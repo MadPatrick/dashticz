@@ -1,6 +1,6 @@
 #!/bin/sh
-# Helper script: gives the web server (www-data) write access to the
-# Dashticz custom/ directory without making it world-writable.
+# Helper script: gives the web server write access to a validated Dashticz
+# custom/ directory without making it world-writable.
 #
 # Installation (run once as root):
 #   sudo cp tools/dashticz-fix-custom-permissions /usr/local/sbin/
@@ -12,15 +12,52 @@
 #   # Add the following line:
 #   www-data ALL=(root) NOPASSWD: /usr/local/sbin/dashticz-fix-custom-permissions
 #
-# After that the Dashticz setup wizard can prepare the directory automatically.
+# After that the Dashticz setup wizard passes its own custom/ path to this
+# helper, so the Dashticz installation can be located anywhere.
 # Alternatively, run this script manually once after deployment:
-#   sudo /usr/local/sbin/dashticz-fix-custom-permissions
+#   sudo /usr/local/sbin/dashticz-fix-custom-permissions /path/to/dashticz/custom
 
-CUSTOM_DIR="${DASHTICZ_CUSTOM_DIR:-/var/www/html/dashticz/custom}"
+set -eu
 
-if [ ! -d "$CUSTOM_DIR" ]; then
-    mkdir -p "$CUSTOM_DIR"
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 /absolute/path/to/dashticz/custom" >&2
+    exit 64
 fi
 
-chown root:www-data "$CUSTOM_DIR"
+case "$1" in
+    /*/custom) ;;
+    *)
+        echo "Refusing path: expected an absolute path ending in /custom" >&2
+        exit 65
+        ;;
+esac
+
+PARENT_DIR=$(dirname -- "$1")
+INSTALL_DIR=$(CDPATH= cd -- "$PARENT_DIR" 2>/dev/null && pwd -P) || {
+    echo "Dashticz installation directory does not exist: $PARENT_DIR" >&2
+    exit 66
+}
+CUSTOM_DIR="$INSTALL_DIR/custom"
+
+# Do not let a privileged invocation follow an attacker-controlled custom symlink.
+if [ -L "$CUSTOM_DIR" ]; then
+    echo "Refusing symlink: $CUSTOM_DIR" >&2
+    exit 65
+fi
+
+# Only operate on a directory that has the expected Dashticz application files.
+if [ ! -f "$INSTALL_DIR/index.html" ] || \
+   [ ! -f "$INSTALL_DIR/js/savecustomjs.php" ] || \
+   [ ! -f "$INSTALL_DIR/vendor/dashticz/security.php" ]; then
+    echo "Refusing path: $INSTALL_DIR is not a Dashticz installation" >&2
+    exit 65
+fi
+
+WEB_GROUP="${DASHTICZ_WEB_GROUP:-www-data}"
+
+if [ ! -d "$CUSTOM_DIR" ]; then
+    mkdir -- "$CUSTOM_DIR"
+fi
+
+chgrp -- "$WEB_GROUP" "$CUSTOM_DIR"
 chmod 2775 "$CUSTOM_DIR"

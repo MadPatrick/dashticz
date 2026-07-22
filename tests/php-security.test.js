@@ -39,6 +39,24 @@ test('settings writes require CSRF and serialize values as JSON', () => {
   assert.doesNotMatch(source, /\$newconf\.="config/);
 });
 
+test('first-run config writer passes its resolved custom path to the helper', () => {
+  const source = read('js/savecustomjs.php');
+  const helper = read('tools/dashticz-fix-custom-permissions');
+
+  assert.match(source, /escapeshellarg\(\$customDir\)/);
+  assert.match(source, /sudo -n --/);
+  assert.doesNotMatch(helper, /\/var\/www\/html/);
+  assert.match(helper, /INSTALL_DIR=.*pwd -P/);
+  assert.match(helper, /is not a Dashticz installation/);
+});
+
+test('first-run config remains valid without CONFIG_DEFAULT.js', () => {
+  const source = read('js/savecustomjs.php');
+
+  assert.match(source, /\$content = "var config = \{\};\\n\\n"/);
+  assert.match(source, /file_put_contents\(\$configPath, \$content, LOCK_EX\)/);
+});
+
 test('bundled Horizon remote requires POST, CSRF and a key allowlist', () => {
   const source = read('tools/switch_horizon.php');
   assert.match(source, /dashticz_require_csrf\(\)/);
