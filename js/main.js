@@ -15,6 +15,7 @@ var blocks = {};
 var cache = new Date().getTime();
 var throwError = null;
 var loadingFilename = null;
+var setupWizardRequired = false;
 
 // device detection
 // eslint-disable-next-line no-unused-vars
@@ -117,10 +118,10 @@ function loadConfig() {
       function (xhr) {
         loadingFilename = null;
         if (xhr.status === 404 && !_PARAMS['cfg'] && _CFG.customfolder === 'custom') {
-          // CONFIG.js not found in the default folder. Define an empty config so
-          // the chain can continue and the setup wizard will be shown when
-          // custom.js is also absent.
+          // CONFIG.js not found in the default folder.
+          // Continue startup and trigger setup wizard later.
           window.config = {};
+          setupWizardRequired = true;
           return;
         }
         return $.Deferred().reject(new Error('Load error in ' + loadingFilename));
@@ -166,6 +167,10 @@ function loadLanguage() {
 }
 
 function loadCustomJS() {
+  if (setupWizardRequired) {
+    return showSetupWizard();
+  }
+
   loadingFilename = _CFG.customfolder + '/custom.js';
 
   return $.ajax({
@@ -187,10 +192,7 @@ function loadCustomJS() {
     })
     .catch(function (res) {
       if (res.status === 404) {
-        //file doesn't exist - show setup wizard when using the default custom folder
-        if (_CFG.customfolder === 'custom') {
-          return showSetupWizard();
-        }
+        // file doesn't exist
         console.log(
           'No custom.js file in folder ' + _CFG.customfolder + '. Skipping.'
         );
