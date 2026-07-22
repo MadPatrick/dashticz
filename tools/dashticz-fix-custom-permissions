@@ -1,0 +1,26 @@
+#!/bin/sh
+# Helper script: gives the web server (www-data) write access to the
+# Dashticz custom/ directory without making it world-writable.
+#
+# Installation (run once as root):
+#   sudo cp tools/dashticz-fix-custom-permissions /usr/local/sbin/
+#   sudo chown root:root /usr/local/sbin/dashticz-fix-custom-permissions
+#   sudo chmod 755 /usr/local/sbin/dashticz-fix-custom-permissions
+#
+# Add a sudoers rule so PHP (www-data) can call this without a password:
+#   sudo visudo
+#   # Add the following line:
+#   www-data ALL=(root) NOPASSWD: /usr/local/sbin/dashticz-fix-custom-permissions
+#
+# After that the Dashticz setup wizard can prepare the directory automatically.
+# Alternatively, run this script manually once after deployment:
+#   sudo /usr/local/sbin/dashticz-fix-custom-permissions
+
+CUSTOM_DIR="${DASHTICZ_CUSTOM_DIR:-/var/www/html/dashticz/custom}"
+
+if [ ! -d "$CUSTOM_DIR" ]; then
+    mkdir -p "$CUSTOM_DIR"
+fi
+
+chown root:www-data "$CUSTOM_DIR"
+chmod 2775 "$CUSTOM_DIR"

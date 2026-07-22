@@ -17,20 +17,29 @@ if (file_exists($configPath)) {
 }
 
 if (!is_dir($customDir)) {
-    if (!mkdir($customDir, 0777, true)) {
-        dashticz_json_error(500, 'The directory "custom/" does not exist and could not be created. Create it manually and grant the web server write permissions.');
+    if (!mkdir($customDir, 0775, true)) {
+        dashticz_json_error(500, 'The directory "custom/" does not exist and could not be created. ' .
+            'Create it manually: sudo mkdir -p custom/ && sudo chown root:www-data custom/ && sudo chmod 2775 custom/');
     }
-    // Override umask so the directory is always world-writable (allows any PHP user to write later).
-    chmod($customDir, 0777);
-} else {
-    // Always try to make the directory world-writable.
-    // Succeeds when PHP is the directory owner (e.g. after git clone as root),
-    // ensuring that a later web-server user (www-data) can write to it too.
-    @chmod($customDir, 0777);
+    // Try to apply the correct group and permissions when PHP is the owner.
+    @chmod($customDir, 2775);
+}
+
+if (!is_writable($customDir)) {
+    // Try via the optional privilege-escalation helper (requires a sudoers rule; see
+    // tools/dashticz-fix-custom-permissions for installation instructions).
+    $helperPath = '/usr/local/sbin/dashticz-fix-custom-permissions';
+    if (is_executable($helperPath)) {
+        $helperOutput = [];
+        $helperExit   = 0;
+        exec('sudo ' . escapeshellarg($helperPath) . ' 2>&1', $helperOutput, $helperExit);
+        clearstatcache(true, $customDir);
+    }
+
     if (!is_writable($customDir)) {
         dashticz_json_error(500, 'The directory "custom/" is not writable by the web server' .
             dashticz_owner_info($customDir) .
-            '. Run: chmod 777 custom/');
+            '. Run: sudo chown root:www-data custom/ && sudo chmod 2775 custom/');
     }
 }
 
@@ -76,11 +85,11 @@ if (file_exists($defaultConfigPath)) {
 }
 
 if (file_put_contents($configPath, $content, LOCK_EX) === false) {
-    dashticz_json_error(500, 'Could not write CONFIG.js. Check that the web server has write permissions on the "custom/" directory (e.g. chmod 777 custom/).');
+    dashticz_json_error(500, 'Could not write CONFIG.js. Check that the web server has write permissions on the "custom/" directory.');
 }
-// Make the new file world-writable so any web-server user can overwrite it later
-// (relevant when PHP ran as root during first setup).
-chmod($configPath, 0666);
+// Apply group-writable permissions so www-data can overwrite the file later
+// (relevant when PHP ran as root or a different user during first setup).
+chmod($configPath, 0664);
 
 header('Content-Type: application/json');
 echo json_encode(array('success' => true));
