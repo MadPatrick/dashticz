@@ -14,7 +14,17 @@ if (file_exists($customPath)) {
     dashticz_json_error(409, 'custom.js already exists.');
 }
 
-$allowedKeys = ['domoticz_ip', 'app_title', 'theme', 'domoticz_refresh', 'dashticz_refresh'];
+$allowedKeys = [
+    'domoticz_ip', 'app_title', 'theme', 'domoticz_refresh', 'dashticz_refresh',
+    'login_timeout', 'editmode', 'loginEnabled', 'client_id', 'client_secret',
+    'enable_websocket', 'room_plan', 'use_cors', 'default_cors_url', 'dashticz_php_path',
+    'standby_after', 'background_image', 'start_page', 'enable_swiper',
+    'vertical_scroll', 'auto_swipe_back_to', 'auto_swipe_back_after', 'auto_slide_pages',
+    'slide_effect', 'standard_graph', 'blink_color', 'language',
+    'timeformat', 'calendarformat', 'calendarlanguage',
+    'auto_positioning', 'use_favorites', 'disable_googleanalytics',
+    'last_update', 'hide_topbar', 'edit_mode',
+];
 $lines = [];
 
 foreach ($allowedKeys as $key) {
