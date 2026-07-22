@@ -37,6 +37,7 @@ test('settings writes require CSRF and serialize values as JSON', () => {
   assert.match(source, /json_decode\(\$serializedValue/);
   assert.match(source, /file_put_contents\(\$configPath, \$newContents, LOCK_EX\)/);
   assert.match(source, /if \(file_exists\(\$configPath\)\)/);
+  assert.match(source, /trim\(\$config\) !== '#EMPTY#'/);
   assert.match(source, /!file_exists\(\$configPath\) && !is_writable\(\$customDir\)/);
   assert.doesNotMatch(source, /\$newconf\.="config/);
 });

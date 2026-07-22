@@ -19,19 +19,21 @@ if (file_exists($configPath)) {
         dashticz_json_error(500, 'Unable to read CONFIG.js.');
     }
 
-    $marker = 'var config = {}';
-    $markerPosition = strpos($config, $marker);
-    if ($markerPosition === false) {
-        dashticz_json_error(409, 'CONFIG.js does not contain the expected config marker.');
-    }
+    if (trim($config) !== '#EMPTY#') {
+        $marker = 'var config = {}';
+        $markerPosition = strpos($config, $marker);
+        if ($markerPosition === false) {
+            dashticz_json_error(409, 'CONFIG.js does not contain the expected config marker.');
+        }
 
-    $before = substr($config, 0, $markerPosition);
-    $conf = substr($config, $markerPosition + strlen($marker));
-    $rows = preg_split('/\r\n|\r|\n/', $conf);
-    foreach ($rows as $index => $row) {
-        if (substr($row, 0, 17) !== "config['garbage']") {
-            if (substr($row, 0, 6) === 'config' || substr($row, 0, 8) === '//config') {
-                unset($rows[$index]);
+        $before = substr($config, 0, $markerPosition);
+        $conf = substr($config, $markerPosition + strlen($marker));
+        $rows = preg_split('/\r\n|\r|\n/', $conf);
+        foreach ($rows as $index => $row) {
+            if (substr($row, 0, 17) !== "config['garbage']") {
+                if (substr($row, 0, 6) === 'config' || substr($row, 0, 8) === '//config') {
+                    unset($rows[$index]);
+                }
             }
         }
     }

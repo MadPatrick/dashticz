@@ -104,6 +104,20 @@ function loadConfig() {
   return $.ajax({
     url: loadingFilename,
     dataType: 'script',
+    dataFilter: function (source) {
+      if (
+        source.trim() === '#EMPTY#' &&
+        !_PARAMS['cfg'] &&
+        _CFG.customfolder === 'custom'
+      ) {
+        // A tracked placeholder CONFIG.js must not be executed as JavaScript.
+        // Treat it exactly like a missing first-run configuration instead.
+        window.config = {};
+        firstRunSetupRequired = true;
+        return '';
+      }
+      return source;
+    },
   })
     .then(
       function () {

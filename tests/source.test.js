@@ -69,6 +69,8 @@ test('first-run setup requires CONFIG.js and removes the legacy browser fallback
   const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
 
   assert.match(source, /localStorage\.removeItem\('dashticz_setup_config'\)/);
+  assert.match(source, /source\.trim\(\) === '#EMPTY#'/);
+  assert.match(source, /dataFilter: function \(source\)/);
   assert.match(source, /firstRunSetupRequired = true/);
   assert.match(source, /regular settings modal handles first-run setup/);
   assert.match(settings, /firstRunSetupRequired/);
