@@ -189,7 +189,7 @@ function loadLanguage() {
 
 function loadCustomJS() {
   if (firstRunSetupRequired) {
-    return showSetupWizard();
+    return checkSetupWriteAccess();
   }
 
   loadingFilename = _CFG.customfolder + '/custom.js';
@@ -222,6 +222,80 @@ function loadCustomJS() {
       var error = res || new Error('Unknown error loading custom.js');
       return $.Deferred().reject(error);
     });
+}
+
+function checkSetupWriteAccess() {
+  var deferred = $.Deferred();
+
+  function showPermissionError(message) {
+    $('#loaderHolder').hide();
+
+    if ($('#dt-setup-permission').length === 0) {
+      $('body').append(
+        '<div class="modal fade" id="dt-setup-permission" tabindex="-1"' +
+          ' aria-labelledby="dt-setup-permission-label" aria-modal="true" role="dialog">' +
+          '<div class="modal-dialog modal-dialog-centered">' +
+          '<div class="modal-content">' +
+          '<div class="modal-header">' +
+          '<h5 class="modal-title" id="dt-setup-permission-label">Configuration permissions</h5>' +
+          '</div>' +
+          '<div class="modal-body">' +
+          '<p id="dt-setup-permission-message"></p>' +
+          '</div>' +
+          '<div class="modal-footer">' +
+          '<button type="button" class="btn btn-primary" id="dt-setup-permission-retry">Check again</button>' +
+          '</div>' +
+          '</div>' +
+          '</div>' +
+          '</div>'
+      );
+    }
+
+    $('#dt-setup-permission-message').text(message);
+    $('#dt-setup-permission-retry')
+      .prop('disabled', false)
+      .off('click.setupPermission')
+      .on('click.setupPermission', function () {
+        $(this).prop('disabled', true);
+        verifyAccess(true);
+      });
+
+    bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('dt-setup-permission'),
+      { backdrop: 'static', keyboard: false }
+    ).show();
+  }
+
+  function verifyAccess(reloadWhenWritable) {
+    $.ajax({
+      url: 'js/checkconfigaccess.php',
+      dataType: 'json',
+      cache: false,
+    })
+      .done(function (result) {
+        if (result.writable) {
+          if (reloadWhenWritable) {
+            window.location.reload();
+          } else {
+            showSetupWizard();
+          }
+          return;
+        }
+
+        showPermissionError(
+          result.message ||
+            'custom/CONFIG.js is not writable by the web server. Correct the file permissions before continuing.'
+        );
+      })
+      .fail(function () {
+        showPermissionError(
+          'Dashticz could not verify write access to custom/CONFIG.js. Make sure PHP is enabled and the file is writable before continuing.'
+        );
+      });
+  }
+
+  verifyAccess(false);
+  return deferred.promise();
 }
 
 function showSetupWizard() {

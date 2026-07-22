@@ -72,7 +72,11 @@ test('first-run setup uses its own wizard and removes the legacy browser fallbac
   assert.match(source, /source\.trim\(\) === '#EMPTY#'/);
   assert.match(source, /dataFilter: function \(source\)/);
   assert.match(source, /firstRunSetupRequired = true/);
-  assert.match(source, /return showSetupWizard\(\)/);
+  assert.match(source, /return checkSetupWriteAccess\(\)/);
+  assert.match(source, /url: 'js\/checkconfigaccess\.php'/);
+  assert.match(source, /Configuration permissions/);
+  assert.match(source, /Check again/);
+  assert.match(source, /showSetupWizard\(\)/);
   assert.match(source, /id="dt-setup-wizard"/);
   assert.match(source, /url: 'js\/savesettings\.php'/);
   assert.doesNotMatch(settings, /firstRunSetupRequired/);

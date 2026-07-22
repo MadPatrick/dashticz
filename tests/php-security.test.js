@@ -42,6 +42,16 @@ test('settings writes require CSRF and serialize values as JSON', () => {
   assert.doesNotMatch(source, /\$newconf\.="config/);
 });
 
+test('first-run access check verifies CONFIG.js as the web server user', () => {
+  const source = read('js/checkconfigaccess.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  assert.match(source, /REQUEST_METHOD.*GET/);
+  assert.match(source, /is_writable\(\$configPath\)/);
+  assert.match(source, /is_writable\(\$customDir\)/);
+  assert.match(source, /'writable' => \$writable/);
+  assert.doesNotMatch(source, /chmod|file_put_contents/);
+});
+
 test('Apache write-access installer derives the path and verifies a real write', () => {
   const installer = read('tools/install-dashticz-write-access');
 
