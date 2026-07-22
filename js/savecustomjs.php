@@ -21,7 +21,12 @@ if (!is_dir($customDir)) {
         dashticz_json_error(500, 'De map "custom/" bestaat niet en kon niet worden aangemaakt. Maak de map handmatig aan en geef de webserver schrijfrechten.');
     }
 } elseif (!is_writable($customDir)) {
-    dashticz_json_error(500, 'De map "custom/" heeft geen schrijfrechten voor de webserver. Voer uit: chmod 775 custom/ (of geef de webserver gebruiker schrijfrechten op deze map).');
+    // Try to set write permission — succeeds when PHP runs as the directory owner
+    // (e.g. a fresh git clone made by root or a deploy user with PHP as the same user).
+    @chmod($customDir, 0775);
+    if (!is_writable($customDir)) {
+        dashticz_json_error(500, 'De map "custom/" heeft geen schrijfrechten voor de webserver. Voer uit: chmod 775 custom/ (of geef de webserver gebruiker schrijfrechten op deze map).');
+    }
 }
 
 $allowedKeys = [
