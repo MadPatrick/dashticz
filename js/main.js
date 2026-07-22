@@ -177,7 +177,10 @@ function loadCustomJS() {
     })
     .catch(function (res) {
       if (res.status === 404) {
-        //file doesn't exist
+        //file doesn't exist - show setup wizard when using the default custom folder
+        if (_CFG.customfolder === 'custom') {
+          return showSetupWizard();
+        }
         console.log(
           'No custom.js file in folder ' + _CFG.customfolder + '. Skipping.'
         );
@@ -186,6 +189,102 @@ function loadCustomJS() {
       var error = res || new Error('Unknown error loading custom.js');
       return $.Deferred().reject(error);
     });
+}
+
+function showSetupWizard() {
+  var deferred = $.Deferred();
+
+  $('#loaderHolder').hide();
+
+  var html =
+    '<div class="modal fade" id="dt-setup-wizard" tabindex="-1"' +
+    ' aria-labelledby="dt-setup-label" aria-modal="true" role="dialog">' +
+    '<div class="modal-dialog modal-dialog-centered">' +
+    '<div class="modal-content">' +
+    '<div class="modal-header">' +
+    '<h5 class="modal-title" id="dt-setup-label">Dashticz Setup</h5>' +
+    '</div>' +
+    '<div class="modal-body">' +
+    '<p class="text-muted">Configure your Domoticz connection to get started.</p>' +
+    '<div class="mb-3">' +
+    '<label for="dt-setup-ip" class="form-label">Domoticz URL <span class="text-danger">*</span></label>' +
+    '<input type="text" class="form-control" id="dt-setup-ip" placeholder="http://192.168.1.3:8084">' +
+    '<div class="form-text">The URL and port of your Domoticz server</div>' +
+    '</div>' +
+    '<div class="mb-3">' +
+    '<label for="dt-setup-app-title" class="form-label">Dashboard Title</label>' +
+    '<input type="text" class="form-control" id="dt-setup-app-title" value="Dashticz">' +
+    '</div>' +
+    '<div class="mb-3">' +
+    '<label for="dt-setup-theme" class="form-label">Theme</label>' +
+    '<select class="form-select" id="dt-setup-theme">' +
+    '<option value="modern-dark" selected>Modern Dark</option>' +
+    '<option value="default">Default</option>' +
+    '<option value="white">White</option>' +
+    '</select>' +
+    '</div>' +
+    '<div class="alert alert-danger d-none" id="dt-setup-error" role="alert"></div>' +
+    '</div>' +
+    '<div class="modal-footer">' +
+    '<button type="button" class="btn btn-primary" id="dt-setup-save">Save &amp; Start</button>' +
+    '</div>' +
+    '</div>' +
+    '</div>' +
+    '</div>';
+
+  $('body').append(html);
+
+  var modalEl = document.getElementById('dt-setup-wizard');
+  var modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+  modal.show();
+
+  $('#dt-setup-save').on('click', function () {
+    var ip = $('#dt-setup-ip').val().trim();
+    var title = $('#dt-setup-app-title').val().trim();
+    var theme = $('#dt-setup-theme').val();
+    var $error = $('#dt-setup-error');
+
+    $error.addClass('d-none').text('');
+
+    if (!ip) {
+      $error.removeClass('d-none').text('Please enter the Domoticz URL.');
+      return;
+    }
+
+    var postData = {
+      domoticz_ip: JSON.stringify(ip),
+      theme: JSON.stringify(theme || 'modern-dark'),
+    };
+    if (title) {
+      postData.app_title = JSON.stringify(title);
+    }
+
+    $('#dt-setup-save').prop('disabled', true);
+
+    $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
+      .then(function (data) {
+        return $.ajax({
+          url: 'js/savecustomjs.php',
+          method: 'POST',
+          data: postData,
+          dataType: 'json',
+          headers: { 'X-Dashticz-CSRF': data.token },
+        });
+      })
+      .done(function () {
+        window.location.reload();
+      })
+      .fail(function (xhr) {
+        var msg =
+          xhr.responseJSON && xhr.responseJSON.error
+            ? xhr.responseJSON.error
+            : 'Could not save settings. Make sure PHP is enabled.';
+        $error.removeClass('d-none').text(msg);
+        $('#dt-setup-save').prop('disabled', false);
+      });
+  });
+
+  return deferred.promise();
 }
 
 function configureDashticz() {
