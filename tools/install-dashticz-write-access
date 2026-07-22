@@ -1,6 +1,7 @@
 #!/bin/sh
-# Install the narrowly scoped helper used to create custom/CONFIG.js.
-# The Dashticz directory is derived from this script's own location.
+# Prepare custom/ for a native Apache/PHP installation.
+# The Dashticz directory is derived from this script's own location, so the
+# repository can be cloned anywhere.
 
 set -eu
 
@@ -38,37 +39,40 @@ if [ -z "$WEB_USER" ]; then
 fi
 
 WEB_GROUP=$(id -gn "$WEB_USER")
-HELPER=/usr/local/sbin/dashticz-fix-custom-permissions
-CONFIG_DIR=/etc/dashticz
-SUDOERS_FILE=/etc/sudoers.d/dashticz-fix-custom-permissions
+CUSTOM_DIR="$INSTALL_DIR/custom"
+CONFIG_FILE="$CUSTOM_DIR/CONFIG.js"
 
-install -o root -g root -m 0755 \
-    "$SCRIPT_DIR/dashticz-fix-custom-permissions" "$HELPER"
-install -d -o root -g root -m 0755 "$CONFIG_DIR"
-printf '%s\n' "$WEB_GROUP" > "$CONFIG_DIR/web-group"
-chown root:root "$CONFIG_DIR/web-group"
-chmod 0644 "$CONFIG_DIR/web-group"
-
-"$HELPER" "$INSTALL_DIR/custom"
-
-if command -v runuser >/dev/null 2>&1 && \
-   ! runuser -u "$WEB_USER" -- test -w "$INSTALL_DIR/custom"; then
-    echo "The custom directory is still not writable by $WEB_USER" >&2
-    exit 73
+if [ -L "$CUSTOM_DIR" ]; then
+    echo "Refusing symlink: $CUSTOM_DIR" >&2
+    exit 65
 fi
 
-# The directory is ready now. Install the optional runtime repair rule when
-# sudo provides visudo; a minimal container does not need this rule to proceed.
-if command -v visudo >/dev/null 2>&1; then
-    SUDOERS_TMP=$(mktemp)
-    trap 'rm -f "$SUDOERS_TMP"' EXIT HUP INT TERM
-    printf '%s ALL=(root) NOPASSWD: %s\n' "$WEB_USER" "$HELPER" > "$SUDOERS_TMP"
-    chmod 0440 "$SUDOERS_TMP"
-    visudo -cf "$SUDOERS_TMP" >/dev/null
-    install -o root -g root -m 0440 "$SUDOERS_TMP" "$SUDOERS_FILE"
+if [ ! -d "$CUSTOM_DIR" ]; then
+    install -d -o root -g "$WEB_GROUP" -m 2775 "$CUSTOM_DIR"
 else
-    echo "Warning: visudo not found; skipped optional runtime permission repair" >&2
+    chgrp "$WEB_GROUP" "$CUSTOM_DIR"
+    chmod 2775 "$CUSTOM_DIR"
 fi
 
-echo "Dashticz write access installed for $WEB_USER:$WEB_GROUP"
-echo "CONFIG.js will be created in $INSTALL_DIR/custom"
+if [ -e "$CONFIG_FILE" ]; then
+    if [ -L "$CONFIG_FILE" ]; then
+        echo "Refusing symlink: $CONFIG_FILE" >&2
+        exit 65
+    fi
+    chgrp "$WEB_GROUP" "$CONFIG_FILE"
+    chmod 0664 "$CONFIG_FILE"
+fi
+
+if command -v runuser >/dev/null 2>&1; then
+    TEST_FILE="$CUSTOM_DIR/.dashticz-write-test.$$"
+    if ! runuser -u "$WEB_USER" -- touch "$TEST_FILE"; then
+        echo "The custom directory is still not writable by $WEB_USER" >&2
+        exit 73
+    fi
+    rm -f "$TEST_FILE"
+else
+    echo "Warning: runuser not found; could not verify access as $WEB_USER" >&2
+fi
+
+echo "Dashticz custom directory prepared for $WEB_USER:$WEB_GROUP"
+echo "The setup wizard can now create $CONFIG_FILE"

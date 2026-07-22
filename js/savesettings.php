@@ -53,7 +53,7 @@ if (!is_writable($configPath)) {
     if (!is_writable($configPath)) {
         dashticz_json_error(500, 'CONFIG.js is not writable' .
             dashticz_owner_info($configPath) .
-            '. Run: sudo chmod 664 custom/CONFIG.js');
+            '. From the Dashticz directory, run: sh tools/install-dashticz-write-access');
     }
 }
 

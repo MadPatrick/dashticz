@@ -19,42 +19,16 @@ if (file_exists($configPath)) {
 if (!is_dir($customDir)) {
     if (!mkdir($customDir, 0775, true)) {
         dashticz_json_error(500, 'The directory "custom/" does not exist and could not be created. ' .
-            'Create it manually: sudo mkdir -p custom/ && sudo chown root:www-data custom/ && sudo chmod 2775 custom/');
+            'From the Dashticz directory, run: sh tools/install-dashticz-write-access');
     }
     // Try to apply the correct group and permissions when PHP is the owner.
     @chmod($customDir, 2775);
 }
 
 if (!is_writable($customDir)) {
-    // Try via the optional privilege-escalation helper (requires a sudoers rule; see
-    // tools/dashticz-fix-custom-permissions for installation instructions).
-    $helperPath = '/usr/local/sbin/dashticz-fix-custom-permissions';
-    $repairStatus = 'permission helper is not installed';
-    if (is_executable($helperPath) && function_exists('exec')) {
-        $helperOutput = [];
-        $helperExit   = 0;
-        exec(
-            'sudo -n -- ' . escapeshellarg($helperPath) . ' ' .
-            escapeshellarg($customDir) . ' 2>&1',
-            $helperOutput,
-            $helperExit
-        );
-        $repairStatus = $helperExit === 0
-            ? 'permission helper completed'
-            : 'permission helper failed with exit code ' . $helperExit;
-        if (!empty($helperOutput)) {
-            $repairStatus .= ': ' . end($helperOutput);
-        }
-        clearstatcache(true, $customDir);
-    } elseif (is_executable($helperPath)) {
-        $repairStatus = 'PHP exec() is disabled';
-    }
-
-    if (!is_writable($customDir)) {
-        dashticz_json_error(500, 'The directory "custom/" is not writable by the web server' .
-            dashticz_owner_info($customDir) .
-            '. Run the bundled write-access installer and try again (' . $repairStatus . ').');
-    }
+    dashticz_json_error(500, 'The directory "custom/" is not writable by the web server' .
+        dashticz_owner_info($customDir) .
+        '. From the Dashticz directory, run: sh tools/install-dashticz-write-access');
 }
 
 $allowedKeys = [
@@ -101,8 +75,7 @@ if (file_exists($defaultConfigPath)) {
 if (file_put_contents($configPath, $content, LOCK_EX) === false) {
     dashticz_json_error(500, 'Could not write CONFIG.js. Check that the web server has write permissions on the "custom/" directory.');
 }
-// Apply group-writable permissions so www-data can overwrite the file later
-// (relevant when PHP ran as root or a different user during first setup).
+// Keep the generated file group-writable for subsequent settings changes.
 chmod($configPath, 0664);
 
 header('Content-Type: application/json');

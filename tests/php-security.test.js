@@ -39,24 +39,22 @@ test('settings writes require CSRF and serialize values as JSON', () => {
   assert.doesNotMatch(source, /\$newconf\.="config/);
 });
 
-test('first-run config writer passes its resolved custom path to the helper', () => {
+test('first-run config writer never invokes a privileged runtime helper', () => {
   const source = read('js/savecustomjs.php');
-  const helper = read('tools/dashticz-fix-custom-permissions');
 
-  assert.match(source, /escapeshellarg\(\$customDir\)/);
-  assert.match(source, /sudo -n --/);
-  assert.doesNotMatch(helper, /\/var\/www\/html/);
-  assert.match(helper, /INSTALL_DIR=.*pwd -P/);
-  assert.match(helper, /is not a Dashticz installation/);
+  assert.doesNotMatch(source, /exec\(/);
+  assert.doesNotMatch(source, /sudo/);
+  assert.match(source, /install-dashticz-write-access/);
 });
 
-test('write-access installer derives the Dashticz path and installs a restricted helper', () => {
+test('Apache write-access installer derives the path and verifies a real write', () => {
   const installer = read('tools/install-dashticz-write-access');
 
   assert.match(installer, /INSTALL_DIR=.*SCRIPT_DIR\/\.\./);
-  assert.match(installer, /visudo -cf/);
-  assert.match(installer, /NOPASSWD/);
-  assert.match(installer, /runuser -u .* test -w/);
+  assert.match(installer, /chmod 2775/);
+  assert.match(installer, /runuser -u .* touch/);
+  assert.doesNotMatch(installer, /sudoers/);
+  assert.doesNotMatch(installer, /NOPASSWD/);
   assert.doesNotMatch(installer, /\/var\/www\/html/);
 });
 

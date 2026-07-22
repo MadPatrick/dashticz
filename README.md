@@ -158,16 +158,17 @@ In addition to that it's possible to show information from all kind of other sou
 # Installation instructions
 See https://dashticz.readthedocs.io/en/master/gettingstarted/
 
-For installations that use the first-run setup wizard, prepare write access once
-from the Dashticz directory:
+For native Apache/PHP installations that use the first-run setup wizard, finish
+the Git installation with:
 
 ```sh
 sh tools/install-dashticz-write-access
 ```
 
-The installer detects the Dashticz directory and web-server account, prepares
-`custom/`, and installs a restricted helper. The wizard then creates a real
-`custom/CONFIG.js`; configuration is never stored in the browser.
+The script requests `sudo` when necessary, derives the Dashticz directory from
+its own location, detects the Apache/PHP account, prepares only `custom/`, and
+verifies write access as that account. The wizard then creates a real
+`custom/CONFIG.js`; no privileged runtime helper or browser storage is used.
 
 # Documentation and support
 Documentation can be found on:
