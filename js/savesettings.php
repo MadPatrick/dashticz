@@ -48,12 +48,12 @@ foreach ($_POST as $name => $serializedValue) {
 
 $newContents = $before . $newConfig . implode("\n", $rows);
 if (!is_writable($configPath)) {
-    // Try to set write permission — succeeds when PHP runs as the file owner.
-    @chmod($configPath, 0664);
+    // Try to set world-writable — succeeds when PHP runs as the file owner.
+    @chmod($configPath, 0666);
     if (!is_writable($configPath)) {
-        dashticz_json_error(500, 'CONFIG.js is niet beschrijfbaar' .
+        dashticz_json_error(500, 'CONFIG.js is not writable' .
             dashticz_owner_info($configPath) .
-            '. Voer uit: chmod 664 custom/CONFIG.js (of geef de webserver gebruiker schrijfrechten op dit bestand).');
+            '. Run: chmod 666 custom/CONFIG.js');
     }
 }
 

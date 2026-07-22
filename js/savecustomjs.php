@@ -13,23 +13,22 @@ $configPath = $customDir . '/CONFIG.js';
 $defaultConfigPath = $customDir . '/CONFIG_DEFAULT.js';
 
 if (file_exists($configPath)) {
-    dashticz_json_error(409, 'CONFIG.js bestaat al.');
+    dashticz_json_error(409, 'CONFIG.js already exists.');
 }
 
 if (!is_dir($customDir)) {
-    if (!mkdir($customDir, 0775, true)) {
-        dashticz_json_error(500, 'De map "custom/" bestaat niet en kon niet worden aangemaakt. Maak de map handmatig aan en geef de webserver schrijfrechten.');
+    if (!mkdir($customDir, 0777, true)) {
+        dashticz_json_error(500, 'The directory "custom/" does not exist and could not be created. Create it manually and grant the web server write permissions.');
     }
-    // Ensure the new directory is group-writable regardless of umask
-    @chmod($customDir, 0775);
+    // Override umask so the directory is always world-writable (allows any PHP user to write later).
+    chmod($customDir, 0777);
 } elseif (!is_writable($customDir)) {
-    // Try to set write permission — succeeds when PHP runs as the directory owner
-    // (e.g. a fresh git clone made by root or a deploy user with PHP as the same user).
-    @chmod($customDir, 0775);
+    // Try to set world-writable — succeeds when PHP runs as the directory owner.
+    @chmod($customDir, 0777);
     if (!is_writable($customDir)) {
-        dashticz_json_error(500, 'De map "custom/" heeft geen schrijfrechten voor de webserver' .
+        dashticz_json_error(500, 'The directory "custom/" is not writable by the web server' .
             dashticz_owner_info($customDir) .
-            '. Voer uit: chmod 775 custom/ (of geef de webserver gebruiker schrijfrechten op deze map).');
+            '. Run: chmod 777 custom/');
     }
 }
 
@@ -69,17 +68,17 @@ $content = $generatedContent;
 if (file_exists($defaultConfigPath)) {
     $defaultContent = file_get_contents($defaultConfigPath);
     if ($defaultContent === false) {
-        dashticz_json_error(500, 'CONFIG_DEFAULT.js kon niet worden gelezen.');
+        dashticz_json_error(500, 'Could not read CONFIG_DEFAULT.js.');
     }
     $content = rtrim($defaultContent) . "\n\n" . $generatedContent;
 }
 
 if (file_put_contents($configPath, $content, LOCK_EX) === false) {
-    dashticz_json_error(500, 'Kon CONFIG.js niet schrijven. Controleer of de webserver schrijfrechten heeft op de map "custom/" (bijv. chmod 775 custom/).');
+    dashticz_json_error(500, 'Could not write CONFIG.js. Check that the web server has write permissions on the "custom/" directory (e.g. chmod 777 custom/).');
 }
-// Ensure the new file is group-writable so a web-server user in the same group
-// can overwrite it later (relevant when PHP ran as root during first setup).
-@chmod($configPath, 0664);
+// Make the new file world-writable so any web-server user can overwrite it later
+// (relevant when PHP ran as root during first setup).
+chmod($configPath, 0666);
 
 header('Content-Type: application/json');
 echo json_encode(array('success' => true));
