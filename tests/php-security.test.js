@@ -50,6 +50,15 @@ test('first-run config writer passes its resolved custom path to the helper', ()
   assert.match(helper, /is not a Dashticz installation/);
 });
 
+test('write-access installer derives the Dashticz path and installs a restricted helper', () => {
+  const installer = read('tools/install-dashticz-write-access');
+
+  assert.match(installer, /INSTALL_DIR=.*SCRIPT_DIR\/\.\./);
+  assert.match(installer, /visudo -cf/);
+  assert.match(installer, /NOPASSWD/);
+  assert.doesNotMatch(installer, /\/var\/www\/html/);
+});
+
 test('first-run config remains valid without CONFIG_DEFAULT.js', () => {
   const source = read('js/savecustomjs.php');
 

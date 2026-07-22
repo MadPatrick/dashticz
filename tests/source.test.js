@@ -64,12 +64,13 @@ test('all application JavaScript files pass a syntax check', () => {
   }
 });
 
-test('first-run setup has a browser-local fallback when CONFIG.js cannot be written', () => {
+test('first-run setup requires CONFIG.js and removes the legacy browser fallback', () => {
   const source = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
 
-  assert.match(source, /localStorage\.setItem\(setupStorageKey/);
-  assert.match(source, /var storedConfig = loadStoredSetupConfig\(\)/);
-  assert.match(source, /if \(storeSetupConfig\(postData\)\)/);
+  assert.match(source, /localStorage\.removeItem\('dashticz_setup_config'\)/);
+  assert.match(source, /setupWizardRequired = true/);
+  assert.doesNotMatch(source, /localStorage\.setItem\('dashticz_setup_config'/);
+  assert.doesNotMatch(source, /storeSetupConfig/);
 });
 
 test('all project JSON files parse', () => {

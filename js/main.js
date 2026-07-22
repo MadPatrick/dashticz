@@ -16,7 +16,6 @@ var cache = new Date().getTime();
 var throwError = null;
 var loadingFilename = null;
 var setupWizardRequired = false;
-var setupStorageKey = 'dashticz_setup_config';
 
 // device detection
 // eslint-disable-next-line no-unused-vars
@@ -120,11 +119,8 @@ function loadConfig() {
         loadingFilename = null;
         if (xhr.status === 404 && !_PARAMS['cfg'] && _CFG.customfolder === 'custom') {
           // CONFIG.js not found in the default folder.
-          // Use the automatic browser fallback when the web server could not
-          // create CONFIG.js during an earlier setup.
-          var storedConfig = loadStoredSetupConfig();
-          window.config = storedConfig || {};
-          setupWizardRequired = !storedConfig;
+          window.config = {};
+          setupWizardRequired = true;
           return;
         }
         return $.Deferred().reject(new Error('Load error in ' + loadingFilename));
@@ -132,40 +128,11 @@ function loadConfig() {
     );
 }
 
-function loadStoredSetupConfig() {
+function clearLegacyStoredSetupConfig() {
   try {
-    var stored = localStorage.getItem(setupStorageKey);
-    if (!stored) return null;
-    var parsed = JSON.parse(stored);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return null;
-    }
-    return parsed;
+    localStorage.removeItem('dashticz_setup_config');
   } catch (err) {
-    console.warn('Could not load the locally stored Dashticz setup.', err);
-    return null;
-  }
-}
-
-function storeSetupConfig(postData) {
-  try {
-    var storedConfig = {};
-    Object.keys(postData).forEach(function (key) {
-      storedConfig[key] = JSON.parse(postData[key]);
-    });
-    localStorage.setItem(setupStorageKey, JSON.stringify(storedConfig));
-    return true;
-  } catch (err) {
-    console.warn('Could not store the Dashticz setup locally.', err);
-    return false;
-  }
-}
-
-function clearStoredSetupConfig() {
-  try {
-    localStorage.removeItem(setupStorageKey);
-  } catch (err) {
-    console.warn('Could not remove the locally stored Dashticz setup.', err);
+    console.warn('Could not remove legacy Dashticz setup data.', err);
   }
 }
 
@@ -445,14 +412,9 @@ function showSetupWizard() {
         });
       })
       .done(function () {
-        clearStoredSetupConfig();
         window.location.reload();
       })
       .fail(function (xhr) {
-        if (storeSetupConfig(postData)) {
-          window.location.reload();
-          return;
-        }
         var msg =
           xhr.responseJSON && xhr.responseJSON.error
             ? xhr.responseJSON.error
@@ -526,6 +488,8 @@ function prepareStart() {
   _PARAMS = getLocationParameters();
 
   _CFG.customfolder = _PARAMS['folder'] || 'custom';
+  // First-run settings must live in CONFIG.js, never in browser storage.
+  clearLegacyStoredSetupConfig();
 
   createErrorHandler();
   loadStyling();

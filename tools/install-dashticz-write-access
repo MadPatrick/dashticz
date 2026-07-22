@@ -1,0 +1,67 @@
+#!/bin/sh
+# Install the narrowly scoped helper used to create custom/CONFIG.js.
+# The Dashticz directory is derived from this script's own location.
+
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+INSTALL_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd -P)
+
+if [ ! -f "$INSTALL_DIR/index.html" ] || \
+   [ ! -f "$INSTALL_DIR/js/savecustomjs.php" ]; then
+    echo "Could not determine the Dashticz installation directory" >&2
+    exit 66
+fi
+
+if [ "$(id -u)" -ne 0 ]; then
+    if [ -n "${DASHTICZ_WEB_USER:-}" ]; then
+        exec sudo -- env DASHTICZ_WEB_USER="$DASHTICZ_WEB_USER" sh "$0" "$@"
+    fi
+    exec sudo -- sh "$0" "$@"
+fi
+
+if [ -n "${DASHTICZ_WEB_USER:-}" ]; then
+    WEB_USER="$DASHTICZ_WEB_USER"
+else
+    WEB_USER=
+    for candidate in www-data apache http nginx; do
+        if id "$candidate" >/dev/null 2>&1; then
+            WEB_USER="$candidate"
+            break
+        fi
+    done
+fi
+
+if [ -z "$WEB_USER" ]; then
+    echo "Could not detect the web-server user; set DASHTICZ_WEB_USER and retry" >&2
+    exit 67
+fi
+
+WEB_GROUP=$(id -gn "$WEB_USER")
+HELPER=/usr/local/sbin/dashticz-fix-custom-permissions
+CONFIG_DIR=/etc/dashticz
+SUDOERS_FILE=/etc/sudoers.d/dashticz-fix-custom-permissions
+
+if ! command -v visudo >/dev/null 2>&1; then
+    echo "visudo is required to install the restricted sudo rule" >&2
+    exit 69
+fi
+
+install -o root -g root -m 0755 \
+    "$SCRIPT_DIR/dashticz-fix-custom-permissions" "$HELPER"
+install -d -o root -g root -m 0755 "$CONFIG_DIR"
+printf '%s\n' "$WEB_GROUP" > "$CONFIG_DIR/web-group"
+chown root:root "$CONFIG_DIR/web-group"
+chmod 0644 "$CONFIG_DIR/web-group"
+
+SUDOERS_TMP=$(mktemp)
+trap 'rm -f "$SUDOERS_TMP"' EXIT HUP INT TERM
+printf '%s ALL=(root) NOPASSWD: %s\n' "$WEB_USER" "$HELPER" > "$SUDOERS_TMP"
+chmod 0440 "$SUDOERS_TMP"
+visudo -cf "$SUDOERS_TMP" >/dev/null
+install -o root -g root -m 0440 "$SUDOERS_TMP" "$SUDOERS_FILE"
+
+"$HELPER" "$INSTALL_DIR/custom"
+
+echo "Dashticz write access installed for $WEB_USER:$WEB_GROUP"
+echo "CONFIG.js will be created in $INSTALL_DIR/custom"

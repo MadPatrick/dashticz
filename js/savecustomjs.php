@@ -44,7 +44,7 @@ if (!is_writable($customDir)) {
     if (!is_writable($customDir)) {
         dashticz_json_error(500, 'The directory "custom/" is not writable by the web server' .
             dashticz_owner_info($customDir) .
-            '. The configuration will be stored in this browser instead.');
+            '. Run the bundled write-access installer and try again.');
     }
 }
 

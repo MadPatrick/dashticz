@@ -2,7 +2,10 @@
 # Helper script: gives the web server write access to a validated Dashticz
 # custom/ directory without making it world-writable.
 #
-# Installation (run once as root):
+# Preferred installation (from the Dashticz directory):
+#   sh tools/install-dashticz-write-access
+#
+# Manual installation (run once as root):
 #   sudo cp tools/dashticz-fix-custom-permissions /usr/local/sbin/
 #   sudo chown root:root /usr/local/sbin/dashticz-fix-custom-permissions
 #   sudo chmod 755 /usr/local/sbin/dashticz-fix-custom-permissions
@@ -53,7 +56,18 @@ if [ ! -f "$INSTALL_DIR/index.html" ] || \
     exit 65
 fi
 
-WEB_GROUP="${DASHTICZ_WEB_GROUP:-www-data}"
+if [ -n "${DASHTICZ_WEB_GROUP:-}" ]; then
+    WEB_GROUP="$DASHTICZ_WEB_GROUP"
+elif [ -r /etc/dashticz/web-group ]; then
+    IFS= read -r WEB_GROUP < /etc/dashticz/web-group
+else
+    WEB_GROUP=www-data
+fi
+
+if [ -z "$WEB_GROUP" ]; then
+    echo "The configured web-server group is empty" >&2
+    exit 78
+fi
 
 if [ ! -d "$CUSTOM_DIR" ]; then
     mkdir -- "$CUSTOM_DIR"
