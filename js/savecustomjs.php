@@ -29,6 +29,7 @@ if (!is_writable($customDir)) {
     // Try via the optional privilege-escalation helper (requires a sudoers rule; see
     // tools/dashticz-fix-custom-permissions for installation instructions).
     $helperPath = '/usr/local/sbin/dashticz-fix-custom-permissions';
+    $repairStatus = 'permission helper is not installed';
     if (is_executable($helperPath) && function_exists('exec')) {
         $helperOutput = [];
         $helperExit   = 0;
@@ -38,13 +39,21 @@ if (!is_writable($customDir)) {
             $helperOutput,
             $helperExit
         );
+        $repairStatus = $helperExit === 0
+            ? 'permission helper completed'
+            : 'permission helper failed with exit code ' . $helperExit;
+        if (!empty($helperOutput)) {
+            $repairStatus .= ': ' . end($helperOutput);
+        }
         clearstatcache(true, $customDir);
+    } elseif (is_executable($helperPath)) {
+        $repairStatus = 'PHP exec() is disabled';
     }
 
     if (!is_writable($customDir)) {
         dashticz_json_error(500, 'The directory "custom/" is not writable by the web server' .
             dashticz_owner_info($customDir) .
-            '. Run the bundled write-access installer and try again.');
+            '. Run the bundled write-access installer and try again (' . $repairStatus . ').');
     }
 }
 

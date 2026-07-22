@@ -42,11 +42,6 @@ HELPER=/usr/local/sbin/dashticz-fix-custom-permissions
 CONFIG_DIR=/etc/dashticz
 SUDOERS_FILE=/etc/sudoers.d/dashticz-fix-custom-permissions
 
-if ! command -v visudo >/dev/null 2>&1; then
-    echo "visudo is required to install the restricted sudo rule" >&2
-    exit 69
-fi
-
 install -o root -g root -m 0755 \
     "$SCRIPT_DIR/dashticz-fix-custom-permissions" "$HELPER"
 install -d -o root -g root -m 0755 "$CONFIG_DIR"
@@ -54,14 +49,26 @@ printf '%s\n' "$WEB_GROUP" > "$CONFIG_DIR/web-group"
 chown root:root "$CONFIG_DIR/web-group"
 chmod 0644 "$CONFIG_DIR/web-group"
 
-SUDOERS_TMP=$(mktemp)
-trap 'rm -f "$SUDOERS_TMP"' EXIT HUP INT TERM
-printf '%s ALL=(root) NOPASSWD: %s\n' "$WEB_USER" "$HELPER" > "$SUDOERS_TMP"
-chmod 0440 "$SUDOERS_TMP"
-visudo -cf "$SUDOERS_TMP" >/dev/null
-install -o root -g root -m 0440 "$SUDOERS_TMP" "$SUDOERS_FILE"
-
 "$HELPER" "$INSTALL_DIR/custom"
+
+if command -v runuser >/dev/null 2>&1 && \
+   ! runuser -u "$WEB_USER" -- test -w "$INSTALL_DIR/custom"; then
+    echo "The custom directory is still not writable by $WEB_USER" >&2
+    exit 73
+fi
+
+# The directory is ready now. Install the optional runtime repair rule when
+# sudo provides visudo; a minimal container does not need this rule to proceed.
+if command -v visudo >/dev/null 2>&1; then
+    SUDOERS_TMP=$(mktemp)
+    trap 'rm -f "$SUDOERS_TMP"' EXIT HUP INT TERM
+    printf '%s ALL=(root) NOPASSWD: %s\n' "$WEB_USER" "$HELPER" > "$SUDOERS_TMP"
+    chmod 0440 "$SUDOERS_TMP"
+    visudo -cf "$SUDOERS_TMP" >/dev/null
+    install -o root -g root -m 0440 "$SUDOERS_TMP" "$SUDOERS_FILE"
+else
+    echo "Warning: visudo not found; skipped optional runtime permission repair" >&2
+fi
 
 echo "Dashticz write access installed for $WEB_USER:$WEB_GROUP"
 echo "CONFIG.js will be created in $INSTALL_DIR/custom"

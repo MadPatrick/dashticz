@@ -56,6 +56,7 @@ test('write-access installer derives the Dashticz path and installs a restricted
   assert.match(installer, /INSTALL_DIR=.*SCRIPT_DIR\/\.\./);
   assert.match(installer, /visudo -cf/);
   assert.match(installer, /NOPASSWD/);
+  assert.match(installer, /runuser -u .* test -w/);
   assert.doesNotMatch(installer, /\/var\/www\/html/);
 });
 
