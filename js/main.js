@@ -104,18 +104,28 @@ function loadConfig() {
     url: loadingFilename,
     dataType: 'script',
   })
-    .fail(function () {
-      return $.Deferred().reject(new Error('Load error in ' + loadingFilename));
-    })
-    .then(function () {
-      var tmp = loadingFilename;
-      loadingFilename = null;
-      if (throwError) return $.Deferred().reject(new Error(throwError));
+    .then(
+      function () {
+        var tmp = loadingFilename;
+        loadingFilename = null;
+        if (throwError) return $.Deferred().reject(new Error(throwError));
 
-      if (typeof config == 'undefined') {
-        return $.Deferred().reject(new Error('Error in ' + tmp));
+        if (typeof config == 'undefined') {
+          return $.Deferred().reject(new Error('Error in ' + tmp));
+        }
+      },
+      function (xhr) {
+        loadingFilename = null;
+        if (xhr.status === 404 && !_PARAMS['cfg'] && _CFG.customfolder === 'custom') {
+          // CONFIG.js not found in the default folder. Define an empty config so
+          // the chain can continue and the setup wizard will be shown when
+          // custom.js is also absent.
+          window.config = {};
+          return;
+        }
+        return $.Deferred().reject(new Error('Load error in ' + loadingFilename));
       }
-    });
+    );
 }
 
 function loadConfig2() {
