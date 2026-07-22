@@ -210,53 +210,54 @@ function showSetupWizard() {
 
   // Field definitions: type 'text' = text input, 'select01' = 0/1 numeric dropdown,
   // 'selectbool' = true/false boolean dropdown, 'select' = named string options,
-  // 'selectstr' = named string options stored as-is (e.g. 'false'/'true').
+  // 'selectstr' = named string options stored as-is (e.g. 'false'/'true'),
+  // 'selectint' = named options stored as integers.
   var wizardFields = [
-    { section: 'Verbinding (Domoticz)' },
-    { id: 'domoticz_ip',   label: 'Domoticz URL *',           type: 'text',      def: 'http://192.168.1.5:8080', help: 'URL en poort van je Domoticz server', required: true },
-    { id: 'loginEnabled',  label: 'Login vereist',            type: 'selectstr', def: 'false', options: [['false','Nee'],['true','Ja']] },
-    { id: 'login_timeout', label: 'Login timeout (minuten)',  type: 'text',      def: '720' },
+    { section: 'Connection (Domoticz)' },
+    { id: 'domoticz_ip',   label: 'Domoticz URL *',           type: 'text',      def: 'http://192.168.1.5:8080', help: 'URL and port of your Domoticz server', required: true },
+    { id: 'loginEnabled',  label: 'Login required',           type: 'selectstr', def: 'false', options: [['false','No'],['true','Yes']] },
+    { id: 'login_timeout', label: 'Login timeout (minutes)',  type: 'text',      def: '720' },
     { id: 'client_id',     label: 'OAuth client ID',          type: 'text',      def: 'Dashticz' },
     { id: 'client_secret', label: 'OAuth client secret',      type: 'text',      def: 'DashticzPassword' },
 
-    { section: 'Algemeen' },
-    { id: 'app_title',               label: 'Dashboard naam',           type: 'text',    def: 'Dashticz' },
-    { id: 'language',                label: 'Taal',                     type: 'select',  def: 'nl_NL',  options: [['nl_NL','Nederlands'],['en_US','English'],['de_DE','Deutsch'],['fr_FR','Français']] },
-    { id: 'theme',                   label: 'Thema',                    type: 'select',  def: 'modern-dark', options: [['modern-dark','Modern Dark'],['default','Default'],['white','White']] },
-    { id: 'background_image',        label: 'Achtergrondafbeelding',    type: 'text',    def: 'bg11.jpg' },
-    { id: 'editmode',                label: 'Bewerk modus (editmode)',  type: 'select01',def: '1' },
-    { id: 'edit_mode',               label: 'Bewerk modus (edit_mode)', type: 'select01',def: '1' },
-    { id: 'hide_topbar',             label: 'Topbar verbergen',         type: 'select01',def: '1' },
-    { id: 'disable_googleanalytics', label: 'Google Analytics uitschakelen', type: 'select01', def: '1' },
+    { section: 'General' },
+    { id: 'app_title',               label: 'Dashboard name',              type: 'text',    def: 'Dashticz' },
+    { id: 'language',                label: 'Language',                    type: 'select',  def: 'nl_NL',  options: [['nl_NL','Nederlands'],['en_US','English'],['de_DE','Deutsch'],['fr_FR','Français']] },
+    { id: 'theme',                   label: 'Theme',                       type: 'select',  def: 'modern-dark', options: [['modern-dark','Modern Dark'],['default','Default'],['white','White']] },
+    { id: 'background_image',        label: 'Background image',            type: 'text',    def: 'bg11.jpg' },
+    { id: 'editmode',                label: 'Edit mode (editmode)',         type: 'select01',def: '1' },
+    { id: 'edit_mode',               label: 'Edit mode (edit_mode)',        type: 'select01',def: '1' },
+    { id: 'hide_topbar',             label: 'Hide topbar',                 type: 'select01',def: '1' },
+    { id: 'disable_googleanalytics', label: 'Disable Google Analytics',    type: 'select01', def: '1' },
 
-    { section: 'Verversing &amp; Verbinding' },
-    { id: 'enable_websocket',  label: 'WebSocket inschakelen',      type: 'selectbool', def: 'true' },
-    { id: 'domoticz_refresh',  label: 'Domoticz ververs interval (sec)', type: 'text', def: '10' },
-    { id: 'dashticz_refresh',  label: 'Dashticz herlaad interval (sec)', type: 'text', def: '1800' },
-    { id: 'use_cors',          label: 'CORS gebruiken',             type: 'select01',   def: '0' },
-    { id: 'default_cors_url',  label: 'CORS URL',                   type: 'text',       def: '' },
-    { id: 'dashticz_php_path', label: 'PHP pad',                    type: 'text',       def: './vendor/dashticz/' },
+    { section: 'Refresh &amp; Connection' },
+    { id: 'enable_websocket',  label: 'Enable WebSocket',                  type: 'selectbool', def: 'true' },
+    { id: 'domoticz_refresh',  label: 'Domoticz refresh interval (sec)',   type: 'text', def: '10' },
+    { id: 'dashticz_refresh',  label: 'Dashticz reload interval (sec)',    type: 'text', def: '1800' },
+    { id: 'use_cors',          label: 'Use CORS',                          type: 'select01',   def: '0' },
+    { id: 'default_cors_url',  label: 'CORS URL',                          type: 'text',       def: '' },
+    { id: 'dashticz_php_path', label: 'PHP path',                          type: 'text',       def: './vendor/dashticz/' },
 
-    { section: 'Scherm &amp; Navigatie' },
-    { id: 'start_page',          label: 'Startpagina',               type: 'text', def: '1' },
-    { id: 'enable_swiper',       label: 'Swiper inschakelen',        type: 'text', def: '1' },
-    { id: 'vertical_scroll',     label: 'Verticaal scrollen',        type: 'text', def: '0' },
-    { id: 'slide_effect',        label: 'Slide effect',              type: 'select', def: 'fade', options: [['slide','Slide'],['fade','Fade'],['cube','Cube'],['coverflow','Coverflow'],['flip','Flip']] },
-    { id: 'auto_swipe_back_to',  label: 'Auto terug naar pagina',    type: 'text', def: '1' },
-    { id: 'auto_swipe_back_after', label: 'Auto terug na (sec)',     type: 'text', def: '120' },
-    { id: 'auto_slide_pages',    label: 'Auto slide pagina\'s',      type: 'text', def: '' },
-    { id: 'standby_after',       label: 'Standby na (minuten)',      type: 'text', def: '1' },
+    { section: 'Screen &amp; Navigation' },
+    { id: 'start_page',          label: 'Start page',                      type: 'text',      def: '1' },
+    { id: 'enable_swiper',       label: 'Enable swiper',                   type: 'select01',  def: '1' },
+    { id: 'vertical_scroll',     label: 'Vertical scroll',                 type: 'select01',  def: '0' },
+    { id: 'slide_effect',        label: 'Slide effect',                    type: 'select', def: 'fade', options: [['slide','Slide'],['fade','Fade'],['cube','Cube'],['coverflow','Coverflow'],['flip','Flip']] },
+    { id: 'auto_swipe_back_to',  label: 'Auto return to page',             type: 'selectint', def: '1', options: [['0','Disabled (0)'],['1','Page 1'],['2','Page 2'],['3','Page 3'],['4','Page 4'],['5','Page 5']] },
+    { id: 'auto_swipe_back_after', label: 'Auto return after (sec)',       type: 'text', def: '120' },
+    { id: 'auto_slide_pages',    label: 'Auto slide pages',                type: 'text', def: '' },
+    { id: 'standby_after',       label: 'Standby after (minutes)',         type: 'text', def: '1' },
 
-    { section: 'Weergave &amp; Overig' },
-    { id: 'room_plan',          label: 'Kamer plan',                   type: 'text',     def: '0' },
-    { id: 'auto_positioning',   label: 'Auto positionering',           type: 'select01', def: '0' },
-    { id: 'use_favorites',      label: 'Favorieten gebruiken',         type: 'select01', def: '0' },
-    { id: 'last_update',        label: 'Laatste update tonen',         type: 'select01', def: '0' },
-    { id: 'standard_graph',     label: 'Standaard grafiek',            type: 'select',   def: 'day', options: [['hours','Uren'],['day','Dag'],['month','Maand']] },
-    { id: 'blink_color',        label: 'Knipperkleur (RGBA)',          type: 'text',     def: '255, 255, 255, 1' },
-    { id: 'timeformat',         label: 'Tijdformaat',                  type: 'text',     def: 'DD-MM-YY HH:mm' },
-    { id: 'calendarformat',     label: 'Kalenderformaat',              type: 'text',     def: 'dd DD.MM HH:mm' },
-    { id: 'calendarlanguage',   label: 'Kalendertaal',                 type: 'select',   def: 'nl_NL', options: [['nl_NL','Nederlands'],['en_US','English'],['de_DE','Deutsch'],['fr_FR','Français']] },
+    { section: 'Display &amp; Other' },
+    { id: 'room_plan',          label: 'Room plan',                        type: 'text',     def: '0' },
+    { id: 'auto_positioning',   label: 'Auto positioning',                 type: 'select01', def: '0' },
+    { id: 'use_favorites',      label: 'Use favorites',                    type: 'select01', def: '0' },
+    { id: 'last_update',        label: 'Show last update',                 type: 'select01', def: '0' },
+    { id: 'standard_graph',     label: 'Default graph',                    type: 'select',   def: 'day', options: [['hours','Hours'],['day','Day'],['month','Month']] },
+    { id: 'blink_color',        label: 'Blink color (RGBA)',               type: 'text',     def: '255, 255, 255, 1' },
+    { id: 'timeformat',         label: 'Time format',                      type: 'text',     def: 'DD-MM-YY HH:mm' },
+    { id: 'calendarformat',     label: 'Calendar format',                  type: 'text',     def: 'dd DD.MM HH:mm' },
+    { id: 'calendarlanguage',   label: 'Calendar language',                type: 'select',   def: 'nl_NL', options: [['nl_NL','Nederlands'],['en_US','English'],['de_DE','Deutsch'],['fr_FR','Français']] },
   ];
 
   function escH(s) {
@@ -292,22 +293,22 @@ function showSetupWizard() {
     } else if (f.type === 'select01') {
       h += '<select class="form-select form-select-sm" id="' + id + '">';
       h +=
-        '<option value="0"' + (f.def === '0' ? ' selected' : '') + '>Nee (0)</option>';
+        '<option value="0"' + (f.def === '0' ? ' selected' : '') + '>No (0)</option>';
       h +=
-        '<option value="1"' + (f.def === '1' ? ' selected' : '') + '>Ja (1)</option>';
+        '<option value="1"' + (f.def === '1' ? ' selected' : '') + '>Yes (1)</option>';
       h += '</select>';
     } else if (f.type === 'selectbool') {
       h += '<select class="form-select form-select-sm" id="' + id + '">';
       h +=
         '<option value="false"' +
         (f.def === 'false' ? ' selected' : '') +
-        '>Nee</option>';
+        '>No</option>';
       h +=
         '<option value="true"' +
         (f.def === 'true' ? ' selected' : '') +
-        '>Ja</option>';
+        '>Yes</option>';
       h += '</select>';
-    } else if (f.type === 'select' || f.type === 'selectstr') {
+    } else if (f.type === 'select' || f.type === 'selectstr' || f.type === 'selectint') {
       h += '<select class="form-select form-select-sm" id="' + id + '">';
       f.options.forEach(function (opt) {
         h +=
@@ -330,7 +331,7 @@ function showSetupWizard() {
   }
 
   var body =
-    '<p class="text-muted small">Stel de basisinstellingen in om verbinding te maken met Domoticz.</p>';
+    '<p class="text-muted small">Configure the basic settings to connect to Domoticz.</p>';
   wizardFields.forEach(function (f) {
     if (f.section !== undefined) {
       body +=
@@ -355,7 +356,7 @@ function showSetupWizard() {
     '<div class="alert alert-danger d-none mt-2" id="dt-setup-error" role="alert"></div>' +
     '</div>' +
     '<div class="modal-footer py-2">' +
-    '<button type="button" class="btn btn-primary btn-sm" id="dt-setup-save">Opslaan &amp; Starten</button>' +
+    '<button type="button" class="btn btn-primary btn-sm" id="dt-setup-save">Save &amp; Start</button>' +
     '</div>' +
     '</div>' +
     '</div>' +
@@ -373,7 +374,7 @@ function showSetupWizard() {
 
     var ip = $('#' + fieldId('domoticz_ip')).val().trim();
     if (!ip) {
-      $error.removeClass('d-none').text('Voer het Domoticz URL in.');
+      $error.removeClass('d-none').text('Please enter the Domoticz URL.');
       return;
     }
 
@@ -384,7 +385,7 @@ function showSetupWizard() {
       if (val === null || val === undefined) return;
       if (f.type === 'text' || f.type === 'select' || f.type === 'selectstr') {
         postData[f.id] = JSON.stringify(val.trim ? val.trim() : val);
-      } else if (f.type === 'select01') {
+      } else if (f.type === 'select01' || f.type === 'selectint') {
         postData[f.id] = JSON.stringify(parseInt(val, 10));
       } else if (f.type === 'selectbool') {
         postData[f.id] = JSON.stringify(val === 'true');
@@ -410,7 +411,7 @@ function showSetupWizard() {
         var msg =
           xhr.responseJSON && xhr.responseJSON.error
             ? xhr.responseJSON.error
-            : 'Instellingen konden niet worden opgeslagen. Controleer of PHP is ingeschakeld.';
+            : 'Settings could not be saved. Check that PHP is enabled.';
         $error.removeClass('d-none').text(msg);
         $('#dt-setup-save').prop('disabled', false);
       });

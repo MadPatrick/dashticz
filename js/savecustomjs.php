@@ -22,8 +22,10 @@ if (!is_dir($customDir)) {
     }
     // Override umask so the directory is always world-writable (allows any PHP user to write later).
     chmod($customDir, 0777);
-} elseif (!is_writable($customDir)) {
-    // Try to set world-writable — succeeds when PHP runs as the directory owner.
+} else {
+    // Always try to make the directory world-writable.
+    // Succeeds when PHP is the directory owner (e.g. after git clone as root),
+    // ensuring that a later web-server user (www-data) can write to it too.
     @chmod($customDir, 0777);
     if (!is_writable($customDir)) {
         dashticz_json_error(500, 'The directory "custom/" is not writable by the web server' .
