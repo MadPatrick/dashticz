@@ -17,15 +17,19 @@ if (file_exists($configPath)) {
 }
 
 if (!is_dir($customDir)) {
-    if (!mkdir($customDir, 0755, true)) {
+    if (!mkdir($customDir, 0775, true)) {
         dashticz_json_error(500, 'De map "custom/" bestaat niet en kon niet worden aangemaakt. Maak de map handmatig aan en geef de webserver schrijfrechten.');
     }
+    // Ensure the new directory is group-writable regardless of umask
+    @chmod($customDir, 0775);
 } elseif (!is_writable($customDir)) {
     // Try to set write permission — succeeds when PHP runs as the directory owner
     // (e.g. a fresh git clone made by root or a deploy user with PHP as the same user).
     @chmod($customDir, 0775);
     if (!is_writable($customDir)) {
-        dashticz_json_error(500, 'De map "custom/" heeft geen schrijfrechten voor de webserver. Voer uit: chmod 775 custom/ (of geef de webserver gebruiker schrijfrechten op deze map).');
+        dashticz_json_error(500, 'De map "custom/" heeft geen schrijfrechten voor de webserver' .
+            dashticz_owner_info($customDir) .
+            '. Voer uit: chmod 775 custom/ (of geef de webserver gebruiker schrijfrechten op deze map).');
     }
 }
 
@@ -73,6 +77,9 @@ if (file_exists($defaultConfigPath)) {
 if (file_put_contents($configPath, $content, LOCK_EX) === false) {
     dashticz_json_error(500, 'Kon CONFIG.js niet schrijven. Controleer of de webserver schrijfrechten heeft op de map "custom/" (bijv. chmod 775 custom/).');
 }
+// Ensure the new file is group-writable so a web-server user in the same group
+// can overwrite it later (relevant when PHP ran as root during first setup).
+@chmod($configPath, 0664);
 
 header('Content-Type: application/json');
 echo json_encode(array('success' => true));
