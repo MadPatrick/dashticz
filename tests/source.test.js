@@ -79,6 +79,8 @@ test('first-run setup uses its own wizard and removes the legacy browser fallbac
   assert.match(source, /showSetupWizard\(\)/);
   assert.match(source, /id="dt-setup-wizard"/);
   assert.match(source, /url: 'js\/savesettings\.php'/);
+  assert.doesNotMatch(source, /section: 'Scherm &amp; Navigatie'/);
+  assert.doesNotMatch(source, /section: 'Weergave &amp; Overig'/);
   assert.doesNotMatch(settings, /firstRunSetupRequired/);
   assert.match(settings, /id="settingspopup"/);
   assert.doesNotMatch(
