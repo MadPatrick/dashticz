@@ -15,7 +15,7 @@ var blocks = {};
 var cache = new Date().getTime();
 var throwError = null;
 var loadingFilename = null;
-var setupWizardRequired = false;
+var firstRunSetupRequired = false;
 
 // device detection
 // eslint-disable-next-line no-unused-vars
@@ -120,7 +120,7 @@ function loadConfig() {
         if (xhr.status === 404 && !_PARAMS['cfg'] && _CFG.customfolder === 'custom') {
           // CONFIG.js not found in the default folder.
           window.config = {};
-          setupWizardRequired = true;
+          firstRunSetupRequired = true;
           return;
         }
         return $.Deferred().reject(new Error('Load error in ' + loadingFilename));
@@ -174,8 +174,10 @@ function loadLanguage() {
 }
 
 function loadCustomJS() {
-  if (setupWizardRequired) {
-    return showSetupWizard();
+  if (firstRunSetupRequired) {
+    // The regular settings modal handles first-run setup. Keep startup paused
+    // until saving CONFIG.js reloads the page.
+    return $.Deferred().promise();
   }
 
   loadingFilename = _CFG.customfolder + '/custom.js';
@@ -208,223 +210,6 @@ function loadCustomJS() {
       var error = res || new Error('Unknown error loading custom.js');
       return $.Deferred().reject(error);
     });
-}
-
-function showSetupWizard() {
-  var deferred = $.Deferred();
-
-  $('#loaderHolder').hide();
-
-  // Field definitions: type 'text' = text input, 'select01' = 0/1 numeric dropdown,
-  // 'selectbool' = true/false boolean dropdown, 'select' = named string options,
-  // 'selectstr' = named string options stored as-is (e.g. 'false'/'true'),
-  // 'selectint' = named options stored as integers.
-  var wizardFields = [
-    { section: 'Connection (Domoticz)' },
-    { id: 'domoticz_ip',   label: 'Domoticz URL *',           type: 'text',      def: 'http://192.168.1.5:8080', help: 'URL and port of your Domoticz server', required: true },
-    { id: 'loginEnabled',  label: 'Login required',           type: 'selectstr', def: 'false', options: [['false','No'],['true','Yes']] },
-    { id: 'login_timeout', label: 'Login timeout (minutes)',  type: 'text',      def: '720' },
-    { id: 'client_id',     label: 'OAuth client ID',          type: 'text',      def: 'Dashticz' },
-    { id: 'client_secret', label: 'OAuth client secret',      type: 'text',      def: 'DashticzPassword' },
-
-    { section: 'General' },
-    { id: 'app_title',               label: 'Dashboard name',              type: 'text',    def: 'Dashticz' },
-    { id: 'language',                label: 'Language',                    type: 'select',  def: 'nl_NL',  options: [['nl_NL','Nederlands'],['en_US','English'],['de_DE','Deutsch'],['fr_FR','Français']] },
-    { id: 'theme',                   label: 'Theme',                       type: 'select',  def: 'modern-dark', options: [['modern-dark','Modern Dark'],['default','Default'],['white','White']] },
-    { id: 'background_image',        label: 'Background image',            type: 'text',    def: 'bg11.jpg' },
-    { id: 'editmode',                label: 'Edit mode (editmode)',         type: 'select01',def: '1' },
-    { id: 'edit_mode',               label: 'Edit mode (edit_mode)',        type: 'select01',def: '1' },
-    { id: 'hide_topbar',             label: 'Hide topbar',                 type: 'select01',def: '1' },
-    { id: 'disable_googleanalytics', label: 'Disable Google Analytics',    type: 'select01', def: '1' },
-
-    { section: 'Refresh &amp; Connection' },
-    { id: 'enable_websocket',  label: 'Enable WebSocket',                  type: 'selectbool', def: 'true' },
-    { id: 'domoticz_refresh',  label: 'Domoticz refresh interval (sec)',   type: 'text', def: '10' },
-    { id: 'dashticz_refresh',  label: 'Dashticz reload interval (sec)',    type: 'text', def: '1800' },
-    { id: 'use_cors',          label: 'Use CORS',                          type: 'select01',   def: '0' },
-    { id: 'default_cors_url',  label: 'CORS URL',                          type: 'text',       def: '' },
-    { id: 'dashticz_php_path', label: 'PHP path',                          type: 'text',       def: './vendor/dashticz/' },
-
-    { section: 'Screen &amp; Navigation' },
-    { id: 'start_page',          label: 'Start page',                      type: 'text',      def: '1' },
-    { id: 'enable_swiper',       label: 'Enable swiper',                   type: 'select01',  def: '1' },
-    { id: 'vertical_scroll',     label: 'Vertical scroll',                 type: 'select01',  def: '0' },
-    { id: 'slide_effect',        label: 'Slide effect',                    type: 'select', def: 'fade', options: [['slide','Slide'],['fade','Fade'],['cube','Cube'],['coverflow','Coverflow'],['flip','Flip']] },
-    { id: 'auto_swipe_back_to',  label: 'Auto return to page',             type: 'selectint', def: '1', options: [['0','Disabled (0)'],['1','Page 1'],['2','Page 2'],['3','Page 3'],['4','Page 4'],['5','Page 5']] },
-    { id: 'auto_swipe_back_after', label: 'Auto return after (sec)',       type: 'text', def: '120' },
-    { id: 'auto_slide_pages',    label: 'Auto slide pages',                type: 'text', def: '' },
-    { id: 'standby_after',       label: 'Standby after (minutes)',         type: 'text', def: '1' },
-
-    { section: 'Display &amp; Other' },
-    { id: 'room_plan',          label: 'Room plan',                        type: 'text',     def: '0' },
-    { id: 'auto_positioning',   label: 'Auto positioning',                 type: 'select01', def: '0' },
-    { id: 'use_favorites',      label: 'Use favorites',                    type: 'select01', def: '0' },
-    { id: 'last_update',        label: 'Show last update',                 type: 'select01', def: '0' },
-    { id: 'standard_graph',     label: 'Default graph',                    type: 'select',   def: 'day', options: [['hours','Hours'],['day','Day'],['month','Month']] },
-    { id: 'blink_color',        label: 'Blink color (RGBA)',               type: 'text',     def: '255, 255, 255, 1' },
-    { id: 'timeformat',         label: 'Time format',                      type: 'text',     def: 'DD-MM-YY HH:mm' },
-    { id: 'calendarformat',     label: 'Calendar format',                  type: 'text',     def: 'dd DD.MM HH:mm' },
-    { id: 'calendarlanguage',   label: 'Calendar language',                type: 'select',   def: 'nl_NL', options: [['nl_NL','Nederlands'],['en_US','English'],['de_DE','Deutsch'],['fr_FR','Français']] },
-  ];
-
-  function escH(s) {
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function fieldId(key) {
-    return 'dt-setup-' + key.replace(/_/g, '-');
-  }
-
-  function renderField(f) {
-    var id = fieldId(f.id);
-    var h = '<div class="mb-1 row align-items-center">';
-    h +=
-      '<label for="' +
-      id +
-      '" class="col-sm-6 col-form-label col-form-label-sm py-1">' +
-      f.label +
-      '</label>';
-    h += '<div class="col-sm-6">';
-
-    if (f.type === 'text') {
-      h +=
-        '<input type="text" class="form-control form-control-sm" id="' +
-        id +
-        '" value="' +
-        escH(f.def) +
-        '">';
-    } else if (f.type === 'select01') {
-      h += '<select class="form-select form-select-sm" id="' + id + '">';
-      h +=
-        '<option value="0"' + (f.def === '0' ? ' selected' : '') + '>No (0)</option>';
-      h +=
-        '<option value="1"' + (f.def === '1' ? ' selected' : '') + '>Yes (1)</option>';
-      h += '</select>';
-    } else if (f.type === 'selectbool') {
-      h += '<select class="form-select form-select-sm" id="' + id + '">';
-      h +=
-        '<option value="false"' +
-        (f.def === 'false' ? ' selected' : '') +
-        '>No</option>';
-      h +=
-        '<option value="true"' +
-        (f.def === 'true' ? ' selected' : '') +
-        '>Yes</option>';
-      h += '</select>';
-    } else if (f.type === 'select' || f.type === 'selectstr' || f.type === 'selectint') {
-      h += '<select class="form-select form-select-sm" id="' + id + '">';
-      f.options.forEach(function (opt) {
-        h +=
-          '<option value="' +
-          escH(opt[0]) +
-          '"' +
-          (f.def === opt[0] ? ' selected' : '') +
-          '>' +
-          escH(opt[1]) +
-          '</option>';
-      });
-      h += '</select>';
-    }
-
-    if (f.help) {
-      h += '<div class="form-text">' + f.help + '</div>';
-    }
-    h += '</div></div>';
-    return h;
-  }
-
-  var body =
-    '<p class="text-muted small">Configure the basic settings to connect to Domoticz.</p>';
-  wizardFields.forEach(function (f) {
-    if (f.section !== undefined) {
-      body +=
-        '<h6 class="border-bottom pb-1 mt-3 mb-2 small fw-bold">' +
-        f.section +
-        '</h6>';
-    } else {
-      body += renderField(f);
-    }
-  });
-
-  var html =
-    '<div class="modal fade" id="dt-setup-wizard" tabindex="-1"' +
-    ' aria-labelledby="dt-setup-label" aria-modal="true" role="dialog">' +
-    '<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">' +
-    '<div class="modal-content">' +
-    '<div class="modal-header py-2">' +
-    '<h5 class="modal-title" id="dt-setup-label">Dashticz Setup</h5>' +
-    '</div>' +
-    '<div class="modal-body py-2">' +
-    body +
-    '<div class="alert alert-danger d-none mt-2" id="dt-setup-error" role="alert"></div>' +
-    '</div>' +
-    '<div class="modal-footer py-2">' +
-    '<button type="button" class="btn btn-primary btn-sm" id="dt-setup-save">Save &amp; Start</button>' +
-    '</div>' +
-    '</div>' +
-    '</div>' +
-    '</div>';
-
-  $('body').append(html);
-
-  var modalEl = document.getElementById('dt-setup-wizard');
-  var modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
-  modal.show();
-
-  $('#dt-setup-save').on('click', function () {
-    var $error = $('#dt-setup-error');
-    $error.addClass('d-none').text('');
-
-    var ip = $('#' + fieldId('domoticz_ip')).val().trim();
-    if (!ip) {
-      $error.removeClass('d-none').text('Please enter the Domoticz URL.');
-      return;
-    }
-
-    var postData = {};
-    wizardFields.forEach(function (f) {
-      if (!f.id) return;
-      var val = $('#' + fieldId(f.id)).val();
-      if (val === null || val === undefined) return;
-      if (f.type === 'text' || f.type === 'select' || f.type === 'selectstr') {
-        postData[f.id] = JSON.stringify(val.trim ? val.trim() : val);
-      } else if (f.type === 'select01' || f.type === 'selectint') {
-        postData[f.id] = JSON.stringify(parseInt(val, 10));
-      } else if (f.type === 'selectbool') {
-        postData[f.id] = JSON.stringify(val === 'true');
-      }
-    });
-
-    $('#dt-setup-save').prop('disabled', true);
-
-    $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
-      .then(function (data) {
-        return $.ajax({
-          url: 'js/savecustomjs.php',
-          method: 'POST',
-          data: postData,
-          dataType: 'json',
-          headers: { 'X-Dashticz-CSRF': data.token },
-        });
-      })
-      .done(function () {
-        window.location.reload();
-      })
-      .fail(function (xhr) {
-        var msg =
-          xhr.responseJSON && xhr.responseJSON.error
-            ? xhr.responseJSON.error
-            : 'Settings could not be saved. Check that PHP is enabled.';
-        $error.removeClass('d-none').text(msg);
-        $('#dt-setup-save').prop('disabled', false);
-      });
-  });
-
-  return deferred.promise();
 }
 
 function configureDashticz() {

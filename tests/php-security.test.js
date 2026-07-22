@@ -36,33 +36,21 @@ test('settings writes require CSRF and serialize values as JSON', () => {
   assert.match(source, /dashticz_require_csrf\(\)/);
   assert.match(source, /json_decode\(\$serializedValue/);
   assert.match(source, /file_put_contents\(\$configPath, \$newContents, LOCK_EX\)/);
+  assert.match(source, /if \(file_exists\(\$configPath\)\)/);
+  assert.match(source, /!file_exists\(\$configPath\) && !is_writable\(\$customDir\)/);
   assert.doesNotMatch(source, /\$newconf\.="config/);
-});
-
-test('first-run config writer never invokes a privileged runtime helper', () => {
-  const source = read('js/savecustomjs.php');
-
-  assert.doesNotMatch(source, /exec\(/);
-  assert.doesNotMatch(source, /sudo/);
-  assert.match(source, /install-dashticz-write-access/);
 });
 
 test('Apache write-access installer derives the path and verifies a real write', () => {
   const installer = read('tools/install-dashticz-write-access');
 
   assert.match(installer, /INSTALL_DIR=.*SCRIPT_DIR\/\.\./);
+  assert.match(installer, /js\/savesettings\.php/);
   assert.match(installer, /chmod 2775/);
   assert.match(installer, /runuser -u .* touch/);
   assert.doesNotMatch(installer, /sudoers/);
   assert.doesNotMatch(installer, /NOPASSWD/);
   assert.doesNotMatch(installer, /\/var\/www\/html/);
-});
-
-test('first-run config remains valid without CONFIG_DEFAULT.js', () => {
-  const source = read('js/savecustomjs.php');
-
-  assert.match(source, /\$content = "var config = \{\};\\n\\n"/);
-  assert.match(source, /file_put_contents\(\$configPath, \$content, LOCK_EX\)/);
 });
 
 test('bundled Horizon remote requires POST, CSRF and a key allowlist', () => {

@@ -9,7 +9,7 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 INSTALL_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd -P)
 
 if [ ! -f "$INSTALL_DIR/index.html" ] || \
-   [ ! -f "$INSTALL_DIR/js/savecustomjs.php" ]; then
+   [ ! -f "$INSTALL_DIR/js/savesettings.php" ]; then
     echo "Could not determine the Dashticz installation directory" >&2
     exit 66
 fi

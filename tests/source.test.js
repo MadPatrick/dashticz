@@ -66,9 +66,14 @@ test('all application JavaScript files pass a syntax check', () => {
 
 test('first-run setup requires CONFIG.js and removes the legacy browser fallback', () => {
   const source = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+  const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
 
   assert.match(source, /localStorage\.removeItem\('dashticz_setup_config'\)/);
-  assert.match(source, /setupWizardRequired = true/);
+  assert.match(source, /firstRunSetupRequired = true/);
+  assert.match(source, /regular settings modal handles first-run setup/);
+  assert.match(settings, /firstRunSetupRequired/);
+  assert.match(settings, /backdrop: 'static', keyboard: false/);
+  assert.doesNotMatch(settings, /localStorage\.setItem\('dashticz_'/);
   assert.doesNotMatch(source, /localStorage\.setItem\('dashticz_setup_config'/);
   assert.doesNotMatch(source, /storeSetupConfig/);
 });
