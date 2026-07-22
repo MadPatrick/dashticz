@@ -1083,6 +1083,8 @@ function loadSettings() {
       console.log('PHP not installed.');
     })
     .then(function () {
+      var firstRun =
+        typeof firstRunSetupRequired !== 'undefined' && firstRunSetupRequired;
       if (
         typeof settings['default_cors_url'] === 'undefined' ||
         settings['default_cors_url'] === ''
@@ -1153,10 +1155,12 @@ function loadSettings() {
         first = false;
       }
       html += '</div>';
-      html +=
-        '</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
-        language.settings.close +
-        '</button> ';
+      html += '</div><div class="modal-footer">';
+      if (!firstRun)
+        html +=
+          '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+          language.settings.close +
+          '</button> ';
       if (settings['loginEnabled'] == true)
         html +=
           '<button onClick="logout()" type="button" class="btn btn-primary" data-bs-dismiss="modal">' +
@@ -1182,14 +1186,18 @@ function loadSettings() {
           });
         }
 
-        if (typeof settings['domoticz_ip'] === 'undefined') {
+        if (firstRun) {
+          $('#loaderHolder').hide();
           if ($('.settingsicon').length == 0)
             $('body').prepend(
               '<button type="button" data-id="settings" class="settings settingsicon" ' +
               'data-bs-toggle="modal" data-bs-target="#settingspopup" ' +
               'aria-label="Open settings"><i class="fas fa-cog" aria-hidden="true"></i></button>'
             );
-          $('.settingsicon').trigger('click');
+          window.bootstrap.Modal.getOrCreateInstance(
+            document.getElementById('settingspopup'),
+            { backdrop: 'static', keyboard: false }
+          ).show();
         }
       }, 100);
     });
@@ -1213,8 +1221,6 @@ function saveSettings() {
   $('div#settingspopup input[type="text"],div#settingspopup select').each(
     function () {
       var val = $(this).val();
-      if (typeof Storage !== 'undefined')
-        localStorage.setItem('dashticz_' + $(this).attr('name'), val);
       if (isNumeric(val))
         val = parseFloat(val);
       var settingName = $(this).attr('name');
@@ -1227,13 +1233,9 @@ function saveSettings() {
 
   $('div#settingspopup input[type="checkbox"]').each(function () {
     if ($(this).is(':checked')) {
-      if (typeof Storage !== 'undefined')
-        localStorage.setItem('dashticz_' + $(this).attr('name'), $(this).val());
       alertSettings += 'config[' + JSON.stringify($(this).attr('name')) + '] = 1;\n';
       saveSettings[$(this).attr('name')] = JSON.stringify(1);
     } else {
-      if (typeof Storage !== 'undefined')
-        localStorage.setItem('dashticz_' + $(this).attr('name'), 0);
       alertSettings += 'config[' + JSON.stringify($(this).attr('name')) + '] = 0;\n';
       saveSettings[$(this).attr('name')] = JSON.stringify(0);
     }
