@@ -12,13 +12,18 @@ $customDir = __DIR__ . '/../custom';
 $configPath = $customDir . '/CONFIG.js';
 $defaultConfigPath = $customDir . '/CONFIG_DEFAULT.js';
 
-if (file_exists($configPath)) {
-    dashticz_json_error(409, 'CONFIG.js bestaat al.');
-}
-
 if (!is_dir($customDir)) {
     if (!mkdir($customDir, 0755, true)) {
         dashticz_json_error(500, 'De map "custom/" bestaat niet en kon niet worden aangemaakt. Maak de map handmatig aan en geef de webserver schrijfrechten.');
+    }
+}
+
+if (file_exists($configPath)) {
+    if (!is_file($configPath) || is_link($configPath)) {
+        dashticz_json_error(500, 'custom/CONFIG.js is geen normaal bestand en kan niet veilig worden overschreven.');
+    }
+    if (!is_writable($configPath)) {
+        dashticz_json_error(500, 'custom/CONFIG.js heeft geen schrijfrechten voor de webserver.');
     }
 } elseif (!is_writable($customDir)) {
     dashticz_json_error(500, 'De map "custom/" heeft geen schrijfrechten voor de webserver. Voer uit: chmod 775 custom/ (of geef de webserver gebruiker schrijfrechten op deze map).');
@@ -65,8 +70,9 @@ if (file_exists($defaultConfigPath)) {
     $content = rtrim($defaultContent) . "\n\n" . $generatedContent;
 }
 
+// file_put_contents replaces the complete file contents; old settings are not appended.
 if (file_put_contents($configPath, $content, LOCK_EX) === false) {
-    dashticz_json_error(500, 'Kon CONFIG.js niet schrijven. Controleer of de webserver schrijfrechten heeft op de map "custom/" (bijv. chmod 775 custom/).');
+    dashticz_json_error(500, 'Kon CONFIG.js niet schrijven. Controleer of de webserver schrijfrechten heeft op het bestand of de map "custom/".');
 }
 
 header('Content-Type: application/json');

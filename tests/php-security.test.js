@@ -39,6 +39,17 @@ test('settings writes require CSRF and serialize values as JSON', () => {
   assert.doesNotMatch(source, /\$newconf\.="config/);
 });
 
+test('first setup replaces a writable existing CONFIG.js', () => {
+  const source = read('js/savecustomjs.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  assert.match(source, /dashticz_require_csrf\(\)/);
+  assert.match(source, /file_exists\(\$configPath\)/);
+  assert.match(source, /is_writable\(\$configPath\)/);
+  assert.match(source, /file_put_contents\(\$configPath, \$content, LOCK_EX\)/);
+  assert.doesNotMatch(source, /CONFIG\.js bestaat al/);
+  assert.doesNotMatch(source, /dashticz_json_error\(409/);
+});
+
 test('bundled Horizon remote requires POST, CSRF and a key allowlist', () => {
   const source = read('tools/switch_horizon.php');
   assert.match(source, /dashticz_require_csrf\(\)/);
