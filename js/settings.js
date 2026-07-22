@@ -1083,8 +1083,6 @@ function loadSettings() {
       console.log('PHP not installed.');
     })
     .then(function () {
-      var firstRun =
-        typeof firstRunSetupRequired !== 'undefined' && firstRunSetupRequired;
       if (
         typeof settings['default_cors_url'] === 'undefined' ||
         settings['default_cors_url'] === ''
@@ -1156,11 +1154,10 @@ function loadSettings() {
       }
       html += '</div>';
       html += '</div><div class="modal-footer">';
-      if (!firstRun)
-        html +=
-          '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
-          language.settings.close +
-          '</button> ';
+      html +=
+        '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+        language.settings.close +
+        '</button> ';
       if (settings['loginEnabled'] == true)
         html +=
           '<button onClick="logout()" type="button" class="btn btn-primary" data-bs-dismiss="modal">' +
@@ -1184,20 +1181,6 @@ function loadSettings() {
           $('#settingspopup [data-bs-toggle="tooltip"]').each(function () {
             window.bootstrap.Tooltip.getOrCreateInstance(this);
           });
-        }
-
-        if (firstRun) {
-          $('#loaderHolder').hide();
-          if ($('.settingsicon').length == 0)
-            $('body').prepend(
-              '<button type="button" data-id="settings" class="settings settingsicon" ' +
-              'data-bs-toggle="modal" data-bs-target="#settingspopup" ' +
-              'aria-label="Open settings"><i class="fas fa-cog" aria-hidden="true"></i></button>'
-            );
-          window.bootstrap.Modal.getOrCreateInstance(
-            document.getElementById('settingspopup'),
-            { backdrop: 'static', keyboard: false }
-          ).show();
         }
       }, 100);
     });
