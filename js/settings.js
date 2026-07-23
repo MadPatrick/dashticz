@@ -783,7 +783,7 @@ var defaultSettings = {
   auto_slide_pages: 0,
   start_page: 1,
   auto_positioning: 1,
-  use_favorites: 1,
+  use_favorites: 0,
   use_hidden: 0,
   translate_windspeed: 1,
   static_weathericons: 0,
@@ -1153,9 +1153,8 @@ function loadSettings() {
         first = false;
       }
       html += '</div>';
-      html += '</div><div class="modal-footer">';
       html +=
-        '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+        '</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
         language.settings.close +
         '</button> ';
       if (settings['loginEnabled'] == true)
@@ -1182,6 +1181,16 @@ function loadSettings() {
             window.bootstrap.Tooltip.getOrCreateInstance(this);
           });
         }
+
+        if (typeof settings['domoticz_ip'] === 'undefined') {
+          if ($('.settingsicon').length == 0)
+            $('body').prepend(
+              '<button type="button" data-id="settings" class="settings settingsicon" ' +
+              'data-bs-toggle="modal" data-bs-target="#settingspopup" ' +
+              'aria-label="Open settings"><i class="fas fa-cog" aria-hidden="true"></i></button>'
+            );
+          $('.settingsicon').trigger('click');
+        }
       }, 100);
     });
 }
@@ -1204,6 +1213,8 @@ function saveSettings() {
   $('div#settingspopup input[type="text"],div#settingspopup select').each(
     function () {
       var val = $(this).val();
+      if (typeof Storage !== 'undefined')
+        localStorage.setItem('dashticz_' + $(this).attr('name'), val);
       if (isNumeric(val))
         val = parseFloat(val);
       var settingName = $(this).attr('name');
@@ -1216,9 +1227,13 @@ function saveSettings() {
 
   $('div#settingspopup input[type="checkbox"]').each(function () {
     if ($(this).is(':checked')) {
+      if (typeof Storage !== 'undefined')
+        localStorage.setItem('dashticz_' + $(this).attr('name'), $(this).val());
       alertSettings += 'config[' + JSON.stringify($(this).attr('name')) + '] = 1;\n';
       saveSettings[$(this).attr('name')] = JSON.stringify(1);
     } else {
+      if (typeof Storage !== 'undefined')
+        localStorage.setItem('dashticz_' + $(this).attr('name'), 0);
       alertSettings += 'config[' + JSON.stringify($(this).attr('name')) + '] = 0;\n';
       saveSettings[$(this).attr('name')] = JSON.stringify(0);
     }
