@@ -303,9 +303,8 @@ function showSetupWizard() {
 
   $('#loaderHolder').hide();
 
-  // Field definitions: type 'text' = text input, 'select01' = 0/1 numeric dropdown,
-  // 'selectbool' = true/false boolean dropdown, 'select' = named string options,
-  // 'selectstr' = named string options stored as-is (e.g. 'false'/'true').
+  // Field definitions: type 'text' = text input, 'toggle01' = 0/1 toggle switch,
+  // 'select' = named string options, 'selectstr' = named string options stored as-is.
   var wizardFields = [
     { section: 'Verbinding (Domoticz)' },
     {
@@ -319,18 +318,8 @@ function showSetupWizard() {
     {
       id: 'loginEnabled',
       label: 'Login vereist',
-      type: 'selectstr',
-      def: 'false',
-      options: [
-        ['false', 'Nee'],
-        ['true', 'Ja'],
-      ],
-    },
-    {
-      id: 'login_timeout',
-      label: 'Login timeout (minuten)',
-      type: 'text',
-      def: '720',
+      type: 'toggle01',
+      def: '0',
     },
     {
       id: 'client_id',
@@ -383,65 +372,15 @@ function showSetupWizard() {
     },
     {
       id: 'editmode',
-      label: 'Bewerk modus (editmode)',
-      type: 'select01',
-      def: '1',
-    },
-    {
-      id: 'edit_mode',
-      label: 'Bewerk modus (edit_mode)',
-      type: 'select01',
+      label: 'Bewerk modus',
+      type: 'toggle01',
       def: '1',
     },
     {
       id: 'hide_topbar',
       label: 'Topbar verbergen',
-      type: 'select01',
+      type: 'toggle01',
       def: '1',
-    },
-    {
-      id: 'disable_googleanalytics',
-      label: 'Google Analytics uitschakelen',
-      type: 'select01',
-      def: '1',
-    },
-
-    { section: 'Verversing &amp; Verbinding' },
-    {
-      id: 'enable_websocket',
-      label: 'WebSocket inschakelen',
-      type: 'selectbool',
-      def: 'true',
-    },
-    {
-      id: 'domoticz_refresh',
-      label: 'Domoticz ververs interval (sec)',
-      type: 'text',
-      def: '10',
-    },
-    {
-      id: 'dashticz_refresh',
-      label: 'Dashticz herlaad interval (sec)',
-      type: 'text',
-      def: '1800',
-    },
-    {
-      id: 'use_cors',
-      label: 'CORS gebruiken',
-      type: 'select01',
-      def: '0',
-    },
-    {
-      id: 'default_cors_url',
-      label: 'CORS URL',
-      type: 'text',
-      def: '',
-    },
-    {
-      id: 'dashticz_php_path',
-      label: 'PHP pad',
-      type: 'text',
-      def: './vendor/dashticz/',
     },
   ];
 
@@ -475,6 +414,12 @@ function showSetupWizard() {
         '" value="' +
         escapeSetupHtml(field.def) +
         '">';
+    } else if (field.type === 'toggle01') {
+      html +=
+        '<div class="form-check form-switch mt-1">' +
+        '<input class="form-check-input" type="checkbox" role="switch" id="' +
+        id + '"' + (field.def === '1' ? ' checked' : '') + '>' +
+        '</div>';
     } else if (field.type === 'select01') {
       html += '<select class="form-select form-select-sm" id="' + id + '">';
       html +=
@@ -585,6 +530,10 @@ function showSetupWizard() {
         postData[field.id] = JSON.stringify(parseInt(value, 10));
       } else if (field.type === 'selectbool') {
         postData[field.id] = JSON.stringify(value === 'true');
+      } else if (field.type === 'toggle01') {
+        postData[field.id] = JSON.stringify(
+          $('#' + fieldId(field.id)).is(':checked') ? 1 : 0
+        );
       }
     });
 
