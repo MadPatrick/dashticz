@@ -365,12 +365,6 @@ function showSetupWizard() {
       ],
     },
     {
-      id: 'background_image',
-      label: 'Background image',
-      type: 'text',
-      def: 'bg11.jpg',
-    },
-    {
       id: 'editmode',
       label: 'Edit mode',
       type: 'toggle01',
@@ -380,7 +374,7 @@ function showSetupWizard() {
       id: 'hide_topbar',
       label: 'Hide topbar',
       type: 'toggle01',
-      def: '1',
+      def: '0',
     },
   ];
 
@@ -398,7 +392,7 @@ function showSetupWizard() {
 
   function renderField(field) {
     var id = fieldId(field.id);
-    var html = '<div class="mb-1 row align-items-center">';
+    var html = '<div class="mb-2 row align-items-center">';
     html +=
       '<label for="' +
       id +
