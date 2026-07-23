@@ -783,7 +783,7 @@ var defaultSettings = {
   auto_slide_pages: 0,
   start_page: 1,
   auto_positioning: 1,
-  use_favorites: 0,
+  use_favorites: 1,
   use_hidden: 0,
   translate_windspeed: 1,
   static_weathericons: 0,

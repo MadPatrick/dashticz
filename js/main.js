@@ -376,6 +376,12 @@ function showSetupWizard() {
       type: 'toggle01',
       def: '0',
     },
+    {
+      id: 'use_favorites',
+      label: 'Use Favorites',
+      type: 'toggle01',
+      def: '1',
+    },
   ];
 
   function escapeSetupHtml(value) {
@@ -392,11 +398,11 @@ function showSetupWizard() {
 
   function renderField(field) {
     var id = fieldId(field.id);
-    var html = '<div class="py-2 border-bottom row align-items-center">';
+    var html = '<div class="py-2 border-bottom row gx-0 align-items-center">';
     html +=
       '<label for="' +
       id +
-      '" class="col-6 col-form-label col-form-label-sm">' +
+      '" class="col-6 col-form-label col-form-label-sm pe-2">' +
       field.label +
       '</label>';
     html += '<div class="col-6">';
