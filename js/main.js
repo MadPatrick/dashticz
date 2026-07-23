@@ -306,18 +306,18 @@ function showSetupWizard() {
   // Field definitions: type 'text' = text input, 'toggle01' = 0/1 toggle switch,
   // 'select' = named string options, 'selectstr' = named string options stored as-is.
   var wizardFields = [
-    { section: 'Verbinding (Domoticz)' },
+    { section: 'Connection (Domoticz)' },
     {
       id: 'domoticz_ip',
       label: 'Domoticz URL *',
       type: 'text',
       def: 'http://192.168.1.5:8080',
-      help: 'URL en poort van je Domoticz server',
+      help: 'URL and port of your Domoticz server',
       required: true,
     },
     {
       id: 'loginEnabled',
-      label: 'Login vereist',
+      label: 'Login required',
       type: 'toggle01',
       def: '0',
     },
@@ -334,16 +334,16 @@ function showSetupWizard() {
       def: 'DashticzPassword',
     },
 
-    { section: 'Algemeen' },
+    { section: 'General' },
     {
       id: 'app_title',
-      label: 'Dashboard naam',
+      label: 'Dashboard name',
       type: 'text',
       def: 'Dashticz',
     },
     {
       id: 'language',
-      label: 'Taal',
+      label: 'Language',
       type: 'select',
       def: 'nl_NL',
       options: [
@@ -355,7 +355,7 @@ function showSetupWizard() {
     },
     {
       id: 'theme',
-      label: 'Thema',
+      label: 'Theme',
       type: 'select',
       def: 'modern-dark',
       options: [
@@ -366,19 +366,19 @@ function showSetupWizard() {
     },
     {
       id: 'background_image',
-      label: 'Achtergrondafbeelding',
+      label: 'Background image',
       type: 'text',
       def: 'bg11.jpg',
     },
     {
       id: 'editmode',
-      label: 'Bewerk modus',
+      label: 'Edit mode',
       type: 'toggle01',
       def: '1',
     },
     {
       id: 'hide_topbar',
-      label: 'Topbar verbergen',
+      label: 'Hide topbar',
       type: 'toggle01',
       def: '1',
     },
@@ -418,29 +418,29 @@ function showSetupWizard() {
       html +=
         '<div class="form-check form-switch mt-1">' +
         '<input class="form-check-input" type="checkbox" role="switch" id="' +
-        id + '"' + (field.def === '1' ? ' checked' : '') + '>' +
+        id + '"' + (field.def === '1' ? ' checked' : '') + ' style="width:4em;height:2em;">' +
         '</div>';
     } else if (field.type === 'select01') {
       html += '<select class="form-select form-select-sm" id="' + id + '">';
       html +=
         '<option value="0"' +
         (field.def === '0' ? ' selected' : '') +
-        '>Nee (0)</option>';
+        '>No (0)</option>';
       html +=
         '<option value="1"' +
         (field.def === '1' ? ' selected' : '') +
-        '>Ja (1)</option>';
+        '>Yes (1)</option>';
       html += '</select>';
     } else if (field.type === 'selectbool') {
       html += '<select class="form-select form-select-sm" id="' + id + '">';
       html +=
         '<option value="false"' +
         (field.def === 'false' ? ' selected' : '') +
-        '>Nee</option>';
+        '>No</option>';
       html +=
         '<option value="true"' +
         (field.def === 'true' ? ' selected' : '') +
-        '>Ja</option>';
+        '>Yes</option>';
       html += '</select>';
     } else if (field.type === 'select' || field.type === 'selectstr') {
       html += '<select class="form-select form-select-sm" id="' + id + '">';
@@ -463,7 +463,7 @@ function showSetupWizard() {
   }
 
   var body =
-    '<p class="text-muted small">Stel de basisinstellingen in om verbinding te maken met Domoticz.</p>';
+    '<p class="text-muted small">Configure the basic settings to connect to Domoticz.</p>';
   wizardFields.forEach(function (field) {
     if (field.section !== undefined) {
       body +=
@@ -488,7 +488,7 @@ function showSetupWizard() {
     '<div class="alert alert-danger d-none mt-2" id="dt-setup-error" role="alert"></div>' +
     '</div>' +
     '<div class="modal-footer py-2">' +
-    '<button type="button" class="btn btn-primary btn-sm" id="dt-setup-save">Opslaan &amp; Starten</button>' +
+    '<button type="button" class="btn btn-primary btn-sm" id="dt-setup-save">Save &amp; Start</button>' +
     '</div>' +
     '</div>' +
     '</div>' +
@@ -509,7 +509,7 @@ function showSetupWizard() {
 
     var ip = $('#' + fieldId('domoticz_ip')).val().trim();
     if (!ip) {
-      $error.removeClass('d-none').text('Voer het Domoticz URL in.');
+      $error.removeClass('d-none').text('Enter the Domoticz URL.');
       return;
     }
 
@@ -556,7 +556,7 @@ function showSetupWizard() {
         var message =
           xhr.responseJSON && xhr.responseJSON.error
             ? xhr.responseJSON.error
-            : 'Instellingen konden niet worden opgeslagen. Controleer of PHP is ingeschakeld.';
+            : 'Settings could not be saved. Check if PHP is enabled.';
         $error.removeClass('d-none').text(message);
         $('#dt-setup-save').prop('disabled', false);
       });
