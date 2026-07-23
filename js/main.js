@@ -392,14 +392,14 @@ function showSetupWizard() {
 
   function renderField(field) {
     var id = fieldId(field.id);
-    var html = '<div class="mb-2 row align-items-center">';
+    var html = '<div class="py-2 border-bottom row align-items-center">';
     html +=
       '<label for="' +
       id +
-      '" class="col-sm-6 col-form-label col-form-label-sm py-1">' +
+      '" class="col-6 col-form-label col-form-label-sm">' +
       field.label +
       '</label>';
-    html += '<div class="col-sm-6">';
+    html += '<div class="col-6">';
 
     if (field.type === 'text') {
       html +=
