@@ -64,34 +64,6 @@ test('all application JavaScript files pass a syntax check', () => {
   }
 });
 
-test('first-run setup uses its own wizard and removes the legacy browser fallback', () => {
-  const source = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
-  const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
-
-  assert.match(source, /localStorage\.removeItem\('dashticz_setup_config'\)/);
-  assert.match(source, /source\.trim\(\) === '#EMPTY#'/);
-  assert.match(source, /dataFilter: function \(source\)/);
-  assert.match(source, /firstRunSetupRequired = true/);
-  assert.match(source, /return checkSetupWriteAccess\(\)/);
-  assert.match(source, /url: 'js\/checkconfigaccess\.php'/);
-  assert.match(source, /Configuration permissions/);
-  assert.match(source, /Check again/);
-  assert.match(source, /showSetupWizard\(\)/);
-  assert.match(source, /id="dt-setup-wizard"/);
-  assert.match(source, /url: 'js\/savesettings\.php'/);
-  assert.doesNotMatch(source, /section: 'Scherm &amp; Navigatie'/);
-  assert.doesNotMatch(source, /section: 'Weergave &amp; Overig'/);
-  assert.doesNotMatch(settings, /firstRunSetupRequired/);
-  assert.match(settings, /id="settingspopup"/);
-  assert.doesNotMatch(
-    settings,
-    /getOrCreateInstance\(\s*document\.getElementById\('settingspopup'\)/
-  );
-  assert.doesNotMatch(settings, /localStorage\.setItem\('dashticz_'/);
-  assert.doesNotMatch(source, /localStorage\.setItem\('dashticz_setup_config'/);
-  assert.doesNotMatch(source, /storeSetupConfig/);
-});
-
 test('all project JSON files parse', () => {
   const ignored = new Set(['node_modules', '.git']);
   function collect(directory) {

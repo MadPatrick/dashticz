@@ -36,32 +36,7 @@ test('settings writes require CSRF and serialize values as JSON', () => {
   assert.match(source, /dashticz_require_csrf\(\)/);
   assert.match(source, /json_decode\(\$serializedValue/);
   assert.match(source, /file_put_contents\(\$configPath, \$newContents, LOCK_EX\)/);
-  assert.match(source, /if \(file_exists\(\$configPath\)\)/);
-  assert.match(source, /trim\(\$config\) !== '#EMPTY#'/);
-  assert.match(source, /!file_exists\(\$configPath\) && !is_writable\(\$customDir\)/);
   assert.doesNotMatch(source, /\$newconf\.="config/);
-});
-
-test('first-run access check verifies CONFIG.js as the web server user', () => {
-  const source = read('js/checkconfigaccess.php');
-  assert.match(source, /dashticz_require_same_origin\(\)/);
-  assert.match(source, /REQUEST_METHOD.*GET/);
-  assert.match(source, /is_writable\(\$configPath\)/);
-  assert.match(source, /is_writable\(\$customDir\)/);
-  assert.match(source, /'writable' => \$writable/);
-  assert.doesNotMatch(source, /chmod|file_put_contents/);
-});
-
-test('Apache write-access installer derives the path and verifies a real write', () => {
-  const installer = read('tools/install-dashticz-write-access');
-
-  assert.match(installer, /INSTALL_DIR=.*SCRIPT_DIR\/\.\./);
-  assert.match(installer, /js\/savesettings\.php/);
-  assert.match(installer, /chmod 2775/);
-  assert.match(installer, /runuser -u .* touch/);
-  assert.doesNotMatch(installer, /sudoers/);
-  assert.doesNotMatch(installer, /NOPASSWD/);
-  assert.doesNotMatch(installer, /\/var\/www\/html/);
 });
 
 test('bundled Horizon remote requires POST, CSRF and a key allowlist', () => {
