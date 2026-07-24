@@ -8,6 +8,16 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 Recent changes
 ---------------
 
+v3.20.5 beta (24-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Device Editor: each listed device now has a **-** button to remove it from Dashticz; the removed device is restored to the "Add device" dropdown so it can be re-added. Save writes the updated list to ``custom/CONFIG.js``.
+* Settings: ``auto_positioning`` (add all devices automatically) and ``use_favorites`` both default to **off** (0). With both options off no devices are shown automatically; add devices explicitly via the Device Editor.
+* Screens: ``buildDefaultScreens`` is only called when ``auto_positioning`` is enabled, preventing automatic device injection on a fresh install.
+
 v3.20.4 beta (24-7-2026)
 --------------------------
 

@@ -165,6 +165,9 @@ var DashticzDeviceEditor = (function () {
     html += '<span class="de-device-idx">IDX\u00a0' + idx + '</span>';
     html += '<span class="de-device-name">' + name + '</span>';
     if (type) html += '<span class="de-device-type">' + type + '</span>';
+    html += '<button type="button" class="btn btn-danger btn-sm de-remove-btn ms-auto" data-idx="' + idx + '" title="Remove device">';
+    html += '<i class="fas fa-minus" aria-hidden="true"></i>';
+    html += '</button>';
     html += '</div>';
     return html;
   }
@@ -190,6 +193,43 @@ var DashticzDeviceEditor = (function () {
 
   /* ── wire up event handlers ─────────────────────────────────── */
   function _attachHandlers(available, allDomoticz) {
+    /* - (remove) button */
+    $('#de-device-list').on('click', '.de-remove-btn', function () {
+      var idx  = parseInt($(this).data('idx'), 10);
+      var pos  = managedDevices.indexOf(idx);
+      if (pos > -1) managedDevices.splice(pos, 1);
+
+      /* remove item from device-list */
+      $(this).closest('.de-device-item').remove();
+      if ($('#de-device-list .de-device-item').length === 0) {
+        $('#de-device-list').html('<div class="de-empty">No devices configured in Dashticz.</div>');
+      }
+
+      /* restore device in add-row dropdown */
+      var device = allDomoticz[String(idx)] || allDomoticz[idx];
+      var name   = device ? device.Name : ('Device ' + idx);
+      var optHtml = '<option value="' + idx + '">' + _esc(name) + ' (IDX\u00a0' + idx + ')</option>';
+
+      var $select = $('#de-add-rows .de-device-select');
+      if ($select.length) {
+        /* insert in alphabetical order */
+        var inserted = false;
+        $select.find('option').each(function () {
+          if ($(this).val() && $(this).text().localeCompare(name + ' (IDX\u00a0' + idx + ')') > 0) {
+            $(this).before(optHtml);
+            inserted = true;
+            return false;
+          }
+        });
+        if (!inserted) $select.append(optHtml);
+        /* remove "all devices added" message if present */
+        $('#de-add-rows .de-empty').remove();
+      } else {
+        /* no add-row exists yet — create one with this single device */
+        $('#de-add-rows').html(_addRowHtml([{ idx: idx, name: name, type: device ? (device.Type || '') : '' }]));
+      }
+    });
+
     /* + button */
     $('#de-add-rows').on('click', '.de-add-btn', function () {
       var $row    = $(this).closest('.de-add-row');

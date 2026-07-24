@@ -1,8 +1,9 @@
 {
-"version": "3.20.4",
+"version": "3.20.5",
 "branch": "beta",
-"last_changes": "Added Device Editor: pencil icon in topbar to add Domoticz devices to Dashticz via UI",
+"last_changes": "Device Editor: add remove (-) button per device; auto_positioning and use_favorites default to off",
 "changelog" : {
+            "3.20.5": "Device Editor: add remove (-) button per device; auto_positioning and use_favorites default to off",
             "3.20.4": "Added Device Editor: pencil icon in topbar to add Domoticz devices to Dashticz via UI",
             "3.20.3": "Added Docker Alpine+nginx+PHP8.3 image and docker-compose setup (jgaalen)",
             "3.20.2": "Doc fix: thermostat.js reference updated to tempcontrol.js (jgaalen)",
