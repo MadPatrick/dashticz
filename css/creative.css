@@ -720,6 +720,96 @@ next css sets the default height of the frame popup
   cursor: pointer;
 }
 
+/* ── Device Editor icon ──────────────────────────────────────── */
+.colbar span.deviceeditoricon {
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+/* ── Device Editor modal ─────────────────────────────────────── */
+.de-section-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #343a40;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 8px;
+}
+
+.de-device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.de-device-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  font-size: 13px;
+}
+
+.de-device-item-new {
+  background: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.de-device-idx {
+  flex: 0 0 auto;
+  min-width: 70px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.de-device-name {
+  flex: 1 1 auto;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.de-device-type {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: #6c757d;
+  background: #e9ecef;
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.de-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.de-add-row .de-device-select {
+  flex: 1 1 auto;
+  font-size: 13px;
+}
+
+.de-empty {
+  font-size: 13px;
+  color: #6c757d;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+.de-nophp {
+  font-size: 12px;
+}
+
 a.playlist {
   margin: 5px !important;
   display: inline-block;

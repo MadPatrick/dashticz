@@ -8,6 +8,14 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 Recent changes
 ---------------
 
+v3.20.4 beta (24-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Device Editor: a pencil icon has been added to the topbar (left of the settings gear). Clicking it opens a modal that lists all Domoticz devices currently shown in Dashticz, and provides a dropdown to select additional Domoticz devices and add them with the **+** button. Added devices are saved to ``custom/CONFIG.js`` via a dedicated ``device_editor`` column. Requires PHP to be installed.
+
 v3.20.3 beta (20-7-2026)
 --------------------------
 
