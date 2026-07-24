@@ -380,7 +380,7 @@ function showSetupWizard() {
       id: 'use_favorites',
       label: 'Use Favorites',
       type: 'toggle01',
-      def: '1',
+      def: '0',
     },
   ];
 
@@ -1082,7 +1082,7 @@ function buildDefaultScreens() {
 }
 
 function buildScreens() {
-  if (screens[1] && !screens[1].columns.length) {
+  if (screens[1] && !screens[1].columns.length && settings['auto_positioning']) {
     buildDefaultScreens();
   }
   var allscreens = {};
