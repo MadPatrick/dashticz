@@ -48,9 +48,10 @@ git clone \
     "$REPOSITORY" \
     "$INSTALL_DIR"
 
+# Maak de custom map en het configuratiebestand aan
 mkdir -p "$INSTALL_DIR/custom"
 printf '%s\n' '#EMPTY#' > "$INSTALL_DIR/custom/CONFIG.js"
-chmod 0755 "$INSTALL_DIR/custom/CONFIG.js"
+chmod 0644 "$INSTALL_DIR/custom/CONFIG.js"
 
 echo
 echo "Dashticz has been installed in '$INSTALL_DIR'."
