@@ -22,6 +22,91 @@ if (json_last_error() !== JSON_ERROR_NONE
     dashticz_json_error(400, 'Invalid widgets list.');
 }
 
+// Allowed widget config settings and their types
+$allowedSettings = [
+    // weather
+    'owm_api'                => 'string',
+    'owm_city'               => 'string',
+    'owm_name'               => 'string',
+    'owm_country'            => 'string',
+    'owm_lang'               => 'string',
+    'owm_days'               => 'bool',
+    'owm_cnt'                => 'number',
+    'owm_min'                => 'bool',
+    'wu_api'                 => 'string',
+    'wu_city'                => 'string',
+    'wu_name'                => 'string',
+    'wu_country'             => 'string',
+    'use_fahrenheit'         => 'bool',
+    'use_beaufort'           => 'bool',
+    'translate_windspeed'    => 'bool',
+    'static_weathericons'    => 'bool',
+    // clock
+    'boss_stationclock'      => 'string',
+    'hide_seconds'           => 'bool',
+    'hide_seconds_stationclock' => 'bool',
+    // garbage
+    'garbage_company'        => 'garbage_company',
+    'garbage_icalurl'        => 'string',
+    'google_api_key'         => 'string',
+    'garbage_calendar_id'    => 'string',
+    'garbage_zipcode'        => 'string',
+    'garbage_street'         => 'string',
+    'garbage_housenumber'    => 'string',
+    'garbage_housenumberadd' => 'string',
+    'garbage_maxitems'       => 'number',
+    'garbage_width'          => 'number',
+    'garbage_hideicon'       => 'bool',
+    'garbage_icon_use_colors'=> 'bool',
+    'garbage_use_colors'     => 'bool',
+    'garbage_use_names'      => 'bool',
+    'garbage_use_cors_prefix'=> 'bool',
+    // sonarr
+    'sonarr_url'             => 'string',
+    'sonarr_apikey'          => 'string',
+    'sonarr_maxitems'        => 'number',
+    // spotify
+    'spot_clientid'          => 'string',
+];
+
+$allowedGarbageCompanies = [
+    'afvalinfo','afvalalert','afvalstoffendienst','almere','alphenaandenrijn','area',
+    'avalex','avri','barafvalbeheer','best','blink','circulusberkel','cure','cyclusnv',
+    'dar','deafvalapp','edg','gad','gemeenteberkelland','goes','googlecalendar',
+    'groningen','hvc','ical','katwijk','maashorst','meerlanden','mijnafvalwijzer',
+    'omrin','purmerend','rd4','recycleapp','rmn','rova','sudwestfryslan','suez',
+    'twentemilieu','uden','veldhoven','venlo','venray','vianen','waalre','waardlanden',
+];
+
+// Process optional config settings
+$configSettings = [];
+if (isset($data['settings']) && is_array($data['settings'])) {
+    foreach ($data['settings'] as $key => $value) {
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $key) || !isset($allowedSettings[$key])) {
+            continue; // silently skip unknown keys
+        }
+        $type = $allowedSettings[$key];
+        if ($type === 'bool') {
+            $configSettings[$key] = (int)(bool)$value;
+        } elseif ($type === 'number') {
+            $configSettings[$key] = is_numeric($value) ? (float)$value : 0;
+            if ($configSettings[$key] == (int)$configSettings[$key]) {
+                $configSettings[$key] = (int)$configSettings[$key];
+            }
+        } elseif ($type === 'garbage_company') {
+            if (in_array((string)$value, $allowedGarbageCompanies, true)) {
+                $configSettings[$key] = (string)$value;
+            }
+        } else {
+            // string: sanitize
+            $str = (string)$value;
+            if (strlen($str) <= 2048) {
+                $configSettings[$key] = $str;
+            }
+        }
+    }
+}
+
 $catalog = [
     'weather' => ['key' => 'widget_weather', 'width' => 12],
     'garbage' => ['key' => 'widget_garbage', 'width' => 6],
@@ -193,6 +278,15 @@ if (!empty($widgets)) {
         $section .= "if(screens[1]['columns'].indexOf('" . $columnKey
             . "')<0) screens[1]['columns'].push('" . $columnKey . "');\n";
     }
+
+    // Write widget-specific config settings inside the marker section
+    if (!empty($configSettings)) {
+        foreach ($configSettings as $key => $value) {
+            $section .= 'config[' . json_encode($key) . ']='
+                . json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ";\n";
+        }
+    }
+
     $section .= $endMarker;
     $config .= $section;
 }
