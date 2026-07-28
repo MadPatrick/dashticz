@@ -326,6 +326,39 @@ var DashticzWidgetEditor = (function () {
            id === 'garbage' || id === 'sonarr' || id === 'spotify';
   }
 
+  function _widgetCardHtml(item) {
+    var selected = !!selectedWidgets[item.id];
+    var configBtn = _widgetHasConfig(item.id)
+      ? '<button type="button" class="we-config-btn" data-widget-id="' +
+        item.id +
+        '" title="Instellingen" aria-label="Instellingen voor ' +
+        item.title +
+        '"><i class="fas fa-cog" aria-hidden="true"></i></button>'
+      : '';
+
+    return (
+      '<div class="we-widget-card' +
+      (selected ? ' we-selected' : '') +
+      '" data-widget-id="' +
+      item.id +
+      '" role="button" tabindex="0" aria-pressed="' +
+      (selected ? 'true' : 'false') +
+      '">' +
+      configBtn +
+      '<div class="we-widget-icon"><i class="' +
+      item.icon +
+      '" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      item.title +
+      '</div><div class="we-widget-description">' +
+      item.description +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      (selected ? 'Toegevoegd' : 'Klik om toe te voegen') +
+      '</div></div>'
+    );
+  }
+
   function _cfgField(key, label, type, value, opts, help) {
     var id = 'we-cfg-' + key.replace(/_/g, '-');
     var html = '<div class="mb-3">';
