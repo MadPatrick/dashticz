@@ -852,8 +852,20 @@ next css sets the default height of the frame popup
   white-space: normal;
 }
 
-.colbar.transbg {
-  padding: 6px 5px !important;
+/* Keep the settings/fullscreen icons pinned to the right edge,
+   independent of the (now absolutely positioned) miniclock block.
+   The margin-left:auto must sit on the actual flex item (the wrapper
+   div Dashticz mounts each block in), not on the nested .text-right
+   element itself, or it has no effect on the flex layout. */
+.colbar > div:has(.text-right) {
+  margin-left: auto;
+  margin-right: -5px;
+}
+
+.colbar .text-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .colbar.transbg .logo {
@@ -899,7 +911,7 @@ next css sets the default height of the frame popup
   cursor: pointer;
 }
 
-/* ── Device Editor icon ──────────────────────────────────────── */
+/* -- Device Editor icon ---------------------------------------- */
 .colbar span.deviceeditoricon,
 .colbar span.layouteditoricon {
   cursor: pointer;
@@ -1091,7 +1103,7 @@ body.dle-active {
   }
 }
 
-/* ── Device Editor modal ─────────────────────────────────────── */
+/* -- Device Editor modal --------------------------------------- */
 .de-section-title {
   font-weight: 600;
   font-size: 14px;

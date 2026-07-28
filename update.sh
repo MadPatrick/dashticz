@@ -21,6 +21,11 @@ CONFIG_FILE="custom/CONFIG.js"
 CONFIG_LINE_1='config["topbar_timeout"] = 5;'
 CONFIG_LINE_2="config['hide_topbar'] = 0;"
 
+# --- Configuration check and update ---
+CONFIG_FILE="custom/CONFIG.js"
+CONFIG_LINE_1='config["topbar_timeout"] = 5;'
+CONFIG_LINE_2="config['hide_topbar'] = 0;"
+
 echo
 echo "Checking $CONFIG_FILE..."
 
