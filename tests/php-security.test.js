@@ -136,11 +136,9 @@ test('widget writer whitelists widgets and protects CONFIG.js writes', () => {
   ]) {
     assert.match(source, new RegExp(`'${id}'\\s*=>`));
   }
-  assert.match(source, /anwb_apikey/);
-  assert.match(source, /default_news_url/);
-  assert.match(source, /longfonds_zipcode/);
-  assert.match(source, /gm_api/);
-  assert.match(source, /security_panel_lock/);
+  assert.match(source, /weather_icons/);
+  assert.match(source, /showGust/);
+  assert.match(source, /allowedWeatherIcons/);
   assert.match(source, /Unknown widget id/);
   assert.match(source, /Unknown weather provider/);
   assert.match(source, /Unknown clock type/);

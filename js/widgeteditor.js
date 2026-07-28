@@ -252,6 +252,11 @@ var DashticzWidgetEditor = (function () {
         owm_days: _n('owm_days'),
         owm_cnt: _s('owm_cnt', '4'),
         owm_min: _n('owm_min', 1),
+        weather_show_rain: _n('weather_show_rain', 1),
+        weather_show_description: _n('weather_show_description', 1),
+        weather_show_wind: _n('weather_show_wind', 0),
+        weather_show_gust: _n('weather_show_gust', 0),
+        weather_icons: _s('weather_icons', 'line'),
         wu_api: _s('wu_api'),
         wu_city: _s('wu_city', 'Amsterdam'),
         wu_name: _s('wu_name'),
@@ -259,7 +264,6 @@ var DashticzWidgetEditor = (function () {
         use_fahrenheit: _n('use_fahrenheit'),
         use_beaufort: _n('use_beaufort'),
         translate_windspeed: _n('translate_windspeed', 1),
-        static_weathericons: _n('static_weathericons'),
       },
       clock: {
         boss_stationclock: _s('boss_stationclock', 'RedBoss'),
@@ -348,6 +352,23 @@ var DashticzWidgetEditor = (function () {
           definition.widget_provider === 'wunderground'
         ) {
           weatherProvider = 'wunderground';
+        }
+        if (item.id === 'weather') {
+          if (typeof definition.showRain !== 'undefined') {
+            widgetConfigs.weather.weather_show_rain = Number(definition.showRain) ? 1 : 0;
+          }
+          if (typeof definition.showDescription !== 'undefined') {
+            widgetConfigs.weather.weather_show_description = Number(definition.showDescription) ? 1 : 0;
+          }
+          if (typeof definition.showWind !== 'undefined') {
+            widgetConfigs.weather.weather_show_wind = Number(definition.showWind) ? 1 : 0;
+          }
+          if (typeof definition.showGust !== 'undefined') {
+            widgetConfigs.weather.weather_show_gust = Number(definition.showGust) ? 1 : 0;
+          }
+          if (typeof definition.icons === 'string') {
+            widgetConfigs.weather.weather_icons = definition.icons;
+          }
         }
         if (
           item.id === 'calendar' &&
@@ -579,6 +600,13 @@ var DashticzWidgetEditor = (function () {
 
     if (item.id === 'weather') {
       var cfg = widgetConfigs.weather || {};
+      var iconOpts = {
+        line: 'Dynamic line icons',
+        linestatic: 'Static version of the line icons',
+        fill: 'Dynamic filled icons',
+        static: 'Static icons',
+        meteo: 'Alternative set of static icons',
+      };
       fields +=
         '<div class="mb-3">' +
         '<label class="form-label we-field-label" for="we-cfg-weather-provider">Provider</label>' +
@@ -586,6 +614,10 @@ var DashticzWidgetEditor = (function () {
         '<option value="openweather"' + (weatherProvider === 'openweather' ? ' selected' : '') + '>OpenWeather</option>' +
         '<option value="wunderground"' + (weatherProvider === 'wunderground' ? ' selected' : '') + '>Weather Underground</option>' +
         '</select></div>';
+      fields +=
+        '<div class="we-weather-group" data-weather-provider="openweather"' +
+        (weatherProvider === 'openweather' ? '' : ' style="display:none"') +
+        '>';
       fields += _cfgHeading('OpenWeather');
       fields += _cfgField('owm_api', lw.owm_api || 'OpenWeather API key', 'text', cfg.owm_api);
       fields += _cfgField('owm_city', lw.owm_city || 'Stad', 'text', cfg.owm_city);
@@ -595,16 +627,27 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField('owm_cnt', lw.owm_cnt || 'Aantal perioden', 'text', cfg.owm_cnt, null, lw.owm_cnt_help || '');
       fields += _cfgField('owm_days', lw.owm_days || 'Daagse voorspelling', 'checkbox', cfg.owm_days, null, lw.owm_days_help || '');
       fields += _cfgField('owm_min', lw.owm_min || 'Minimumtemperatuur tonen', 'checkbox', cfg.owm_min, null, lw.owm_min_help || '');
+      fields += _cfgHeading(lw.display || 'Weergave (OWM)');
+      fields += _cfgField('weather_show_rain', lw.show_rain || 'Regen tonen', 'checkbox', cfg.weather_show_rain);
+      fields += _cfgField('weather_show_description', lw.show_description || 'Beschrijving tonen', 'checkbox', cfg.weather_show_description);
+      fields += _cfgField('weather_show_wind', lw.show_wind || 'Wind tonen', 'checkbox', cfg.weather_show_wind);
+      fields += _cfgField('weather_show_gust', lw.show_gust || 'Windstoten tonen', 'checkbox', cfg.weather_show_gust);
+      fields += _cfgField('weather_icons', lw.icons || 'Weericonen', 'select', cfg.weather_icons || 'line', iconOpts);
+      fields += '</div>';
+      fields +=
+        '<div class="we-weather-group" data-weather-provider="wunderground"' +
+        (weatherProvider === 'wunderground' ? '' : ' style="display:none"') +
+        '>';
       fields += _cfgHeading('Weather Underground');
       fields += _cfgField('wu_api', lw.wu_api || 'Weather Underground API key', 'text', cfg.wu_api);
       fields += _cfgField('wu_city', lw.wu_city || 'Stad (WU)', 'text', cfg.wu_city);
       fields += _cfgField('wu_name', lw.wu_name || 'Weergavenaam (WU)', 'text', cfg.wu_name);
       fields += _cfgField('wu_country', lw.wu_country || 'Landcode (WU)', 'text', cfg.wu_country);
-      fields += _cfgHeading('Weergave');
+      fields += '</div>';
+      fields += _cfgHeading(lw.shared_display || 'Algemene weergave');
       fields += _cfgField('use_fahrenheit', lw.use_fahrenheit || 'Fahrenheit gebruiken', 'checkbox', cfg.use_fahrenheit);
       fields += _cfgField('use_beaufort', lw.use_beaufort || 'Beaufort gebruiken', 'checkbox', cfg.use_beaufort);
       fields += _cfgField('translate_windspeed', lw.translate_windspeed || 'Windsnelheid vertalen', 'checkbox', cfg.translate_windspeed, null, lw.translate_windspeed_help || '');
-      fields += _cfgField('static_weathericons', lw.static_weathericons || 'Statische weericonen', 'checkbox', cfg.static_weathericons);
 
     } else if (item.id === 'calendar') {
       var ccal = widgetConfigs.calendar || {};
@@ -779,6 +822,13 @@ var DashticzWidgetEditor = (function () {
     $('body').append(_buildConfigModalHtml(item));
 
     var $cfgModal = $('#we-config-popup');
+
+    $cfgModal.on('change', '#we-cfg-weather-provider', function () {
+      var provider = $(this).val() === 'wunderground' ? 'wunderground' : 'openweather';
+      $cfgModal.find('.we-weather-group').each(function () {
+        $(this).toggle(String($(this).data('weather-provider')) === provider);
+      });
+    });
 
     $cfgModal.on('click', '#we-cfg-ok-btn', function () {
       var valid = true;
@@ -992,6 +1042,14 @@ var DashticzWidgetEditor = (function () {
       entry.width = dimensions.width || item.width;
       if (dimensions.height) entry.height = dimensions.height;
       if (item.id === 'weather') entry.provider = weatherProvider;
+      if (item.id === 'weather' && widgetConfigs.weather) {
+        var wcfg = widgetConfigs.weather;
+        entry.showRain = Number(wcfg.weather_show_rain) ? 1 : 0;
+        entry.showDescription = Number(wcfg.weather_show_description) ? 1 : 0;
+        entry.showWind = Number(wcfg.weather_show_wind) ? 1 : 0;
+        entry.showGust = Number(wcfg.weather_show_gust) ? 1 : 0;
+        entry.icons = wcfg.weather_icons || 'line';
+      }
       if (item.id === 'calendar') entry.icalurl = calendarUrl;
       if (item.id === 'clock') entry.clockType = clockType;
       if (item.id === 'publictransport') {

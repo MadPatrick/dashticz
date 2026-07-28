@@ -319,6 +319,14 @@ settingList['media']['hide_mediaplayer']['title'] =
 settingList['media']['hide_mediaplayer']['type'] = 'checkbox';
 
 /* Widget settings shown as tiles in Custom mode (not Wizard). */
+var weatherIconOptions = {
+  line: 'Dynamic line icons',
+  linestatic: 'Static version of the line icons',
+  fill: 'Dynamic filled icons',
+  static: 'Static icons',
+  meteo: 'Alternative set of static icons',
+};
+
 var widgetSettingTiles = [
   {
     id: 'weather',
@@ -349,6 +357,38 @@ var widgetSettingTiles = [
         type: 'checkbox',
         help: language.settings.weather.owm_min_help,
       },
+      weather_show_rain: {
+        title:
+          (language.settings.weather && language.settings.weather.show_rain) ||
+          'Show rain',
+        type: 'checkbox',
+      },
+      weather_show_description: {
+        title:
+          (language.settings.weather &&
+            language.settings.weather.show_description) ||
+          'Show description',
+        type: 'checkbox',
+      },
+      weather_show_wind: {
+        title:
+          (language.settings.weather && language.settings.weather.show_wind) ||
+          'Show wind',
+        type: 'checkbox',
+      },
+      weather_show_gust: {
+        title:
+          (language.settings.weather && language.settings.weather.show_gust) ||
+          'Show gust',
+        type: 'checkbox',
+      },
+      weather_icons: {
+        title:
+          (language.settings.weather && language.settings.weather.icons) ||
+          'Weather icons',
+        type: 'select',
+        options: weatherIconOptions,
+      },
       wu_api: { title: language.settings.weather.wu_api, type: 'text' },
       wu_city: { title: language.settings.weather.wu_city, type: 'text' },
       wu_name: { title: language.settings.weather.wu_name, type: 'text' },
@@ -365,10 +405,6 @@ var widgetSettingTiles = [
         title: language.settings.weather.translate_windspeed,
         type: 'checkbox',
         help: language.settings.weather.translate_windspeed_help,
-      },
-      static_weathericons: {
-        title: language.settings.weather.static_weathericons,
-        type: 'checkbox',
       },
     },
   },
@@ -772,6 +808,11 @@ var defaultSettings = {
   owm_days: 0,
   owm_cnt: 4,
   owm_min: true,
+  weather_show_rain: 1,
+  weather_show_description: 1,
+  weather_show_wind: 0,
+  weather_show_gust: 0,
+  weather_icons: 'line',
   boss_stationclock: 'RedBoss',
   use_fahrenheit: 0,
   use_beaufort: 0,
@@ -1173,6 +1214,7 @@ function loadSettings() {
         bindSettingsCategoryTiles();
         bindStandbyBackgroundPicker();
         bindSettingsUpdateControls();
+        bindWeatherProviderToggle();
 
         $('#php_version').html(phpversion);
 
@@ -1408,23 +1450,116 @@ function renderWidgetSettingsTab() {
       ' me-2" aria-hidden="true"></i>' +
       escapeSettingsHtml(tile.title) +
       '</h5>';
-    for (var key in tile.settings) {
-      html += renderSettingsRow(key, tile.settings[key]);
-    }
-    if (!Object.keys(tile.settings).length) {
-      html +=
-        '<p class="settings-intro">' +
-        escapeSettingsHtml(
-          (language.settings.widgets &&
-            language.settings.widgets.no_global_settings) ||
-            'This widget has no global settings. Configure it in the Widget editor or in CONFIG.js.'
-        ) +
-        '</p>';
+    if (tile.id === 'weather') {
+      html += renderWeatherWidgetSettings(tile);
+    } else {
+      for (var key in tile.settings) {
+        html += renderSettingsRow(key, tile.settings[key]);
+      }
+      if (!Object.keys(tile.settings).length) {
+        html +=
+          '<p class="settings-intro">' +
+          escapeSettingsHtml(
+            (language.settings.widgets &&
+              language.settings.widgets.no_global_settings) ||
+              'This widget has no global settings. Configure it in the Widget editor or in CONFIG.js.'
+          ) +
+          '</p>';
+      }
     }
     html += '</div>';
   });
 
   return html;
+}
+
+function getWeatherProviderPreference() {
+  if (settings['owm_api'] || !settings['wu_api']) {
+    return 'openweather';
+  }
+  return 'wunderground';
+}
+
+function renderWeatherWidgetSettings(tile) {
+  var provider = getWeatherProviderPreference();
+  var html =
+    '<div class="settings-row">' +
+    '<label class="settings-label" for="setting-weather_provider_ui">Provider</label>' +
+    '<div class="settings-control">' +
+    '<select id="setting-weather_provider_ui" class="form-select settings-weather-provider">' +
+    '<option value="openweather"' +
+    (provider === 'openweather' ? ' selected' : '') +
+    '>OpenWeather</option>' +
+    '<option value="wunderground"' +
+    (provider === 'wunderground' ? ' selected' : '') +
+    '>Weather Underground</option>' +
+    '</select></div><div class="settings-help-slot"></div></div>';
+
+  var owmKeys = [
+    'owm_api',
+    'owm_city',
+    'owm_name',
+    'owm_country',
+    'owm_lang',
+    'owm_cnt',
+    'owm_days',
+    'owm_min',
+    'weather_show_rain',
+    'weather_show_description',
+    'weather_show_wind',
+    'weather_show_gust',
+    'weather_icons',
+  ];
+  var wuKeys = ['wu_api', 'wu_city', 'wu_name', 'wu_country'];
+  var sharedKeys = ['use_fahrenheit', 'use_beaufort', 'translate_windspeed'];
+
+  html +=
+    '<div class="settings-weather-group" data-weather-provider="openweather"' +
+    (provider === 'openweather' ? '' : ' style="display:none"') +
+    '>';
+  html += '<h6 class="settings-weather-heading">OpenWeather</h6>';
+  owmKeys.forEach(function (key) {
+    if (tile.settings[key]) {
+      html += renderSettingsRow(key, tile.settings[key]);
+    }
+  });
+  html += '</div>';
+
+  html +=
+    '<div class="settings-weather-group" data-weather-provider="wunderground"' +
+    (provider === 'wunderground' ? '' : ' style="display:none"') +
+    '>';
+  html += '<h6 class="settings-weather-heading">Weather Underground</h6>';
+  wuKeys.forEach(function (key) {
+    if (tile.settings[key]) {
+      html += renderSettingsRow(key, tile.settings[key]);
+    }
+  });
+  html += '</div>';
+
+  html += '<h6 class="settings-weather-heading">Display</h6>';
+  sharedKeys.forEach(function (key) {
+    if (tile.settings[key]) {
+      html += renderSettingsRow(key, tile.settings[key]);
+    }
+  });
+
+  return html;
+}
+
+function bindWeatherProviderToggle() {
+  var $popup = $('#settingspopup');
+  if (!$popup.length) return;
+
+  $popup
+    .off('change.weatherprovider')
+    .on('change.weatherprovider', '.settings-weather-provider', function () {
+      var provider = $(this).val() === 'wunderground' ? 'wunderground' : 'openweather';
+      $popup.find('.settings-weather-group').each(function () {
+        var group = String($(this).data('weather-provider'));
+        $(this).toggle(group === provider);
+      });
+    });
 }
 
 function showSettingsHome() {
@@ -1673,13 +1808,15 @@ function saveSettings() {
   var standbyBlocksValue = null;
   $('div#settingspopup input[type="text"],div#settingspopup input[type="hidden"],div#settingspopup select').each(
     function () {
-      // Skip UI-only controls that must not become config[...] keys.
-      if (
-        !$(this).attr('name') ||
-        $(this).is('#settings-update-branch, #setting-standby_background_pick')
-      ) {
-        return;
-      }
+        // Skip UI-only controls that must not become config[...] keys.
+        if (
+          !$(this).attr('name') ||
+          $(this).is(
+            '#settings-update-branch, #setting-standby_background_pick, #setting-weather_provider_ui'
+          )
+        ) {
+          return;
+        }
       var val = $(this).val();
       if (isNumeric(val))
         val = parseFloat(val);

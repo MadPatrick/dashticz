@@ -42,6 +42,11 @@ $allowedSettings = [
     'use_beaufort'           => 'bool',
     'translate_windspeed'    => 'bool',
     'static_weathericons'    => 'bool',
+    'weather_show_rain'      => 'bool',
+    'weather_show_description' => 'bool',
+    'weather_show_wind'      => 'bool',
+    'weather_show_gust'      => 'bool',
+    'weather_icons'          => 'weather_icons',
     // clock
     'boss_stationclock'      => 'string',
     'hide_seconds'           => 'bool',
@@ -106,6 +111,8 @@ $allowedCalendarLanguages = [
     'sl_SL','sv_SE','uk_UA',
 ];
 
+$allowedWeatherIcons = ['line', 'linestatic', 'fill', 'static', 'meteo'];
+
 // Process optional config settings
 $configSettings = [];
 if (isset($data['settings']) && is_array($data['settings'])) {
@@ -127,6 +134,10 @@ if (isset($data['settings']) && is_array($data['settings'])) {
             }
         } elseif ($type === 'calendar_language') {
             if (in_array((string)$value, $allowedCalendarLanguages, true)) {
+                $configSettings[$key] = (string)$value;
+            }
+        } elseif ($type === 'weather_icons') {
+            if (in_array((string)$value, $allowedWeatherIcons, true)) {
                 $configSettings[$key] = (string)$value;
             }
         } else {
@@ -194,6 +205,26 @@ foreach ($data['widgets'] as $entry) {
             dashticz_json_error(400, 'Unknown weather provider.');
         }
         $widget['provider'] = $provider;
+
+        $widget['showRain'] = array_key_exists('showRain', $entry)
+            ? (int)(bool)$entry['showRain']
+            : 1;
+        $widget['showDescription'] = array_key_exists('showDescription', $entry)
+            ? (int)(bool)$entry['showDescription']
+            : 1;
+        $widget['showWind'] = array_key_exists('showWind', $entry)
+            ? (int)(bool)$entry['showWind']
+            : 0;
+        $widget['showGust'] = array_key_exists('showGust', $entry)
+            ? (int)(bool)$entry['showGust']
+            : 0;
+        $icons = isset($entry['icons']) && is_string($entry['icons'])
+            ? $entry['icons']
+            : 'line';
+        if (!in_array($icons, $allowedWeatherIcons, true)) {
+            $icons = 'line';
+        }
+        $widget['icons'] = $icons;
     }
 
     if ($id === 'calendar') {
@@ -367,6 +398,13 @@ function _widgetBlockProps($widget)
             $props['type'] = $widget['provider'] === 'wunderground' ? 'wunderground' : 'weather';
             $props['widget_provider'] = $widget['provider'];
             $props['title'] = 'Weer';
+            if ($widget['provider'] === 'openweather') {
+                $props['showRain'] = !empty($widget['showRain']);
+                $props['showDescription'] = !empty($widget['showDescription']);
+                $props['showWind'] = !empty($widget['showWind']);
+                $props['showGust'] = !empty($widget['showGust']);
+                $props['icons'] = $widget['icons'];
+            }
             break;
         case 'garbage':
             $props['type'] = 'garbage';
