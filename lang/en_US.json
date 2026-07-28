@@ -49,6 +49,15 @@
         "blocksave": "Save the code below to your CONFIG.js to apply the changes. Reload Dashticz afterwards.",
         "close": "Close",
         "close_reload": "Close and reload!",
+        "config_mode": {
+            "custom": "Custom",
+            "wizard": "Wizard"
+        },
+        "widgets": {
+            "title": "Widgets",
+            "back": "Back",
+            "choose": "Choose a widget to configure its settings."
+        },
         "garbage": {
             "garbage_calendar_id": "Google Calendar ID",
             "garbage_calendar_id_help": "Your calendar id is found in calendar settings",

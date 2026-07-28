@@ -398,6 +398,94 @@ next css sets the default height of the frame popup
   padding-top: 14px;
 }
 
+.settings-widgets-intro {
+  margin: 0 0 14px;
+  color: #495057;
+  font-size: 14px;
+}
+
+.settings-widget-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.settings-widget-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 110px;
+  padding: 16px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 10px;
+  background: #f8f9fa;
+  color: #212529;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.settings-widget-tile:hover,
+.settings-widget-tile:focus-visible {
+  background: #fff;
+  border-color: #495057;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.settings-widget-tile i {
+  font-size: 28px;
+  color: #495057;
+}
+
+.settings-widget-tile span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-widget-panel-title {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.config-mode-switch {
+  display: inline-flex;
+  align-items: stretch;
+  margin-right: 8px;
+  vertical-align: middle;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.config-mode-btn {
+  border: 0;
+  margin: 0;
+  padding: 4px 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.config-mode-btn.active {
+  background: rgba(255, 255, 255, 0.92);
+  color: #212529;
+}
+
+.config-mode-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+.topbar-settings-wrap .settings {
+  vertical-align: middle;
+}
+
 .settings-row {
   display: grid;
   grid-template-columns: minmax(230px, 320px) minmax(0, 40ch) 26px;

@@ -43,12 +43,20 @@ if (file_exists($configPath)) {
         $conf = substr($config, $markerPosition + strlen($marker));
         $rows = preg_split('/\r\n|\r|\n/', $conf);
         $inWidgetEditorSection = false;
+        $customMode = false;
+        if (isset($_POST['config_mode'])) {
+            $modeValue = json_decode($_POST['config_mode'], true);
+            $customMode = is_string($modeValue) && strtolower($modeValue) === 'custom';
+        }
         foreach ($rows as $index => $row) {
             if (strpos($row, '// [widget-editor-start]') !== false) {
                 $inWidgetEditorSection = true;
             }
-            if (!$inWidgetEditorSection && substr($row, 0, 17) !== "config['garbage']") {
-                if (substr($row, 0, 6) === 'config' || substr($row, 0, 8) === '//config') {
+            $isConfigLine = substr($row, 0, 6) === 'config' || substr($row, 0, 8) === '//config';
+            if ($isConfigLine && substr($row, 0, 17) !== "config['garbage']") {
+                // In Custom mode the settings menu is authoritative: drop
+                // leftover widget-section config overrides as well.
+                if (!$inWidgetEditorSection || $customMode) {
                     unset($rows[$index]);
                 }
             }

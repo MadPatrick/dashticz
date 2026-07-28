@@ -39,7 +39,19 @@ test('settings writes require CSRF and serialize values as JSON', () => {
   assert.match(source, /if \(file_exists\(\$configPath\)\)/);
   assert.match(source, /trim\(\$config\) !== '#EMPTY#'/);
   assert.match(source, /!file_exists\(\$configPath\) && !is_writable\(\$customDir\)/);
+  assert.match(source, /\$customMode/);
   assert.doesNotMatch(source, /\$newconf\.="config/);
+});
+
+test('config mode writer only accepts custom or wizard', () => {
+  const source = read('js/saveconfigmode.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  assert.match(source, /dashticz_require_csrf\(\)/);
+  assert.match(source, /REQUEST_METHOD.*POST/);
+  assert.match(source, /config_mode/);
+  assert.match(source, /custom/);
+  assert.match(source, /wizard/);
+  assert.match(source, /configwriter_write_config/);
 });
 
 test('first-run access check verifies CONFIG.js as the web server user', () => {

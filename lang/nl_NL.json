@@ -49,6 +49,15 @@
         "blocksave": "Sla de onderstaande code op in uw CONFIG.js om de wijzigingen toe te passen en herlaad Dashticz!",
         "close": "Sluiten",
         "close_reload": "Sluit venster en herlaad Dashticz",
+        "config_mode": {
+            "custom": "Custom",
+            "wizard": "Wizard"
+        },
+        "widgets": {
+            "title": "Widgets",
+            "back": "Terug",
+            "choose": "Kies een widget om de instellingen te bewerken."
+        },
         "garbage": {
             "garbage_calendar_id": "Google Agenda-ID",
             "garbage_calendar_id_help": "Je agenda-id bevindt zich in de agenda-instellingen",

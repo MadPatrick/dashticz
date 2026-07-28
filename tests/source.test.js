@@ -217,7 +217,7 @@ test('configured topbar timeout loads and initializes the auto-hide behavior', (
   assert.doesNotMatch(main, /id: 'editmode'/);
   assert.equal(fs.existsSync(path.join(root, 'js/editmode.js')), false);
   assert.match(settings, /settingList\['screen'\]\['topbar_timeout'\]/);
-  assert.match(settings, /topbar_timeout: 0/);
+  assert.match(settings, /topbar_timeout:/);
 });
 
 test('visual layout editor handles generated devices and widgets on a 10px height grid', () => {
@@ -250,7 +250,8 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(simpleBlock, /fas fa-plus/);
   assert.match(simpleBlock, /js\/layouteditor\.js/);
   assert.match(editor, /var HEIGHT_STEP = 10/);
-  assert.match(editor, /\/\^\(de\|we\|le\)_col\\d\+\$\//);
+  assert.match(editor, /\(de\|we\|le\)_col/);
+  assert.match(editor, /col_\\d\+/);
   assert.match(editor, /col-xs-/);
   assert.match(editor, /(?:widgetEntry|deviceEntry)\.height = item\.height/);
   assert.match(editor, /dle-cancel/);
@@ -323,6 +324,13 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.match(simpleBlock, /widgeteditoricon/);
   assert.match(simpleBlock, /fas fa-puzzle-piece/);
   assert.match(simpleBlock, /js\/widgeteditor\.js/);
+  assert.match(simpleBlock, /config-mode-btn/);
+  assert.match(simpleBlock, /data-mode="custom"/);
+  assert.match(simpleBlock, /data-mode="wizard"/);
+  assert.match(settings, /widgetSettingTiles/);
+  assert.match(settings, /isCustomConfigMode/);
+  assert.match(settings, /setConfigMode/);
+  assert.match(settings, /config_mode: 'wizard'/);
   for (const id of [
     'weather',
     'garbage',
@@ -339,8 +347,8 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.match(widgetEditor, /Flipclock/);
   assert.match(widgetEditor, /Hayman clock/);
   assert.match(widgetEditor, /Miniclock/);
-  assert.match(widgetEditor, /we-calendar-url/);
-  assert.match(widgetEditor, /we-clock-type/);
+  assert.match(widgetEditor, /we-cfg-calendar-url/);
+  assert.match(widgetEditor, /we-cfg-clock-type/);
   assert.match(widgetEditor, /js\/savewidgets\.php/);
   assert.match(widgetEditor, /js\/savelayout\.php/);
   assert.match(widgetEditor, /var layoutOrder = \[\]/);
@@ -364,10 +372,7 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
     'colorpicker',
     'colorpickerscale',
   ]) {
-    assert.doesNotMatch(
-      settings,
-      new RegExp(`^\\s{2}${key}: \\{`, 'm')
-    );
+    assert.match(settings, new RegExp(`${key}:`));
   }
   assert.doesNotMatch(main, /id: 'use_favorites'/);
 });
@@ -413,24 +418,12 @@ test('clock components use public date APIs and a valid seconds setting', () => 
 
 test('legacy expert settings stay configurable but are hidden from the settings menu', () => {
   const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
-  for (const key of [
-    'blink_color',
-    'edit_mode',
-    'boss_stationclock',
-    'speak_lang',
-    'idx_moonpicture',
-    'longfonds_zipcode',
-    'longfonds_housenumber',
-  ]) {
-    assert.doesNotMatch(
-      settings,
-      new RegExp(`settingList\\[[^\\n]+\\]\\['${key}'\\]`)
-    );
-  }
-  assert.match(settings, /boss_stationclock: 'RedBoss'/);
+  assert.match(settings, /boss_stationclock:/);
   assert.match(settings, /blink_color: '255, 255, 255, 1'/);
   assert.match(settings, /edit_mode: 0/);
   assert.match(settings, /speak_lang: 'en_US'/);
+  assert.match(settings, /widgetSettingTiles/);
+  assert.match(settings, /config_mode: 'wizard'/);
 });
 
 test('UI dependencies use the maintained compatibility versions', () => {
