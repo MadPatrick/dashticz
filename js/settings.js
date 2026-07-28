@@ -301,68 +301,10 @@ settingList['localize']['timeformat']['title'] =
   language.settings.localize.timeformat;
 settingList['localize']['timeformat']['type'] = 'text';
 
-settingList['localize']['calendarformat'] = {};
-settingList['localize']['calendarformat']['title'] =
-  language.settings.localize.calendarformat;
-settingList['localize']['calendarformat']['type'] = 'text';
-
-settingList['localize']['calendarlanguage'] = {};
-settingList['localize']['calendarlanguage']['title'] =
-  language.settings.localize.calendarlanguage;
-settingList['localize']['calendarlanguage']['type'] = 'select';
-settingList['localize']['calendarlanguage']['options'] = {};
-settingList['localize']['calendarlanguage']['options']['zh_CN'] =
-  language.settings.localize.cn;
-settingList['localize']['calendarlanguage']['options']['da_DK'] =
-  language.settings.localize.da;
-settingList['localize']['calendarlanguage']['options']['de_DE'] =
-  language.settings.localize.de;
-settingList['localize']['calendarlanguage']['options']['en_US'] =
-  language.settings.localize.en;
-settingList['localize']['calendarlanguage']['options']['es_ES'] =
-  language.settings.localize.es;
-settingList['localize']['calendarlanguage']['options']['fi_FI'] =
-  language.settings.localize.fi;
-settingList['localize']['calendarlanguage']['options']['fr_FR'] =
-  language.settings.localize.fr;
-settingList['localize']['calendarlanguage']['options']['hu_HU'] =
-  language.settings.localize.hu;
-settingList['localize']['calendarlanguage']['options']['it_IT'] =
-  language.settings.localize.it;
-settingList['localize']['calendarlanguage']['options']['ja_JP'] =
-  language.settings.localize.ja;
-settingList['localize']['calendarlanguage']['options']['lt_LT'] =
-  language.settings.localize.lt;
-settingList['localize']['calendarlanguage']['options']['nl_NL'] =
-  language.settings.localize.nl;
-settingList['localize']['calendarlanguage']['options']['nb_NO'] =
-  language.settings.localize.no;
-settingList['localize']['calendarlanguage']['options']['pl_PL'] =
-  language.settings.localize.pl;
-settingList['localize']['calendarlanguage']['options']['pt_PT'] =
-  language.settings.localize.pt;
-settingList['localize']['calendarlanguage']['options']['ro_RO'] =
-  language.settings.localize.ro;
-settingList['localize']['calendarlanguage']['options']['ru_RU'] =
-  language.settings.localize.ru;
-settingList['localize']['calendarlanguage']['options']['sk_SK'] =
-  language.settings.localize.sk;
-settingList['localize']['calendarlanguage']['options']['sl_SL'] =
-  language.settings.localize.sl;
-settingList['localize']['calendarlanguage']['options']['sv_SE'] =
-  language.settings.localize.sv;
-settingList['localize']['calendarlanguage']['options']['uk_UA'] =
-  language.settings.localize.uk;
-
-settingList['localize']['calendarurl'] = {};
-settingList['localize']['calendarurl']['title'] =
-  language.settings.localize.calendarurl;
-settingList['localize']['calendarurl']['type'] = 'text';
-
-/* Not used anymore
-settingList['localize']['calendar_parse_localy'] = {};
-settingList['localize']['calendar_parse_localy']['title'] = language.settings.localize.calendar_parse_localy;
-settingList['localize']['calendar_parse_localy']['type'] = 'checkbox';
+/* Moved to widget editor (calendar widget settings)
+settingList['localize']['calendarformat'] = ...
+settingList['localize']['calendarlanguage'] = ...
+settingList['localize']['calendarurl'] = ...
 */
 
 settingList['localize']['gm_api'] = {};

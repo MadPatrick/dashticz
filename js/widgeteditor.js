@@ -54,6 +54,30 @@ var DashticzWidgetEditor = (function () {
     },
   ];
 
+  var _CALENDAR_LANGUAGES = {
+    zh_CN: 'Chinese',
+    da_DK: 'Danish',
+    de_DE: 'Duits',
+    en_US: 'Engels',
+    es_ES: 'Spaans',
+    fi_FI: 'Fins',
+    fr_FR: 'Frans',
+    hu_HU: 'Hongaars',
+    it_IT: 'Italiaans',
+    ja_JP: 'Japans',
+    lt_LT: 'Litouws',
+    nl_NL: 'Nederlands',
+    nb_NO: 'Noors',
+    pl_PL: 'Pools',
+    pt_PT: 'Portugees',
+    ro_RO: 'Roemeens',
+    ru_RU: 'Russisch',
+    sk_SK: 'Slowaaks',
+    sl_SL: 'Sloveens',
+    sv_SE: 'Zweeds',
+    uk_UA: 'Oekraïens',
+  };
+
   var _GARBAGE_COMPANIES = {
     afvalinfo: '99% coverage in NL',
     afvalalert: 'Afval Alert (NL)',
@@ -182,6 +206,10 @@ var DashticzWidgetEditor = (function () {
       },
       spotify: {
         spot_clientid: _s('spot_clientid'),
+      },
+      calendar: {
+        calendarformat: _s('calendarformat', 'dd DD.MM HH:mm'),
+        calendarlanguage: _s('calendarlanguage', 'en_US'),
       },
     };
 
@@ -431,11 +459,14 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField('static_weathericons', lw.static_weathericons || 'Statische weericonen', 'checkbox', cfg.static_weathericons);
 
     } else if (item.id === 'calendar') {
+      var ccal = widgetConfigs.calendar || {};
       fields =
         '<div class="mb-3">' +
         '<label class="form-label we-field-label" for="we-cfg-calendar-url">ICS-URL</label>' +
         '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-calendar-url" ' +
         'placeholder="https://…/calendar.ics" value="' + _esc(calendarUrl) + '"></div>';
+      fields += _cfgField('calendarformat', ll.calendarformat || 'Kalender weergave', 'text', ccal.calendarformat);
+      fields += _cfgField('calendarlanguage', ll.calendarlanguage || 'Taal van kalender', 'select', ccal.calendarlanguage, _CALENDAR_LANGUAGES);
 
     } else if (item.id === 'clock') {
       var ccfg = widgetConfigs.clock || {};
@@ -545,6 +576,7 @@ var DashticzWidgetEditor = (function () {
           valid = false;
         } else {
           calendarUrl = url;
+          widgetConfigs.calendar = collected;
         }
       } else if (widgetId === 'clock') {
         clockType = $('#we-cfg-clock-type').val() || 'basicclock';
@@ -649,7 +681,7 @@ var DashticzWidgetEditor = (function () {
 
     // Collect flattened config settings from all widget configs
     var configSettings = {};
-    var configWidgets = ['weather', 'clock', 'garbage', 'sonarr', 'spotify'];
+    var configWidgets = ['weather', 'clock', 'garbage', 'sonarr', 'spotify', 'calendar'];
     configWidgets.forEach(function (id) {
       if (widgetConfigs[id]) {
         var cfg = widgetConfigs[id];

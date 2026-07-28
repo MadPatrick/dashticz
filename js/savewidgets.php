@@ -67,6 +67,9 @@ $allowedSettings = [
     'sonarr_maxitems'        => 'number',
     // spotify
     'spot_clientid'          => 'string',
+    // calendar
+    'calendarformat'         => 'string',
+    'calendarlanguage'       => 'calendar_language',
 ];
 
 $allowedGarbageCompanies = [
@@ -76,6 +79,12 @@ $allowedGarbageCompanies = [
     'groningen','hvc','ical','katwijk','maashorst','meerlanden','mijnafvalwijzer',
     'omrin','purmerend','rd4','recycleapp','rmn','rova','sudwestfryslan','suez',
     'twentemilieu','uden','veldhoven','venlo','venray','vianen','waalre','waardlanden',
+];
+
+$allowedCalendarLanguages = [
+    'zh_CN','da_DK','de_DE','en_US','es_ES','fi_FI','fr_FR','hu_HU','it_IT',
+    'ja_JP','lt_LT','nl_NL','nb_NO','pl_PL','pt_PT','ro_RO','ru_RU','sk_SK',
+    'sl_SL','sv_SE','uk_UA',
 ];
 
 // Process optional config settings
@@ -95,6 +104,10 @@ if (isset($data['settings']) && is_array($data['settings'])) {
             }
         } elseif ($type === 'garbage_company') {
             if (in_array((string)$value, $allowedGarbageCompanies, true)) {
+                $configSettings[$key] = (string)$value;
+            }
+        } elseif ($type === 'calendar_language') {
+            if (in_array((string)$value, $allowedCalendarLanguages, true)) {
                 $configSettings[$key] = (string)$value;
             }
         } else {
