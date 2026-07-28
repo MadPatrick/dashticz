@@ -261,6 +261,10 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(editor, /js\/savewidgets\.php/);
   assert.match(editor, /js\/savelayout\.php/);
   assert.match(editor, /widgetResult\.blockKeys/);
+  assert.match(editor, /widget_alarmmeldingen: 'alarmmeldingen'/);
+  assert.match(editor, /widgets\.push\(_widgetPayload\(item\)\)/);
+  assert.match(editor, /definition\.rss \|\| 'https:\/\/www\.alarmeringen\.nl\/feeds\/all\.rss'/);
+  assert.match(editor, /if \(definition\.filter\) entry\.filter = definition\.filter/);
   assert.match(editor, /_startDrag\(event, item, \$canvas\[0\]\)/);
   assert.match(editor, /\$\(item\.visibleBlocks\)[\s\S]*children\('\.dle-overlay'\)/);
   assert.match(editor, /appendChild\(item\.wrapper\)/);
@@ -279,6 +283,8 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(deviceEditor, /screens\[1\]\.columns/);
   assert.match(deviceEditor, /\$activeScreen\.find\('\[data-colindex\]'\)/);
   assert.match(deviceEditor, /function _widgetFromReference/);
+  assert.match(deviceEditor, /widget_alarmmeldingen: \{ id: 'alarmmeldingen', title: '112' \}/);
+  assert.match(deviceEditor, /return _widgetPayload\(orderKey\)/);
   assert.match(deviceEditor, /Widget - /);
   assert.match(deviceEditor, /var managedOrder/);
   assert.match(deviceEditor, /js\/savewidgets\.php/);
@@ -425,7 +431,9 @@ test('clock components use public date APIs and a valid seconds setting', () => 
   assert.doesNotMatch(dateTime, /dayjs\.Ls/);
   assert.match(basicClock, /maxFontSize: 42/);
   assert.match(basicClock, /Math\.min\(fontSize, me\.block\.maxFontSize\)/);
-  assert.match(stationClock, /maxSize: 160/);
+  assert.match(stationClock, /function clockFitSize/);
+  assert.match(stationClock, /if \(me\.block\.maxSize\)/);
+  assert.match(stationClock, /var width = clockFitSize\(me, 120\)/);
   assert.match(flipClock, /minEmSize: 3\.5/);
   assert.match(flipClock, /maxEmSize: 7/);
   assert.match(flipClock, /FlipClock\(\$content, 0,/);
@@ -506,9 +514,9 @@ test('modern dark theme is portable and documented', () => {
   assert.match(theme, /--main-bg/);
   assert.match(theme, /--main-border-width: 1px/);
   assert.match(theme, /--block-gap: 3px/);
-  assert.match(theme, /--border-color-inactive: rgb\(42, 94, 151\)/);
-  assert.match(theme, /--border-color-active: rgb\(112, 160, 218\)/);
-  assert.match(theme, /--border-color-block: var\(--border-color-active\)/);
+  assert.match(theme, /--border-color-inactive: rgba\(42, 94, 151, \.5\)/);
+  assert.match(theme, /--border-color-active: rgba\(112, 160, 218, \.5\)/);
+  assert.match(theme, /--border-color-block: rgba\(112, 160, 218, \.2\)/);
   assert.match(theme, /--border-color-selector: var\(--border-color-inactive\)/);
   assert.match(theme, /border: var\(--block-gap\) solid transparent !important/);
   assert.match(theme, /inset 0 0 0 var\(--main-border-width\) var\(--border-color-block\)/);
