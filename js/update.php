@@ -132,9 +132,19 @@ function dashticz_git_preferred_remote($git, $repoRoot)
 
 /**
  * Run one Git command with argument arrays (no shell interpolation).
+ *
+ * When running inside the Dashticz checkout, pass -c safe.directory=<cwd> so
+ * Git accepts the repo even if the web-server user does not own the files
+ * (common with Docker / www-data vs root installs). Without this, fetch fails
+ * with "detected dubious ownership in repository".
  */
 function dashticz_run_git_command(array $command, $cwd)
 {
+    if ($cwd !== null && isset($command[0])) {
+        $safeDirectory = str_replace('\\', '/', $cwd);
+        array_splice($command, 1, 0, ['-c', 'safe.directory=' . $safeDirectory]);
+    }
+
     $descriptors = [
         0 => ['pipe', 'r'],
         1 => ['pipe', 'w'],
