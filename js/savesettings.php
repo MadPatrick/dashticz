@@ -42,11 +42,18 @@ if (file_exists($configPath)) {
         $before = substr($config, 0, $markerPosition);
         $conf = substr($config, $markerPosition + strlen($marker));
         $rows = preg_split('/\r\n|\r|\n/', $conf);
+        $inWidgetEditorSection = false;
         foreach ($rows as $index => $row) {
-            if (substr($row, 0, 17) !== "config['garbage']") {
+            if (strpos($row, '// [widget-editor-start]') !== false) {
+                $inWidgetEditorSection = true;
+            }
+            if (!$inWidgetEditorSection && substr($row, 0, 17) !== "config['garbage']") {
                 if (substr($row, 0, 6) === 'config' || substr($row, 0, 8) === '//config') {
                     unset($rows[$index]);
                 }
+            }
+            if (strpos($row, '// [widget-editor-end]') !== false) {
+                $inWidgetEditorSection = false;
             }
         }
     }

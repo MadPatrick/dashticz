@@ -301,84 +301,11 @@ settingList['localize']['timeformat']['title'] =
   language.settings.localize.timeformat;
 settingList['localize']['timeformat']['type'] = 'text';
 
-settingList['localize']['calendarformat'] = {};
-settingList['localize']['calendarformat']['title'] =
-  language.settings.localize.calendarformat;
-settingList['localize']['calendarformat']['type'] = 'text';
-
-settingList['localize']['calendarlanguage'] = {};
-settingList['localize']['calendarlanguage']['title'] =
-  language.settings.localize.calendarlanguage;
-settingList['localize']['calendarlanguage']['type'] = 'select';
-settingList['localize']['calendarlanguage']['options'] = {};
-settingList['localize']['calendarlanguage']['options']['zh_CN'] =
-  language.settings.localize.cn;
-settingList['localize']['calendarlanguage']['options']['da_DK'] =
-  language.settings.localize.da;
-settingList['localize']['calendarlanguage']['options']['de_DE'] =
-  language.settings.localize.de;
-settingList['localize']['calendarlanguage']['options']['en_US'] =
-  language.settings.localize.en;
-settingList['localize']['calendarlanguage']['options']['es_ES'] =
-  language.settings.localize.es;
-settingList['localize']['calendarlanguage']['options']['fi_FI'] =
-  language.settings.localize.fi;
-settingList['localize']['calendarlanguage']['options']['fr_FR'] =
-  language.settings.localize.fr;
-settingList['localize']['calendarlanguage']['options']['hu_HU'] =
-  language.settings.localize.hu;
-settingList['localize']['calendarlanguage']['options']['it_IT'] =
-  language.settings.localize.it;
-settingList['localize']['calendarlanguage']['options']['ja_JP'] =
-  language.settings.localize.ja;
-settingList['localize']['calendarlanguage']['options']['lt_LT'] =
-  language.settings.localize.lt;
-settingList['localize']['calendarlanguage']['options']['nl_NL'] =
-  language.settings.localize.nl;
-settingList['localize']['calendarlanguage']['options']['nb_NO'] =
-  language.settings.localize.no;
-settingList['localize']['calendarlanguage']['options']['pl_PL'] =
-  language.settings.localize.pl;
-settingList['localize']['calendarlanguage']['options']['pt_PT'] =
-  language.settings.localize.pt;
-settingList['localize']['calendarlanguage']['options']['ro_RO'] =
-  language.settings.localize.ro;
-settingList['localize']['calendarlanguage']['options']['ru_RU'] =
-  language.settings.localize.ru;
-settingList['localize']['calendarlanguage']['options']['sk_SK'] =
-  language.settings.localize.sk;
-settingList['localize']['calendarlanguage']['options']['sl_SL'] =
-  language.settings.localize.sl;
-settingList['localize']['calendarlanguage']['options']['sv_SE'] =
-  language.settings.localize.sv;
-settingList['localize']['calendarlanguage']['options']['uk_UA'] =
-  language.settings.localize.uk;
-
-settingList['localize']['calendarurl'] = {};
-settingList['localize']['calendarurl']['title'] =
-  language.settings.localize.calendarurl;
-settingList['localize']['calendarurl']['type'] = 'text';
-
-/* Not used anymore
-settingList['localize']['calendar_parse_localy'] = {};
-settingList['localize']['calendar_parse_localy']['title'] = language.settings.localize.calendar_parse_localy;
-settingList['localize']['calendar_parse_localy']['type'] = 'checkbox';
+/* Moved to widget editor (calendar widget settings)
+settingList['localize']['calendarformat'] = ...
+settingList['localize']['calendarlanguage'] = ...
+settingList['localize']['calendarurl'] = ...
 */
-
-settingList['localize']['hide_seconds'] = {};
-settingList['localize']['hide_seconds']['title'] =
-  language.settings.localize.hide_seconds;
-settingList['localize']['hide_seconds']['type'] = 'checkbox';
-
-settingList['localize']['hide_seconds_stationclock'] = {};
-settingList['localize']['hide_seconds_stationclock']['title'] =
-  language.settings.localize.hide_seconds_stationclock;
-settingList['localize']['hide_seconds_stationclock']['type'] = 'checkbox';
-
-settingList['localize']['boss_stationclock'] = {};
-settingList['localize']['boss_stationclock']['title'] =
-  language.settings.localize.boss_stationclock;
-settingList['localize']['boss_stationclock']['type'] = 'text';
 
 settingList['localize']['gm_api'] = {};
 settingList['localize']['gm_api']['title'] = language.settings.localize.gm_api;
@@ -421,111 +348,6 @@ settingList['localize']['speak_lang']['options']['pl-PL'] =
 settingList['localize']['speak_lang']['options']['ru-RU'] =
   language.settings.localize.ru;
 
-settingList['weather'] = {};
-settingList['weather']['title'] = language.settings.weather.title;
-
-settingList['weather']['wu_api'] = {};
-settingList['weather']['wu_api']['title'] = language.settings.weather.wu_api;
-settingList['weather']['wu_api']['type'] = 'text';
-
-settingList['weather']['wu_city'] = {};
-settingList['weather']['wu_city']['title'] = language.settings.weather.wu_city;
-settingList['weather']['wu_city']['type'] = 'text';
-
-settingList['weather']['wu_name'] = {};
-settingList['weather']['wu_name']['title'] = language.settings.weather.wu_name;
-settingList['weather']['wu_name']['type'] = 'text';
-
-settingList['weather']['wu_country'] = {};
-settingList['weather']['wu_country']['title'] =
-  language.settings.weather.wu_country;
-settingList['weather']['wu_country']['type'] = 'text';
-
-settingList['weather']['owm_api'] = {};
-settingList['weather']['owm_api']['title'] = language.settings.weather.owm_api;
-settingList['weather']['owm_api']['type'] = 'text';
-
-settingList['weather']['owm_city'] = {};
-settingList['weather']['owm_city']['title'] =
-  language.settings.weather.owm_city;
-settingList['weather']['owm_city']['type'] = 'text';
-
-settingList['weather']['owm_name'] = {};
-settingList['weather']['owm_name']['title'] =
-  language.settings.weather.owm_name;
-settingList['weather']['owm_name']['type'] = 'text';
-
-settingList['weather']['owm_country'] = {};
-settingList['weather']['owm_country']['title'] =
-  language.settings.weather.owm_country;
-settingList['weather']['owm_country']['type'] = 'text';
-
-settingList['weather']['owm_lang'] = {};
-settingList['weather']['owm_lang']['title'] =
-  language.settings.weather.owm_lang;
-settingList['weather']['owm_lang']['type'] = 'text';
-settingList['weather']['owm_lang']['help'] =
-  language.settings.weather.owm_lang_help;
-
-settingList['weather']['owm_days'] = {};
-settingList['weather']['owm_days']['title'] =
-  language.settings.weather.owm_days;
-settingList['weather']['owm_days']['type'] = 'checkbox';
-settingList['weather']['owm_days']['help'] =
-  language.settings.weather.owm_days_help;
-
-settingList['weather']['owm_cnt'] = {};
-settingList['weather']['owm_cnt']['title'] = language.settings.weather.owm_cnt;
-settingList['weather']['owm_cnt']['type'] = 'text';
-settingList['weather']['owm_cnt']['help'] =
-  language.settings.weather.owm_cnt_help;
-
-settingList['weather']['owm_min'] = {};
-settingList['weather']['owm_min']['title'] = language.settings.weather.owm_min;
-settingList['weather']['owm_min']['type'] = 'checkbox';
-settingList['weather']['owm_min']['help'] =
-  language.settings.weather.owm_min_help;
-
-settingList['weather']['use_fahrenheit'] = {};
-settingList['weather']['use_fahrenheit']['title'] =
-  language.settings.weather.use_fahrenheit;
-settingList['weather']['use_fahrenheit']['type'] = 'checkbox';
-
-settingList['weather']['use_beaufort'] = {};
-settingList['weather']['use_beaufort']['title'] =
-  language.settings.weather.use_beaufort;
-settingList['weather']['use_beaufort']['type'] = 'checkbox';
-
-settingList['weather']['translate_windspeed'] = {};
-settingList['weather']['translate_windspeed']['title'] =
-  language.settings.weather.translate_windspeed;
-settingList['weather']['translate_windspeed']['type'] = 'checkbox';
-settingList['weather']['translate_windspeed']['help'] =
-  language.settings.weather.translate_windspeed_help;
-
-settingList['weather']['static_weathericons'] = {};
-settingList['weather']['static_weathericons']['title'] =
-  language.settings.weather.static_weathericons;
-settingList['weather']['static_weathericons']['type'] = 'checkbox';
-
-settingList['weather']['idx_moonpicture'] = {};
-settingList['weather']['idx_moonpicture']['title'] =
-  language.settings.weather.idx_moonpicture;
-settingList['weather']['idx_moonpicture']['type'] = 'text';
-settingList['weather']['idx_moonpicture']['help'] =
-  language.settings.weather.idx_moonpicture_help;
-
-settingList['weather']['longfonds_zipcode'] = {};
-settingList['weather']['longfonds_zipcode'] = {
-  title: language.settings.weather.longfonds_zipcode,
-  type: 'text',
-};
-settingList['weather']['longfonds_housenumber'] = {};
-settingList['weather']['longfonds_housenumber'] = {
-  title: language.settings.weather.longfonds_housenumber,
-  type: 'text',
-};
-
 settingList['media'] = {};
 settingList['media']['title'] = language.settings.media.title;
 
@@ -543,165 +365,10 @@ settingList['media']['host_nzbget']['type'] = 'text';
 settingList['media']['host_nzbget']['help'] =
   language.settings.media.host_nzbget_help;
 
-settingList['media']['spot_clientid'] = {};
-settingList['media']['spot_clientid']['title'] =
-  language.settings.media.spot_clientid;
-settingList['media']['spot_clientid']['type'] = 'text';
-
-settingList['media']['sonarr_url'] = {};
-settingList['media']['sonarr_url']['title'] =
-  language.settings.media.sonarr_url;
-settingList['media']['sonarr_url']['type'] = 'text';
-
-settingList['media']['sonarr_apikey'] = {};
-settingList['media']['sonarr_apikey']['title'] =
-  language.settings.media.sonarr_apikey;
-settingList['media']['sonarr_apikey']['type'] = 'text';
-
-settingList['media']['sonarr_maxitems'] = {};
-settingList['media']['sonarr_maxitems']['title'] =
-  language.settings.media.sonarr_maxitems;
-settingList['media']['sonarr_maxitems']['type'] = 'text';
-
 settingList['media']['hide_mediaplayer'] = {};
 settingList['media']['hide_mediaplayer']['title'] =
   language.settings.media.hide_mediaplayer;
 settingList['media']['hide_mediaplayer']['type'] = 'checkbox';
-
-settingList.garbage = {
-  title: language.settings.garbage.title,
-  garbage_company: {
-    title: language.settings.garbage.garbage_company,
-    type: 'select',
-    options: {
-      afvalinfo:'99% coverage in NL',
-      afvalalert: 'Afval Alert (NL)',
-      afvalstoffendienst:
-        'Afvalstoffendienst: Hertogenbosch, Vlijmen, ... (NL)',
-      almere: 'Almere',
-      alphenaandenrijn: 'Alphen aan de Rijn (NL)',
-      area: 'Area',
-      avalex: 'Avalex (NL)',
-      avri: 'Rivierenland (Zaltbommel, ...)(NL)',
-      barafvalbeheer: 'Bar-afvalbeheer (Barendrecht, Rhoon)(NL)',
-      best: 'Best (NL)',
-      blink:
-        'Blink: Asten, Deurne, Gemert-Bakel, Heeze-Leende, Helmond, Laarbeek, Nuenen, Someren (NL)',
-      circulusberkel: 'Circulus Berkel (NL)',
-      cure: 'Cure: Eindhoven, Geldrop-Mierlo, Valkenswaard (NL)',
-      cyclusnv:
-        'Cyclus NV: Bodegraven-Reeuwijk, Gouda, Kaag en Braassem, Krimpen aan den IJssel, Krimpenerwaard, Montfoort, Nieuwkoop, Waddinxveen en Zuidplas (NL)',
-      dar:
-        'Dar: Berg en Dal, Beuningen, Druten, Heumen, Nijmegen, Wijchen (NL)',
-      deafvalapp: 'Afval App (NL)',
-      edg: 'EDG (DE)',
-      gad: 'Grondstoffen- en Afvalstoffendienst regio Gooi en Vechtstreek (NL)',
-      gemeenteberkelland: 'Berkelland: Borculo, Eibergen, Neede en Ruurlo (NL)',
-      goes: 'Goes (NL)',
-      googlecalendar: 'Google Calender',
-      groningen: 'Groningen (NL)',
-      hvc: 'HVC Groep (NL)',
-      ical: 'iCal',
-      katwijk: 'Katwijk (NL)',
-      maashorst: 'Maashorst (NL)',
-      meerlanden: 'Meerlanden (NL)',
-      mijnafvalwijzer: 'Mijn Afval Wijzer (NL)',
-      omrin: 'Omrin (NL)',
-      purmerend: 'Purmerend',
-      rd4: 'Rd4',
-      recycleapp: 'RecycleApp (BE)',
-      rmn: 'RMN (NL)',
-      rova: 'Rova (NL)',
-      sudwestfryslan: 'Sudwest Fryslan (NL)',
-      suez: 'Suez: Arnhem (NL)',
-      twentemilieu: 'Twente Milieu (NL)',
-      uden: 'Uden (NL)',
-      veldhoven: 'Veldhoven (NL)',
-      venlo: 'Venlo (NL)',
-      venray: 'Venray (NL)',
-      vianen: 'Vianen (NL)',
-      waalre: 'Waalre (NL)',
-      waardlanden:
-        'Waardlanden: Gorinchem, Hardinxveld-Giessendam, Molenlanden en Vijfheerenlanden (NL)',
-    },
-  },
-};
-
-settingList['garbage']['garbage_icalurl'] = {};
-settingList['garbage']['garbage_icalurl']['title'] =
-  language.settings.garbage.garbage_icalurl;
-settingList['garbage']['garbage_icalurl']['type'] = 'text';
-
-settingList['garbage']['google_api_key'] = {};
-settingList['garbage']['google_api_key']['title'] =
-  language.settings.garbage.google_api_key;
-settingList['garbage']['google_api_key']['type'] = 'text';
-settingList['garbage']['google_api_key']['help'] =
-  language.settings.garbage.google_api_key_help;
-
-settingList['garbage']['garbage_calendar_id'] = {};
-settingList['garbage']['garbage_calendar_id']['title'] =
-  language.settings.garbage.garbage_calendar_id;
-settingList['garbage']['garbage_calendar_id']['type'] = 'text';
-settingList['garbage']['garbage_calendar_id']['help'] =
-  language.settings.garbage.garbage_calendar_id_help;
-
-settingList['garbage']['garbage_zipcode'] = {};
-settingList['garbage']['garbage_zipcode']['title'] =
-  language.settings.garbage.garbage_zipcode;
-settingList['garbage']['garbage_zipcode']['type'] = 'text';
-
-settingList['garbage']['garbage_street'] = {};
-settingList['garbage']['garbage_street']['title'] =
-  language.settings.garbage.garbage_street;
-settingList['garbage']['garbage_street']['type'] = 'text';
-
-settingList['garbage']['garbage_housenumber'] = {};
-settingList['garbage']['garbage_housenumber']['title'] =
-  language.settings.garbage.garbage_housenumber;
-settingList['garbage']['garbage_housenumber']['type'] = 'text';
-
-settingList['garbage']['garbage_housenumberadd'] = {};
-settingList['garbage']['garbage_housenumberadd']['title'] =
-  language.settings.garbage.garbage_housenumberaddition;
-settingList['garbage']['garbage_housenumberadd']['type'] = 'text';
-
-settingList['garbage']['garbage_maxitems'] = {};
-settingList['garbage']['garbage_maxitems']['title'] =
-  language.settings.garbage.garbage_maxitems;
-settingList['garbage']['garbage_maxitems']['type'] = 'text';
-
-settingList['garbage']['garbage_width'] = {};
-settingList['garbage']['garbage_width']['title'] =
-  language.settings.garbage.garbage_width;
-settingList['garbage']['garbage_width']['type'] = 'text';
-
-settingList['garbage']['garbage_hideicon'] = {};
-settingList['garbage']['garbage_hideicon']['title'] =
-  language.settings.garbage.garbage_hideicon;
-settingList['garbage']['garbage_hideicon']['type'] = 'checkbox';
-
-settingList['garbage']['garbage_icon_use_colors'] = {};
-settingList['garbage']['garbage_icon_use_colors']['title'] =
-  language.settings.garbage.garbage_icon_use_colors;
-settingList['garbage']['garbage_icon_use_colors']['type'] = 'checkbox';
-
-settingList['garbage']['garbage_use_colors'] = {};
-settingList['garbage']['garbage_use_colors']['title'] =
-  language.settings.garbage.garbage_use_colors;
-settingList['garbage']['garbage_use_colors']['type'] = 'checkbox';
-
-settingList['garbage']['garbage_use_names'] = {};
-settingList['garbage']['garbage_use_names']['title'] =
-  language.settings.garbage.garbage_use_names;
-settingList['garbage']['garbage_use_names']['type'] = 'checkbox';
-
-settingList['garbage']['garbage_use_cors_prefix'] = {};
-settingList['garbage']['garbage_use_cors_prefix']['title'] =
-  language.settings.garbage.garbage_use_cors_prefix;
-settingList['garbage']['garbage_use_cors_prefix']['type'] = 'checkbox';
-settingList['garbage']['garbage_use_cors_prefix']['help'] =
-  language.settings.garbage.garbage_use_prefix_help;
 
 settingList['other'] = {};
 settingList['other']['title'] = language.settings.other.title;
@@ -730,6 +397,22 @@ settingList['other']['evohome_boost_hw'] = {};
 settingList['other']['evohome_boost_hw']['title'] =
   language.settings.other.evohome_boost_hw;
 settingList['other']['evohome_boost_hw']['type'] = 'text';
+
+settingList['other']['idx_moonpicture'] = {};
+settingList['other']['idx_moonpicture']['title'] =
+  language.settings.weather.idx_moonpicture;
+settingList['other']['idx_moonpicture']['type'] = 'text';
+settingList['other']['idx_moonpicture']['help'] =
+  language.settings.weather.idx_moonpicture_help;
+
+settingList['other']['longfonds_zipcode'] = {
+  title: language.settings.weather.longfonds_zipcode,
+  type: 'text',
+};
+settingList['other']['longfonds_housenumber'] = {
+  title: language.settings.weather.longfonds_housenumber,
+  type: 'text',
+};
 
 settingList['about'] = {};
 settingList['about']['title'] = language.settings.about.title;
@@ -786,7 +469,7 @@ var defaultSettings = {
   auto_slide_pages: 0,
   start_page: 1,
   auto_positioning: 0,
-  topbar_timeout: 0,
+  topbar_timeout: 5,
   use_favorites: 0,
   use_hidden: 0,
   translate_windspeed: 1,
