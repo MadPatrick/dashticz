@@ -343,40 +343,6 @@ next css sets the default height of the frame popup
   background: #eef1f4;
 }
 
-.settings-tabs {
-  display: flex;
-  flex: 1 1 auto;
-  flex-wrap: nowrap;
-  gap: 3px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.settings-tabs .nav-link {
-  padding: 7px;
-  border: 0;
-  border-radius: 6px;
-  color: #343a40;
-  background: rgba(255, 255, 255, .7);
-  font-size: 15px;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.settings-tabs .nav-link:hover,
-.settings-tabs .nav-link:focus-visible {
-  color: #000;
-  background: #e2e6ea;
-}
-
-.settings-tabs .nav-link.active {
-  color: #fff;
-  background: #495057;
-}
-
 .settings-brand {
   display: flex;
   flex: 0 0 auto;
@@ -398,18 +364,14 @@ next css sets the default height of the frame popup
   padding-top: 14px;
 }
 
-.settings-widgets-intro {
-  margin: 0 0 14px;
-  color: #495057;
-  font-size: 14px;
-}
-
+.settings-tiles,
 .settings-widget-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 12px;
 }
 
+.settings-tile,
 .settings-widget-tile {
   display: flex;
   flex-direction: column;
@@ -426,6 +388,8 @@ next css sets the default height of the frame popup
   transition: background .15s ease, border-color .15s ease, transform .15s ease;
 }
 
+.settings-tile:hover,
+.settings-tile:focus-visible,
 .settings-widget-tile:hover,
 .settings-widget-tile:focus-visible {
   background: #fff;
@@ -434,19 +398,30 @@ next css sets the default height of the frame popup
   transform: translateY(-1px);
 }
 
+.settings-tile i,
 .settings-widget-tile i {
   font-size: 28px;
   color: #495057;
 }
 
+.settings-tile span,
 .settings-widget-tile span {
   font-size: 14px;
   font-weight: 600;
+  text-align: center;
 }
 
+.settings-panel-title,
 .settings-widget-panel-title {
   margin: 0 0 14px;
   font-size: 18px;
+}
+
+.settings-intro,
+.settings-widgets-intro {
+  margin: 0 0 14px;
+  color: #495057;
+  font-size: 14px;
 }
 
 .config-mode-switch {

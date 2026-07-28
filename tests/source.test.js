@@ -538,19 +538,22 @@ test('settings modal uses compact Bootstrap 5 controls and aligned help icons', 
 
   assert.match(settings, /class="settings-row"/);
   assert.match(settings, /form-check form-switch settings-switch/);
-  assert.match(settings, /data-bs-toggle="pill"/);
+  assert.match(settings, /class="settings-tile"/);
+  assert.match(settings, /settings-category-tiles/);
   assert.match(settings, /class="settings-brand"/);
   assert.match(settings, /img\/favicon\/app-icon-192x192\.png/);
   assert.match(settings, /window\.bootstrap\.Tooltip/);
   assert.match(settings, /data-bs-trigger="click"/);
   assert.match(settings, /data-bs-custom-class="settings-tooltip"/);
   assert.doesNotMatch(settings, /material-switch/);
+  assert.doesNotMatch(settings, /data-bs-toggle="pill"/);
 
   assert.match(simpleblock, /data-bs-target="#settingspopup"/);
   assert.doesNotMatch(simpleblock, /\sdata-target="#settingspopup"/);
 
   assert.match(styles, /\.settings-row\s*\{/);
   assert.match(styles, /grid-template-columns:/);
+  assert.match(styles, /\.settings-tile(?:,\s*\.settings-widget-tile)?\s*\{/);
   assert.match(styles, /\.settings-switch \.form-check-input/);
   assert.match(styles, /width: 38px;/);
   assert.match(styles, /height: 20px;/);

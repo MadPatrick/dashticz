@@ -49,6 +49,8 @@
         "blocksave": "Save the code below to your CONFIG.js to apply the changes. Reload Dashticz afterwards.",
         "close": "Close",
         "close_reload": "Close and reload!",
+        "back": "Back",
+        "choose": "Choose a category to configure.",
         "config_mode": {
             "custom": "Custom",
             "wizard": "Wizard"

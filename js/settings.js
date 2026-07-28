@@ -568,6 +568,16 @@ function isCustomConfigMode() {
   return String(settings['config_mode'] || 'wizard').toLowerCase() === 'custom';
 }
 
+var settingsCategoryIcons = {
+  general: 'fas fa-sliders-h',
+  screen: 'fas fa-desktop',
+  localize: 'fas fa-globe',
+  media: 'fas fa-film',
+  widgets: 'fas fa-puzzle-piece',
+  other: 'fas fa-ellipsis-h',
+  about: 'fas fa-info-circle',
+};
+
 settingList['other'] = {};
 settingList['other']['title'] = language.settings.other.title;
 
@@ -993,74 +1003,17 @@ function loadSettings() {
       html +=
         '<h2 class="visually-hidden" id="settings-title">Dashticz settings</h2>';
       html += '<div class="settings-header">';
-
-      html += '<ul class="nav nav-pills settings-tabs" role="tablist">';
-      var first = true;
-      var tabs = [];
-      for (var settingGroup in settingList) {
-        tabs.push(settingGroup);
-      }
-      if (isCustomConfigMode()) {
-        tabs.splice(Math.min(1, tabs.length), 0, 'widgets');
-      }
-      for (var ti = 0; ti < tabs.length; ti++) {
-        var b = tabs[ti];
-        var tabTitle =
-          b === 'widgets'
-            ? (language.settings.widgets && language.settings.widgets.title) ||
-              'Widgets'
-            : settingList[b]['title'];
-        html +=
-          '<li class="nav-item" role="presentation"><button class="nav-link' +
-          (first ? ' active' : '') +
-          '" id="settings-tab-' +
-          b +
-          '" data-bs-toggle="pill" data-bs-target="#tabs-' +
-          b +
-          '" type="button" role="tab" aria-controls="tabs-' +
-          b +
-          '" aria-selected="' +
-          (first ? 'true' : 'false') +
-          '">' +
-          escapeSettingsHtml(tabTitle) +
-          '</button></li>';
-        first = false;
-      }
-      html += '</ul>';
       html +=
         '<div class="settings-brand"><img src="img/favicon/app-icon-192x192.png" ' +
         'width="38" height="38" alt=""><span>Dashticz</span></div>';
       html += '</div>';
 
-      html += '<div class="tab-content settings-tab-content">';
+      html += '<div class="settings-tab-content">';
       html +=
         '<input type="hidden" name="config_mode" value="' +
         escapeSettingsHtml(settings['config_mode'] || 'wizard') +
         '">';
-
-      first = true;
-      for (ti = 0; ti < tabs.length; ti++) {
-        b = tabs[ti];
-        html +=
-          '<div class="tab-pane fade' +
-          (first ? ' show active' : '') +
-          '" id="tabs-' +
-          b +
-          '" role="tabpanel" aria-labelledby="settings-tab-' +
-          b +
-          '" tabindex="0">';
-        if (b === 'widgets') {
-          html += renderWidgetSettingsTab();
-        } else {
-          for (var s in settingList[b]) {
-            if (s !== 'title') {
-              html += renderSettingsRow(s, settingList[b][s]);
-            }
-          }
-        }
-        html += '</div>';
-        first = false;
-      }
+      html += renderSettingsCategoryHome();
       html += '</div>';
       html += '</div><div class="modal-footer">';
       html +=
@@ -1083,7 +1036,7 @@ function loadSettings() {
         $('body').append(html);
 
         addSettingsAboutItems();
-        bindWidgetSettingsTiles();
+        bindSettingsCategoryTiles();
 
         $('#php_version').html(phpversion);
 
@@ -1096,20 +1049,110 @@ function loadSettings() {
     });
 }
 
+function getSettingsCategories() {
+  var tabs = [];
+  for (var settingGroup in settingList) {
+    tabs.push(settingGroup);
+  }
+  if (isCustomConfigMode()) {
+    tabs.splice(Math.min(1, tabs.length), 0, 'widgets');
+  }
+  return tabs;
+}
+
+function getSettingsCategoryTitle(id) {
+  if (id === 'widgets') {
+    return (
+      (language.settings.widgets && language.settings.widgets.title) || 'Widgets'
+    );
+  }
+  return settingList[id] && settingList[id].title
+    ? settingList[id].title
+    : id;
+}
+
+function renderSettingsCategoryHome() {
+  var backLabel = language.settings.back || 'Back';
+  var chooseLabel =
+    language.settings.choose || 'Choose a category to configure.';
+  var tabs = getSettingsCategories();
+  var html =
+    '<div id="settings-home">' +
+    '<p class="settings-intro">' +
+    escapeSettingsHtml(chooseLabel) +
+    '</p>' +
+    '<div class="settings-tiles" id="settings-category-tiles">';
+
+  for (var ti = 0; ti < tabs.length; ti++) {
+    var id = tabs[ti];
+    var title = getSettingsCategoryTitle(id);
+    var icon = settingsCategoryIcons[id] || 'fas fa-cog';
+    html +=
+      '<button type="button" class="settings-tile" data-settings-category="' +
+      escapeSettingsHtml(id) +
+      '">' +
+      '<i class="' +
+      escapeSettingsHtml(icon) +
+      '" aria-hidden="true"></i>' +
+      '<span>' +
+      escapeSettingsHtml(title) +
+      '</span></button>';
+  }
+  html += '</div></div>';
+
+  for (ti = 0; ti < tabs.length; ti++) {
+    id = tabs[ti];
+    title = getSettingsCategoryTitle(id);
+    icon = settingsCategoryIcons[id] || 'fas fa-cog';
+    html +=
+      '<div class="settings-category-panel d-none" id="settings-category-' +
+      escapeSettingsHtml(id) +
+      '" data-settings-panel="' +
+      escapeSettingsHtml(id) +
+      '">';
+    html +=
+      '<button type="button" class="btn btn-sm btn-outline-secondary settings-category-back mb-3">' +
+      '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' +
+      escapeSettingsHtml(backLabel) +
+      '</button>';
+    html +=
+      '<h5 class="settings-panel-title"><i class="' +
+      escapeSettingsHtml(icon) +
+      ' me-2" aria-hidden="true"></i>' +
+      escapeSettingsHtml(title) +
+      '</h5>';
+    if (id === 'widgets') {
+      html += renderWidgetSettingsTab();
+    } else {
+      for (var s in settingList[id]) {
+        if (s !== 'title') {
+          html += renderSettingsRow(s, settingList[id][s]);
+        }
+      }
+    }
+    html += '</div>';
+  }
+
+  return html;
+}
+
 function renderWidgetSettingsTab() {
   var backLabel =
-    (language.settings.widgets && language.settings.widgets.back) || 'Back';
+    (language.settings.widgets && language.settings.widgets.back) ||
+    language.settings.back ||
+    'Back';
   var chooseLabel =
     (language.settings.widgets && language.settings.widgets.choose) ||
     'Choose a widget to configure its settings.';
   var html =
-    '<p class="settings-widgets-intro">' +
+    '<p class="settings-intro settings-widgets-intro">' +
     escapeSettingsHtml(chooseLabel) +
     '</p>';
-  html += '<div class="settings-widget-tiles" id="settings-widget-tiles">';
+  html +=
+    '<div class="settings-tiles settings-widget-tiles" id="settings-widget-tiles">';
   widgetSettingTiles.forEach(function (tile) {
     html +=
-      '<button type="button" class="settings-widget-tile" data-widget-id="' +
+      '<button type="button" class="settings-tile settings-widget-tile" data-widget-id="' +
       escapeSettingsHtml(tile.id) +
       '">' +
       '<i class="' +
@@ -1134,7 +1177,7 @@ function renderWidgetSettingsTab() {
       escapeSettingsHtml(backLabel) +
       '</button>';
     html +=
-      '<h5 class="settings-widget-panel-title"><i class="' +
+      '<h5 class="settings-panel-title settings-widget-panel-title"><i class="' +
       escapeSettingsHtml(tile.icon) +
       ' me-2" aria-hidden="true"></i>' +
       escapeSettingsHtml(tile.title) +
@@ -1148,20 +1191,60 @@ function renderWidgetSettingsTab() {
   return html;
 }
 
-function bindWidgetSettingsTiles() {
+function showSettingsHome() {
+  var $popup = $('#settingspopup');
+  $popup.find('.settings-category-panel, .settings-widget-panel').addClass('d-none');
+  $popup.find('#settings-home').removeClass('d-none');
+  $popup
+    .find('#settings-widget-tiles, .settings-widgets-intro')
+    .removeClass('d-none');
+}
+
+function showSettingsCategory(id) {
+  var $popup = $('#settingspopup');
+  $popup.find('#settings-home').addClass('d-none');
+  $popup.find('.settings-category-panel, .settings-widget-panel').addClass('d-none');
+  $popup.find('#settings-category-' + id).removeClass('d-none');
+  $popup
+    .find('#settings-widget-tiles, .settings-widgets-intro')
+    .removeClass('d-none');
+  $popup
+    .find('#settings-category-widgets > .settings-category-back, #settings-category-widgets > .settings-panel-title')
+    .removeClass('d-none');
+}
+
+function bindSettingsCategoryTiles() {
   var $popup = $('#settingspopup');
   if (!$popup.length) return;
 
-  $popup.off('click.settingswidgets');
-  $popup.on('click.settingswidgets', '.settings-widget-tile', function () {
+  $popup.off('click.settingsnav');
+  $popup.on('click.settingsnav', '.settings-tile[data-settings-category]', function () {
+    showSettingsCategory(String($(this).data('settings-category')));
+  });
+  $popup.on('click.settingsnav', '.settings-category-back', function () {
+    showSettingsHome();
+  });
+  $popup.on('click.settingsnav', '.settings-widget-tile', function () {
     var id = String($(this).data('widget-id'));
     $popup.find('#settings-widget-tiles, .settings-widgets-intro').addClass('d-none');
+    $popup
+      .find(
+        '#settings-category-widgets > .settings-category-back, #settings-category-widgets > .settings-panel-title'
+      )
+      .addClass('d-none');
     $popup.find('.settings-widget-panel').addClass('d-none');
     $popup.find('#settings-widget-panel-' + id).removeClass('d-none');
   });
-  $popup.on('click.settingswidgets', '.settings-widget-back', function () {
+  $popup.on('click.settingsnav', '.settings-widget-back', function () {
     $popup.find('.settings-widget-panel').addClass('d-none');
-    $popup.find('#settings-widget-tiles, .settings-widgets-intro').removeClass('d-none');
+    $popup
+      .find('#settings-widget-tiles, .settings-widgets-intro')
+      .removeClass('d-none');
+    $popup
+      .find(
+        '#settings-category-widgets > .settings-category-back, #settings-category-widgets > .settings-panel-title'
+      )
+      .removeClass('d-none');
   });
 }
 

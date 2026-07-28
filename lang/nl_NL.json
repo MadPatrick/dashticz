@@ -49,6 +49,8 @@
         "blocksave": "Sla de onderstaande code op in uw CONFIG.js om de wijzigingen toe te passen en herlaad Dashticz!",
         "close": "Sluiten",
         "close_reload": "Sluit venster en herlaad Dashticz",
+        "back": "Terug",
+        "choose": "Kies een categorie om te configureren.",
         "config_mode": {
             "custom": "Custom",
             "wizard": "Wizard"
