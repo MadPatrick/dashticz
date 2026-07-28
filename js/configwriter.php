@@ -531,15 +531,56 @@ function configwriter_emit_columns_standby($blockKeys, $width = 12)
         return "'" . configwriter_js_string_escape($blockKey) . "'";
     }, $blockKeys);
 
+    // Standby layout is independent of screens[] — one full-width column.
     $section = configwriter_section_header('STANDBY SCREEN') . "\n";
-    $section .= "if(typeof columns_standby==='undefined') var columns_standby={};\n";
-    $section .= "columns_standby[1] = {}\n";
+    $section .= "if (typeof columns_standby === 'undefined') var columns_standby = {};\n";
+    $section .= "columns_standby[1] = {};\n";
     $section .= "columns_standby[1]['blocks'] = ["
         . implode(', ', $quotedBlocks)
-        . "]\n";
+        . "];\n";
     $section .= "columns_standby[1]['width'] = " . max(1, min(12, (int)$width)) . ";\n";
 
     return $section;
+}
+
+/**
+ * Replace (or append) the marked standby-editor section in CONFIG.js.
+ * Also strips legacy unmarked columns_standby definitions to avoid duplicates.
+ */
+function configwriter_replace_standby_section($config, $blockKeys, $width = 12)
+{
+    $startMarker = '// [standby-editor-start]';
+    $endMarker = '// [standby-editor-end]';
+
+    $config = configwriter_remove_section($config, $startMarker, $endMarker);
+    $config = configwriter_strip_legacy_columns_standby($config);
+
+    $body = configwriter_emit_columns_standby($blockKeys, $width);
+    return rtrim($config) . configwriter_wrap_section($startMarker, $endMarker, $body);
+}
+
+/**
+ * Remove older hand-written columns_standby blocks that lack editor markers.
+ */
+function configwriter_strip_legacy_columns_standby($config)
+{
+    $patterns = [
+        '/(?:\/\/\s*-{10,}[^\n]*\n\/\/\s*STANDBY SCREEN[^\n]*\n\/\/\s*-{10,}[^\n]*\n)?'
+        . 'if\s*\(\s*typeof\s+columns_standby\s*===\s*[\'"]undefined[\'"]\s*\)\s*var\s+columns_standby\s*=\s*\{\s*\}\s*;?\s*\r?\n'
+        . 'columns_standby\[1\]\s*=\s*\{\s*\}\s*;?\s*\r?\n'
+        . 'columns_standby\[1\]\[[\'"]blocks[\'"]\]\s*=\s*\[[^\]]*\]\s*;?\s*\r?\n'
+        . 'columns_standby\[1\]\[[\'"]width[\'"]\]\s*=\s*\d+\s*;?\s*\r?\n?/i',
+        '/var\s+columns_standby\s*=\s*\{\s*\}\s*;?\s*\r?\n'
+        . 'columns_standby\[1\]\s*=\s*\{\s*\}\s*;?\s*\r?\n'
+        . 'columns_standby\[1\]\[[\'"]blocks[\'"]\]\s*=\s*\[[^\]]*\]\s*;?\s*\r?\n'
+        . 'columns_standby\[1\]\[[\'"]width[\'"]\]\s*=\s*\d+\s*;?\s*\r?\n?/i',
+    ];
+
+    foreach ($patterns as $pattern) {
+        $config = preg_replace($pattern, '', $config);
+    }
+
+    return $config;
 }
 
 function configwriter_extract_block_lines($config)

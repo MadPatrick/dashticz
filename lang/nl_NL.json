@@ -51,6 +51,27 @@
         "close_reload": "Sluit venster en herlaad Dashticz",
         "back": "Terug",
         "choose": "Kies een categorie om te configureren.",
+        "update": {
+            "button": "Update",
+            "branch": "Branch",
+            "run": "Update uitvoeren",
+            "running": "Bezig met updaten…",
+            "success": "Update voltooid. Herlaad Dashticz om de nieuwe versie te gebruiken.",
+            "failed": "Update mislukt."
+        },
+        "standby": {
+            "title": "Standby",
+            "standby_after": "Standby na (minuten, 0 = nooit)",
+            "standby_after_help": "Ga na zoveel minuten in standby. Gebruik 0 om uit te schakelen.",
+            "standby_call_url": "URL die bij start van standby wordt aangeroepen",
+            "standby_call_url_on_end": "URL die bij einde van standby wordt aangeroepen",
+            "standby_background": "Standby-achtergrond",
+            "standby_background_help": "Pad of URL voor de standby-achtergrond, bijv. img\/bg11.jpg",
+            "pick_background": "Kies achtergrondafbeelding",
+            "custom_path": "Aangepast pad \/ URL",
+            "blocks": "Standby-blokken",
+            "blocks_help": "Kommagescheiden block-keys voor columns_standby, bijv. clock, currentweather_big, weather"
+        },
         "config_mode": {
             "custom": "Custom",
             "wizard": "Wizard"

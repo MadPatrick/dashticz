@@ -175,3 +175,35 @@ test('widget writer preserves existing settings when none are posted', () => {
   assert.match(writer, /function configwriter_extract_section_config_settings/);
   assert.match(writer, /function configwriter_emit_config_settings/);
 });
+
+test('git update endpoint allowlists branches and requires CSRF', () => {
+  const source = read('js/update.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  assert.match(source, /dashticz_require_csrf\(\)/);
+  assert.match(source, /REQUEST_METHOD.*POST/);
+  assert.match(source, /branchMap/);
+  assert.match(source, /'beta'\s*=>\s*'beta'/);
+  assert.match(source, /'main'\s*=>\s*'master'/);
+  assert.match(source, /pull',\s*'--ff-only'/);
+  assert.match(source, /bypass_shell/);
+  assert.doesNotMatch(source, /shell_exec|exec\(|passthru|system\(/);
+});
+
+test('settings writer persists columns_standby from standby_blocks', () => {
+  const source = read('js/savesettings.php');
+  const writer = read('js/configwriter.php');
+  assert.match(source, /standby_blocks/);
+  assert.match(source, /configwriter_replace_standby_section/);
+  assert.match(writer, /function configwriter_replace_standby_section/);
+  assert.match(writer, /standby-editor-start/);
+  assert.match(writer, /columns_standby/);
+});
+
+test('background list endpoint only exposes img/bg* files', () => {
+  const source = read('js/listbackgrounds.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  assert.match(source, /REQUEST_METHOD.*GET/);
+  assert.match(source, /preg_match\(\'\/\^\(bg/);
+  assert.doesNotMatch(source, /\$_GET\[/);
+  assert.doesNotMatch(source, /\$_POST\[/);
+});

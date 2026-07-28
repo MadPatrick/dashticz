@@ -1015,10 +1015,24 @@ function toSlide(num) {
 
 function buildStandby() {
   if ($('.screenstandby').length == 0) {
+    var standbyBackground =
+      settings['standby_background'] || settings['background_image'] || '';
+    var backgroundStyle = '';
+    if (standbyBackground) {
+      if (String(standbyBackground).indexOf('/') > 0) {
+        backgroundStyle =
+          'background-image:url(\'' + standbyBackground + '\');';
+      } else {
+        backgroundStyle =
+          'background-image:url(\'img/' + standbyBackground + '\');';
+      }
+    }
     var screenhtml =
       '<div class="screen screenstandby swiper-slide slidestandby" style="height:' +
       $(window).height() +
-      'px"><div class="row"></div></div>';
+      'px;' +
+      backgroundStyle +
+      '"><div class="row"></div></div>';
     $('div.screen').hide();
     $('#settingspopup').modal('hide');
     $('div.dt-container').before(screenhtml);

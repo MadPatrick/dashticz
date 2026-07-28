@@ -51,6 +51,27 @@
         "close_reload": "Close and reload!",
         "back": "Back",
         "choose": "Choose a category to configure.",
+        "update": {
+            "button": "Update",
+            "branch": "Branch",
+            "run": "Run update",
+            "running": "Updating…",
+            "success": "Update completed. Reload Dashticz to use the new version.",
+            "failed": "Update failed."
+        },
+        "standby": {
+            "title": "Standby",
+            "standby_after": "Standby after (minutes, 0 = never)",
+            "standby_after_help": "Enter standby mode after this many minutes. Use 0 to disable.",
+            "standby_call_url": "URL to be called at start of standby",
+            "standby_call_url_on_end": "URL to be called at end of standby",
+            "standby_background": "Standby background",
+            "standby_background_help": "Path or URL for the standby screen background, e.g. img\/bg11.jpg",
+            "pick_background": "Choose background image",
+            "custom_path": "Custom path \/ URL",
+            "blocks": "Standby blocks",
+            "blocks_help": "Comma-separated block keys for columns_standby, e.g. clock, currentweather_big, weather"
+        },
         "config_mode": {
             "custom": "Custom",
             "wizard": "Wizard"

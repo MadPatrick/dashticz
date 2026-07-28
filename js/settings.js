@@ -113,14 +113,6 @@ settingList.general = {
     title: language.settings.general.dashticz_php_path,
     type: 'text'
   },
-  standby_call_url: {
-    title: language.settings.general.standby_call_url,
-    type: 'text',
-  },
-  standby_call_url_on_end: {
-    title: language.settings.general.standby_call_url_on_end,
-    type: 'text',
-  },
 };
 
 settingList['screen'] = {};
@@ -148,11 +140,6 @@ settingList['screen']['background_image']['title'] =
 settingList['screen']['background_image']['type'] = 'text';
 settingList['screen']['background_image']['help'] =
   language.settings.screen.background_image.help;
-
-settingList['screen']['standby_after'] = {};
-settingList['screen']['standby_after']['title'] =
-  language.settings.screen.standby_after;
-settingList['screen']['standby_after']['type'] = 'text';
 
 settingList['screen']['start_page'] = {};
 settingList['screen']['start_page']['title'] =
@@ -571,11 +558,51 @@ function isCustomConfigMode() {
 var settingsCategoryIcons = {
   general: 'fas fa-sliders-h',
   screen: 'fas fa-desktop',
+  standby: 'fas fa-moon',
   localize: 'fas fa-globe',
   media: 'fas fa-film',
   widgets: 'fas fa-puzzle-piece',
   other: 'fas fa-ellipsis-h',
   about: 'fas fa-info-circle',
+};
+
+settingList['standby'] = {
+  title:
+    (language.settings.standby && language.settings.standby.title) || 'Standby',
+  standby_after: {
+    title:
+      (language.settings.standby && language.settings.standby.standby_after) ||
+      language.settings.screen.standby_after,
+    type: 'text',
+    help:
+      (language.settings.standby &&
+        language.settings.standby.standby_after_help) ||
+      'Enter standby mode after this many minutes. Use 0 to disable.',
+  },
+  standby_call_url: {
+    title:
+      (language.settings.standby && language.settings.standby.standby_call_url) ||
+      language.settings.general.standby_call_url,
+    type: 'text',
+  },
+  standby_call_url_on_end: {
+    title:
+      (language.settings.standby &&
+        language.settings.standby.standby_call_url_on_end) ||
+      language.settings.general.standby_call_url_on_end,
+    type: 'text',
+  },
+  standby_background: {
+    title:
+      (language.settings.standby &&
+        language.settings.standby.standby_background) ||
+      'Standby background',
+    type: 'text',
+    help:
+      (language.settings.standby &&
+        language.settings.standby.standby_background_help) ||
+      'Path or URL for the standby screen background, e.g. img/bg11.jpg',
+  },
 };
 
 settingList['other'] = {};
@@ -688,6 +715,7 @@ var defaultSettings = {
   swiper_touch_move: 1,
   auto_swipe_back_after: 0,
   standby_after: 0,
+  standby_background: '',
   config_mode: 'wizard',
   selector_instead_of_buttons: 0,
   default_news_url: 'https://www.nu.nl/rss/Algemeen',
@@ -1015,7 +1043,35 @@ function loadSettings() {
         '">';
       html += renderSettingsCategoryHome();
       html += '</div>';
-      html += '</div><div class="modal-footer">';
+      html += '</div><div class="modal-footer settings-footer">';
+      html +=
+        '<div class="settings-update" id="settings-update">' +
+        '<button type="button" class="btn btn-outline-secondary" id="settings-update-toggle">' +
+        escapeSettingsHtml(
+          (language.settings.update && language.settings.update.button) ||
+            'Update'
+        ) +
+        '</button>' +
+        '<div class="settings-update-panel d-none" id="settings-update-panel">' +
+        '<label class="settings-update-label" for="settings-update-branch">' +
+        escapeSettingsHtml(
+          (language.settings.update && language.settings.update.branch) ||
+            'Branch'
+        ) +
+        '</label>' +
+        '<select id="settings-update-branch" class="form-select form-select-sm">' +
+        '<option value="beta">Beta</option>' +
+        '<option value="main">Main</option>' +
+        '</select>' +
+        '<button type="button" class="btn btn-sm btn-primary" id="settings-update-run">' +
+        escapeSettingsHtml(
+          (language.settings.update && language.settings.update.run) ||
+            'Run update'
+        ) +
+        '</button>' +
+        '<pre class="settings-update-log d-none" id="settings-update-log"></pre>' +
+        '</div></div>';
+      html += '<div class="settings-footer-actions">';
       html +=
         '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
         language.settings.close +
@@ -1028,7 +1084,7 @@ function loadSettings() {
       html +=
         '<button onClick="saveSettings();" type="button" class="btn btn-primary" data-bs-dismiss="modal">' +
         language.settings.save +
-        '</button></div>';
+        '</button></div></div>';
       html += '</div>';
       html += '</div>';
       html += '</div>';
@@ -1037,6 +1093,8 @@ function loadSettings() {
 
         addSettingsAboutItems();
         bindSettingsCategoryTiles();
+        bindStandbyBackgroundPicker();
+        bindSettingsUpdateControls();
 
         $('#php_version').html(phpversion);
 
@@ -1050,12 +1108,32 @@ function loadSettings() {
 }
 
 function getSettingsCategories() {
+  var preferred = [
+    'general',
+    'screen',
+    'standby',
+    'localize',
+    'media',
+    'widgets',
+    'other',
+    'about',
+  ];
   var tabs = [];
+  preferred.forEach(function (id) {
+    if (id === 'widgets') {
+      if (isCustomConfigMode()) {
+        tabs.push(id);
+      }
+      return;
+    }
+    if (settingList[id]) {
+      tabs.push(id);
+    }
+  });
   for (var settingGroup in settingList) {
-    tabs.push(settingGroup);
-  }
-  if (isCustomConfigMode()) {
-    tabs.splice(Math.min(1, tabs.length), 0, 'widgets');
+    if (tabs.indexOf(settingGroup) === -1) {
+      tabs.push(settingGroup);
+    }
   }
   return tabs;
 }
@@ -1129,9 +1207,79 @@ function renderSettingsCategoryHome() {
           html += renderSettingsRow(s, settingList[id][s]);
         }
       }
+      if (id === 'standby') {
+        html += renderStandbyExtras();
+      }
     }
     html += '</div>';
   }
+
+  return html;
+}
+
+function getStandbyBlocksValue() {
+  if (
+    typeof columns_standby === 'undefined' ||
+    !columns_standby ||
+    !columns_standby[1] ||
+    !columns_standby[1].blocks
+  ) {
+    return '';
+  }
+  return columns_standby[1].blocks.join(', ');
+}
+
+function renderStandbyExtras() {
+  var blocksLabel =
+    (language.settings.standby && language.settings.standby.blocks) ||
+    'Standby blocks';
+  var blocksHelp =
+    (language.settings.standby && language.settings.standby.blocks_help) ||
+    'Comma-separated block keys for columns_standby, e.g. clock, currentweather_big, weather';
+  var pickLabel =
+    (language.settings.standby && language.settings.standby.pick_background) ||
+    'Choose background image';
+  var html = '';
+
+  html += '<div class="settings-row">';
+  html +=
+    '<label class="settings-label" for="setting-standby_blocks">' +
+    escapeSettingsHtml(blocksLabel) +
+    '</label>';
+  html += '<div class="settings-control">';
+  html +=
+    '<input class="form-control" type="text" id="setting-standby_blocks" ' +
+    'name="standby_blocks" value="' +
+    escapeSettingsHtml(getStandbyBlocksValue()) +
+    '">';
+  html += '</div><div class="settings-help-slot">';
+  html +=
+    '<button type="button" class="settings-help" data-bs-toggle="tooltip" ' +
+    'data-bs-trigger="click" data-bs-placement="right" ' +
+    'data-bs-custom-class="settings-tooltip" title="' +
+    escapeSettingsHtml(blocksHelp) +
+    '" aria-label="' +
+    escapeSettingsHtml(blocksHelp) +
+    '"><i class="fas fa-info-circle" aria-hidden="true"></i></button>';
+  html += '</div></div>';
+
+  html += '<div class="settings-row">';
+  html +=
+    '<label class="settings-label" for="setting-standby_background_pick">' +
+    escapeSettingsHtml(pickLabel) +
+    '</label>';
+  html += '<div class="settings-control">';
+  html +=
+    '<select id="setting-standby_background_pick" class="form-select settings-standby-bg-pick">' +
+    '<option value="">' +
+    escapeSettingsHtml(
+      (language.settings.standby && language.settings.standby.custom_path) ||
+        'Custom path / URL'
+    ) +
+    '</option></select>';
+  html +=
+    '<div class="settings-standby-bg-preview" id="settings-standby-bg-preview" aria-hidden="true"></div>';
+  html += '</div><div class="settings-help-slot"></div></div>';
 
   return html;
 }
@@ -1248,6 +1396,148 @@ function bindSettingsCategoryTiles() {
   });
 }
 
+function bindStandbyBackgroundPicker() {
+  var $popup = $('#settingspopup');
+  if (!$popup.length) return;
+
+  var $pick = $popup.find('#setting-standby_background_pick');
+  var $path = $popup.find('#setting-standby_background');
+  var $preview = $popup.find('#settings-standby-bg-preview');
+  if (!$pick.length || !$path.length) return;
+
+  function syncPreview(path) {
+    if (!path) {
+      $preview.removeClass('is-visible').css('background-image', '');
+      return;
+    }
+    var url = String(path).indexOf('/') >= 0 ? path : 'img/' + path;
+    $preview.addClass('is-visible').css('background-image', "url('" + url + "')");
+  }
+
+  function selectMatchingOption(path) {
+    var match = false;
+    $pick.find('option').each(function () {
+      if ($(this).val() === path) {
+        match = true;
+        return false;
+      }
+    });
+    $pick.val(match ? path : '');
+  }
+
+  $.getJSON('js/listbackgrounds.php')
+    .done(function (data) {
+      var images = (data && data.images) || [];
+      images.forEach(function (imagePath) {
+        $pick.append(
+          $('<option></option>')
+            .attr('value', imagePath)
+            .text(imagePath.replace(/^img\//, ''))
+        );
+      });
+      selectMatchingOption($path.val());
+      syncPreview($path.val());
+    })
+    .fail(function () {
+      selectMatchingOption($path.val());
+      syncPreview($path.val());
+    });
+
+  $pick.off('change.standbybg').on('change.standbybg', function () {
+    var value = $(this).val();
+    if (value) {
+      $path.val(value);
+      syncPreview(value);
+    }
+  });
+
+  $path.off('input.standbybg').on('input.standbybg', function () {
+    selectMatchingOption($(this).val());
+    syncPreview($(this).val());
+  });
+}
+
+function bindSettingsUpdateControls() {
+  var $popup = $('#settingspopup');
+  if (!$popup.length) return;
+
+  $popup.off('click.settingsupdate change.settingsupdate');
+  $popup.on('click.settingsupdate', '#settings-update-toggle', function () {
+    $popup.find('#settings-update-panel').toggleClass('d-none');
+  });
+  $popup.on('click.settingsupdate', '#settings-update-run', function () {
+    runDashticzUpdate($popup.find('#settings-update-branch').val());
+  });
+}
+
+// eslint-disable-next-line no-unused-vars
+function runDashticzUpdate(branch) {
+  var $log = $('#settings-update-log');
+  var $run = $('#settings-update-run');
+  branch = String(branch || 'beta').toLowerCase() === 'main' ? 'main' : 'beta';
+
+  $run.prop('disabled', true);
+  $log
+    .removeClass('d-none text-danger text-success')
+    .text(
+      (language.settings.update && language.settings.update.running) ||
+        'Updating…'
+    );
+
+  $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
+    .then(function (data) {
+      return $.ajax({
+        url: 'js/update.php',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ branch: branch }),
+        headers: {
+          'X-Dashticz-CSRF': data && data.token ? data.token : '',
+        },
+      });
+    })
+    .done(function (result) {
+      var lines = [];
+      if (result && result.log) {
+        result.log.forEach(function (entry) {
+          lines.push('$ git ' + entry.command);
+          if (entry.stdout) lines.push(entry.stdout);
+          if (entry.stderr) lines.push(entry.stderr);
+        });
+      }
+      if (result && result.success) {
+        $log
+          .addClass('text-success')
+          .text(
+            ((language.settings.update && language.settings.update.success) ||
+              'Update completed. Reload Dashticz to use the new version.') +
+              '\n\n' +
+              lines.join('\n')
+          );
+      } else {
+        $log
+          .addClass('text-danger')
+          .text(
+            ((result && result.error) ||
+              (language.settings.update && language.settings.update.failed) ||
+              'Update failed.') +
+              '\n\n' +
+              lines.join('\n')
+          );
+      }
+    })
+    .fail(function (xhr) {
+      var message =
+        (xhr.responseJSON && xhr.responseJSON.error) ||
+        (language.settings.update && language.settings.update.failed) ||
+        'Update failed.';
+      $log.addClass('text-danger').text(message);
+    })
+    .always(function () {
+      $run.prop('disabled', false);
+    });
+}
+
 // eslint-disable-next-line no-unused-vars
 function setConfigMode(mode) {
   mode = String(mode || '').toLowerCase() === 'custom' ? 'custom' : 'wizard';
@@ -1277,7 +1567,8 @@ function setConfigMode(mode) {
 }
 
 function addSettingsAboutItems() {
-  var $div=$('#tabs-about');
+  var $div = $('#settings-category-about');
+  if (!$div.length) $div = $('#tabs-about');
   $div.append('<p>');
   $div.append('<div class="about-item">Domoticz version: <span id="domoticz_version">unknown</span></div>');
   $div.append('<div class="about-item">dzVents version: <span id="dzvents_version">unknown</span></div>');
@@ -1291,13 +1582,27 @@ function addSettingsAboutItems() {
 function saveSettings() {
   var saveSettings = {};
   var alertSettings = 'var config = {}\n';
+  var standbyBlocksValue = null;
   $('div#settingspopup input[type="text"],div#settingspopup input[type="hidden"],div#settingspopup select').each(
     function () {
+      // Skip UI-only controls that must not become config[...] keys.
+      if (
+        !$(this).attr('name') ||
+        $(this).is('#settings-update-branch, #setting-standby_background_pick')
+      ) {
+        return;
+      }
       var val = $(this).val();
       if (isNumeric(val))
         val = parseFloat(val);
       var settingName = $(this).attr('name');
       var serializedValue = JSON.stringify(val);
+      if (settingName === 'standby_blocks') {
+        // Written by savesettings.php as columns_standby, not config[].
+        standbyBlocksValue = String($(this).val() || '');
+        saveSettings[settingName] = JSON.stringify(standbyBlocksValue);
+        return;
+      }
       saveSettings[settingName] = serializedValue;
       alertSettings +=
         'config[' + JSON.stringify(settingName) + '] = ' + serializedValue + ';\n';
@@ -1313,6 +1618,26 @@ function saveSettings() {
       saveSettings[$(this).attr('name')] = JSON.stringify(0);
     }
   });
+
+  if (standbyBlocksValue !== null) {
+    var blockParts = standbyBlocksValue
+      .split(',')
+      .map(function (part) {
+        return part.trim();
+      })
+      .filter(Boolean);
+    alertSettings +=
+      '\nif (typeof columns_standby === \'undefined\') var columns_standby = {};\n' +
+      'columns_standby[1] = {};\n' +
+      "columns_standby[1]['blocks'] = [" +
+      blockParts
+        .map(function (key) {
+          return JSON.stringify(key);
+        })
+        .join(', ') +
+      "];\n" +
+      "columns_standby[1]['width'] = 12;\n";
+  }
 
   function showSettingsOutput(saved, errorMessage) {
       var html =
