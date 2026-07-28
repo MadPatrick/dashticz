@@ -297,11 +297,20 @@
 .standby .transbg {
   color: var(--text-light) !important;
   border: 0 !important;
-  background: #000 !important;
   background-clip: border-box !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+
+.standby .screenstandby {
+  background-color: #000 !important;
+}
+
+.standby .block,
+.standby [data-id],
+.standby .transbg {
+  background: #000 !important;
 }
 
 .message_block {

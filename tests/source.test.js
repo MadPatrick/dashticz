@@ -588,6 +588,41 @@ test('settings modal uses compact Bootstrap 5 controls and aligned help icons', 
   assert.doesNotMatch(styles, /\.material-switch/);
 });
 
+test('standby background image is not overwritten by standby CSS', () => {
+  const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const modernDark = fs.readFileSync(
+    path.join(root, 'themes/modern-dark/modern-dark.css'),
+    'utf8'
+  );
+
+  assert.match(
+    main,
+    /settings\['standby_background'\]\s*\|\|\s*settings\['background_image'\]/
+  );
+  assert.match(
+    main,
+    /screenstandby[\s\S]*resolveBackgroundImagePath\(standbyBackground\)/
+  );
+  assert.match(styles, /\.standby \.swiper-slide:not\(\.screenstandby\)/);
+  assert.match(
+    styles,
+    /\.standby \.screenstandby\s*\{[^}]*background-size: cover;[^}]*\}/
+  );
+  assert.doesNotMatch(
+    styles,
+    /\.standby \.swiper-slide\s*\{[\s\S]*?background-image: none !important;/
+  );
+  assert.match(
+    modernDark,
+    /\.standby \.screenstandby\s*\{[^}]*background-color: #000 !important;[^}]*\}/
+  );
+  assert.doesNotMatch(
+    modernDark,
+    /\.standby \.screenstandby\s*\{[^}]*background: #000 !important;/
+  );
+});
+
 test('migration sources use LF line endings', () => {
   for (const file of [
     '.gitattributes',

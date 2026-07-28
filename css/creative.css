@@ -1796,9 +1796,16 @@ hr {
   margin-bottom: 20px;
 }
 
-.standby .swiper-slide {
+.standby .swiper-slide:not(.screenstandby) {
   background-image: none !important;
   background-color: #313131;
+}
+
+.standby .screenstandby {
+  background-color: #313131;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .standby .far,
