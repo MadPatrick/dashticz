@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/../vendor/dashticz/security.php');
+require_once(__DIR__ . '/configwriter.php');
 
 dashticz_require_same_origin();
 dashticz_require_csrf();
@@ -194,20 +195,12 @@ foreach ($data['widgets'] as $entry) {
 
 $customDir = __DIR__ . '/../custom';
 $configPath = $customDir . '/CONFIG.js';
-
-if (file_exists($configPath)) {
-    $config = @file_get_contents($configPath);
-    if ($config === false) {
-        dashticz_json_error(500, 'Unable to read CONFIG.js.');
-    }
-    if (trim($config) === '#EMPTY#') {
-        $config = "var config = {}\n";
-    }
-} else {
-    $config = "var config = {}\n";
+list($config, $readError) = configwriter_read_config($configPath);
+if ($readError !== null) {
+    dashticz_json_error(500, $readError);
 }
 
-$config = _widgetRemoveSection(
+$config = configwriter_remove_section(
     $config,
     '// [layout-editor-start]',
     '// [layout-editor-end]'
@@ -215,120 +208,49 @@ $config = _widgetRemoveSection(
 
 $startMarker = '// [widget-editor-start]';
 $endMarker = '// [widget-editor-end]';
-$startPos = strpos($config, $startMarker);
-if ($startPos !== false) {
-    $endPos = strpos($config, $endMarker, $startPos);
-    if ($endPos !== false) {
-        $config = substr($config, 0, $startPos)
-            . substr($config, $endPos + strlen($endMarker));
-    } else {
-        $config = substr($config, 0, $startPos);
-    }
-}
+$config = configwriter_remove_section($config, $startMarker, $endMarker);
 $config = rtrim($config);
 
 if (!empty($widgets)) {
-    $section = "\n\n" . $startMarker . "\n";
+    $section = configwriter_section_header('BLOCKS') . "\n";
     $section .= "if(typeof blocks==='undefined') var blocks={};\n";
 
     foreach ($widgets as $widget) {
-        $width = $widget['width'];
-        $height = $widget['height'] !== null
-            ? ",height:" . $widget['height']
-            : '';
-        $section .= "blocks['" . $widget['key'] . "']=";
-        switch ($widget['id']) {
-            case 'weather':
-                $weatherType = $widget['provider'] === 'wunderground'
-                    ? 'wunderground'
-                    : 'weather';
-                $section .= "{type:'" . $weatherType . "',widget_provider:'"
-                    . $widget['provider']
-                    . "',width:" . $width . ",title:'Weer'" . $height . "}";
-                break;
-            case 'garbage':
-                $section .= "{type:'garbage',width:" . $width . ",title:'Afval'" . $height . "}";
-                break;
-            case 'spotify':
-                $section .= "{type:'spotify',width:" . $width . ",title:'Spotify'" . $height . "}";
-                break;
-            case 'sonarr':
-                $section .= "{type:'sonarr',width:" . $width
-                    . ",title:'Sonarr',title_position:'left',view:'banner'" . $height . "}";
-                break;
-            case 'clock':
-                $section .= "{type:'" . $widget['clockType'] . "',width:"
-                    . $width . ",title:'Klok'" . $height . "}";
-                break;
-            case 'calendar':
-                $section .= "{type:'calendar',width:" . $width
-                    . ",title:'Kalender',icalurl:'"
-                    . _widgetJsStringEscape($widget['icalurl'])
-                    . "'" . $height . "}";
-                break;
-        }
-        $section .= ";\n";
+        $props = _widgetBlockProps($widget);
+        $section .= configwriter_emit_block_line($widget['key'], $props);
     }
 
+    $section .= "\n" . configwriter_section_header('COLUMNS') . "\n";
+    $section .= "if(typeof columns==='undefined') var columns={};\n";
     $chunks = _widgetChunks($widgets, 12);
     $columnKeys = [];
-    $section .= "if(typeof columns==='undefined') var columns={};\n";
     foreach ($chunks as $index => $chunk) {
         $columnKey = 'we_col' . ($index + 1);
         $columnKeys[] = $columnKey;
         $keys = array_map(function ($widget) {
             return $widget['key'];
         }, $chunk);
-        $section .= "columns['" . $columnKey . "']={blocks:['"
-            . implode("','", $keys)
-            . "'],width:12};\n";
+        $section .= configwriter_emit_column_line($columnKey, $keys, 12);
     }
 
-    $section .= "if(typeof screens==='undefined') var screens={};\n";
-    $section .= "if(typeof screens[1]==='undefined') screens[1]={};\n";
-    $section .= "if(!Array.isArray(screens[1]['columns'])) screens[1]['columns']=[];\n";
-    foreach ($columnKeys as $columnKey) {
-        $section .= "if(screens[1]['columns'].indexOf('" . $columnKey
-            . "')<0) screens[1]['columns'].push('" . $columnKey . "');\n";
-    }
+    $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
+    $section .= configwriter_emit_screen_columns(1, $columnKeys);
 
-    // Write widget-specific config settings inside the marker section
     if (!empty($configSettings)) {
+        $section .= "\n" . configwriter_section_header('WIDGET SETTINGS') . "\n";
         foreach ($configSettings as $key => $value) {
-            $section .= 'config[' . json_encode($key) . ']='
+            $section .= 'config[' . json_encode($key) . '] = '
                 . json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ";\n";
         }
     }
 
-    $section .= $endMarker;
-    $config .= $section;
+    $config .= configwriter_wrap_section($startMarker, $endMarker, $section);
 }
 
-if (!file_exists($configPath) && !is_writable($customDir)) {
-    dashticz_json_error(
-        500,
-        'The directory "custom/" is not writable by the web server'
-        . dashticz_owner_info($customDir)
-        . '. From the Dashticz directory, run: sh tools/install-dashticz-write-access'
-    );
+$writeError = configwriter_write_config($configPath, $customDir, $config);
+if ($writeError !== null) {
+    dashticz_json_error(500, $writeError);
 }
-
-if (file_exists($configPath) && !is_writable($configPath)) {
-    @chmod($configPath, 0664);
-    if (!is_writable($configPath)) {
-        dashticz_json_error(
-            500,
-            'CONFIG.js is not writable'
-            . dashticz_owner_info($configPath)
-            . '. From the Dashticz directory, run: sh tools/install-dashticz-write-access'
-        );
-    }
-}
-
-if (file_put_contents($configPath, $config . "\n", LOCK_EX) === false) {
-    dashticz_json_error(500, 'Unable to write CONFIG.js.');
-}
-@chmod($configPath, 0664);
 
 header('Content-Type: application/json');
 echo json_encode([
@@ -338,23 +260,48 @@ echo json_encode([
     }, $widgets),
 ]);
 
-function _widgetRemoveSection($config, $startMarker, $endMarker)
+function _widgetBlockProps($widget)
 {
-    $startPos = strpos($config, $startMarker);
-    if ($startPos === false) {
-        return $config;
+    $props = [
+        'width' => $widget['width'],
+        'title' => 'Widget',
+    ];
+    if ($widget['height'] !== null) {
+        $props['height'] = $widget['height'];
     }
-    $endPos = strpos($config, $endMarker, $startPos);
-    if ($endPos === false) {
-        return substr($config, 0, $startPos);
-    }
-    return substr($config, 0, $startPos)
-        . substr($config, $endPos + strlen($endMarker));
-}
 
-function _widgetJsStringEscape($value)
-{
-    return str_replace(['\\', "'"], ['\\\\', "\\'"], $value);
+    switch ($widget['id']) {
+        case 'weather':
+            $props['type'] = $widget['provider'] === 'wunderground' ? 'wunderground' : 'weather';
+            $props['widget_provider'] = $widget['provider'];
+            $props['title'] = 'Weer';
+            break;
+        case 'garbage':
+            $props['type'] = 'garbage';
+            $props['title'] = 'Afval';
+            break;
+        case 'spotify':
+            $props['type'] = 'spotify';
+            $props['title'] = 'Spotify';
+            break;
+        case 'sonarr':
+            $props['type'] = 'sonarr';
+            $props['title'] = 'Sonarr';
+            $props['title_position'] = 'left';
+            $props['view'] = 'banner';
+            break;
+        case 'clock':
+            $props['type'] = $widget['clockType'];
+            $props['title'] = 'Klok';
+            break;
+        case 'calendar':
+            $props['type'] = 'calendar';
+            $props['title'] = 'Kalender';
+            $props['icalurl'] = $widget['icalurl'];
+            break;
+    }
+
+    return $props;
 }
 
 function _widgetChunks($widgets, $columnWidth)
