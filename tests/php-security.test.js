@@ -124,13 +124,28 @@ test('widget writer whitelists widgets and protects CONFIG.js writes', () => {
     'sonarr',
     'clock',
     'calendar',
+    'secpanel',
+    'publictransport',
+    'trafficinfo',
+    'alarmmeldingen',
+    'camera',
+    'map',
+    'longfonds',
+    'moon',
+    'news',
   ]) {
     assert.match(source, new RegExp(`'${id}'\\s*=>`));
   }
+  assert.match(source, /anwb_apikey/);
+  assert.match(source, /default_news_url/);
+  assert.match(source, /longfonds_zipcode/);
+  assert.match(source, /gm_api/);
+  assert.match(source, /security_panel_lock/);
   assert.match(source, /Unknown widget id/);
   assert.match(source, /Unknown weather provider/);
   assert.match(source, /Unknown clock type/);
   assert.match(source, /Calendar requires a valid http\(s\) ICS URL/);
+  assert.match(source, /Camera requires a valid http\(s\) image URL/);
   assert.match(source, /widget-editor-start/);
   assert.match(source, /layout-editor-start/);
   assert.match(source, /blockKeys/);

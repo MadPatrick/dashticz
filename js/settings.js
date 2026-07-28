@@ -92,14 +92,6 @@ settingList.general = {
     title: language.settings.general.last_update,
     type: 'checkbox'
   },
-  default_news_url: {
-    title: language.settings.general.default_news_url,
-    type: 'text'
-  },
-  news_scroll_after: {
-    title: language.settings.general.news_scroll_after,
-    type: 'text',
-  },
   disable_googleanalytics: {
     title: language.settings.general.disable_googleanalytics,
     help: language.settings.general.disable_googleanalytics_help,
@@ -204,18 +196,6 @@ settingList['screen']['standard_graph']['options']['month'] =
 settingList['screen']['standard_graph']['options']['day'] =
   language.graph.today;
 
-settingList['screen']['security_button_icons'] = {};
-settingList['screen']['security_button_icons']['title'] =
-  language.settings.screen.security_button_icons;
-settingList['screen']['security_button_icons']['type'] = 'checkbox';
-
-settingList['screen']['security_panel_lock'] = {};
-settingList['screen']['security_panel_lock']['title'] =
-  language.settings.screen.security_panel_lock;
-settingList['screen']['security_panel_lock']['type'] = 'checkbox';
-settingList['screen']['security_panel_lock']['help'] =
-  language.settings.screen.security_panel_lock_help;
-
 settingList['screen']['blink_color'] = {};
 settingList['screen']['blink_color']['title'] =
   language.settings.screen.blink_color;
@@ -293,25 +273,6 @@ settingList['localize']['calendarformat'] = ...
 settingList['localize']['calendarlanguage'] = ...
 settingList['localize']['calendarurl'] = ...
 */
-
-settingList['localize']['gm_api'] = {};
-settingList['localize']['gm_api']['title'] = language.settings.localize.gm_api;
-settingList['localize']['gm_api']['type'] = 'text';
-
-settingList['localize']['gm_zoomlevel'] = {};
-settingList['localize']['gm_zoomlevel']['title'] =
-  language.settings.localize.gm_zoomlevel;
-settingList['localize']['gm_zoomlevel']['type'] = 'text';
-
-settingList['localize']['gm_latitude'] = {};
-settingList['localize']['gm_latitude']['title'] =
-  language.settings.localize.gm_latitude;
-settingList['localize']['gm_latitude']['type'] = 'text';
-
-settingList['localize']['gm_longitude'] = {};
-settingList['localize']['gm_longitude']['title'] =
-  language.settings.localize.gm_longitude;
-settingList['localize']['gm_longitude']['type'] = 'text';
 
 settingList['localize']['speak_lang'] = {};
 settingList['localize']['speak_lang']['title'] =
@@ -549,6 +510,138 @@ var widgetSettingTiles = [
       },
     },
   },
+  {
+    id: 'secpanel',
+    title:
+      (language.settings.widgets && language.settings.widgets.secpanel) ||
+      'Security panel',
+    icon: 'fas fa-shield-alt',
+    settings: {
+      security_button_icons: {
+        title: language.settings.screen.security_button_icons,
+        type: 'checkbox',
+      },
+      security_panel_lock: {
+        title: language.settings.screen.security_panel_lock,
+        type: 'checkbox',
+        help: language.settings.screen.security_panel_lock_help,
+      },
+    },
+  },
+  {
+    id: 'publictransport',
+    title:
+      (language.settings.widgets && language.settings.widgets.publictransport) ||
+      'Public transport',
+    icon: 'fas fa-train',
+    settings: {},
+  },
+  {
+    id: 'trafficinfo',
+    title:
+      (language.settings.widgets && language.settings.widgets.trafficinfo) ||
+      'Traffic info',
+    icon: 'fas fa-car',
+    settings: {
+      anwb_apikey: {
+        title:
+          (language.settings.widgets && language.settings.widgets.anwb_apikey) ||
+          'ANWB API key',
+        type: 'text',
+        help:
+          (language.settings.widgets &&
+            language.settings.widgets.anwb_apikey_help) ||
+          'API key for ANWB traffic info (trafficinfo widget).',
+      },
+    },
+  },
+  {
+    id: 'alarmmeldingen',
+    title:
+      (language.settings.widgets && language.settings.widgets.alarmmeldingen) ||
+      '112',
+    icon: 'fas fa-bullhorn',
+    settings: {},
+  },
+  {
+    id: 'camera',
+    title:
+      (language.settings.widgets && language.settings.widgets.camera) ||
+      'Cameras',
+    icon: 'fas fa-video',
+    settings: {},
+  },
+  {
+    id: 'map',
+    title:
+      (language.settings.widgets && language.settings.widgets.map) ||
+      'Google Maps',
+    icon: 'fas fa-map-marked-alt',
+    settings: {
+      gm_api: {
+        title: language.settings.localize.gm_api,
+        type: 'text',
+      },
+      gm_zoomlevel: {
+        title: language.settings.localize.gm_zoomlevel,
+        type: 'text',
+      },
+      gm_latitude: {
+        title: language.settings.localize.gm_latitude,
+        type: 'text',
+      },
+      gm_longitude: {
+        title: language.settings.localize.gm_longitude,
+        type: 'text',
+      },
+    },
+  },
+  {
+    id: 'longfonds',
+    title:
+      (language.settings.widgets && language.settings.widgets.longfonds) ||
+      'Air Quality',
+    icon: 'fas fa-wind',
+    settings: {
+      longfonds_zipcode: {
+        title: language.settings.weather.longfonds_zipcode,
+        type: 'text',
+      },
+      longfonds_housenumber: {
+        title: language.settings.weather.longfonds_housenumber,
+        type: 'text',
+      },
+    },
+  },
+  {
+    id: 'moon',
+    title:
+      (language.settings.widgets && language.settings.widgets.moon) || 'Moon',
+    icon: 'fas fa-moon',
+    settings: {
+      idx_moonpicture: {
+        title: language.settings.weather.idx_moonpicture,
+        type: 'text',
+        help: language.settings.weather.idx_moonpicture_help,
+      },
+    },
+  },
+  {
+    id: 'news',
+    title:
+      (language.settings.widgets && language.settings.widgets.news) || 'News',
+    icon: 'fas fa-newspaper',
+    settings: {
+      default_news_url: {
+        title: language.settings.general.default_news_url,
+        type: 'text',
+      },
+      news_scroll_after: {
+        title: language.settings.general.news_scroll_after,
+        type: 'text',
+      },
+    },
+  },
 ];
 
 function isCustomConfigMode() {
@@ -633,22 +726,6 @@ settingList['other']['evohome_boost_hw']['title'] =
   language.settings.other.evohome_boost_hw;
 settingList['other']['evohome_boost_hw']['type'] = 'text';
 
-settingList['other']['idx_moonpicture'] = {};
-settingList['other']['idx_moonpicture']['title'] =
-  language.settings.weather.idx_moonpicture;
-settingList['other']['idx_moonpicture']['type'] = 'text';
-settingList['other']['idx_moonpicture']['help'] =
-  language.settings.weather.idx_moonpicture_help;
-
-settingList['other']['longfonds_zipcode'] = {
-  title: language.settings.weather.longfonds_zipcode,
-  type: 'text',
-};
-settingList['other']['longfonds_housenumber'] = {
-  title: language.settings.weather.longfonds_housenumber,
-  type: 'text',
-};
-
 settingList['about'] = {};
 settingList['about']['title'] = language.settings.about.title;
 
@@ -716,6 +793,7 @@ var defaultSettings = {
   auto_swipe_back_after: 0,
   standby_after: 0,
   standby_background: '',
+  anwb_apikey: '',
   config_mode: 'wizard',
   selector_instead_of_buttons: 0,
   default_news_url: 'https://www.nu.nl/rss/Algemeen',
@@ -1332,6 +1410,16 @@ function renderWidgetSettingsTab() {
       '</h5>';
     for (var key in tile.settings) {
       html += renderSettingsRow(key, tile.settings[key]);
+    }
+    if (!Object.keys(tile.settings).length) {
+      html +=
+        '<p class="settings-intro">' +
+        escapeSettingsHtml(
+          (language.settings.widgets &&
+            language.settings.widgets.no_global_settings) ||
+            'This widget has no global settings. Configure it in the Widget editor or in CONFIG.js.'
+        ) +
+        '</p>';
     }
     html += '</div>';
   });

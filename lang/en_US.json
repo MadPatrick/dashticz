@@ -79,7 +79,19 @@
         "widgets": {
             "title": "Widgets",
             "back": "Back",
-            "choose": "Choose a widget to configure its settings."
+            "choose": "Choose a widget to configure its settings.",
+            "no_global_settings": "This widget has no global settings. Configure it in the Widget editor or in CONFIG.js.",
+            "secpanel": "Security panel",
+            "publictransport": "Public transport",
+            "trafficinfo": "Traffic info",
+            "alarmmeldingen": "112",
+            "camera": "Cameras",
+            "map": "Google Maps",
+            "longfonds": "Air Quality",
+            "moon": "Moon",
+            "news": "News",
+            "anwb_apikey": "ANWB API key",
+            "anwb_apikey_help": "API key for ANWB traffic info (trafficinfo widget)."
         },
         "garbage": {
             "garbage_calendar_id": "Google Calendar ID",

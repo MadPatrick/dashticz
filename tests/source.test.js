@@ -338,9 +338,25 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
     'sonarr',
     'clock',
     'calendar',
+    'secpanel',
+    'publictransport',
+    'trafficinfo',
+    'alarmmeldingen',
+    'camera',
+    'map',
+    'longfonds',
+    'moon',
+    'news',
   ]) {
     assert.match(widgetEditor, new RegExp(`id: '${id}'`));
+    assert.match(settings, new RegExp(`id: '${id}'`));
   }
+  assert.doesNotMatch(settings, /settingList\['screen'\]\['security_button_icons'\]/);
+  assert.doesNotMatch(settings, /settingList\['localize'\]\['gm_api'\]/);
+  assert.doesNotMatch(settings, /settingList\['other'\]\['longfonds_zipcode'\]/);
+  assert.doesNotMatch(settings, /settingList\.general = \{[^}]*default_news_url:/);
+  assert.match(settings, /anwb_apikey:/);
+  assert.match(settings, /id: 'news'[\s\S]*default_news_url:/);
   assert.match(widgetEditor, /OpenWeather/);
   assert.match(widgetEditor, /Weather Underground/);
   assert.match(widgetEditor, /Stationsklok/);
@@ -353,7 +369,8 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.match(widgetEditor, /js\/savelayout\.php/);
   assert.match(widgetEditor, /var layoutOrder = \[\]/);
   assert.match(widgetEditor, /if \(!selectedWidgets\[item\.widgetId\]\) return/);
-  assert.match(widgetEditor, /layoutItems\.push\(\{ ref: item\.ref, width: item\.width \}\)/);
+  assert.match(widgetEditor, /layoutItems\.push\(widgetEntry\)/);
+  assert.match(widgetEditor, /layoutItems\.push\(deviceEntry\)/);
   assert.match(widgetEditor, /X-Dashticz-CSRF/);
   assert.match(styles, /\.we-widget-grid/);
   assert.match(styles, /\.we-widget-card\.we-selected/);

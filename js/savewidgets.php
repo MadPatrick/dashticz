@@ -71,6 +71,24 @@ $allowedSettings = [
     // calendar
     'calendarformat'         => 'string',
     'calendarlanguage'       => 'calendar_language',
+    // security panel
+    'security_button_icons'  => 'bool',
+    'security_panel_lock'    => 'bool',
+    // traffic info
+    'anwb_apikey'            => 'string',
+    // google maps
+    'gm_api'                 => 'string',
+    'gm_zoomlevel'           => 'number',
+    'gm_latitude'            => 'string',
+    'gm_longitude'           => 'string',
+    // air quality (longfonds)
+    'longfonds_zipcode'      => 'string',
+    'longfonds_housenumber'  => 'string',
+    // moon
+    'idx_moonpicture'        => 'string',
+    // news
+    'default_news_url'       => 'string',
+    'news_scroll_after'      => 'number',
 ];
 
 $allowedGarbageCompanies = [
@@ -128,6 +146,15 @@ $catalog = [
     'sonarr' => ['key' => 'widget_sonarr', 'width' => 8],
     'clock' => ['key' => 'widget_clock', 'width' => 4],
     'calendar' => ['key' => 'widget_calendar', 'width' => 8],
+    'secpanel' => ['key' => 'widget_secpanel', 'width' => 12],
+    'publictransport' => ['key' => 'widget_publictransport', 'width' => 12],
+    'trafficinfo' => ['key' => 'widget_trafficinfo', 'width' => 12],
+    'alarmmeldingen' => ['key' => 'widget_alarmmeldingen', 'width' => 12],
+    'camera' => ['key' => 'widget_cameras', 'width' => 6],
+    'map' => ['key' => 'widget_map', 'width' => 12],
+    'longfonds' => ['key' => 'widget_longfonds', 'width' => 6],
+    'moon' => ['key' => 'widget_moon', 'width' => 3],
+    'news' => ['key' => 'widget_news', 'width' => 12],
 ];
 
 $widgets = [];
@@ -188,6 +215,53 @@ foreach ($data['widgets'] as $entry) {
             dashticz_json_error(400, 'Unknown clock type.');
         }
         $widget['clockType'] = $clockType;
+    }
+
+    if ($id === 'publictransport') {
+        $station = isset($entry['station']) && is_string($entry['station'])
+            ? trim($entry['station'])
+            : 'UT';
+        if ($station === '' || strlen($station) > 64 || !preg_match('/^[A-Za-z0-9_\-]+$/', $station)) {
+            dashticz_json_error(400, 'Invalid public transport station id.');
+        }
+        $provider = isset($entry['provider']) && is_string($entry['provider'])
+            ? $entry['provider']
+            : 'treinen';
+        $allowedProviders = ['treinen', 'ovapi', 'drgl', 'irailbe', 'delijnbe'];
+        if (!in_array($provider, $allowedProviders, true)) {
+            dashticz_json_error(400, 'Unknown public transport provider.');
+        }
+        $widget['station'] = $station;
+        $widget['provider'] = $provider;
+    }
+
+    if ($id === 'camera') {
+        $imageUrl = isset($entry['imageUrl']) && is_string($entry['imageUrl'])
+            ? trim($entry['imageUrl'])
+            : '';
+        if ($imageUrl === '' || strlen($imageUrl) > 2048 || !preg_match('#^https?://[^\s]+$#i', $imageUrl)) {
+            dashticz_json_error(400, 'Camera requires a valid http(s) image URL.');
+        }
+        $widget['imageUrl'] = $imageUrl;
+        if (isset($entry['videoUrl']) && is_string($entry['videoUrl'])) {
+            $videoUrl = trim($entry['videoUrl']);
+            if ($videoUrl !== '' && strlen($videoUrl) <= 2048 && preg_match('#^https?://[^\s]+$#i', $videoUrl)) {
+                $widget['videoUrl'] = $videoUrl;
+            }
+        }
+    }
+
+    if ($id === 'alarmmeldingen') {
+        $rss = isset($entry['rss']) && is_string($entry['rss'])
+            ? trim($entry['rss'])
+            : 'https://www.alarmeringen.nl/feeds/all.rss';
+        if (strlen($rss) > 2048 || !preg_match('#^https?://[^\s]+$#i', $rss)) {
+            dashticz_json_error(400, '112 requires a valid http(s) RSS URL.');
+        }
+        $widget['rss'] = $rss;
+        if (isset($entry['filter']) && is_string($entry['filter']) && strlen($entry['filter']) <= 256) {
+            $widget['filter'] = $entry['filter'];
+        }
     }
 
     $widgets[] = $widget;
@@ -316,6 +390,58 @@ function _widgetBlockProps($widget)
             $props['type'] = 'calendar';
             $props['title'] = 'Kalender';
             $props['icalurl'] = $widget['icalurl'];
+            break;
+        case 'secpanel':
+            $props['type'] = 'secpanel';
+            $props['title'] = 'Security Panel';
+            break;
+        case 'publictransport':
+            $props['title'] = 'OV';
+            $props['provider'] = $widget['provider'];
+            $props['station'] = $widget['station'];
+            $props['results'] = 5;
+            $props['show_via'] = true;
+            break;
+        case 'trafficinfo':
+            $props['title'] = 'Traffic';
+            $props['provider'] = 'anwb';
+            $props['trafficJams'] = true;
+            $props['roadWorks'] = true;
+            $props['radars'] = true;
+            $props['results'] = 50;
+            break;
+        case 'alarmmeldingen':
+            $props['title'] = '112';
+            $props['rss'] = $widget['rss'];
+            $props['results'] = 5;
+            if (!empty($widget['filter'])) {
+                $props['filter'] = $widget['filter'];
+            }
+            break;
+        case 'camera':
+            $props['type'] = 'camera';
+            $props['title'] = 'Camera';
+            $props['imageUrl'] = $widget['imageUrl'];
+            if (!empty($widget['videoUrl'])) {
+                $props['videoUrl'] = $widget['videoUrl'];
+            }
+            break;
+        case 'map':
+            $props['type'] = 'map';
+            $props['title'] = 'Google Maps';
+            $props['showtraffic'] = true;
+            break;
+        case 'longfonds':
+            $props['type'] = 'longfonds';
+            $props['title'] = 'Luchtkwaliteit';
+            break;
+        case 'moon':
+            $props['type'] = 'moon';
+            $props['title'] = 'Moon';
+            break;
+        case 'news':
+            $props['type'] = 'news';
+            $props['title'] = 'News';
             break;
     }
 

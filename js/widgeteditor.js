@@ -52,6 +52,78 @@ var DashticzWidgetEditor = (function () {
       icon: 'fas fa-calendar-alt',
       width: 8,
     },
+    {
+      id: 'secpanel',
+      blockKey: 'widget_secpanel',
+      title: 'Security panel',
+      description: 'Domoticz security panel met pincode.',
+      icon: 'fas fa-shield-alt',
+      width: 12,
+    },
+    {
+      id: 'publictransport',
+      blockKey: 'widget_publictransport',
+      title: 'Openbaar vervoer',
+      description: 'Vertrektijden van treinen, bus of tram.',
+      icon: 'fas fa-train',
+      width: 12,
+    },
+    {
+      id: 'trafficinfo',
+      blockKey: 'widget_trafficinfo',
+      title: 'Verkeersinfo',
+      description: 'ANWB files, werkzaamheden en radars.',
+      icon: 'fas fa-car',
+      width: 12,
+    },
+    {
+      id: 'alarmmeldingen',
+      blockKey: 'widget_alarmmeldingen',
+      title: '112',
+      description: 'Nederlandse 112-meldingen (alarmeringen.nl).',
+      icon: 'fas fa-bullhorn',
+      width: 12,
+    },
+    {
+      id: 'camera',
+      blockKey: 'widget_cameras',
+      title: "Camera's",
+      description: 'Camera-beeld of MJPEG-stream.',
+      icon: 'fas fa-video',
+      width: 6,
+    },
+    {
+      id: 'map',
+      blockKey: 'widget_map',
+      title: 'Google Maps',
+      description: 'Kaart met optioneel verkeer en route.',
+      icon: 'fas fa-map-marked-alt',
+      width: 12,
+    },
+    {
+      id: 'longfonds',
+      blockKey: 'widget_longfonds',
+      title: 'Luchtkwaliteit',
+      description: 'Longfonds / RIVM luchtkwaliteit op postcode.',
+      icon: 'fas fa-wind',
+      width: 6,
+    },
+    {
+      id: 'moon',
+      blockKey: 'widget_moon',
+      title: 'Maan',
+      description: 'Huidige maanstand.',
+      icon: 'fas fa-moon',
+      width: 3,
+    },
+    {
+      id: 'news',
+      blockKey: 'widget_news',
+      title: 'Nieuws',
+      description: 'RSS-nieuwsfeed met automatische scroll.',
+      icon: 'fas fa-newspaper',
+      width: 12,
+    },
   ];
 
   var _CALENDAR_LANGUAGES = {
@@ -131,6 +203,12 @@ var DashticzWidgetEditor = (function () {
   var weatherProvider = 'openweather';
   var calendarUrl = '';
   var clockType = 'basicclock';
+  var publicTransportStation = 'UT';
+  var publicTransportProvider = 'treinen';
+  var cameraImageUrl = '';
+  var cameraVideoUrl = '';
+  var alarmRss = 'https://www.alarmeringen.nl/feeds/all.rss';
+  var alarmFilter = '';
   var widgetConfigs = {};
 
   function open() {
@@ -148,6 +226,12 @@ var DashticzWidgetEditor = (function () {
         : 'wunderground';
     calendarUrl = '';
     clockType = 'basicclock';
+    publicTransportStation = 'UT';
+    publicTransportProvider = 'treinen';
+    cameraImageUrl = '';
+    cameraVideoUrl = '';
+    alarmRss = 'https://www.alarmeringen.nl/feeds/all.rss';
+    alarmFilter = '';
 
     function _n(key, def) {
       return typeof settings[key] !== 'undefined' ? Number(settings[key]) : (def !== undefined ? def : 0);
@@ -211,6 +295,30 @@ var DashticzWidgetEditor = (function () {
         calendarformat: _s('calendarformat', 'dd DD.MM HH:mm'),
         calendarlanguage: _s('calendarlanguage', 'en_US'),
       },
+      secpanel: {
+        security_button_icons: _n('security_button_icons'),
+        security_panel_lock: _n('security_panel_lock'),
+      },
+      trafficinfo: {
+        anwb_apikey: _s('anwb_apikey'),
+      },
+      map: {
+        gm_api: _s('gm_api'),
+        gm_zoomlevel: _s('gm_zoomlevel'),
+        gm_latitude: _s('gm_latitude'),
+        gm_longitude: _s('gm_longitude'),
+      },
+      longfonds: {
+        longfonds_zipcode: _s('longfonds_zipcode'),
+        longfonds_housenumber: _s('longfonds_housenumber'),
+      },
+      moon: {
+        idx_moonpicture: _s('idx_moonpicture'),
+      },
+      news: {
+        default_news_url: _s('default_news_url', 'https://www.nu.nl/rss/Algemeen'),
+        news_scroll_after: _s('news_scroll_after', '7'),
+      },
     };
 
     if (typeof columns === 'undefined') return;
@@ -254,6 +362,30 @@ var DashticzWidgetEditor = (function () {
           )
         ) {
           clockType = definition.type;
+        }
+        if (item.id === 'publictransport') {
+          if (typeof definition.station === 'string') {
+            publicTransportStation = definition.station;
+          }
+          if (typeof definition.provider === 'string') {
+            publicTransportProvider = definition.provider;
+          }
+        }
+        if (item.id === 'camera') {
+          if (typeof definition.imageUrl === 'string') {
+            cameraImageUrl = definition.imageUrl;
+          }
+          if (typeof definition.videoUrl === 'string') {
+            cameraVideoUrl = definition.videoUrl;
+          }
+        }
+        if (item.id === 'alarmmeldingen') {
+          if (typeof definition.rss === 'string') {
+            alarmRss = definition.rss;
+          }
+          if (typeof definition.filter === 'string') {
+            alarmFilter = definition.filter;
+          }
         }
       });
     });
@@ -351,8 +483,23 @@ var DashticzWidgetEditor = (function () {
   }
 
   function _widgetHasConfig(id) {
-    return id === 'weather' || id === 'calendar' || id === 'clock' ||
-           id === 'garbage' || id === 'sonarr' || id === 'spotify';
+    return (
+      id === 'weather' ||
+      id === 'calendar' ||
+      id === 'clock' ||
+      id === 'garbage' ||
+      id === 'sonarr' ||
+      id === 'spotify' ||
+      id === 'secpanel' ||
+      id === 'publictransport' ||
+      id === 'trafficinfo' ||
+      id === 'alarmmeldingen' ||
+      id === 'camera' ||
+      id === 'map' ||
+      id === 'longfonds' ||
+      id === 'moon' ||
+      id === 'news'
+    );
   }
 
   function _widgetCardHtml(item) {
@@ -514,6 +661,87 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'spotify') {
       var spcfg = widgetConfigs.spotify || {};
       fields += _cfgField('spot_clientid', lm.spot_clientid || 'Spotify Client ID', 'text', spcfg.spot_clientid);
+
+    } else if (item.id === 'secpanel') {
+      var sec = widgetConfigs.secpanel || {};
+      var ls = lng.screen || {};
+      fields += _cfgField('security_button_icons', ls.security_button_icons || 'Iconen i.p.v. tekst', 'checkbox', sec.security_button_icons);
+      fields += _cfgField('security_panel_lock', ls.security_panel_lock || 'Security panel fullscreen', 'checkbox', sec.security_panel_lock, null, ls.security_panel_lock_help || '');
+
+    } else if (item.id === 'publictransport') {
+      fields +=
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-pt-provider">Provider</label>' +
+        '<select class="form-select form-select-sm we-widget-field" id="we-cfg-pt-provider">' +
+        _ptOption('treinen', 'Treinen (NL)') +
+        _ptOption('ovapi', 'OV API (NL)') +
+        _ptOption('drgl', 'DRGL (NL)') +
+        _ptOption('irailbe', 'iRail (BE)') +
+        _ptOption('delijnbe', 'De Lijn (BE)') +
+        '</select></div>';
+      fields +=
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-pt-station">Station / halte</label>' +
+        '<input type="text" class="form-control form-control-sm we-widget-field" id="we-cfg-pt-station" value="' +
+        _esc(publicTransportStation) +
+        '">' +
+        '<div class="form-text" style="font-size:11px;color:#6c757d">Bijv. UT voor Utrecht Centraal (treinen).</div></div>';
+
+    } else if (item.id === 'trafficinfo') {
+      var tcfg = widgetConfigs.trafficinfo || {};
+      var lwgt = lng.widgets || {};
+      fields += _cfgField('anwb_apikey', lwgt.anwb_apikey || 'ANWB API key', 'text', tcfg.anwb_apikey, null, lwgt.anwb_apikey_help || '');
+
+    } else if (item.id === 'alarmmeldingen') {
+      fields +=
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-alarm-rss">RSS-feed</label>' +
+        '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-alarm-rss" value="' +
+        _esc(alarmRss) +
+        '"></div>';
+      fields +=
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-alarm-filter">Filter (optioneel)</label>' +
+        '<input type="text" class="form-control form-control-sm we-widget-field" id="we-cfg-alarm-filter" value="' +
+        _esc(alarmFilter) +
+        '">' +
+        '<div class="form-text" style="font-size:11px;color:#6c757d">Kommagescheiden zoektermen, bijv. Amsterdam, Utrecht.</div></div>';
+
+    } else if (item.id === 'camera') {
+      fields +=
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-camera-image">Image URL</label>' +
+        '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-camera-image" value="' +
+        _esc(cameraImageUrl) +
+        '"></div>';
+      fields +=
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-camera-video">Video URL (optioneel, MJPEG)</label>' +
+        '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-camera-video" value="' +
+        _esc(cameraVideoUrl) +
+        '"></div>';
+
+    } else if (item.id === 'map') {
+      var mcfg = widgetConfigs.map || {};
+      fields += _cfgField('gm_api', ll.gm_api || 'Google Maps API key', 'text', mcfg.gm_api);
+      fields += _cfgField('gm_zoomlevel', ll.gm_zoomlevel || 'Zoomniveau', 'text', mcfg.gm_zoomlevel);
+      fields += _cfgField('gm_latitude', ll.gm_latitude || 'Breedtegraad', 'text', mcfg.gm_latitude);
+      fields += _cfgField('gm_longitude', ll.gm_longitude || 'Lengtegraad', 'text', mcfg.gm_longitude);
+
+    } else if (item.id === 'longfonds') {
+      var lcfg = widgetConfigs.longfonds || {};
+      fields += _cfgField('longfonds_zipcode', lw.longfonds_zipcode || 'Postcode', 'text', lcfg.longfonds_zipcode);
+      fields += _cfgField('longfonds_housenumber', lw.longfonds_housenumber || 'Huisnummer', 'text', lcfg.longfonds_housenumber);
+
+    } else if (item.id === 'moon') {
+      var mooncfg = widgetConfigs.moon || {};
+      fields += _cfgField('idx_moonpicture', lw.idx_moonpicture || 'IDX moonpicture', 'text', mooncfg.idx_moonpicture, null, lw.idx_moonpicture_help || '');
+
+    } else if (item.id === 'news') {
+      var ncfg = widgetConfigs.news || {};
+      var lg2 = lng.general || {};
+      fields += _cfgField('default_news_url', lg2.default_news_url || 'News URL', 'text', ncfg.default_news_url);
+      fields += _cfgField('news_scroll_after', lg2.news_scroll_after || 'Scroll after (seconds)', 'text', ncfg.news_scroll_after);
     }
 
     return (
@@ -588,6 +816,39 @@ var DashticzWidgetEditor = (function () {
         widgetConfigs.sonarr = collected;
       } else if (widgetId === 'spotify') {
         widgetConfigs.spotify = collected;
+      } else if (widgetId === 'secpanel') {
+        widgetConfigs.secpanel = collected;
+      } else if (widgetId === 'publictransport') {
+        publicTransportProvider = $('#we-cfg-pt-provider').val() || 'treinen';
+        publicTransportStation = $.trim($('#we-cfg-pt-station').val() || '') || 'UT';
+      } else if (widgetId === 'trafficinfo') {
+        widgetConfigs.trafficinfo = collected;
+      } else if (widgetId === 'alarmmeldingen') {
+        var rss = $.trim($('#we-cfg-alarm-rss').val() || '');
+        if (!rss || !/^https?:\/\/\S+$/i.test(rss)) {
+          $('.we-cfg-message').addClass('text-danger').text('Vul een geldige http(s)-RSS-URL in.');
+          valid = false;
+        } else {
+          alarmRss = rss;
+          alarmFilter = $.trim($('#we-cfg-alarm-filter').val() || '');
+        }
+      } else if (widgetId === 'camera') {
+        var imageUrl = $.trim($('#we-cfg-camera-image').val() || '');
+        if (!imageUrl || !/^https?:\/\/\S+$/i.test(imageUrl)) {
+          $('.we-cfg-message').addClass('text-danger').text('Vul een geldige http(s)-image-URL in.');
+          valid = false;
+        } else {
+          cameraImageUrl = imageUrl;
+          cameraVideoUrl = $.trim($('#we-cfg-camera-video').val() || '');
+        }
+      } else if (widgetId === 'map') {
+        widgetConfigs.map = collected;
+      } else if (widgetId === 'longfonds') {
+        widgetConfigs.longfonds = collected;
+      } else if (widgetId === 'moon') {
+        widgetConfigs.moon = collected;
+      } else if (widgetId === 'news') {
+        widgetConfigs.news = collected;
       }
 
       if (valid) {
@@ -612,6 +873,18 @@ var DashticzWidgetEditor = (function () {
       value +
       '"' +
       (clockType === value ? ' selected' : '') +
+      '>' +
+      label +
+      '</option>'
+    );
+  }
+
+  function _ptOption(value, label) {
+    return (
+      '<option value="' +
+      value +
+      '"' +
+      (publicTransportProvider === value ? ' selected' : '') +
       '>' +
       label +
       '</option>'
@@ -679,10 +952,29 @@ var DashticzWidgetEditor = (function () {
         .text('Vul voor Kalender een geldige http(s)-ICS-URL in.');
       return;
     }
+    if (selectedWidgets.camera && !/^https?:\/\/\S+$/i.test(cameraImageUrl)) {
+      $('.we-message')
+        .addClass('text-danger')
+        .text("Vul bij Camera's een geldige image-URL in (tandwiel).");
+      return;
+    }
 
     // Collect flattened config settings from all widget configs
     var configSettings = {};
-    var configWidgets = ['weather', 'clock', 'garbage', 'sonarr', 'spotify', 'calendar'];
+    var configWidgets = [
+      'weather',
+      'clock',
+      'garbage',
+      'sonarr',
+      'spotify',
+      'calendar',
+      'secpanel',
+      'trafficinfo',
+      'map',
+      'longfonds',
+      'moon',
+      'news',
+    ];
     configWidgets.forEach(function (id) {
       if (widgetConfigs[id]) {
         var cfg = widgetConfigs[id];
@@ -702,6 +994,18 @@ var DashticzWidgetEditor = (function () {
       if (item.id === 'weather') entry.provider = weatherProvider;
       if (item.id === 'calendar') entry.icalurl = calendarUrl;
       if (item.id === 'clock') entry.clockType = clockType;
+      if (item.id === 'publictransport') {
+        entry.station = publicTransportStation;
+        entry.provider = publicTransportProvider;
+      }
+      if (item.id === 'camera') {
+        entry.imageUrl = cameraImageUrl;
+        if (cameraVideoUrl) entry.videoUrl = cameraVideoUrl;
+      }
+      if (item.id === 'alarmmeldingen') {
+        entry.rss = alarmRss;
+        if (alarmFilter) entry.filter = alarmFilter;
+      }
       payload.push(entry);
     });
 
