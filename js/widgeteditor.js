@@ -213,38 +213,19 @@ var DashticzWidgetEditor = (function () {
     ).show();
   }
 
+  function _widgetHasConfig(id) {
+    return id === 'weather' || id === 'calendar' || id === 'clock';
+  }
+
   function _widgetCardHtml(item) {
     var selected = !!selectedWidgets[item.id];
-    var extra = '';
-
-    if (item.id === 'weather') {
-      extra =
-        '<label class="we-field-label" for="we-weather-provider">Provider</label>' +
-        '<select class="form-select form-select-sm we-widget-field" id="we-weather-provider">' +
-        '<option value="openweather"' +
-        (weatherProvider === 'openweather' ? ' selected' : '') +
-        '>OpenWeather</option>' +
-        '<option value="wunderground"' +
-        (weatherProvider === 'wunderground' ? ' selected' : '') +
-        '>Weather Underground</option></select>';
-    } else if (item.id === 'calendar') {
-      extra =
-        '<label class="we-field-label" for="we-calendar-url">ICS-URL</label>' +
-        '<input type="url" class="form-control form-control-sm we-widget-field" id="we-calendar-url" ' +
-        'placeholder="https://…/calendar.ics" value="' +
-        _esc(calendarUrl) +
-        '">';
-    } else if (item.id === 'clock') {
-      extra =
-        '<label class="we-field-label" for="we-clock-type">Kloktype</label>' +
-        '<select class="form-select form-select-sm we-widget-field" id="we-clock-type">' +
-        _clockOption('basicclock', 'Basic clock') +
-        _clockOption('stationclock', 'Stationsklok') +
-        _clockOption('flipclock', 'Flipclock') +
-        _clockOption('haymanclock', 'Hayman clock') +
-        _clockOption('miniclock', 'Miniclock') +
-        '</select>';
-    }
+    var configBtn = _widgetHasConfig(item.id)
+      ? '<button type="button" class="we-config-btn" data-widget-id="' +
+        item.id +
+        '" title="Instellingen" aria-label="Instellingen voor ' +
+        item.title +
+        '"><i class="fas fa-cog" aria-hidden="true"></i></button>'
+      : '';
 
     return (
       '<div class="we-widget-card' +
@@ -254,6 +235,7 @@ var DashticzWidgetEditor = (function () {
       '" role="button" tabindex="0" aria-pressed="' +
       (selected ? 'true' : 'false') +
       '">' +
+      configBtn +
       '<div class="we-widget-icon"><i class="' +
       item.icon +
       '" aria-hidden="true"></i></div>' +
@@ -261,12 +243,115 @@ var DashticzWidgetEditor = (function () {
       item.title +
       '</div><div class="we-widget-description">' +
       item.description +
-      '</div>' +
-      extra +
-      '</div><div class="we-widget-status">' +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
       (selected ? 'Toegevoegd' : 'Klik om toe te voegen') +
       '</div></div>'
     );
+  }
+
+  function _buildConfigModalHtml(item) {
+    var fields = '';
+    if (item.id === 'weather') {
+      fields =
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-weather-provider">Provider</label>' +
+        '<select class="form-select form-select-sm we-widget-field" id="we-cfg-weather-provider">' +
+        '<option value="openweather"' +
+        (weatherProvider === 'openweather' ? ' selected' : '') +
+        '>OpenWeather</option>' +
+        '<option value="wunderground"' +
+        (weatherProvider === 'wunderground' ? ' selected' : '') +
+        '>Weather Underground</option></select></div>';
+    } else if (item.id === 'calendar') {
+      fields =
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-calendar-url">ICS-URL</label>' +
+        '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-calendar-url" ' +
+        'placeholder="https://…/calendar.ics" value="' +
+        _esc(calendarUrl) +
+        '"></div>';
+    } else if (item.id === 'clock') {
+      fields =
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-clock-type">Kloktype</label>' +
+        '<select class="form-select form-select-sm we-widget-field" id="we-cfg-clock-type">' +
+        _clockOption('basicclock', 'Basic clock') +
+        _clockOption('stationclock', 'Stationsklok') +
+        _clockOption('flipclock', 'Flipclock') +
+        _clockOption('haymanclock', 'Hayman clock') +
+        _clockOption('miniclock', 'Miniclock') +
+        '</select></div>';
+    }
+
+    return (
+      '<div class="modal fade" id="we-config-popup" tabindex="-1" aria-labelledby="we-cfg-title" aria-hidden="true" data-bs-backdrop="static">' +
+      '<div class="modal-dialog modal-dialog-centered">' +
+      '<div class="modal-content">' +
+      '<div class="modal-header">' +
+      '<h5 class="modal-title" id="we-cfg-title"><i class="fas fa-cog me-2" aria-hidden="true"></i>Instellingen — ' +
+      item.title +
+      '</h5>' +
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Sluiten"></button>' +
+      '</div>' +
+      '<div class="modal-body">' +
+      fields +
+      '<div class="we-cfg-message" role="status"></div>' +
+      '</div>' +
+      '<div class="modal-footer">' +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>' +
+      '<button type="button" class="btn btn-primary" id="we-cfg-ok-btn">OK</button>' +
+      '</div></div></div></div>'
+    );
+  }
+
+  function _openConfigModal(widgetId) {
+    var item = null;
+    for (var i = 0; i < catalog.length; i++) {
+      if (catalog[i].id === widgetId) {
+        item = catalog[i];
+        break;
+      }
+    }
+    if (!item) return;
+
+    $('#we-config-popup').remove();
+    $('body').append(_buildConfigModalHtml(item));
+
+    var $cfgModal = $('#we-config-popup');
+
+    $cfgModal.on('click', '#we-cfg-ok-btn', function () {
+      var valid = true;
+      if (widgetId === 'weather') {
+        weatherProvider = $('#we-cfg-weather-provider').val() || 'openweather';
+      } else if (widgetId === 'calendar') {
+        var url = $.trim($('#we-cfg-calendar-url').val() || '');
+        if (url && !/^https?:\/\/\S+$/i.test(url)) {
+          $('.we-cfg-message')
+            .addClass('text-danger')
+            .text('Vul een geldige http(s)-ICS-URL in.');
+          $('#we-cfg-calendar-url').trigger('focus');
+          valid = false;
+        } else {
+          calendarUrl = url;
+        }
+      } else if (widgetId === 'clock') {
+        clockType = $('#we-cfg-clock-type').val() || 'basicclock';
+      }
+      if (valid) {
+        selectedWidgets[widgetId] = true;
+        _refreshCard(widgetId);
+        window.bootstrap.Modal.getInstance(document.getElementById('we-config-popup')).hide();
+      }
+    });
+
+    $cfgModal.one('hidden.bs.modal', function () {
+      $cfgModal.remove();
+    });
+
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('we-config-popup')
+    ).show();
   }
 
   function _clockOption(value, label) {
@@ -284,24 +369,30 @@ var DashticzWidgetEditor = (function () {
   function _attachHandlers() {
     var $modal = $('#widgeteditorpopup');
 
+    $modal.on('click', '.we-config-btn', function (event) {
+      event.stopPropagation();
+      _openConfigModal(String($(this).data('widget-id')));
+    });
+
+    $modal.on('keydown', '.we-config-btn', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        event.stopPropagation();
+        _openConfigModal(String($(this).data('widget-id')));
+      }
+    });
+
     $modal.on('click', '.we-widget-card', function (event) {
-      if ($(event.target).closest('.we-widget-field').length) return;
+      if ($(event.target).closest('.we-config-btn').length) return;
       _toggleWidget(String($(this).data('widget-id')));
     });
 
     $modal.on('keydown', '.we-widget-card', function (event) {
-      if ($(event.target).closest('.we-widget-field').length) return;
+      if ($(event.target).closest('.we-config-btn').length) return;
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         _toggleWidget(String($(this).data('widget-id')));
       }
-    });
-
-    $modal.on('change input', '.we-widget-field', function () {
-      var id = $(this).closest('.we-widget-card').data('widget-id');
-      selectedWidgets[String(id)] = true;
-      _refreshCard(String(id));
-      $('.we-message').removeClass('text-danger').text('');
     });
 
     $modal.on('click', '#we-save-btn', _save);
@@ -326,18 +417,14 @@ var DashticzWidgetEditor = (function () {
   }
 
   function _save() {
-    weatherProvider = $('#we-weather-provider').val() || 'openweather';
-    calendarUrl = $.trim($('#we-calendar-url').val() || '');
-    clockType = $('#we-clock-type').val() || 'basicclock';
-
     if (
       selectedWidgets.calendar &&
+      calendarUrl &&
       !/^https?:\/\/\S+$/i.test(calendarUrl)
     ) {
       $('.we-message')
         .addClass('text-danger')
         .text('Vul voor Kalender een geldige http(s)-ICS-URL in.');
-      $('#we-calendar-url').trigger('focus');
       return;
     }
 
