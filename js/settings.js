@@ -119,6 +119,16 @@ settingList['screen']['topbar_timeout']['help'] =
   language.settings.screen.topbar_timeout_help ||
   'Hide the topbar after this many seconds. Move the pointer to the top of the screen to show it again.';
 
+settingList['screen']['show_topbar_clock'] = {
+  title:
+    language.settings.screen.show_topbar_clock ||
+    'Show clock in topbar',
+  type: 'checkbox',
+  help:
+    language.settings.screen.show_topbar_clock_help ||
+    'Show the date/time clock in the topbar.',
+};
+
 settingList['screen']['theme'] = {};
 settingList['screen']['theme']['title'] =
   language.settings.screen.dashticz_themes;
@@ -852,6 +862,7 @@ var defaultSettings = {
   start_page: 1,
   auto_positioning: 0,
   topbar_timeout: 5,
+  show_topbar_clock: 0,
   use_favorites: 0,
   use_hidden: 0,
   translate_windspeed: 1,

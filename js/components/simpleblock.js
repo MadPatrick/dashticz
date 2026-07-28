@@ -116,12 +116,17 @@ var DT_simpleblock = (function () {
   }
 
   function renderLogo(me) {
+    var title = settings['app_title'] || 'Dashticz';
     return (
       '<div data-id="logo" class="logo col-xs-' +
       me.block.width +
       '">' +
-      settings['app_title'] +
-      '</div>'
+      '<img class="logo-image" src="img/dashticz.png" alt="' +
+      $('<div>').text(title).html() +
+      '">' +
+      '<span class="logo-title">' +
+      $('<div>').text(title).html() +
+      '</span></div>'
     );
   }
 

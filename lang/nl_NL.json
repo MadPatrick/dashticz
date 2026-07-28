@@ -235,6 +235,8 @@
             "dashticz_themes_help": "Stel de naam van het thema in (bijvoorbeeld wit) het thema zal overschreven worden door custom.css",
             "edit_mode": "Ga naar de bewerkingsmodus",
             "hide_topbar": "Verberg titelbalk",
+            "show_topbar_clock": "Toon klok in titelbalk",
+            "show_topbar_clock_help": "Toon datum en tijd in de titelbalk. Standaard uit.",
             "slide_effect": "Schuif effect",
             "standard_graph": "Standaard grafiek",
             "standby_after": "Standby na (minuteen, 0 = nooit)",

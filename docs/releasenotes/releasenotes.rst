@@ -8,17 +8,6 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 Recent changes
 ---------------
 
-v3.21.1 beta (28-7-2026)
---------------------------
-
-Enhancements
-~~~~~~~~~~~~
-
-* Settings → Weergave: background image uses the same pulldown as Standby (``BG_*`` labels for ``img/bg*`` files), with a **Pad/URL** field underneath for custom paths or full URLs.
-* Settings → Standby: the path field sits under **Kies achtergrondafbeelding** and is labeled **Pad/URL**; choosing *Aangepast pad / URL* focuses that field so custom values work.
-* Background paths and ``http(s)`` URLs are resolved consistently for the main screen and standby.
-* Settings → Widgets → Clock: **Grootte** and **Schaal** apply as defaults; clocks (especially station clock) now fit inside the device tile.
-
 v3.21.0 beta (28-7-2026)
 --------------------------
 
@@ -30,6 +19,9 @@ Enhancements
 * Widget Editor / Clock: selecting a clock type shows the relevant options from the clock docs — size and scale for Basic/Hayman/Flip/Station; Flipclock ``showSeconds`` and ``clockFace``; Stationclock body, dial, hands, boss, and hand behavior. Values are saved on the clock block in ``CONFIG.js``.
 * Widget catalog: additional widgets (security panel, public transport, traffic, 112/alarmmeldingen, camera, map, longfonds, moon, news) and OpenWeather display options (rain, description, wind, gust, icon set).
 * Standby: standby screen settings available as a Settings tile.
+* Settings → Weergave: background image uses the same pulldown as Standby (``BG_*`` labels for ``img/bg*`` files), with a **Pad/URL** field underneath for custom paths or full URLs. Standby uses the same pattern.
+* Settings → Widgets → Clock: **Grootte** and **Schaal** apply as defaults; clocks (especially station clock) fit inside the device tile.
+* Topbar: Dashticz logo is shown before the app title. The topbar clock is optional via Settings → Weergave (default off).
 
 v3.20.4 beta (24-7-2026)
 --------------------------

@@ -857,10 +857,28 @@ next css sets the default height of the frame popup
 }
 
 .colbar.transbg .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 20px;
   font-weight: bold;
   margin-top: -4px;
   margin-bottom: -4px;
+  min-height: 28px;
+}
+
+.colbar.transbg .logo .logo-image {
+  display: block;
+  height: 28px;
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.colbar.transbg .logo .logo-title {
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .colbar.transbg .fab,

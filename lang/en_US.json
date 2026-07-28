@@ -235,6 +235,8 @@
             "dashticz_themes_help": "Set the name of the theme (e.g. white) the theme will be overridden by custom.css",
             "edit_mode": "Go to edit mode",
             "hide_topbar": "Hide top bar",
+            "show_topbar_clock": "Show clock in top bar",
+            "show_topbar_clock_help": "Show date and time in the top bar. Off by default.",
             "slide_effect": "Slide effect",
             "standard_graph": "Standard graph",
             "standby_after": "Standby after (minutes, 0 = never)",
