@@ -47,6 +47,19 @@ if ($git === null) {
     dashticz_json_error(500, 'Git executable not found on the server.');
 }
 
+$writableCheck = dashticz_git_writable_check($repoRoot);
+if ($writableCheck !== null) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'branch' => $branch,
+        'error' => $writableCheck['error'],
+        'hint' => $writableCheck['hint'],
+        'log' => [],
+    ]);
+    exit;
+}
+
 $remote = dashticz_git_preferred_remote($git, $repoRoot);
 $log = [];
 
@@ -67,12 +80,15 @@ foreach ($steps as $command) {
         'stderr' => $result['stderr'],
     ];
     if ($result['exit_code'] !== 0) {
+        $combined = trim($result['stdout'] . "\n" . $result['stderr']);
+        $permissionHint = dashticz_git_permission_hint($repoRoot, $combined);
         header('Content-Type: application/json');
         echo json_encode([
             'success' => false,
             'branch' => $branch,
             'remote' => $remote,
             'error' => 'Git command failed: ' . implode(' ', array_slice($command, 1)),
+            'hint' => $permissionHint,
             'log' => $log,
         ]);
         exit;
@@ -109,6 +125,69 @@ function dashticz_find_git_binary()
     }
 
     return null;
+}
+
+/**
+ * Detect the Unix user PHP is running as (for permission hints).
+ */
+function dashticz_web_user_name()
+{
+    if (function_exists('posix_geteuid') && function_exists('posix_getpwuid')) {
+        $info = @posix_getpwuid(posix_geteuid());
+        if (is_array($info) && !empty($info['name'])) {
+            return $info['name'];
+        }
+    }
+    return 'www-data';
+}
+
+/**
+ * Fail early when the web server cannot write into .git (fetch needs FETCH_HEAD).
+ */
+function dashticz_git_writable_check($repoRoot)
+{
+    $gitDir = $repoRoot . DIRECTORY_SEPARATOR . '.git';
+    if (!is_dir($gitDir)) {
+        return null;
+    }
+
+    $probe = $gitDir . DIRECTORY_SEPARATOR . '.dashticz-write-test';
+    $ok = @file_put_contents($probe, 'ok') !== false;
+    if ($ok) {
+        @unlink($probe);
+        return null;
+    }
+
+    return [
+        'error' => 'The web server cannot write to .git (needed for updates).',
+        'hint' => dashticz_git_permission_hint($repoRoot, 'Permission denied'),
+    ];
+}
+
+/**
+ * Build a concrete fix command when Git reports permission / ownership problems.
+ */
+function dashticz_git_permission_hint($repoRoot, $combinedOutput)
+{
+    $text = strtolower((string)$combinedOutput);
+    if (
+        strpos($text, 'permission denied') === false
+        && strpos($text, 'dubious ownership') === false
+        && strpos($text, 'cannot open') === false
+    ) {
+        return null;
+    }
+
+    $user = dashticz_web_user_name();
+    $path = str_replace('\\', '/', $repoRoot);
+    $tool = $path . '/tools/install-dashticz-write-access --git-update';
+
+    return
+        'The web-server user (' . $user . ') needs write access to the Dashticz checkout.' . "\n" .
+        'On the server run:' . "\n" .
+        '  sudo ' . $tool . "\n" .
+        'or:' . "\n" .
+        '  sudo chown -R ' . $user . ':' . $user . ' ' . $path;
 }
 
 /**

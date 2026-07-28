@@ -1999,15 +1999,16 @@ function runDashticzUpdate(branch) {
               lines.join('\n')
           );
       } else {
-        $log
-          .addClass('text-danger')
-          .text(
-            ((result && result.error) ||
-              (language.settings.update && language.settings.update.failed) ||
-              'Update failed.') +
-              '\n\n' +
-              lines.join('\n')
-          );
+        var failText =
+          ((result && result.error) ||
+            (language.settings.update && language.settings.update.failed) ||
+            'Update failed.') +
+          '\n\n' +
+          lines.join('\n');
+        if (result && result.hint) {
+          failText += '\n\n' + result.hint;
+        }
+        $log.addClass('text-danger').text(failText);
       }
     })
     .fail(function (xhr) {

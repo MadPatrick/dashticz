@@ -200,6 +200,8 @@ test('git update endpoint allowlists branches and requires CSRF', () => {
   assert.match(source, /pull',\s*'--ff-only'/);
   assert.match(source, /bypass_shell/);
   assert.match(source, /safe\.directory/);
+  assert.match(source, /dashticz_git_writable_check/);
+  assert.match(source, /Permission denied/);
   assert.doesNotMatch(source, /shell_exec|exec\(|passthru|system\(/);
 });
 
