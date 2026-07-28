@@ -51,6 +51,8 @@ $allowedSettings = [
     'boss_stationclock'      => 'string',
     'hide_seconds'           => 'bool',
     'hide_seconds_stationclock' => 'bool',
+    'clock_size'             => 'number',
+    'clock_scale'            => 'number',
     // garbage
     'garbage_company'        => 'garbage_company',
     'garbage_icalurl'        => 'string',

@@ -132,6 +132,7 @@ settingList['screen']['background_image']['title'] =
 settingList['screen']['background_image']['type'] = 'text';
 settingList['screen']['background_image']['help'] =
   language.settings.screen.background_image.help;
+settingList['screen']['background_image']['picker'] = true;
 
 settingList['screen']['start_page'] = {};
 settingList['screen']['start_page']['title'] =
@@ -413,6 +414,26 @@ var widgetSettingTiles = [
     title: language.editmode.clock || 'Clock',
     icon: 'fas fa-clock',
     settings: {
+      clock_size: {
+        title:
+          (language.settings.widgets && language.settings.widgets.clock_size) ||
+          'Size (px)',
+        type: 'text',
+        help:
+          (language.settings.widgets &&
+            language.settings.widgets.clock_size_help) ||
+          'Empty = fit to tile width. Example: 120',
+      },
+      clock_scale: {
+        title:
+          (language.settings.widgets && language.settings.widgets.clock_scale) ||
+          'Scale',
+        type: 'text',
+        help:
+          (language.settings.widgets &&
+            language.settings.widgets.clock_scale_help) ||
+          'Relative scale factor, e.g. 0.75 (default 1)',
+      },
       boss_stationclock: {
         title: language.settings.localize.boss_stationclock,
         type: 'select',
@@ -729,14 +750,14 @@ settingList['standby'] = {
   },
   standby_background: {
     title:
-      (language.settings.standby &&
-        language.settings.standby.standby_background) ||
-      'Standby background',
+      (language.settings.standby && language.settings.standby.path_url) ||
+      'Pad/URL',
     type: 'text',
     help:
       (language.settings.standby &&
         language.settings.standby.standby_background_help) ||
       'Path or URL for the standby screen background, e.g. img/bg11.jpg',
+    picker: true,
   },
 };
 
@@ -820,6 +841,8 @@ var defaultSettings = {
   weather_show_gust: 0,
   weather_icons: 'line',
   boss_stationclock: 'RedBoss',
+  clock_size: '',
+  clock_scale: 1,
   use_fahrenheit: 0,
   use_beaufort: 0,
   slide_effect: 'slide',
@@ -1219,7 +1242,7 @@ function loadSettings() {
 
         addSettingsAboutItems();
         bindSettingsCategoryTiles();
-        bindStandbyBackgroundPicker();
+        bindBackgroundPickers();
         bindSettingsUpdateControls();
         bindWeatherProviderToggle();
         bindClockTypeToggle();
@@ -1332,11 +1355,23 @@ function renderSettingsCategoryHome() {
     } else {
       for (var s in settingList[id]) {
         if (s !== 'title') {
+          // Standby path field is rendered under the picker after the blocks row.
+          if (id === 'standby' && s === 'standby_background') {
+            continue;
+          }
+          if (settingList[id][s] && settingList[id][s].picker) {
+            html += renderBackgroundPicker(s, settingList[id][s]);
+            continue;
+          }
           html += renderSettingsRow(s, settingList[id][s]);
         }
       }
       if (id === 'standby') {
         html += renderStandbyExtras();
+        html += renderBackgroundPicker(
+          'standby_background',
+          settingList.standby.standby_background
+        );
       }
     }
     html += '</div>';
@@ -1364,9 +1399,6 @@ function renderStandbyExtras() {
   var blocksHelp =
     (language.settings.standby && language.settings.standby.blocks_help) ||
     'Comma-separated block keys for columns_standby, e.g. clock, currentweather_big, weather';
-  var pickLabel =
-    (language.settings.standby && language.settings.standby.pick_background) ||
-    'Choose background image';
   var html = '';
 
   html += '<div class="settings-row">';
@@ -1391,23 +1423,103 @@ function renderStandbyExtras() {
     '"><i class="fas fa-info-circle" aria-hidden="true"></i></button>';
   html += '</div></div>';
 
-  html += '<div class="settings-row">';
+  return html;
+}
+
+function backgroundOptionLabel(imagePath) {
+  var name = String(imagePath || '')
+    .replace(/^img\//i, '')
+    .replace(/\.[^.]+$/, '');
+  if (/^bg_?/i.test(name)) {
+    return 'BG_' + name.replace(/^bg_?/i, '');
+  }
+  return name || imagePath;
+}
+
+function resolveBackgroundUrl(path) {
+  var value = String(path || '').trim();
+  if (!value) return '';
+  if (/^(https?:)?\/\//i.test(value) || value.indexOf('/') >= 0) {
+    return value;
+  }
+  return 'img/' + value;
+}
+
+function renderBackgroundPicker(settingName, definition) {
+  var pickLabel =
+    (language.settings.standby && language.settings.standby.pick_background) ||
+    'Choose background image';
+  var pathLabel =
+    (language.settings.standby && language.settings.standby.path_url) ||
+    definition.title ||
+    'Pad/URL';
+  var customLabel =
+    (language.settings.standby && language.settings.standby.custom_path) ||
+    'Custom path / URL';
+  var current = typeof settings[settingName] !== 'undefined' && settings[settingName] !== null
+    ? String(settings[settingName])
+    : '';
+  var help = definition.help || '';
+  var pickId = 'setting-' + settingName + '_pick';
+  var pathId = 'setting-' + settingName;
+  var previewId = 'settings-bg-preview-' + settingName;
+  var html = '';
+
+  html += '<div class="settings-row settings-bg-picker-row">';
   html +=
-    '<label class="settings-label" for="setting-standby_background_pick">' +
+    '<label class="settings-label" for="' +
+    escapeSettingsHtml(pickId) +
+    '">' +
     escapeSettingsHtml(pickLabel) +
     '</label>';
   html += '<div class="settings-control">';
   html +=
-    '<select id="setting-standby_background_pick" class="form-select settings-standby-bg-pick">' +
+    '<select id="' +
+    escapeSettingsHtml(pickId) +
+    '" class="form-select settings-bg-pick" data-bg-target="' +
+    escapeSettingsHtml(settingName) +
+    '">' +
     '<option value="">' +
-    escapeSettingsHtml(
-      (language.settings.standby && language.settings.standby.custom_path) ||
-        'Custom path / URL'
-    ) +
+    escapeSettingsHtml(customLabel) +
     '</option></select>';
   html +=
-    '<div class="settings-standby-bg-preview" id="settings-standby-bg-preview" aria-hidden="true"></div>';
+    '<div class="settings-standby-bg-preview settings-bg-preview" id="' +
+    escapeSettingsHtml(previewId) +
+    '" data-bg-preview="' +
+    escapeSettingsHtml(settingName) +
+    '" aria-hidden="true"></div>';
   html += '</div><div class="settings-help-slot"></div></div>';
+
+  html += '<div class="settings-row settings-bg-path-row" data-bg-path-row="' +
+    escapeSettingsHtml(settingName) +
+    '">';
+  html +=
+    '<label class="settings-label" for="' +
+    escapeSettingsHtml(pathId) +
+    '">' +
+    escapeSettingsHtml(pathLabel) +
+    '</label>';
+  html += '<div class="settings-control">';
+  html +=
+    '<input class="form-control settings-bg-path" type="text" id="' +
+    escapeSettingsHtml(pathId) +
+    '" name="' +
+    escapeSettingsHtml(settingName) +
+    '" value="' +
+    escapeSettingsHtml(current) +
+    '" placeholder="img/bg11.jpg or https://…">';
+  html += '</div><div class="settings-help-slot">';
+  if (help) {
+    html +=
+      '<button type="button" class="settings-help" data-bs-toggle="tooltip" ' +
+      'data-bs-trigger="click" data-bs-placement="right" ' +
+      'data-bs-custom-class="settings-tooltip" title="' +
+      escapeSettingsHtml(help) +
+      '" aria-label="' +
+      escapeSettingsHtml(help) +
+      '"><i class="fas fa-info-circle" aria-hidden="true"></i></button>';
+  }
+  html += '</div></div>';
 
   return html;
 }
@@ -1504,12 +1616,15 @@ function renderClockWidgetSettings(tile) {
     '</select></div><div class="settings-help-slot"></div></div>';
 
   html +=
-    '<p class="settings-intro">' +
-    escapeSettingsHtml(
-      (language.settings.widgets && language.settings.widgets.clock_intro) ||
-        'Global defaults below. Per-widget size, scale and style options are set in the Widget editor.'
-    ) +
-    '</p>';
+    '<div class="settings-clock-size-group">';
+  html += '<h6 class="settings-weather-heading">Weergave</h6>';
+  if (tile.settings.clock_size) {
+    html += renderSettingsRow('clock_size', tile.settings.clock_size);
+  }
+  if (tile.settings.clock_scale) {
+    html += renderSettingsRow('clock_scale', tile.settings.clock_scale);
+  }
+  html += '</div>';
 
   html +=
     '<div class="settings-clock-group" data-clock-type="flipclock" style="display:none">';
@@ -1534,19 +1649,12 @@ function renderClockWidgetSettings(tile) {
   html += '</div>';
 
   html +=
-    '<div class="settings-clock-group" data-clock-type="basicclock" style="display:none">' +
-    '<p class="settings-intro">' +
-    escapeSettingsHtml('Configure size and scale in the Widget editor.') +
-    '</p></div>';
-  html +=
-    '<div class="settings-clock-group" data-clock-type="haymanclock" style="display:none">' +
-    '<p class="settings-intro">' +
-    escapeSettingsHtml('Configure size and scale in the Widget editor.') +
-    '</p></div>';
-  html +=
     '<div class="settings-clock-group" data-clock-type="miniclock" style="display:none">' +
     '<p class="settings-intro">' +
-    escapeSettingsHtml('Miniclock has no global settings.') +
+    escapeSettingsHtml(
+      (language.settings.widgets && language.settings.widgets.miniclock_note) ||
+        'Miniclock has no extra display options.'
+    ) +
     '</p></div>';
 
   return html;
@@ -1563,6 +1671,7 @@ function bindClockTypeToggle() {
       $popup.find('.settings-clock-group').each(function () {
         $(this).toggle(String($(this).data('clock-type')) === type);
       });
+      $popup.find('.settings-clock-size-group').toggle(type !== 'miniclock');
     });
 }
 
@@ -1705,65 +1814,119 @@ function bindSettingsCategoryTiles() {
   });
 }
 
-function bindStandbyBackgroundPicker() {
+function bindBackgroundPickers() {
   var $popup = $('#settingspopup');
   if (!$popup.length) return;
 
-  var $pick = $popup.find('#setting-standby_background_pick');
-  var $path = $popup.find('#setting-standby_background');
-  var $preview = $popup.find('#settings-standby-bg-preview');
-  if (!$pick.length || !$path.length) return;
+  var $picks = $popup.find('.settings-bg-pick');
+  if (!$picks.length) return;
 
-  function syncPreview(path) {
+  function syncPreview(settingName, path) {
+    var $preview = $popup.find('[data-bg-preview="' + settingName + '"]');
+    if (!$preview.length) return;
     if (!path) {
       $preview.removeClass('is-visible').css('background-image', '');
       return;
     }
-    var url = String(path).indexOf('/') >= 0 ? path : 'img/' + path;
-    $preview.addClass('is-visible').css('background-image', "url('" + url + "')");
+    $preview
+      .addClass('is-visible')
+      .css('background-image', "url('" + resolveBackgroundUrl(path) + "')");
   }
 
-  function selectMatchingOption(path) {
+  function selectMatchingOption($pick, path) {
     var match = false;
+    var normalized = String(path || '').trim();
     $pick.find('option').each(function () {
-      if ($(this).val() === path) {
+      var optionVal = String($(this).val() || '');
+      if (
+        optionVal &&
+        (optionVal === normalized ||
+          optionVal === resolveBackgroundUrl(normalized) ||
+          resolveBackgroundUrl(optionVal) === resolveBackgroundUrl(normalized))
+      ) {
         match = true;
+        $pick.val(optionVal);
         return false;
       }
     });
-    $pick.val(match ? path : '');
+    if (!match) {
+      $pick.val('');
+    }
+  }
+
+  function syncPathVisibility(settingName, isCustom) {
+    var $row = $popup.find('[data-bg-path-row="' + settingName + '"]');
+    // Always show Pad/URL so custom values stay editable; emphasize when custom.
+    $row.toggleClass('is-custom', !!isCustom);
   }
 
   $.getJSON('js/listbackgrounds.php')
     .done(function (data) {
       var images = (data && data.images) || [];
-      images.forEach(function (imagePath) {
-        $pick.append(
-          $('<option></option>')
-            .attr('value', imagePath)
-            .text(imagePath.replace(/^img\//, ''))
-        );
+      $picks.each(function () {
+        var $pick = $(this);
+        var settingName = String($pick.data('bg-target') || '');
+        var $path = $popup.find('#setting-' + settingName);
+        images.forEach(function (imagePath) {
+          var exists = false;
+          $pick.find('option').each(function () {
+            if ($(this).val() === imagePath) {
+              exists = true;
+              return false;
+            }
+          });
+          if (exists) return;
+          $pick.append(
+            $('<option></option>')
+              .attr('value', imagePath)
+              .text(backgroundOptionLabel(imagePath))
+          );
+        });
+        selectMatchingOption($pick, $path.val());
+        syncPreview(settingName, $path.val());
+        syncPathVisibility(settingName, !$pick.val());
       });
-      selectMatchingOption($path.val());
-      syncPreview($path.val());
     })
     .fail(function () {
-      selectMatchingOption($path.val());
-      syncPreview($path.val());
+      $picks.each(function () {
+        var $pick = $(this);
+        var settingName = String($pick.data('bg-target') || '');
+        var $path = $popup.find('#setting-' + settingName);
+        selectMatchingOption($pick, $path.val());
+        syncPreview(settingName, $path.val());
+        syncPathVisibility(settingName, true);
+      });
     });
 
-  $pick.off('change.standbybg').on('change.standbybg', function () {
-    var value = $(this).val();
-    if (value) {
-      $path.val(value);
-      syncPreview(value);
-    }
-  });
+  $popup
+    .off('change.bgpick')
+    .on('change.bgpick', '.settings-bg-pick', function () {
+      var $pick = $(this);
+      var settingName = String($pick.data('bg-target') || '');
+      var $path = $popup.find('#setting-' + settingName);
+      var value = $pick.val();
+      if (value) {
+        $path.val(value);
+        syncPreview(settingName, value);
+        syncPathVisibility(settingName, false);
+      } else {
+        // Custom path / URL: keep current value for editing and focus the field.
+        syncPreview(settingName, $path.val());
+        syncPathVisibility(settingName, true);
+        $path.trigger('focus');
+      }
+    });
 
-  $path.off('input.standbybg').on('input.standbybg', function () {
-    selectMatchingOption($(this).val());
-    syncPreview($(this).val());
-  });
+  $popup
+    .off('input.bgpath')
+    .on('input.bgpath', '.settings-bg-path', function () {
+      var $path = $(this);
+      var settingName = String($path.attr('name') || '');
+      var $pick = $popup.find('.settings-bg-pick[data-bg-target="' + settingName + '"]');
+      selectMatchingOption($pick, $path.val());
+      syncPreview(settingName, $path.val());
+      syncPathVisibility(settingName, !$pick.val());
+    });
 }
 
 function bindSettingsUpdateControls() {
@@ -1899,7 +2062,7 @@ function saveSettings() {
         if (
           !$(this).attr('name') ||
           $(this).is(
-            '#settings-update-branch, #setting-standby_background_pick, #setting-weather_provider_ui, #setting-clock_type_ui'
+            '#settings-update-branch, #setting-standby_background_pick, #setting-background_image_pick, #setting-weather_provider_ui, #setting-clock_type_ui'
           )
         ) {
           return;

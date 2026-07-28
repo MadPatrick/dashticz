@@ -1,8 +1,9 @@
 {
-"version": "3.21.0",
+"version": "3.21.1",
 "branch": "beta",
-"last_changes": "Clock type settings, larger Update controls, Settings Widgets tiles",
+"last_changes": "Background BG_ picker + custom path/URL; clock fit-to-tile and scale settings",
 "changelog" : {
+            "3.21.1": "Background BG_ picker + custom path/URL; clock fit-to-tile and scale settings",
             "3.21.0": "Clock type settings, larger Update controls, Settings Widgets tiles",
             "3.20.5": "Blocks configuration editor with block sizing",
             "3.20.4": "Device Editor: generate named blocks, grouped columns, and proper screens[1] in CONFIG.js",

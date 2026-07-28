@@ -1,7 +1,8 @@
 <?php
 /**
- * List bundled background images under img/ for the Settings standby picker.
+ * List bundled background images under img/ for the Settings background pickers.
  * Read-only: same-origin only (no CSRF) so the settings UI can populate the select.
+ * Returns img/bg*.{jpg,png,...} entries shown as BG_* labels in the UI.
  */
 require_once(__DIR__ . '/../vendor/dashticz/security.php');
 

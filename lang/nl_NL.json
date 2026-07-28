@@ -66,8 +66,9 @@
             "standby_call_url": "URL die bij start van standby wordt aangeroepen",
             "standby_call_url_on_end": "URL die bij einde van standby wordt aangeroepen",
             "standby_background": "Standby-achtergrond",
-            "standby_background_help": "Pad of URL voor de standby-achtergrond, bijv. img\/bg11.jpg",
+            "standby_background_help": "Pad of URL voor de standby-achtergrond, bijv. img\/bg11.jpg of https:\/\/voorbeeld.nl\/beeld.jpg",
             "pick_background": "Kies achtergrondafbeelding",
+            "path_url": "Pad\/URL",
             "custom_path": "Aangepast pad \/ URL",
             "blocks": "Standby-blokken",
             "blocks_help": "Kommagescheiden block-keys voor columns_standby, bijv. clock, currentweather_big, weather"
@@ -91,7 +92,12 @@
             "moon": "Maan",
             "news": "Nieuws",
             "anwb_apikey": "ANWB API-sleutel",
-            "anwb_apikey_help": "API-sleutel voor ANWB verkeersinfo (trafficinfo-widget)."
+            "anwb_apikey_help": "API-sleutel voor ANWB verkeersinfo (trafficinfo-widget).",
+            "clock_size": "Grootte (px)",
+            "clock_size_help": "Leeg = past zich aan de tegel aan. Bijv. 120",
+            "clock_scale": "Schaal",
+            "clock_scale_help": "Relatieve schaalfactor, bijv. 0.75 (standaard 1)",
+            "miniclock_note": "Miniclock heeft geen extra weergave-opties."
         },
         "garbage": {
             "garbage_calendar_id": "Google Agenda-ID",

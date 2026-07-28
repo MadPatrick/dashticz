@@ -66,8 +66,9 @@
             "standby_call_url": "URL to be called at start of standby",
             "standby_call_url_on_end": "URL to be called at end of standby",
             "standby_background": "Standby background",
-            "standby_background_help": "Path or URL for the standby screen background, e.g. img\/bg11.jpg",
+            "standby_background_help": "Path or URL for the standby screen background, e.g. img\/bg11.jpg or https:\/\/example.com\/image.jpg",
             "pick_background": "Choose background image",
+            "path_url": "Path\/URL",
             "custom_path": "Custom path \/ URL",
             "blocks": "Standby blocks",
             "blocks_help": "Comma-separated block keys for columns_standby, e.g. clock, currentweather_big, weather"
@@ -91,7 +92,12 @@
             "moon": "Moon",
             "news": "News",
             "anwb_apikey": "ANWB API key",
-            "anwb_apikey_help": "API key for ANWB traffic info (trafficinfo widget)."
+            "anwb_apikey_help": "API key for ANWB traffic info (trafficinfo widget).",
+            "clock_size": "Size (px)",
+            "clock_size_help": "Empty = fit to the tile. Example: 120",
+            "clock_scale": "Scale",
+            "clock_scale_help": "Relative scale factor, e.g. 0.75 (default 1)",
+            "miniclock_note": "Miniclock has no extra display options."
         },
         "garbage": {
             "garbage_calendar_id": "Google Calendar ID",

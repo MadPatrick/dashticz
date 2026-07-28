@@ -538,6 +538,16 @@ next css sets the default height of the frame popup
   background-repeat: no-repeat;
 }
 
+.settings-standby-bg-preview.is-visible,
+.settings-bg-preview.is-visible {
+  display: block;
+}
+
+.settings-bg-path-row.is-custom .settings-bg-path {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
+}
+
 .settings-weather-heading {
   margin: 16px 0 10px;
   font-size: 14px;

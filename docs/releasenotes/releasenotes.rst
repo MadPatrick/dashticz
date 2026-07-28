@@ -8,6 +8,17 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 Recent changes
 ---------------
 
+v3.21.1 beta (28-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Settings → Weergave: background image uses the same pulldown as Standby (``BG_*`` labels for ``img/bg*`` files), with a **Pad/URL** field underneath for custom paths or full URLs.
+* Settings → Standby: the path field sits under **Kies achtergrondafbeelding** and is labeled **Pad/URL**; choosing *Aangepast pad / URL* focuses that field so custom values work.
+* Background paths and ``http(s)`` URLs are resolved consistently for the main screen and standby.
+* Settings → Widgets → Clock: **Grootte** and **Schaal** apply as defaults; clocks (especially station clock) now fit inside the device tile.
+
 v3.21.0 beta (28-7-2026)
 --------------------------
 

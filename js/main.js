@@ -1009,6 +1009,15 @@ function setClockDateWeekday() {
   );
 }
 
+function resolveBackgroundImagePath(path) {
+  var value = String(path || '').trim();
+  if (!value) return '';
+  if (/^(https?:)?\/\//i.test(value) || value.indexOf('/') >= 0) {
+    return value;
+  }
+  return 'img/' + value;
+}
+
 function toSlide(num) {
   if (typeof myswiper !== 'undefined') myswiper.slideTo(num, 0, true);
 }
@@ -1019,13 +1028,10 @@ function buildStandby() {
       settings['standby_background'] || settings['background_image'] || '';
     var backgroundStyle = '';
     if (standbyBackground) {
-      if (String(standbyBackground).indexOf('/') > 0) {
-        backgroundStyle =
-          'background-image:url(\'' + standbyBackground + '\');';
-      } else {
-        backgroundStyle =
-          'background-image:url(\'img/' + standbyBackground + '\');';
-      }
+      backgroundStyle =
+        'background-image:url(\'' +
+        resolveBackgroundImagePath(standbyBackground) +
+        '\');';
     }
     var screenhtml =
       '<div class="screen screenstandby swiper-slide slidestandby" style="height:' +
@@ -1136,30 +1142,18 @@ function buildScreens() {
             screens[t][s]['background'] = settings['background_image'];
           }
           if (typeof screens[t][s]['background'] !== 'undefined') {
-            if (screens[t][s]['background'].indexOf('/') > 0)
-              screenhtml +=
-                'style="background-image:url(\'' +
-                screens[t][s]['background'] +
-                '\');"';
-            else
-              screenhtml +=
-                'style="background-image:url(\'img/' +
-                screens[t][s]['background'] +
-                '\');"';
+            screenhtml +=
+              'style="background-image:url(\'' +
+              resolveBackgroundImagePath(screens[t][s]['background']) +
+              '\');"';
           } else if (
             typeof screens[t][s][1] !== 'undefined' &&
             typeof screens[t][s][1]['background'] !== 'undefined'
           ) {
-            if (screens[t][s][1]['background'].indexOf('/') > 0)
-              screenhtml +=
-                'style="background-image:url(\'' +
-                screens[t][s][1]['background'] +
-                '\');"';
-            else
-              screenhtml +=
-                'style="background-image:url(\'img/' +
-                screens[t][s][1]['background'] +
-                '\');"';
+            screenhtml +=
+              'style="background-image:url(\'' +
+              resolveBackgroundImagePath(screens[t][s][1]['background']) +
+              '\');"';
           }
 
           screenhtml += '><div class="row"></div></div>';
@@ -1258,16 +1252,12 @@ function setClassByTime() {
   for (var t in screens) {
     for (var s in screens[t]) {
       if (typeof screens[t][s]['background_' + newClass] !== 'undefined') {
-        if (screens[t][s]['background_' + newClass].indexOf('/') > 0)
-          $('.screen.screen' + s).css(
-            'background-image',
-            "url('" + screens[t][s]['background_' + newClass] + "')"
-          );
-        else
-          $('.screen.screen' + s).css(
-            'background-image',
-            "url('img/" + screens[t][s]['background_' + newClass] + "')"
-          );
+        $('.screen.screen' + s).css(
+          'background-image',
+          "url('" +
+            resolveBackgroundImagePath(screens[t][s]['background_' + newClass]) +
+            "')"
+        );
       }
     }
   }
