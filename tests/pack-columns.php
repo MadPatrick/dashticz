@@ -40,7 +40,7 @@ assert_pack(
     ]
 );
 
-// Tall right tile creates an 8+4 split and a side pocket for the next row.
+// Tall right tile: side-pocket shorts join the short column (no flex gap).
 assert_pack(
     'tall block creates virtual side column',
     [
@@ -51,13 +51,12 @@ assert_pack(
         ['ref' => 'BLOK5', 'width' => 4, 'height' => 120],
     ],
     [
-        ['blocks' => ['BLOK1', 'BLOK2'], 'width' => 8],
+        ['blocks' => ['BLOK1', 'BLOK2', 'BLOK4', 'BLOK5'], 'width' => 8],
         ['blocks' => ['BLOK3'], 'width' => 4],
-        ['blocks' => ['BLOK4', 'BLOK5'], 'width' => 8],
     ]
 );
 
-// Triple-height tall tile fills two side pockets.
+// Triple-height tall tile fills two side pockets inside the short column.
 assert_pack(
     'triple height fills two side rows',
     [
@@ -67,10 +66,8 @@ assert_pack(
         ['ref' => 'C', 'width' => 6, 'height' => 120],
     ],
     [
-        ['blocks' => ['A'], 'width' => 6],
+        ['blocks' => ['A', 'B', 'C'], 'width' => 6],
         ['blocks' => ['T'], 'width' => 6],
-        ['blocks' => ['B'], 'width' => 6],
-        ['blocks' => ['C'], 'width' => 6],
     ]
 );
 

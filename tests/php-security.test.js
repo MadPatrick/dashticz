@@ -156,11 +156,15 @@ test('layout writer only stores safe managed block references', () => {
 test('layout writer packs tall blocks into virtual side columns', () => {
   const writer = read('js/configwriter.php');
   const layout = read('js/savelayout.php');
+  const styles = read('css/creative.css');
   assert.match(writer, /function configwriter_pack_columns_by_height/);
-  assert.match(writer, /virtual side column/);
+  assert.match(writer, /virtual tall column/);
   assert.match(writer, /rowsBeside/);
+  assert.match(writer, /append every side-pocket tile into the same short column/);
   assert.match(layout, /configwriter_pack_columns_by_height/);
   assert.match(layout, /height/);
+  assert.match(styles, /display: contents/);
+  assert.match(styles, /id\^=\"block_\"/);
 });
 
 test('widget writer preserves existing settings when none are posted', () => {

@@ -253,6 +253,12 @@ function configwriter_normalise_layout_item($item, $columnWidth)
  *   [ short C ][ short D ][ TALL ]
  *                         [      ]
  *
+ * Side-pocket shorts (C, D) are appended into the SAME short column as A/B.
+ * Emitting them as extra Bootstrap columns leaves a flex-wrap gap under A/B,
+ * because a new flex line always starts below the tallest item of the previous
+ * line. Keeping them in one column stacks (or float-packs) them directly under
+ * the opening short tiles — e.g. BMW sits flush under Afval beside a tall UPS.
+ *
  * @param array $items        Ordered list of {ref, width, height?}
  * @param int   $columnWidth  Grid width (normally 12)
  * @param string $keyPrefix   Column key prefix, e.g. 'le_col', 'de_col', 'we_col'
@@ -344,14 +350,58 @@ function configwriter_pack_columns_by_height($items, $columnWidth = 12, $keyPref
         }
 
         /*
-         * Step 3 — shrink the current column and add the virtual tall column.
+         * Step 3 — shrink the short column and add the virtual tall column.
          *
          * Current column width becomes (gridWidth - tallWidth) so the short
-         * tiles sit on the left. The tall tile gets its own column of width
+         * tiles sit on one side. The tall tile gets its own column of width
          * tallWidth. Together they still sum to the full grid width.
+         *
+         * IMPORTANT (Bootstrap 5 flex rows): do NOT emit the side-pocket short
+         * tiles as separate columns. A new flex line always starts below the
+         * tallest item of the previous line, which leaves a gap under the
+         * short tiles (e.g. BMW sitting below APC instead of under Afval).
+         * Instead, append every side-pocket tile into the same short column so
+         * they stack (or float-pack) directly under the opening short tiles.
          */
         $sideWidth = max(1, $columnWidth - $tall['width']);
         $tallWidth = $tall['width'];
+
+        /*
+         * Step 4 — how many extra short rows still fit beside the tall tile?
+         *
+         * rowsBeside = floor(tallHeight / baseHeight) - 1
+         * (the first baseHeight unit was already consumed by the short tiles
+         * on the opening row). Pull those tiles now and append them to
+         * shortBlocks before emitting the short column.
+         */
+        $rowsBeside = (int)floor($maxHeight / max(1, $baseHeight)) - 1;
+        for ($rowSlot = 0; $rowSlot < $rowsBeside; $rowSlot++) {
+            $sideRowWidth = 0;
+            $added = 0;
+            while ($index < count($queue)) {
+                $candidate = $queue[$index];
+                // Do not pull another tall-or-taller tile into the side pocket;
+                // it would overflow the remaining vertical space beside TALL.
+                if ($candidate['height'] > $baseHeight) {
+                    break;
+                }
+                if ($added > 0 && ($sideRowWidth + $candidate['width']) > $sideWidth) {
+                    break;
+                }
+                if ($added === 0 && $candidate['width'] > $sideWidth) {
+                    // Too wide for the pocket — leave it for a later full-width pass.
+                    break;
+                }
+                $shortBlocks[] = $candidate['ref'];
+                $sideRowWidth += $candidate['width'];
+                $added++;
+                $index++;
+            }
+
+            if ($added === 0) {
+                break;
+            }
+        }
 
         if (!empty($shortBlocks)) {
             $packed[] = [
@@ -366,47 +416,6 @@ function configwriter_pack_columns_by_height($items, $columnWidth = 12, $keyPref
             'blocks' => [$tall['ref']],
             'width' => $tallWidth,
         ];
-
-        /*
-         * Step 4 — how many extra short rows still fit beside the tall tile?
-         *
-         * rowsBeside = floor(tallHeight / baseHeight) - 1
-         * (the first baseHeight unit was already consumed by the short tiles
-         * on the opening row).
-         */
-        $rowsBeside = (int)floor($maxHeight / max(1, $baseHeight)) - 1;
-        for ($rowSlot = 0; $rowSlot < $rowsBeside; $rowSlot++) {
-            $sideRow = [];
-            $sideRowWidth = 0;
-            while ($index < count($queue)) {
-                $candidate = $queue[$index];
-                // Do not pull another tall-or-taller tile into the side pocket;
-                // it would overflow the remaining vertical space beside TALL.
-                if ($candidate['height'] > $baseHeight) {
-                    break;
-                }
-                if (!empty($sideRow) && ($sideRowWidth + $candidate['width']) > $sideWidth) {
-                    break;
-                }
-                if (empty($sideRow) && $candidate['width'] > $sideWidth) {
-                    // Too wide for the pocket — leave it for a later full-width pass.
-                    break;
-                }
-                $sideRow[] = $candidate['ref'];
-                $sideRowWidth += $candidate['width'];
-                $index++;
-            }
-
-            if (empty($sideRow)) {
-                break;
-            }
-
-            $packed[] = [
-                'key' => $keyPrefix . $columnNumber++,
-                'blocks' => $sideRow,
-                'width' => $sideWidth,
-            ];
-        }
     }
 
     return $packed;
