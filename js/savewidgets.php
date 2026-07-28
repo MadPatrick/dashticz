@@ -234,7 +234,7 @@ if (!empty($widgets)) {
     }
 
     $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
-    $section .= configwriter_emit_screen_columns(1, $columnKeys);
+    $section .= configwriter_emit_screen_columns(1, $columnKeys, 'merge');
 
     if (!empty($configSettings)) {
         $section .= "\n" . configwriter_section_header('WIDGET SETTINGS') . "\n";

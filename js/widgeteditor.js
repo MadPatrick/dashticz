@@ -286,7 +286,7 @@ var DashticzWidgetEditor = (function () {
   function _readManagedLayoutOrder() {
     var seen = {};
     _orderedColumnKeys().forEach(function (columnKey) {
-      if (!/^(de|we|le)_col\d+$/.test(String(columnKey))) return;
+      if (!/^(de|we|le)_col\d+$|^col_\d+$/.test(String(columnKey))) return;
       var column = columns[columnKey];
       if (!column || !Array.isArray(column.blocks)) return;
 

@@ -21,8 +21,9 @@ var DashticzLayoutEditor = (function () {
     var $screen = $('.screen.swiper-slide-active');
     if (!$screen.length) $screen = $('.screen:visible').first();
 
+    var managedColumnRe = /^(de|we|le)_col\d+$|^col_\d+$/;
     var $managedColumns = $screen.find('[data-colindex]').filter(function () {
-      return /^(de|we|le)_col\d+$/.test(String($(this).data('colindex')));
+      return managedColumnRe.test(String($(this).attr('data-colindex')));
     });
 
     if (!$managedColumns.length) {
@@ -58,7 +59,7 @@ var DashticzLayoutEditor = (function () {
 
     $managedColumns.each(function () {
       var $column = $(this);
-      var columnKey = String($column.data('colindex'));
+      var columnKey = String($column.attr('data-colindex'));
       var refs =
         typeof columns !== 'undefined' &&
         columns[columnKey] &&

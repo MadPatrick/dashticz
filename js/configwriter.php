@@ -129,18 +129,35 @@ function configwriter_emit_column_line($key, $blockKeys, $width)
         . '], width: ' . (int)$width . "};\n";
 }
 
-function configwriter_emit_screen_columns($screenNumber, $columnKeys)
+/**
+ * Emit screens[N] column wiring.
+ * - merge (default): push column keys if missing (device/widget editors)
+ * - replace: drop managed editor columns, then push the provided keys (layout editor)
+ */
+function configwriter_emit_screen_columns($screenNumber, $columnKeys, $mode = 'merge')
 {
-    $quotedColumns = array_map(function ($columnKey) {
-        return "'" . configwriter_js_string_escape($columnKey) . "'";
-    }, $columnKeys);
+    $n = (int)$screenNumber;
+    $out = "if(typeof screens==='undefined') var screens={};\n"
+        . "if(typeof screens[{$n}]==='undefined') screens[{$n}]={};\n"
+        . "if(!Array.isArray(screens[{$n}]['columns'])) screens[{$n}]['columns']=[];\n";
 
-    return "if(typeof screens==='undefined') var screens={};\n"
-        . 'if(typeof screens[' . (int)$screenNumber . "]==='undefined') screens["
-        . (int)$screenNumber . "]={};\n"
-        . 'screens[' . (int)$screenNumber . "]['columns'] = ["
-        . implode(', ', $quotedColumns)
-        . "];\n";
+    if ($mode === 'replace') {
+        $out .= "screens[{$n}]['columns']=screens[{$n}]['columns'].filter(function(columnKey){"
+            . "return !/^(de|we|le)_col\\d+$|^col_\\d+$/.test(String(columnKey));});\n";
+        foreach ($columnKeys as $columnKey) {
+            $out .= "screens[{$n}]['columns'].push('"
+                . configwriter_js_string_escape($columnKey) . "');\n";
+        }
+        return $out;
+    }
+
+    foreach ($columnKeys as $columnKey) {
+        $safe = configwriter_js_string_escape($columnKey);
+        $out .= "if(screens[{$n}]['columns'].indexOf('{$safe}')<0) "
+            . "screens[{$n}]['columns'].push('{$safe}');\n";
+    }
+
+    return $out;
 }
 
 function configwriter_emit_columns_standby($blockKeys, $width = 12)
@@ -229,7 +246,7 @@ function configwriter_build_layout_section($blockLines, $items, $screenNumber = 
     $columnKeys = [];
     $chunks = configwriter_chunk_items_by_width($items, $columnWidth);
     foreach ($chunks as $index => $chunk) {
-        $columnKey = 'col_' . ($index + 1);
+        $columnKey = 'le_col' . ($index + 1);
         $columnKeys[] = $columnKey;
         $refs = array_map(function ($item) {
             return $item['ref'];
@@ -238,7 +255,7 @@ function configwriter_build_layout_section($blockLines, $items, $screenNumber = 
     }
 
     $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
-    $section .= configwriter_emit_screen_columns($screenNumber, $columnKeys);
+    $section .= configwriter_emit_screen_columns($screenNumber, $columnKeys, 'replace');
 
     return [$section, $columnKeys];
 }

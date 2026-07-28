@@ -138,15 +138,17 @@ if (!empty($devices)) {
     }
 
     $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
-    $section .= configwriter_emit_screen_columns(1, $columnKeys);
+    $section .= configwriter_emit_screen_columns(1, $columnKeys, 'merge');
 
-    $config .= configwriter_wrap_section($startMarker, $endMarker, $section);
+    $wrapped = configwriter_wrap_section($startMarker, $endMarker, $section);
 
     $widgetStartPos = strpos($config, '// [widget-editor-start]');
     if ($widgetStartPos !== false) {
         $beforeWidgets = rtrim(substr($config, 0, $widgetStartPos));
         $widgetSection = ltrim(substr($config, $widgetStartPos));
-        $config = $beforeWidgets . configwriter_wrap_section($startMarker, $endMarker, $section) . "\n\n" . $widgetSection;
+        $config = $beforeWidgets . $wrapped . "\n\n" . $widgetSection;
+    } else {
+        $config .= $wrapped;
     }
 }
 

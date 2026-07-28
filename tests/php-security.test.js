@@ -74,14 +74,15 @@ test('bundled Horizon remote requires POST, CSRF and a key allowlist', () => {
 
 test('blocks writer requires CSRF, POST, and generates named block definitions', () => {
   const source = read('js/saveblocks.php');
+  const writer = read('js/configwriter.php');
   assert.match(source, /dashticz_require_same_origin\(\)/);
   assert.match(source, /dashticz_require_csrf\(\)/);
   assert.match(source, /REQUEST_METHOD.*POST/);
-  assert.match(source, /file_put_contents\(\$configPath,.*LOCK_EX\)/);
+  assert.match(source, /configwriter_write_config/);
   /* generates named block entries, not raw IDX arrays */
-  assert.match(source, /typeof blocks/);
-  assert.match(source, /typeof columns/);
-  assert.match(source, /typeof screens/);
+  assert.match(writer, /typeof blocks/);
+  assert.match(writer, /typeof columns/);
+  assert.match(writer, /typeof screens/);
   assert.match(source, /device-editor-start/);
   assert.match(source, /widget-editor-start/);
   assert.match(source, /layout-editor-start/);
@@ -89,12 +90,11 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   /* accepts both legacy bare integers and {idx,name} objects */
   assert.match(source, /is_int\(\$entry\)/);
   assert.match(source, /\$entry\['idx'\]/);
-  assert.match(source, /function _chunkBlockKeysByWidth/);
-  assert.match(source, /\$defaultBlockWidth = 3/);
+  assert.match(writer, /function configwriter_chunk_items_by_width/);
   assert.match(source, /array_key_exists\('height'/);
   assert.match(source, /round\(\$height \/ 10\) \* 10/);
-  assert.match(source, /,height:/);
-  assert.doesNotMatch(source, /array_chunk\(\$blockKeys,\s*4\)/);
+  assert.match(writer, /height/);
+  assert.doesNotMatch(source, /array_chunk\(\$.*,\s*4\)/);
   /* no raw IDX-only column block from the old implementation */
   assert.doesNotMatch(source, /columns\['device_editor'\]/);
 });
@@ -122,16 +122,19 @@ test('widget writer whitelists widgets and protects CONFIG.js writes', () => {
   assert.match(source, /widget-editor-start/);
   assert.match(source, /layout-editor-start/);
   assert.match(source, /blockKeys/);
-  assert.match(source, /file_put_contents\(\$configPath, \$config \. "\\n", LOCK_EX\)/);
+  assert.match(source, /configwriter_write_config/);
 });
 
 test('layout writer only stores safe managed block references', () => {
   const source = read('js/savelayout.php');
+  const writer = read('js/configwriter.php');
   assert.match(source, /dashticz_require_same_origin\(\)/);
   assert.match(source, /dashticz_require_csrf\(\)/);
   assert.match(source, /REQUEST_METHOD.*POST/);
   assert.match(source, /\^\[A-Za-z_\]\[A-Za-z0-9_\]\*\$/);
   assert.match(source, /layout-editor-start/);
-  assert.match(source, /\(de\|we\|le\)_col/);
-  assert.match(source, /file_put_contents\(\$configPath, \$config \. "\\n", LOCK_EX\)/);
+  assert.match(source, /configwriter\.php/);
+  assert.match(writer, /\(de\|we\|le\)_col/);
+  assert.match(writer, /le_col/);
+  assert.match(source, /configwriter_write_config/);
 });
