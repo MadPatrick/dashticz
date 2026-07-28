@@ -134,7 +134,18 @@ test('layout writer only stores safe managed block references', () => {
   assert.match(source, /\^\[A-Za-z_\]\[A-Za-z0-9_\]\*\$/);
   assert.match(source, /layout-editor-start/);
   assert.match(source, /configwriter\.php/);
+  /* Must not wipe device/widget sections (that deletes widget settings). */
+  assert.doesNotMatch(source, /configwriter_remove_editor_sections/);
   assert.match(writer, /\(de\|we\|le\)_col/);
   assert.match(writer, /le_col/);
   assert.match(source, /configwriter_write_config/);
+});
+
+test('widget writer preserves existing settings when none are posted', () => {
+  const source = read('js/savewidgets.php');
+  const writer = read('js/configwriter.php');
+  assert.match(source, /configwriter_extract_section_config_settings/);
+  assert.match(source, /existingSettings/);
+  assert.match(writer, /function configwriter_extract_section_config_settings/);
+  assert.match(writer, /function configwriter_emit_config_settings/);
 });

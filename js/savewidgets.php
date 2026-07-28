@@ -208,6 +208,17 @@ $config = configwriter_remove_section(
 
 $startMarker = '// [widget-editor-start]';
 $endMarker = '// [widget-editor-end]';
+
+/*
+ * Device/layout editors call this endpoint without a settings payload.
+ * Keep previously saved widget config settings unless new ones are provided.
+ */
+$existingSettings = configwriter_extract_section_config_settings(
+    $config,
+    $startMarker,
+    $endMarker
+);
+
 $config = configwriter_remove_section($config, $startMarker, $endMarker);
 $config = rtrim($config);
 
@@ -237,11 +248,9 @@ if (!empty($widgets)) {
     $section .= configwriter_emit_screen_columns(1, $columnKeys, 'merge');
 
     if (!empty($configSettings)) {
-        $section .= "\n" . configwriter_section_header('WIDGET SETTINGS') . "\n";
-        foreach ($configSettings as $key => $value) {
-            $section .= 'config[' . json_encode($key) . '] = '
-                . json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ";\n";
-        }
+        $section .= configwriter_emit_config_settings($configSettings, false);
+    } elseif (!empty($existingSettings)) {
+        $section .= configwriter_emit_config_settings($existingSettings, true);
     }
 
     $config .= configwriter_wrap_section($startMarker, $endMarker, $section);

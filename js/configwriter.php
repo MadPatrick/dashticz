@@ -75,6 +75,61 @@ function configwriter_remove_editor_sections($config)
     return rtrim($config);
 }
 
+/**
+ * Extract config['key'] = value; lines from a marked CONFIG.js section.
+ * Returns an associative array of setting name => raw JS value expression.
+ */
+function configwriter_extract_section_config_settings($config, $startMarker, $endMarker)
+{
+    $settings = [];
+    $startPos = strpos($config, $startMarker);
+    if ($startPos === false) {
+        return $settings;
+    }
+    $endPos = strpos($config, $endMarker, $startPos);
+    if ($endPos === false) {
+        return $settings;
+    }
+
+    $section = substr($config, $startPos, $endPos - $startPos);
+    if (!preg_match_all(
+        "/config\\[(['\\\"])([A-Za-z0-9_]+)\\1\\]\\s*=\\s*([^;]+);/",
+        $section,
+        $matches,
+        PREG_SET_ORDER
+    )) {
+        return $settings;
+    }
+
+    foreach ($matches as $match) {
+        $settings[$match[2]] = trim($match[3]);
+    }
+
+    return $settings;
+}
+
+/**
+ * Emit config['key'] = value; lines from either PHP scalars or raw JS expressions.
+ */
+function configwriter_emit_config_settings($settings, $raw = false)
+{
+    if (empty($settings)) {
+        return '';
+    }
+
+    $out = "\n" . configwriter_section_header('WIDGET SETTINGS') . "\n";
+    foreach ($settings as $key => $value) {
+        if ($raw) {
+            $out .= 'config[' . json_encode((string)$key) . '] = ' . $value . ";\n";
+            continue;
+        }
+        $out .= 'config[' . json_encode((string)$key) . '] = '
+            . json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ";\n";
+    }
+
+    return $out;
+}
+
 function configwriter_js_string_escape($value)
 {
     return str_replace(['\\', "'"], ['\\\\', "\\'"], $value);

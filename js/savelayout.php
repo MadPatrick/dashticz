@@ -46,16 +46,33 @@ if ($readError !== null) {
     dashticz_json_error(500, $readError);
 }
 
-$blockLines = configwriter_extract_block_lines($config);
-$config = configwriter_remove_editor_sections($config);
+/*
+ * Only replace the layout section. Device/widget sections (and their
+ * widget-specific config settings) must stay intact.
+ */
+$startMarker = '// [layout-editor-start]';
+$endMarker = '// [layout-editor-end]';
+$config = configwriter_remove_section($config, $startMarker, $endMarker);
+$config = rtrim($config);
 
 if (!empty($items)) {
-    list($body,) = configwriter_build_layout_section($blockLines, $items, 1, 12);
-    $config .= configwriter_wrap_section(
-        '// [layout-editor-start]',
-        '// [layout-editor-end]',
-        $body
-    );
+    $section = configwriter_section_header('COLUMNS') . "\n";
+    $section .= "if(typeof columns==='undefined') var columns={};\n";
+
+    $columnKeys = [];
+    foreach (configwriter_chunk_items_by_width($items, 12) as $index => $chunk) {
+        $columnKey = 'le_col' . ($index + 1);
+        $columnKeys[] = $columnKey;
+        $refs = array_map(function ($item) {
+            return $item['ref'];
+        }, $chunk);
+        $section .= configwriter_emit_column_line($columnKey, $refs, 12);
+    }
+
+    $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
+    $section .= configwriter_emit_screen_columns(1, $columnKeys, 'replace');
+
+    $config .= configwriter_wrap_section($startMarker, $endMarker, $section);
 }
 
 $writeError = configwriter_write_config($configPath, $customDir, $config);
