@@ -311,6 +311,7 @@ var DashticzWidgetEditor = (function () {
             1,
             Math.min(12, parseInt(definition.width, 10) || 3)
           ),
+          height: parseInt(definition.height, 10) || null,
         });
       });
     });
@@ -728,21 +729,28 @@ var DashticzWidgetEditor = (function () {
             if (item.widgetId) {
               if (!selectedWidgets[item.widgetId]) return;
               includedWidgets[item.widgetId] = true;
-              layoutItems.push({
+              var widgetEntry = {
                 ref: widgetRefs[item.widgetId],
                 width: widgetWidths[item.widgetId],
-              });
+              };
+              var widgetDims = widgetDimensions[item.widgetId] || {};
+              if (widgetDims.height) widgetEntry.height = widgetDims.height;
+              layoutItems.push(widgetEntry);
               return;
             }
-            layoutItems.push({ ref: item.ref, width: item.width });
+            var deviceEntry = { ref: item.ref, width: item.width };
+            if (item.height) deviceEntry.height = item.height;
+            layoutItems.push(deviceEntry);
           });
 
           payload.forEach(function (entry) {
             if (includedWidgets[entry.id]) return;
-            layoutItems.push({
+            var newEntry = {
               ref: widgetRefs[entry.id],
               width: entry.width,
-            });
+            };
+            if (entry.height) newEntry.height = entry.height;
+            layoutItems.push(newEntry);
           });
 
           return _postWidgetData(

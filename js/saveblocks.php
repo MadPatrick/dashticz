@@ -108,7 +108,7 @@ if (!empty($devices)) {
     unset($device);
 
     $section = configwriter_section_header('BLOCKS') . "\n";
-    $section .= "if(typeof blocks==='undefined') var blocks={};\n";
+    $section .= "if (typeof blocks === 'undefined') var blocks = {}\n";
     foreach ($devices as $device) {
         $section .= configwriter_emit_block_line(
             $device['key'],
@@ -117,24 +117,25 @@ if (!empty($devices)) {
     }
 
     $section .= "\n" . configwriter_section_header('COLUMNS') . "\n";
-    $section .= "if(typeof columns==='undefined') var columns={};\n";
-    $chunks = configwriter_chunk_items_by_width(
-        array_map(function ($device) {
-            return [
-                'ref' => $device['key'],
-                'width' => $device['width'],
-            ];
-        }, $devices),
-        12
-    );
+    $section .= "if (typeof columns === 'undefined') var columns = {}\n";
+    $layoutItems = array_map(function ($device) {
+        $item = [
+            'ref' => $device['key'],
+            'width' => $device['width'],
+        ];
+        if (isset($device['height']) && is_int($device['height'])) {
+            $item['height'] = $device['height'];
+        }
+        return $item;
+    }, $devices);
     $columnKeys = [];
-    foreach ($chunks as $index => $chunk) {
-        $columnKey = 'de_col' . ($index + 1);
-        $columnKeys[] = $columnKey;
-        $refs = array_map(function ($item) {
-            return $item['ref'];
-        }, $chunk);
-        $section .= configwriter_emit_column_line($columnKey, $refs, 12);
+    foreach (configwriter_pack_columns_by_height($layoutItems, 12, 'de_col') as $column) {
+        $columnKeys[] = $column['key'];
+        $section .= configwriter_emit_column_line(
+            $column['key'],
+            $column['blocks'],
+            $column['width']
+        );
     }
 
     $section .= "\n" . configwriter_section_header('SCREENS') . "\n";

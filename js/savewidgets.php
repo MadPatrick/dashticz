@@ -224,7 +224,7 @@ $config = rtrim($config);
 
 if (!empty($widgets)) {
     $section = configwriter_section_header('BLOCKS') . "\n";
-    $section .= "if(typeof blocks==='undefined') var blocks={};\n";
+    $section .= "if (typeof blocks === 'undefined') var blocks = {}\n";
 
     foreach ($widgets as $widget) {
         $props = _widgetBlockProps($widget);
@@ -232,16 +232,25 @@ if (!empty($widgets)) {
     }
 
     $section .= "\n" . configwriter_section_header('COLUMNS') . "\n";
-    $section .= "if(typeof columns==='undefined') var columns={};\n";
-    $chunks = _widgetChunks($widgets, 12);
+    $section .= "if (typeof columns === 'undefined') var columns = {}\n";
+    $layoutItems = array_map(function ($widget) {
+        $item = [
+            'ref' => $widget['key'],
+            'width' => $widget['width'],
+        ];
+        if ($widget['height'] !== null) {
+            $item['height'] = $widget['height'];
+        }
+        return $item;
+    }, $widgets);
     $columnKeys = [];
-    foreach ($chunks as $index => $chunk) {
-        $columnKey = 'we_col' . ($index + 1);
-        $columnKeys[] = $columnKey;
-        $keys = array_map(function ($widget) {
-            return $widget['key'];
-        }, $chunk);
-        $section .= configwriter_emit_column_line($columnKey, $keys, 12);
+    foreach (configwriter_pack_columns_by_height($layoutItems, 12, 'we_col') as $column) {
+        $columnKeys[] = $column['key'];
+        $section .= configwriter_emit_column_line(
+            $column['key'],
+            $column['blocks'],
+            $column['width']
+        );
     }
 
     $section .= "\n" . configwriter_section_header('SCREENS') . "\n";

@@ -153,6 +153,16 @@ test('layout writer only stores safe managed block references', () => {
   assert.match(source, /configwriter_write_config/);
 });
 
+test('layout writer packs tall blocks into virtual side columns', () => {
+  const writer = read('js/configwriter.php');
+  const layout = read('js/savelayout.php');
+  assert.match(writer, /function configwriter_pack_columns_by_height/);
+  assert.match(writer, /virtual side column/);
+  assert.match(writer, /rowsBeside/);
+  assert.match(layout, /configwriter_pack_columns_by_height/);
+  assert.match(layout, /height/);
+});
+
 test('widget writer preserves existing settings when none are posted', () => {
   const source = read('js/savewidgets.php');
   const writer = read('js/configwriter.php');

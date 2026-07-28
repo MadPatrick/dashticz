@@ -189,30 +189,331 @@ function configwriter_emit_column_line($key, $blockKeys, $width)
  * - merge (default): push column keys if missing (device/widget editors)
  * - replace: drop managed editor columns, then push the provided keys (layout editor)
  */
+/**
+ * Default visual row height in pixels.
+ *
+ * Matches the common Dashticz tile height (modern-dark --height-block-default
+ * and the layout editor's typical unset-height rendering). Blocks without an
+ * explicit height are treated as exactly one row unit tall.
+ */
+function configwriter_default_row_height()
+{
+    return 120;
+}
+
+/**
+ * Normalise a layout item to safe width/height integers.
+ *
+ * @param array $item  Must contain ref/width; height is optional.
+ * @param int   $columnWidth
+ * @return array{ref:string,width:int,height:int}
+ */
+function configwriter_normalise_layout_item($item, $columnWidth)
+{
+    $width = isset($item['width']) ? (int)$item['width'] : 3;
+    $width = max(1, min($columnWidth, $width));
+
+    $height = configwriter_default_row_height();
+    if (isset($item['height']) && $item['height'] !== null && $item['height'] !== '') {
+        $height = (int)$item['height'];
+        // Height snaps to the same 10px grid the layout editor uses.
+        $height = (int)(round($height / 10) * 10);
+        if ($height < 50) {
+            $height = 50;
+        } elseif ($height > 2000) {
+            $height = 2000;
+        }
+    }
+
+    return [
+        'ref' => (string)$item['ref'],
+        'width' => $width,
+        'height' => $height,
+    ];
+}
+
+/**
+ * Pack ordered blocks into Bootstrap screen-columns, honouring height.
+ *
+ * Dashticz screens are a Bootstrap float row of columns. Each column has a
+ * width of 1–12 (`col-sm-N`) and contains one or more floated tiles
+ * (`col-xs-N`). When every column is width 12, columns stack and a tall tile
+ * cannot leave a side pocket for later tiles.
+ *
+ * This packer detects a tall tile on a filled row and splits that row into:
+ *   1. a "short" column of width (gridWidth - tallWidth) for the short tiles
+ *   2. a virtual side column of width tallWidth that holds only the tall tile
+ *
+ * Additional short rows that still fit in the remaining vertical space beside
+ * the tall tile are emitted as further columns of width (gridWidth - tallWidth).
+ * Bootstrap's float packing then places those columns under the short tiles and
+ * beside the tall tile, so all tops align:
+ *
+ *   [ short A ][ short B ][      ]
+ *   [ short C ][ short D ][ TALL ]
+ *                         [      ]
+ *
+ * @param array $items        Ordered list of {ref, width, height?}
+ * @param int   $columnWidth  Grid width (normally 12)
+ * @param string $keyPrefix   Column key prefix, e.g. 'le_col', 'de_col', 'we_col'
+ * @return array<int, array{key:string, blocks:string[], width:int}>
+ */
+function configwriter_pack_columns_by_height($items, $columnWidth = 12, $keyPrefix = 'le_col')
+{
+    $columnWidth = max(1, min(12, (int)$columnWidth));
+    $defaultRowHeight = configwriter_default_row_height();
+    $queue = [];
+    foreach ($items as $item) {
+        if (!isset($item['ref']) || !is_string($item['ref']) || $item['ref'] === '') {
+            continue;
+        }
+        $queue[] = configwriter_normalise_layout_item($item, $columnWidth);
+    }
+
+    $packed = [];
+    $index = 0;
+    $columnNumber = 1;
+
+    while ($index < count($queue)) {
+        /*
+         * Step 1 — fill one logical row until the 12-wide budget is exhausted.
+         * This mirrors classic width-only chunking, but we keep height metadata.
+         */
+        $row = [];
+        $rowWidth = 0;
+        while ($index < count($queue)) {
+            $candidate = $queue[$index];
+            if (!empty($row) && ($rowWidth + $candidate['width']) > $columnWidth) {
+                break;
+            }
+            $row[] = $candidate;
+            $rowWidth += $candidate['width'];
+            $index++;
+        }
+
+        if (empty($row)) {
+            // Single block wider than remaining budget: force it into its own column.
+            $row[] = $queue[$index];
+            $index++;
+        }
+
+        /*
+         * Step 2 — decide whether this row contains a tall block that should
+         * become a virtual side column.
+         *
+         * Base height = the tallest *short* tile on the row (or the default row
+         * height when every tile shares the max). A tile is "tall" when it is
+         * strictly taller than that base by at least one full row unit.
+         */
+        $heights = array_map(function ($item) {
+            return $item['height'];
+        }, $row);
+        $maxHeight = max($heights);
+        $minHeight = min($heights);
+
+        $tallIndex = null;
+        if ($maxHeight > $minHeight) {
+            foreach ($row as $i => $item) {
+                if ($item['height'] === $maxHeight) {
+                    $tallIndex = $i;
+                    break;
+                }
+            }
+        }
+
+        $baseHeight = $minHeight;
+        if ($tallIndex === null || $maxHeight < ($baseHeight + $defaultRowHeight)) {
+            // No meaningful height difference → emit one full-width column.
+            $packed[] = [
+                'key' => $keyPrefix . $columnNumber++,
+                'blocks' => array_map(function ($item) {
+                    return $item['ref'];
+                }, $row),
+                'width' => $columnWidth,
+            ];
+            continue;
+        }
+
+        $tall = $row[$tallIndex];
+        $shortBlocks = [];
+        foreach ($row as $i => $item) {
+            if ($i === $tallIndex) {
+                continue;
+            }
+            $shortBlocks[] = $item['ref'];
+        }
+
+        /*
+         * Step 3 — shrink the current column and add the virtual tall column.
+         *
+         * Current column width becomes (gridWidth - tallWidth) so the short
+         * tiles sit on the left. The tall tile gets its own column of width
+         * tallWidth. Together they still sum to the full grid width.
+         */
+        $sideWidth = max(1, $columnWidth - $tall['width']);
+        $tallWidth = $tall['width'];
+
+        if (!empty($shortBlocks)) {
+            $packed[] = [
+                'key' => $keyPrefix . $columnNumber++,
+                'blocks' => $shortBlocks,
+                'width' => $sideWidth,
+            ];
+        }
+
+        $packed[] = [
+            'key' => $keyPrefix . $columnNumber++,
+            'blocks' => [$tall['ref']],
+            'width' => $tallWidth,
+        ];
+
+        /*
+         * Step 4 — how many extra short rows still fit beside the tall tile?
+         *
+         * rowsBeside = floor(tallHeight / baseHeight) - 1
+         * (the first baseHeight unit was already consumed by the short tiles
+         * on the opening row).
+         */
+        $rowsBeside = (int)floor($maxHeight / max(1, $baseHeight)) - 1;
+        for ($rowSlot = 0; $rowSlot < $rowsBeside; $rowSlot++) {
+            $sideRow = [];
+            $sideRowWidth = 0;
+            while ($index < count($queue)) {
+                $candidate = $queue[$index];
+                // Do not pull another tall-or-taller tile into the side pocket;
+                // it would overflow the remaining vertical space beside TALL.
+                if ($candidate['height'] > $baseHeight) {
+                    break;
+                }
+                if (!empty($sideRow) && ($sideRowWidth + $candidate['width']) > $sideWidth) {
+                    break;
+                }
+                if (empty($sideRow) && $candidate['width'] > $sideWidth) {
+                    // Too wide for the pocket — leave it for a later full-width pass.
+                    break;
+                }
+                $sideRow[] = $candidate['ref'];
+                $sideRowWidth += $candidate['width'];
+                $index++;
+            }
+
+            if (empty($sideRow)) {
+                break;
+            }
+
+            $packed[] = [
+                'key' => $keyPrefix . $columnNumber++,
+                'blocks' => $sideRow,
+                'width' => $sideWidth,
+            ];
+        }
+    }
+
+    return $packed;
+}
+
+/**
+ * Width-only chunking (legacy). Prefer configwriter_pack_columns_by_height when
+ * block heights are available.
+ */
+function configwriter_chunk_items_by_width($items, $columnWidth)
+{
+    $packed = configwriter_pack_columns_by_height(
+        array_map(function ($item) {
+            // Force equal heights so the packer reduces to classic width chunking.
+            $copy = $item;
+            $copy['height'] = configwriter_default_row_height();
+            return $copy;
+        }, $items),
+        $columnWidth,
+        'chunk'
+    );
+
+    return array_map(function ($column) use ($items) {
+        $refs = $column['blocks'];
+        $chunk = [];
+        foreach ($refs as $ref) {
+            foreach ($items as $item) {
+                if (isset($item['ref']) && $item['ref'] === $ref) {
+                    $chunk[] = $item;
+                    break;
+                }
+            }
+        }
+        return $chunk;
+    }, $packed);
+}
+
+/**
+ * Emit screens[N]['columns'] as a direct assignment (flat CONFIG style).
+ *
+ * replace — overwrite the managed editor columns with the provided keys
+ * merge   — append missing keys while keeping existing non-managed columns
+ */
 function configwriter_emit_screen_columns($screenNumber, $columnKeys, $mode = 'merge')
 {
     $n = (int)$screenNumber;
-    $out = "if(typeof screens==='undefined') var screens={};\n"
-        . "if(typeof screens[{$n}]==='undefined') screens[{$n}]={};\n"
-        . "if(!Array.isArray(screens[{$n}]['columns'])) screens[{$n}]['columns']=[];\n";
+    $quoted = array_map(function ($columnKey) {
+        return "'" . configwriter_js_string_escape($columnKey) . "'";
+    }, $columnKeys);
+    $list = '[' . implode(', ', $quoted) . ']';
+
+    $out = "if (typeof screens === 'undefined') var screens = {}\n"
+        . "if (typeof screens[{$n}] === 'undefined') screens[{$n}] = {}\n";
 
     if ($mode === 'replace') {
-        $out .= "screens[{$n}]['columns']=screens[{$n}]['columns'].filter(function(columnKey){"
-            . "return !/^(de|we|le)_col\\d+$|^col_\\d+$/.test(String(columnKey));});\n";
-        foreach ($columnKeys as $columnKey) {
-            $out .= "screens[{$n}]['columns'].push('"
-                . configwriter_js_string_escape($columnKey) . "');\n";
-        }
+        // Keep non-managed columns (e.g. hand-written ones), then set the full list.
+        $out .= "screens[{$n}]['columns'] = (Array.isArray(screens[{$n}]['columns']) "
+            . "? screens[{$n}]['columns'].filter(function (columnKey) {"
+            . " return !/^(de|we|le)_col\\d+$|^col_\\d+$/.test(String(columnKey)); })"
+            . " : []).concat({$list});\n";
         return $out;
     }
 
+    $out .= "if (!Array.isArray(screens[{$n}]['columns'])) screens[{$n}]['columns'] = []\n";
     foreach ($columnKeys as $columnKey) {
         $safe = configwriter_js_string_escape($columnKey);
-        $out .= "if(screens[{$n}]['columns'].indexOf('{$safe}')<0) "
-            . "screens[{$n}]['columns'].push('{$safe}');\n";
+        $out .= "if (screens[{$n}]['columns'].indexOf('{$safe}') < 0) "
+            . "screens[{$n}]['columns'].push('{$safe}')\n";
     }
 
     return $out;
+}
+
+function configwriter_build_layout_section($blockLines, $items, $screenNumber = 1, $columnWidth = 12)
+{
+    $section = configwriter_section_header('BLOCKS') . "\n";
+    $section .= "if (typeof blocks === 'undefined') var blocks = {}\n";
+
+    $usedRefs = [];
+    foreach ($items as $item) {
+        if (!isset($item['ref']) || !is_string($item['ref'])) {
+            continue;
+        }
+        $ref = $item['ref'];
+        if (isset($blockLines[$ref]) && !isset($usedRefs[$ref])) {
+            $section .= "blocks['" . $ref . "'] = " . $blockLines[$ref] . "\n";
+            $usedRefs[$ref] = true;
+        }
+    }
+
+    $section .= "\n" . configwriter_section_header('COLUMNS') . "\n";
+    $section .= "if (typeof columns === 'undefined') var columns = {}\n";
+
+    $columnKeys = [];
+    foreach (configwriter_pack_columns_by_height($items, $columnWidth, 'le_col') as $column) {
+        $columnKeys[] = $column['key'];
+        $section .= configwriter_emit_column_line(
+            $column['key'],
+            $column['blocks'],
+            $column['width']
+        );
+    }
+
+    $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
+    $section .= configwriter_emit_screen_columns($screenNumber, $columnKeys, 'replace');
+
+    return [$section, $columnKeys];
 }
 
 function configwriter_emit_columns_standby($blockKeys, $width = 12)
@@ -236,7 +537,7 @@ function configwriter_extract_block_lines($config)
 {
     $blocks = [];
     if (!preg_match_all(
-        "/blocks\\['([^']+)'\\]\\s*=\\s*(\\{[^;]*\\})\\s*;/",
+        "/blocks\\['([^']+)'\\]\\s*=\\s*(\\{[^;]*\\})\\s*;?/",
         $config,
         $matches,
         PREG_SET_ORDER
@@ -251,68 +552,18 @@ function configwriter_extract_block_lines($config)
     return $blocks;
 }
 
-function configwriter_chunk_items_by_width($items, $columnWidth)
+/**
+ * Read height:N from a previously emitted block property object string.
+ */
+function configwriter_height_from_block_props($propsLiteral)
 {
-    $chunks = [];
-    $current = [];
-    $width = 0;
-
-    foreach ($items as $item) {
-        $itemWidth = isset($item['width']) ? (int)$item['width'] : 3;
-        $itemWidth = max(1, min($columnWidth, $itemWidth));
-
-        if (!empty($current) && ($width + $itemWidth) > $columnWidth) {
-            $chunks[] = $current;
-            $current = [];
-            $width = 0;
-        }
-
-        $current[] = $item;
-        $width += $itemWidth;
+    if (!is_string($propsLiteral)) {
+        return null;
     }
-
-    if (!empty($current)) {
-        $chunks[] = $current;
+    if (preg_match('/\bheight\s*:\s*(\d+)/', $propsLiteral, $match)) {
+        return (int)$match[1];
     }
-
-    return $chunks;
-}
-
-function configwriter_build_layout_section($blockLines, $items, $screenNumber = 1, $columnWidth = 12)
-{
-    $section = configwriter_section_header('BLOCKS') . "\n";
-    $section .= "if(typeof blocks==='undefined') var blocks={};\n";
-
-    $usedRefs = [];
-    foreach ($items as $item) {
-        if (!isset($item['ref']) || !is_string($item['ref'])) {
-            continue;
-        }
-        $ref = $item['ref'];
-        if (isset($blockLines[$ref]) && !isset($usedRefs[$ref])) {
-            $section .= "blocks['" . $ref . "'] = " . $blockLines[$ref] . ";\n";
-            $usedRefs[$ref] = true;
-        }
-    }
-
-    $section .= "\n" . configwriter_section_header('COLUMNS') . "\n";
-    $section .= "if(typeof columns==='undefined') var columns={};\n";
-
-    $columnKeys = [];
-    $chunks = configwriter_chunk_items_by_width($items, $columnWidth);
-    foreach ($chunks as $index => $chunk) {
-        $columnKey = 'le_col' . ($index + 1);
-        $columnKeys[] = $columnKey;
-        $refs = array_map(function ($item) {
-            return $item['ref'];
-        }, $chunk);
-        $section .= configwriter_emit_column_line($columnKey, $refs, $columnWidth);
-    }
-
-    $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
-    $section .= configwriter_emit_screen_columns($screenNumber, $columnKeys, 'replace');
-
-    return [$section, $columnKeys];
+    return null;
 }
 
 function configwriter_wrap_section($startMarker, $endMarker, $body)

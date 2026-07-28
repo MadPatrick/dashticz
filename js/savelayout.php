@@ -23,6 +23,15 @@ if (json_last_error() !== JSON_ERROR_NONE
     dashticz_json_error(400, 'Invalid layout items.');
 }
 
+$customDir = __DIR__ . '/../custom';
+$configPath = $customDir . '/CONFIG.js';
+list($config, $readError) = configwriter_read_config($configPath);
+if ($readError !== null) {
+    dashticz_json_error(500, $readError);
+}
+
+$blockLines = configwriter_extract_block_lines($config);
+
 $items = [];
 foreach ($data['items'] as $entry) {
     if (!is_array($entry)
@@ -33,17 +42,22 @@ foreach ($data['items'] as $entry) {
         dashticz_json_error(400, 'Each layout item requires a safe block reference.');
     }
     $width = isset($entry['width']) ? (int)$entry['width'] : 1;
-    $items[] = [
+    $item = [
         'ref' => $entry['ref'],
         'width' => max(1, min(12, $width)),
     ];
-}
 
-$customDir = __DIR__ . '/../custom';
-$configPath = $customDir . '/CONFIG.js';
-list($config, $readError) = configwriter_read_config($configPath);
-if ($readError !== null) {
-    dashticz_json_error(500, $readError);
+    // Prefer explicit height from the layout editor; fall back to CONFIG.js.
+    if (array_key_exists('height', $entry) && $entry['height'] !== null && $entry['height'] !== '') {
+        $item['height'] = (int)$entry['height'];
+    } elseif (isset($blockLines[$entry['ref']])) {
+        $fromBlock = configwriter_height_from_block_props($blockLines[$entry['ref']]);
+        if ($fromBlock !== null) {
+            $item['height'] = $fromBlock;
+        }
+    }
+
+    $items[] = $item;
 }
 
 /*
@@ -57,16 +71,20 @@ $config = rtrim($config);
 
 if (!empty($items)) {
     $section = configwriter_section_header('COLUMNS') . "\n";
-    $section .= "if(typeof columns==='undefined') var columns={};\n";
+    $section .= "if (typeof columns === 'undefined') var columns = {}\n";
 
     $columnKeys = [];
-    foreach (configwriter_chunk_items_by_width($items, 12) as $index => $chunk) {
-        $columnKey = 'le_col' . ($index + 1);
-        $columnKeys[] = $columnKey;
-        $refs = array_map(function ($item) {
-            return $item['ref'];
-        }, $chunk);
-        $section .= configwriter_emit_column_line($columnKey, $refs, 12);
+    /*
+     * Height-aware packing emits columns whose widths sum to 12 when a tall
+     * tile creates a virtual side column. See configwriter_pack_columns_by_height().
+     */
+    foreach (configwriter_pack_columns_by_height($items, 12, 'le_col') as $column) {
+        $columnKeys[] = $column['key'];
+        $section .= configwriter_emit_column_line(
+            $column['key'],
+            $column['blocks'],
+            $column['width']
+        );
     }
 
     $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
@@ -81,4 +99,4 @@ if ($writeError !== null) {
 }
 
 header('Content-Type: application/json');
-echo json_encode(['success' => true]);
+echo json_encode(['success' => true, 'columns' => $columnKeys ?? []]);

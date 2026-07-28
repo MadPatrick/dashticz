@@ -621,7 +621,9 @@ var DashticzLayoutEditor = (function () {
                 item.kind === 'widget'
                   ? widgetResult.blockKeys[widgetIndex++]
                   : deviceResult.blockKeys[deviceIndex++];
-              return { ref: ref, width: item.width };
+              var entry = { ref: ref, width: item.width };
+              if (item.height !== null) entry.height = item.height;
+              return entry;
             });
             return _postLayoutData(
               'js/savelayout.php',

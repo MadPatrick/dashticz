@@ -666,16 +666,18 @@ var DashticzDeviceEditor = (function () {
               widgetRefs[orderKey] = widgetResult.blockKeys[index];
             });
             var layoutItems = managedOrder.map(function (orderKey) {
-              return {
-                ref:
-                  orderKey.indexOf('widget:') === 0
-                    ? widgetRefs[orderKey]
-                    : deviceRefs[orderKey],
-                width:
-                  orderKey.indexOf('widget:') === 0
-                    ? _parseWidth(widgetWidths[orderKey])
-                    : _parseWidth(deviceWidths[orderKey.slice(7)]),
+              var isWidget = orderKey.indexOf('widget:') === 0;
+              var entry = {
+                ref: isWidget ? widgetRefs[orderKey] : deviceRefs[orderKey],
+                width: isWidget
+                  ? _parseWidth(widgetWidths[orderKey])
+                  : _parseWidth(deviceWidths[orderKey.slice(7)]),
               };
+              var height = isWidget
+                ? widgetHeights[orderKey]
+                : deviceHeights[orderKey.slice(7)];
+              if (height) entry.height = height;
+              return entry;
             });
             return _postEditorData(
               'js/savelayout.php',
