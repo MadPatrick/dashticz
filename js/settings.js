@@ -415,7 +415,13 @@ var widgetSettingTiles = [
     settings: {
       boss_stationclock: {
         title: language.settings.localize.boss_stationclock,
-        type: 'text',
+        type: 'select',
+        options: {
+          NoBoss: 'NoBoss',
+          BlackBoss: 'BlackBoss',
+          RedBoss: 'RedBoss',
+          ViennaBoss: 'ViennaBoss',
+        },
       },
       hide_seconds: {
         title: language.settings.localize.hide_seconds,
@@ -1165,31 +1171,32 @@ function loadSettings() {
       html += '</div><div class="modal-footer settings-footer">';
       html +=
         '<div class="settings-update" id="settings-update">' +
-        '<button type="button" class="btn btn-outline-secondary" id="settings-update-toggle">' +
+        '<button type="button" class="btn btn-outline-secondary settings-update-btn" id="settings-update-toggle">' +
         escapeSettingsHtml(
           (language.settings.update && language.settings.update.button) ||
             'Update'
         ) +
         '</button>' +
-        '<div class="settings-update-panel d-none" id="settings-update-panel">' +
+        '<div class="settings-update-panel" id="settings-update-panel">' +
         '<label class="settings-update-label" for="settings-update-branch">' +
         escapeSettingsHtml(
           (language.settings.update && language.settings.update.branch) ||
             'Branch'
         ) +
         '</label>' +
-        '<select id="settings-update-branch" class="form-select form-select-sm">' +
+        '<select id="settings-update-branch" class="form-select">' +
         '<option value="beta">Beta</option>' +
         '<option value="main">Main</option>' +
         '</select>' +
-        '<button type="button" class="btn btn-sm btn-primary" id="settings-update-run">' +
+        '<button type="button" class="btn btn-primary settings-update-run" id="settings-update-run">' +
         escapeSettingsHtml(
           (language.settings.update && language.settings.update.run) ||
             'Run update'
         ) +
         '</button>' +
+        '</div>' +
         '<pre class="settings-update-log d-none" id="settings-update-log"></pre>' +
-        '</div></div>';
+        '</div>';
       html += '<div class="settings-footer-actions">';
       html +=
         '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
@@ -1215,6 +1222,7 @@ function loadSettings() {
         bindStandbyBackgroundPicker();
         bindSettingsUpdateControls();
         bindWeatherProviderToggle();
+        bindClockTypeToggle();
 
         $('#php_version').html(phpversion);
 
@@ -1452,6 +1460,8 @@ function renderWidgetSettingsTab() {
       '</h5>';
     if (tile.id === 'weather') {
       html += renderWeatherWidgetSettings(tile);
+    } else if (tile.id === 'clock') {
+      html += renderClockWidgetSettings(tile);
     } else {
       for (var key in tile.settings) {
         html += renderSettingsRow(key, tile.settings[key]);
@@ -1478,6 +1488,82 @@ function getWeatherProviderPreference() {
     return 'openweather';
   }
   return 'wunderground';
+}
+
+function renderClockWidgetSettings(tile) {
+  var html =
+    '<div class="settings-row">' +
+    '<label class="settings-label" for="setting-clock_type_ui">Type</label>' +
+    '<div class="settings-control">' +
+    '<select id="setting-clock_type_ui" class="form-select settings-clock-type">' +
+    '<option value="basicclock">Basic clock</option>' +
+    '<option value="stationclock" selected>Stationsklok</option>' +
+    '<option value="flipclock">Flipclock</option>' +
+    '<option value="haymanclock">Hayman clock</option>' +
+    '<option value="miniclock">Miniclock</option>' +
+    '</select></div><div class="settings-help-slot"></div></div>';
+
+  html +=
+    '<p class="settings-intro">' +
+    escapeSettingsHtml(
+      (language.settings.widgets && language.settings.widgets.clock_intro) ||
+        'Global defaults below. Per-widget size, scale and style options are set in the Widget editor.'
+    ) +
+    '</p>';
+
+  html +=
+    '<div class="settings-clock-group" data-clock-type="flipclock" style="display:none">';
+  html += '<h6 class="settings-weather-heading">Flipclock</h6>';
+  if (tile.settings.hide_seconds) {
+    html += renderSettingsRow('hide_seconds', tile.settings.hide_seconds);
+  }
+  html += '</div>';
+
+  html +=
+    '<div class="settings-clock-group" data-clock-type="stationclock">';
+  html += '<h6 class="settings-weather-heading">Stationsklok</h6>';
+  if (tile.settings.boss_stationclock) {
+    html += renderSettingsRow('boss_stationclock', tile.settings.boss_stationclock);
+  }
+  if (tile.settings.hide_seconds_stationclock) {
+    html += renderSettingsRow(
+      'hide_seconds_stationclock',
+      tile.settings.hide_seconds_stationclock
+    );
+  }
+  html += '</div>';
+
+  html +=
+    '<div class="settings-clock-group" data-clock-type="basicclock" style="display:none">' +
+    '<p class="settings-intro">' +
+    escapeSettingsHtml('Configure size and scale in the Widget editor.') +
+    '</p></div>';
+  html +=
+    '<div class="settings-clock-group" data-clock-type="haymanclock" style="display:none">' +
+    '<p class="settings-intro">' +
+    escapeSettingsHtml('Configure size and scale in the Widget editor.') +
+    '</p></div>';
+  html +=
+    '<div class="settings-clock-group" data-clock-type="miniclock" style="display:none">' +
+    '<p class="settings-intro">' +
+    escapeSettingsHtml('Miniclock has no global settings.') +
+    '</p></div>';
+
+  return html;
+}
+
+function bindClockTypeToggle() {
+  var $popup = $('#settingspopup');
+  if (!$popup.length) return;
+
+  $popup
+    .off('change.clocktype')
+    .on('change.clocktype', '.settings-clock-type', function () {
+      var type = $(this).val() || 'stationclock';
+      $popup.find('.settings-clock-group').each(function () {
+        $(this).toggle(String($(this).data('clock-type')) === type);
+      });
+    });
 }
 
 function renderWeatherWidgetSettings(tile) {
@@ -1685,8 +1771,9 @@ function bindSettingsUpdateControls() {
   if (!$popup.length) return;
 
   $popup.off('click.settingsupdate change.settingsupdate');
+  // Keep the Update label as a focus helper: scroll/show the log area.
   $popup.on('click.settingsupdate', '#settings-update-toggle', function () {
-    $popup.find('#settings-update-panel').toggleClass('d-none');
+    $popup.find('#settings-update-log').removeClass('d-none');
   });
   $popup.on('click.settingsupdate', '#settings-update-run', function () {
     runDashticzUpdate($popup.find('#settings-update-branch').val());
@@ -1812,7 +1899,7 @@ function saveSettings() {
         if (
           !$(this).attr('name') ||
           $(this).is(
-            '#settings-update-branch, #setting-standby_background_pick, #setting-weather_provider_ui'
+            '#settings-update-branch, #setting-standby_background_pick, #setting-weather_provider_ui, #setting-clock_type_ui'
           )
         ) {
           return;

@@ -269,6 +269,18 @@ var DashticzWidgetEditor = (function () {
         boss_stationclock: _s('boss_stationclock', 'RedBoss'),
         hide_seconds: _n('hide_seconds'),
         hide_seconds_stationclock: _n('hide_seconds_stationclock'),
+        size: '',
+        scale: '',
+        showSeconds: 1,
+        clockFace: '24',
+        body: 'RoundBody',
+        dial: 'GermanStrokeDial',
+        hourhand: 'PointedHourHand',
+        minutehand: 'PointedMinuteHand',
+        secondhand: 'HoleShapedSecondHand',
+        boss: 'RedBoss',
+        minutehandbehavior: 'BouncingMinuteHand',
+        secondhandbehavior: 'OverhastySecondHand',
       },
       garbage: {
         garbage_company: _s('garbage_company', 'afvalinfo'),
@@ -383,6 +395,42 @@ var DashticzWidgetEditor = (function () {
           )
         ) {
           clockType = definition.type;
+          if (typeof definition.size !== 'undefined' && definition.size !== null && definition.size !== '') {
+            widgetConfigs.clock.size = definition.size;
+          }
+          if (typeof definition.scale !== 'undefined' && definition.scale !== null && definition.scale !== '') {
+            widgetConfigs.clock.scale = definition.scale;
+          }
+          if (typeof definition.showSeconds !== 'undefined') {
+            widgetConfigs.clock.showSeconds = Number(definition.showSeconds) ? 1 : 0;
+          }
+          if (typeof definition.clockFace !== 'undefined' && definition.clockFace !== null) {
+            widgetConfigs.clock.clockFace = String(definition.clockFace);
+          }
+          var stationMaps = {
+            body: ['NoBody', 'SmallWhiteBody', 'RoundBody', 'RoundGreenBody', 'SquareBody', 'ViennaBody'],
+            dial: ['NoDial', 'GermanHourStrokeDial', 'GermanStrokeDial', 'AustriaStrokeDial', 'SwissStrokeDial', 'ViennaStrokeDial'],
+            hourhand: [null, 'PointedHourHand', 'BarHourHand', 'SwissHourHand', 'ViennaHourHand'],
+            minutehand: [null, 'PointedMinuteHand', 'BarMinuteHand', 'SwissMinuteHand', 'ViennaMinuteHand'],
+            secondhand: ['NoSecondHand', 'BarSecondHand', 'HoleShapedSecondHand', 'NewHoleShapedSecondHand', 'SwissSecondHand'],
+            boss: ['NoBoss', 'BlackBoss', 'RedBoss', 'ViennaBoss'],
+            minutehandbehavior: ['CreepingMinuteHand', 'BouncingMinuteHand', 'ElasticBouncingMinuteHand'],
+            secondhandbehavior: ['CreepingSecondHand', 'BouncingSecondHand', 'ElasticBouncingSecondHand', 'OverhastySecondHand'],
+          };
+          Object.keys(stationMaps).forEach(function (prop) {
+            if (typeof definition[prop] === 'undefined' || definition[prop] === null || definition[prop] === '') {
+              return;
+            }
+            var val = definition[prop];
+            if (typeof val === 'number' || (/^\d+$/).test(String(val))) {
+              var named = stationMaps[prop][Number(val)];
+              if (named) {
+                widgetConfigs.clock[prop] = named;
+                return;
+              }
+            }
+            widgetConfigs.clock[prop] = val;
+          });
         }
         if (item.id === 'publictransport') {
           if (typeof definition.station === 'string') {
@@ -661,6 +709,60 @@ var DashticzWidgetEditor = (function () {
 
     } else if (item.id === 'clock') {
       var ccfg = widgetConfigs.clock || {};
+      var bodyOpts = {
+        NoBody: 'Geen behuizing',
+        SmallWhiteBody: 'Klein wit',
+        RoundBody: 'Rond',
+        RoundGreenBody: 'Rond groen',
+        SquareBody: 'Vierkant',
+        ViennaBody: 'Wenen',
+      };
+      var dialOpts = {
+        NoDial: 'Geen wijzerplaat',
+        GermanHourStrokeDial: 'Duits (uren)',
+        GermanStrokeDial: 'Duits',
+        AustriaStrokeDial: 'Oostenrijk',
+        SwissStrokeDial: 'Zwitsers',
+        ViennaStrokeDial: 'Wenen',
+      };
+      var hourOpts = {
+        PointedHourHand: 'Punt',
+        BarHourHand: 'Balk',
+        SwissHourHand: 'Zwitsers',
+        ViennaHourHand: 'Wenen',
+      };
+      var minuteOpts = {
+        PointedMinuteHand: 'Punt',
+        BarMinuteHand: 'Balk',
+        SwissMinuteHand: 'Zwitsers',
+        ViennaMinuteHand: 'Wenen',
+      };
+      var secondOpts = {
+        NoSecondHand: 'Geen',
+        BarSecondHand: 'Balk',
+        HoleShapedSecondHand: 'Gat',
+        NewHoleShapedSecondHand: 'Gat (nieuw)',
+        SwissSecondHand: 'Zwitsers',
+      };
+      var bossOpts = {
+        NoBoss: 'Geen',
+        BlackBoss: 'Zwart',
+        RedBoss: 'Rood',
+        ViennaBoss: 'Wenen',
+      };
+      var minuteBehOpts = {
+        CreepingMinuteHand: 'Kruipend',
+        BouncingMinuteHand: 'Stuiterend',
+        ElasticBouncingMinuteHand: 'Elastisch',
+      };
+      var secondBehOpts = {
+        CreepingSecondHand: 'Kruipend',
+        BouncingSecondHand: 'Stuiterend',
+        ElasticBouncingSecondHand: 'Elastisch',
+        OverhastySecondHand: 'Haastig',
+      };
+      var clockFaceOpts = { '24': '24-uurs', '12': '12-uurs' };
+      var showSizeScale = clockType !== 'miniclock';
       fields +=
         '<div class="mb-3">' +
         '<label class="form-label we-field-label" for="we-cfg-clock-type">Kloktype</label>' +
@@ -671,9 +773,49 @@ var DashticzWidgetEditor = (function () {
         _clockOption('haymanclock', 'Hayman clock') +
         _clockOption('miniclock', 'Miniclock') +
         '</select></div>';
-      fields += _cfgField('boss_stationclock', ll.boss_stationclock || 'Stationsklok thema', 'text', ccfg.boss_stationclock);
-      fields += _cfgField('hide_seconds', ll.hide_seconds || 'Seconden verbergen', 'checkbox', ccfg.hide_seconds);
-      fields += _cfgField('hide_seconds_stationclock', ll.hide_seconds_stationclock || 'Seconden verbergen (stationsklok)', 'checkbox', ccfg.hide_seconds_stationclock);
+
+      fields +=
+        '<div class="we-clock-size-group"' +
+        (showSizeScale ? '' : ' style="display:none"') +
+        '>';
+      fields += _cfgField('size', 'Grootte (px)', 'text', ccfg.size, null, 'Leeg = kolombreedte');
+      fields += _cfgField('scale', 'Schaal', 'text', ccfg.scale, null, 'Bijv. 0.75 (default 1)');
+      fields += '</div>';
+
+      fields +=
+        '<div class="we-clock-group" data-clock-type="flipclock"' +
+        (clockType === 'flipclock' ? '' : ' style="display:none"') +
+        '>';
+      fields += _cfgHeading('Flipclock');
+      fields += _cfgField('showSeconds', 'Seconden tonen', 'checkbox', ccfg.showSeconds);
+      fields += _cfgField('clockFace', 'Wijzerplaat', 'select', ccfg.clockFace || '24', clockFaceOpts);
+      fields += _cfgField('hide_seconds', ll.hide_seconds || 'Default: seconden verbergen', 'checkbox', ccfg.hide_seconds);
+      fields += '</div>';
+
+      fields +=
+        '<div class="we-clock-group" data-clock-type="stationclock"' +
+        (clockType === 'stationclock' ? '' : ' style="display:none"') +
+        '>';
+      fields += _cfgHeading('Stationsklok');
+      fields += _cfgField('body', 'Behuizing', 'select', ccfg.body || 'RoundBody', bodyOpts);
+      fields += _cfgField('dial', 'Wijzerplaat', 'select', ccfg.dial || 'GermanStrokeDial', dialOpts);
+      fields += _cfgField('hourhand', 'Uurwijzer', 'select', ccfg.hourhand || 'PointedHourHand', hourOpts);
+      fields += _cfgField('minutehand', 'Minutenwijzer', 'select', ccfg.minutehand || 'PointedMinuteHand', minuteOpts);
+      fields += _cfgField('secondhand', 'Secondenwijzer', 'select', ccfg.secondhand || 'HoleShapedSecondHand', secondOpts);
+      fields += _cfgField('boss', 'As-kap', 'select', ccfg.boss || 'RedBoss', bossOpts);
+      fields += _cfgField('minutehandbehavior', 'Minuten-gedrag', 'select', ccfg.minutehandbehavior || 'BouncingMinuteHand', minuteBehOpts);
+      fields += _cfgField('secondhandbehavior', 'Seconden-gedrag', 'select', ccfg.secondhandbehavior || 'OverhastySecondHand', secondBehOpts);
+      fields += _cfgField('boss_stationclock', ll.boss_stationclock || 'Default as-kap (config)', 'select', ccfg.boss_stationclock || 'RedBoss', bossOpts);
+      fields += _cfgField('hide_seconds_stationclock', ll.hide_seconds_stationclock || 'Default: seconden verbergen', 'checkbox', ccfg.hide_seconds_stationclock);
+      fields += '</div>';
+
+      fields +=
+        '<div class="we-clock-group" data-clock-type="miniclock"' +
+        (clockType === 'miniclock' ? '' : ' style="display:none"') +
+        '>';
+      fields +=
+        '<p class="form-text" style="font-size:12px;color:#6c757d">Miniclock heeft geen extra weergave-opties. Stel breedte/hoogte in via de layout editor.</p>';
+      fields += '</div>';
 
     } else if (item.id === 'garbage') {
       var gcfg = widgetConfigs.garbage || {};
@@ -828,6 +970,14 @@ var DashticzWidgetEditor = (function () {
       $cfgModal.find('.we-weather-group').each(function () {
         $(this).toggle(String($(this).data('weather-provider')) === provider);
       });
+    });
+
+    $cfgModal.on('change', '#we-cfg-clock-type', function () {
+      var type = $(this).val() || 'basicclock';
+      $cfgModal.find('.we-clock-group').each(function () {
+        $(this).toggle(String($(this).data('clock-type')) === type);
+      });
+      $cfgModal.find('.we-clock-size-group').toggle(type !== 'miniclock');
     });
 
     $cfgModal.on('click', '#we-cfg-ok-btn', function () {
@@ -1051,7 +1201,32 @@ var DashticzWidgetEditor = (function () {
         entry.icons = wcfg.weather_icons || 'line';
       }
       if (item.id === 'calendar') entry.icalurl = calendarUrl;
-      if (item.id === 'clock') entry.clockType = clockType;
+      if (item.id === 'clock') {
+        entry.clockType = clockType;
+        var ccfg = widgetConfigs.clock || {};
+        if (clockType !== 'miniclock') {
+          if (ccfg.size !== '' && ccfg.size !== null && typeof ccfg.size !== 'undefined') {
+            entry.size = ccfg.size;
+          }
+          if (ccfg.scale !== '' && ccfg.scale !== null && typeof ccfg.scale !== 'undefined') {
+            entry.scale = ccfg.scale;
+          }
+        }
+        if (clockType === 'flipclock') {
+          entry.showSeconds = Number(ccfg.showSeconds) ? 1 : 0;
+          entry.clockFace = ccfg.clockFace || '24';
+        }
+        if (clockType === 'stationclock') {
+          entry.body = ccfg.body || 'RoundBody';
+          entry.dial = ccfg.dial || 'GermanStrokeDial';
+          entry.hourhand = ccfg.hourhand || 'PointedHourHand';
+          entry.minutehand = ccfg.minutehand || 'PointedMinuteHand';
+          entry.secondhand = ccfg.secondhand || 'HoleShapedSecondHand';
+          entry.boss = ccfg.boss || 'RedBoss';
+          entry.minutehandbehavior = ccfg.minutehandbehavior || 'BouncingMinuteHand';
+          entry.secondhandbehavior = ccfg.secondhandbehavior || 'OverhastySecondHand';
+        }
+      }
       if (item.id === 'publictransport') {
         entry.station = publicTransportStation;
         entry.provider = publicTransportProvider;

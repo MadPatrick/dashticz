@@ -474,9 +474,18 @@ next css sets the default height of the frame popup
 
 .settings-update {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+}
+
+.settings-update-btn {
+  padding: 0.7rem 1.4rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  min-height: 2.75rem;
 }
 
 .settings-update-panel {
@@ -484,11 +493,6 @@ next css sets the default height of the frame popup
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  max-width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  background: #f8f9fa;
 }
 
 .settings-update-label {
@@ -502,7 +506,13 @@ next css sets the default height of the frame popup
   min-width: 8rem;
 }
 
+.settings-update-run {
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+}
+
 .settings-update-log {
+  flex: 1 0 100%;
   width: 100%;
   max-height: 160px;
   margin: 4px 0 0;

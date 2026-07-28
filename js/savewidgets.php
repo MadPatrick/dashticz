@@ -246,6 +246,53 @@ foreach ($data['widgets'] as $entry) {
             dashticz_json_error(400, 'Unknown clock type.');
         }
         $widget['clockType'] = $clockType;
+
+        if ($clockType !== 'miniclock') {
+            if (isset($entry['size']) && $entry['size'] !== '' && is_numeric($entry['size'])) {
+                $size = (int)$entry['size'];
+                if ($size > 0 && $size <= 2000) {
+                    $widget['size'] = $size;
+                }
+            }
+            if (isset($entry['scale']) && $entry['scale'] !== '' && is_numeric($entry['scale'])) {
+                $scale = (float)$entry['scale'];
+                if ($scale > 0 && $scale <= 5) {
+                    $widget['scale'] = $scale == (int)$scale ? (int)$scale : $scale;
+                }
+            }
+        }
+
+        if ($clockType === 'flipclock') {
+            $widget['showSeconds'] = array_key_exists('showSeconds', $entry)
+                ? (int)(bool)$entry['showSeconds']
+                : 1;
+            $clockFace = isset($entry['clockFace']) ? (string)$entry['clockFace'] : '24';
+            $widget['clockFace'] = ($clockFace === '12') ? 12 : 24;
+        }
+
+        if ($clockType === 'stationclock') {
+            $stationEnums = [
+                'body' => ['NoBody', 'SmallWhiteBody', 'RoundBody', 'RoundGreenBody', 'SquareBody', 'ViennaBody'],
+                'dial' => ['NoDial', 'GermanHourStrokeDial', 'GermanStrokeDial', 'AustriaStrokeDial', 'SwissStrokeDial', 'ViennaStrokeDial'],
+                'hourhand' => ['PointedHourHand', 'BarHourHand', 'SwissHourHand', 'ViennaHourHand'],
+                'minutehand' => ['PointedMinuteHand', 'BarMinuteHand', 'SwissMinuteHand', 'ViennaMinuteHand'],
+                'secondhand' => ['NoSecondHand', 'BarSecondHand', 'HoleShapedSecondHand', 'NewHoleShapedSecondHand', 'SwissSecondHand'],
+                'boss' => ['NoBoss', 'BlackBoss', 'RedBoss', 'ViennaBoss'],
+                'minutehandbehavior' => ['CreepingMinuteHand', 'BouncingMinuteHand', 'ElasticBouncingMinuteHand'],
+                'secondhandbehavior' => ['CreepingSecondHand', 'BouncingSecondHand', 'ElasticBouncingSecondHand', 'OverhastySecondHand'],
+            ];
+            foreach ($stationEnums as $prop => $allowed) {
+                if (!isset($entry[$prop])) {
+                    continue;
+                }
+                $val = $entry[$prop];
+                if (is_string($val) && in_array($val, $allowed, true)) {
+                    $widget[$prop] = $val;
+                } elseif (is_numeric($val)) {
+                    $widget[$prop] = (int)$val;
+                }
+            }
+        }
     }
 
     if ($id === 'publictransport') {
@@ -423,6 +470,32 @@ function _widgetBlockProps($widget)
         case 'clock':
             $props['type'] = $widget['clockType'];
             $props['title'] = 'Klok';
+            if (isset($widget['size'])) {
+                $props['size'] = $widget['size'];
+            }
+            if (isset($widget['scale'])) {
+                $props['scale'] = $widget['scale'];
+            }
+            if ($widget['clockType'] === 'flipclock') {
+                $props['showSeconds'] = !empty($widget['showSeconds']);
+                $props['clockFace'] = $widget['clockFace'];
+            }
+            if ($widget['clockType'] === 'stationclock') {
+                foreach ([
+                    'body',
+                    'dial',
+                    'hourhand',
+                    'minutehand',
+                    'secondhand',
+                    'boss',
+                    'minutehandbehavior',
+                    'secondhandbehavior',
+                ] as $prop) {
+                    if (isset($widget[$prop])) {
+                        $props[$prop] = $widget[$prop];
+                    }
+                }
+            }
             break;
         case 'calendar':
             $props['type'] = 'calendar';

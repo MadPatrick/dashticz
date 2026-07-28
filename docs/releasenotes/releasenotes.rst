@@ -8,6 +8,18 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 Recent changes
 ---------------
 
+v3.21.0 beta (28-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Settings: the Update button is larger, with Beta/Main branch selection and **Update uitvoeren** shown beside it.
+* Settings Widgets: category tiles for widget-related settings (including Weather provider groups and Clock type-specific defaults).
+* Widget Editor / Clock: selecting a clock type shows the relevant options from the clock docs — size and scale for Basic/Hayman/Flip/Station; Flipclock ``showSeconds`` and ``clockFace``; Stationclock body, dial, hands, boss, and hand behavior. Values are saved on the clock block in ``CONFIG.js``.
+* Widget catalog: additional widgets (security panel, public transport, traffic, 112/alarmmeldingen, camera, map, longfonds, moon, news) and OpenWeather display options (rain, description, wind, gust, icon set).
+* Standby: standby screen settings available as a Settings tile.
+
 v3.20.4 beta (24-7-2026)
 --------------------------
 
