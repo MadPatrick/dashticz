@@ -985,7 +985,7 @@ next css sets the default height of the frame popup
   outline-offset: 2px;
 }
 
-/* Standby chrome: S/1/2/+ next to editor icons (S-edit only, not idle standby) */
+/* Standby chrome: S/1/2/+ next to editor icons; auto-hide unless hovered */
 .dt-screen-switcher-bar {
   position: relative;
   z-index: 20;
@@ -997,7 +997,7 @@ next css sets the default height of the frame popup
   pointer-events: auto;
 }
 
-body.standby-edit .dt-screen-switcher-bar {
+body.standby-edit .dt-screen-switcher-bar.is-visible {
   display: flex;
 }
 

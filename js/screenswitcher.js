@@ -199,10 +199,78 @@ var DashticzScreenSwitcher = (function () {
     $bar.append(html);
   }
 
+  function isEditorChromeNeeded() {
+    if ($('body').hasClass('dle-active')) return true;
+    if ($('#deviceeditorpopup').length && $('#deviceeditorpopup').is(':visible')) {
+      return true;
+    }
+    if ($('#widgeteditorpopup').length && $('#widgeteditorpopup').is(':visible')) {
+      return true;
+    }
+    if ($('.modal.show').filter('#deviceeditorpopup, #widgeteditorpopup').length) {
+      return true;
+    }
+    return false;
+  }
+
+  function setStandbyBarVisible(visible) {
+    var $bar = $('.screenstandby .dt-screen-switcher-bar');
+    if (!$bar.length) return;
+    if (visible || isEditorChromeNeeded()) {
+      $bar.addClass('is-visible');
+    } else {
+      $bar.removeClass('is-visible');
+    }
+  }
+
+  function bindStandbyBarHover() {
+    $(document)
+      .off('.standbyChrome')
+      .on('mousemove.standbyChrome pointermove.standbyChrome', function (event) {
+        if (typeof standbyActive === 'undefined' || !standbyActive) return;
+        if (!$('body').hasClass('standby-edit')) return;
+        if (!$('.screenstandby:visible').length) return;
+        if (isEditorChromeNeeded()) {
+          setStandbyBarVisible(true);
+          return;
+        }
+        // Reveal near the top edge; hide once the pointer leaves that zone.
+        if (event.clientY < 56) {
+          setStandbyBarVisible(true);
+        } else if (event.clientY > 96) {
+          setStandbyBarVisible(false);
+        }
+      })
+      .on(
+        'shown.bs.modal.standbyChrome hidden.bs.modal.standbyChrome',
+        '#deviceeditorpopup, #widgeteditorpopup',
+        function () {
+          setStandbyBarVisible(isEditorChromeNeeded());
+        }
+      )
+      .on('click.standbyChrome', '.layouteditoricon', function () {
+        setTimeout(function () {
+          setStandbyBarVisible(isEditorChromeNeeded());
+        }, 50);
+      });
+
+    if (!window.__dtStandbyChromeObserver) {
+      window.__dtStandbyChromeObserver = new MutationObserver(function () {
+        if (typeof standbyActive !== 'undefined' && standbyActive) {
+          setStandbyBarVisible(isEditorChromeNeeded());
+        }
+      });
+      window.__dtStandbyChromeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class'],
+      });
+    }
+  }
+
   function mountIntoStandby() {
     var $standby = $('.screenstandby .row').first();
     if (!$standby.length) return;
-    // One bar: S/1/2/+ next to the editor icons (visible in S-edit mode).
+    // One bar: S/1/2/+ next to the editor icons.
     if (!$standby.children('.dt-screen-switcher-bar').length) {
       $standby.prepend(
         '<div class="dt-screen-switcher-bar col-xs-12"></div>'
@@ -213,6 +281,10 @@ var DashticzScreenSwitcher = (function () {
     var $bar = $standby.children('.dt-screen-switcher-bar');
     renderInto($bar);
     mountEditorIcons($bar);
+    // Hidden until the pointer is near the top (or an editor is open).
+    $bar.removeClass('is-visible');
+    bindStandbyBarHover();
+    setStandbyBarVisible(isEditorChromeNeeded());
   }
 
   function addScreen() {
