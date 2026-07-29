@@ -1136,12 +1136,15 @@ function buildStandby() {
     }
 
     $('.screenstandby').on('click touchend', function (event) {
-      // Keep switcher/editor clicks from exiting standby.
+      // Keep switcher/editor/layout-editor clicks from exiting standby.
       if (
         $(event.target).closest(
-          '.dt-screen-switcher, .dt-screen-btn, .dt-standby-editor-icons, .settings, .modal'
+          '.dt-screen-switcher, .dt-screen-btn, .dt-standby-editor-icons, .settings, .modal, .dle-toolbar, .dle-overlay, .dle-block, .dle-canvas, .dle-item-wrapper'
         ).length
       ) {
+        return;
+      }
+      if ($('body').hasClass('dle-active')) {
         return;
       }
       // In manual edit mode (opened via S) clicks must not exit standby.

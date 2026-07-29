@@ -534,6 +534,10 @@ var DashticzWidgetEditor = (function () {
     var seen = {};
     _orderedColumnKeys().forEach(function (columnKey) {
       var isStandby = _activeScreenTarget() === 'standby';
+      var lookupKey = String(columnKey);
+      if (isStandby && /^standby/.test(lookupKey)) {
+        lookupKey = lookupKey.replace(/^standby/, '');
+      }
       if (
         !isStandby &&
         !/^(de|we|le)_s\d+_col\d+$|^(de|we|le)_col\d+$|^col_\d+$/.test(
@@ -543,7 +547,7 @@ var DashticzWidgetEditor = (function () {
         return;
       }
       var column = isStandby
-        ? columns_standby && columns_standby[columnKey]
+        ? columns_standby && columns_standby[lookupKey]
         : columns[columnKey];
       if (!column || !Array.isArray(column.blocks)) return;
 

@@ -265,12 +265,22 @@ var DashticzDeviceEditor = (function () {
     }
 
     columnKeys.forEach(function (colKey) {
+      var lookupKey = String(colKey);
+      if (
+        _activeScreenTarget() === 'standby' &&
+        /^standby/.test(lookupKey)
+      ) {
+        lookupKey = lookupKey.replace(/^standby/, '');
+      }
       var col =
         _activeScreenTarget() === 'standby' &&
         typeof columns_standby !== 'undefined' &&
-        columns_standby[colKey]
-          ? columns_standby[colKey]
+        columns_standby[lookupKey]
+          ? columns_standby[lookupKey]
           : columns[colKey];
+      if (!col && typeof columns !== 'undefined') {
+        col = columns[lookupKey];
+      }
       if (col && Array.isArray(col.blocks)) {
         col.blocks.forEach(function (b) {
           var ck = _toCompositeKey(b);
