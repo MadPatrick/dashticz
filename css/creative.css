@@ -985,7 +985,7 @@ next css sets the default height of the frame popup
   outline-offset: 2px;
 }
 
-/* S/1/2 switcher on Standby: only while an editor is (or was just) open */
+/* Standby chrome: S/1/2/+ next to editor icons (S-edit only, not idle standby) */
 .dt-screen-switcher-bar {
   position: relative;
   z-index: 20;
@@ -997,26 +997,14 @@ next css sets the default height of the frame popup
   pointer-events: auto;
 }
 
-.dt-screen-switcher-bar.is-visible {
+body.standby-edit .dt-screen-switcher-bar {
   display: flex;
 }
 
-/* Compact editor entry points — not a full topbar */
 .dt-standby-editor-icons {
-  position: relative;
-  z-index: 21;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 8px;
-  padding: 8px 12px 0;
-  opacity: 0.55;
-  transition: opacity 0.2s ease;
-}
-
-.dt-standby-editor-icons:hover,
-.dt-standby-editor-icons:focus-within {
-  opacity: 1;
 }
 
 .dt-standby-editor-icons .settings {
@@ -1027,11 +1015,6 @@ next css sets the default height of the frame popup
 
 .screenstandby .dt-screen-switcher-bar .dt-screen-btn {
   border-color: rgba(255, 255, 255, 0.9);
-}
-
-/* Idle standby: hide editor icons too (only manual S-edit needs them) */
-body.standby:not(.standby-edit) .dt-standby-editor-icons {
-  display: none;
 }
 
 body.standby-edit {

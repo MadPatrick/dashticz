@@ -181,148 +181,38 @@ var DashticzScreenSwitcher = (function () {
     $('.dt-screen-btn[data-screen="' + active + '"]').addClass('active');
   }
 
-  var standbySwitcherGraceTimer = null;
-  var standbyEditorWasOpen = false;
-
-  function mountEditorIcons($standby) {
-    if (!$standby || !$standby.length) return;
+  function mountEditorIcons($bar) {
+    if (!$bar || !$bar.length) return;
     if (typeof isCustomConfigMode === 'function' && isCustomConfigMode()) {
       return;
     }
-    if ($standby.children('.dt-standby-editor-icons').length) return;
+    if ($bar.children('.dt-standby-editor-icons').length) return;
     var html =
-      '<div class="dt-standby-editor-icons col-xs-12">' +
+      '<span class="dt-standby-editor-icons">' +
       '<span class="settings deviceeditoricon" role="button" title="Devices toevoegen">' +
       '<i class="fas fa-plus" aria-hidden="true"></i></span>' +
       '<span class="settings widgeteditoricon" role="button" title="Widgets toevoegen">' +
       '<i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>' +
       '<span class="settings layouteditoricon" role="button" title="Tegels verplaatsen en schalen">' +
       '<i class="fas fa-arrows-alt" aria-hidden="true"></i></span>' +
-      '</div>';
-    $standby.prepend(html);
-  }
-
-  function isEditorChromeNeeded() {
-    if ($('body').hasClass('dle-active')) return true;
-    if ($('#deviceeditorpopup').length && $('#deviceeditorpopup').is(':visible')) {
-      return true;
-    }
-    if ($('#widgeteditorpopup').length && $('#widgeteditorpopup').is(':visible')) {
-      return true;
-    }
-    if ($('.modal.show').filter('#deviceeditorpopup, #widgeteditorpopup').length) {
-      return true;
-    }
-    return false;
-  }
-
-  function setStandbySwitcherVisible(visible) {
-    var $bar = $('.screenstandby .dt-screen-switcher-bar');
-    if (!$bar.length) return;
-    if (visible || isEditorChromeNeeded()) {
-      $bar.addClass('is-visible');
-    } else {
-      $bar.removeClass('is-visible');
-    }
-  }
-
-  function scheduleStandbySwitcherGrace() {
-    if (standbySwitcherGraceTimer) {
-      clearTimeout(standbySwitcherGraceTimer);
-      standbySwitcherGraceTimer = null;
-    }
-    // After closing an editor, keep S/1/2 briefly so the user can leave Standby.
-    setStandbySwitcherVisible(true);
-    standbySwitcherGraceTimer = setTimeout(function () {
-      standbySwitcherGraceTimer = null;
-      if (!isEditorChromeNeeded()) {
-        setStandbySwitcherVisible(false);
-      }
-    }, 8000);
-  }
-
-  function bindStandbyChromeReveal() {
-    $(document)
-      .off('.standbyChrome')
-      .on(
-        'shown.bs.modal.standbyChrome',
-        '#deviceeditorpopup, #widgeteditorpopup',
-        function () {
-          standbyEditorWasOpen = true;
-          if (standbySwitcherGraceTimer) {
-            clearTimeout(standbySwitcherGraceTimer);
-            standbySwitcherGraceTimer = null;
-          }
-          setStandbySwitcherVisible(true);
-        }
-      )
-      .on(
-        'hidden.bs.modal.standbyChrome',
-        '#deviceeditorpopup, #widgeteditorpopup',
-        function () {
-          standbyEditorWasOpen = false;
-          if (typeof standbyActive !== 'undefined' && standbyActive) {
-            scheduleStandbySwitcherGrace();
-          } else {
-            setStandbySwitcherVisible(false);
-          }
-        }
-      )
-      .on('click.standbyChrome', '.layouteditoricon', function () {
-        // Layout editor adds body.dle-active shortly after click.
-        setTimeout(function () {
-          if (isEditorChromeNeeded()) {
-            standbyEditorWasOpen = true;
-            if (standbySwitcherGraceTimer) {
-              clearTimeout(standbySwitcherGraceTimer);
-              standbySwitcherGraceTimer = null;
-            }
-            setStandbySwitcherVisible(true);
-          }
-        }, 50);
-      });
-
-    // Keep watching layout-editor body class.
-    if (!window.__dtStandbyChromeObserver) {
-      window.__dtStandbyChromeObserver = new MutationObserver(function () {
-        if (typeof standbyActive === 'undefined' || !standbyActive) return;
-        var needed = isEditorChromeNeeded();
-        if (needed) {
-          standbyEditorWasOpen = true;
-          if (standbySwitcherGraceTimer) {
-            clearTimeout(standbySwitcherGraceTimer);
-            standbySwitcherGraceTimer = null;
-          }
-          setStandbySwitcherVisible(true);
-          return;
-        }
-        if (standbyEditorWasOpen) {
-          standbyEditorWasOpen = false;
-          scheduleStandbySwitcherGrace();
-        }
-      });
-      window.__dtStandbyChromeObserver.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-    }
+      '</span>';
+    $bar.append(html);
   }
 
   function mountIntoStandby() {
     var $standby = $('.screenstandby .row').first();
     if (!$standby.length) return;
-    // Editor icons stay available; the S/1/2 switcher bar only appears while editing.
-    mountEditorIcons($standby);
+    // One bar: S/1/2/+ next to the editor icons (visible in S-edit mode).
     if (!$standby.children('.dt-screen-switcher-bar').length) {
       $standby.prepend(
         '<div class="dt-screen-switcher-bar col-xs-12"></div>'
       );
     }
+    // Drop any leftover separate icon strip from earlier builds.
+    $standby.children('.dt-standby-editor-icons').remove();
     var $bar = $standby.children('.dt-screen-switcher-bar');
     renderInto($bar);
-    $bar.removeClass('is-visible');
-    bindStandbyChromeReveal();
-    setStandbySwitcherVisible(isEditorChromeNeeded());
+    mountEditorIcons($bar);
   }
 
   function addScreen() {

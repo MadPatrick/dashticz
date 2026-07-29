@@ -703,12 +703,9 @@ test('topbar screen switcher supports standby and extra screens', () => {
   assert.match(writer, /function configwriter_column_prefix/);
   assert.match(writer, /function configwriter_build_standby_layout_section/);
   assert.match(writer, /do not coerce to 1/);
-  assert.match(styles, /\.dt-screen-switcher-bar\.is-visible/);
-  assert.match(switcher, /setStandbySwitcherVisible/);
-  assert.match(switcher, /scheduleStandbySwitcherGrace/);
-  assert.match(switcher, /mountEditorIcons\(\$standby\)/);
-  assert.doesNotMatch(switcher, /clientY\s*</);
-  assert.match(styles, /body\.standby:not\(\.standby-edit\) \.dt-standby-editor-icons/);
+  assert.match(styles, /body\.standby-edit \.dt-screen-switcher-bar/);
+  assert.match(switcher, /mountEditorIcons\(\$bar\)/);
+  assert.match(switcher, /\$bar\.append\(html\)/);
 });
 
 test('migration sources use LF line endings', () => {
