@@ -702,6 +702,8 @@ test('topbar screen switcher supports standby and extra screens', () => {
   assert.match(writer, /function configwriter_editor_markers/);
   assert.match(writer, /function configwriter_column_prefix/);
   assert.match(writer, /function configwriter_build_standby_layout_section/);
+  assert.match(writer, /do not coerce to 1/);
+  assert.match(styles, /\.dt-screen-switcher-bar\.is-visible/);
 });
 
 test('migration sources use LF line endings', () => {

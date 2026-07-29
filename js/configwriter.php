@@ -81,7 +81,11 @@ function configwriter_extract_wrapped_section($config, $startMarker, $endMarker)
 
 function configwriter_remove_editor_sections($config, $screenNumber = 1)
 {
-    $n = max(1, (int)$screenNumber);
+    // Screen 0 = standby; do not coerce to 1 (that wiped screen 1's dashboard).
+    $n = (int)$screenNumber;
+    if ($n < 0) {
+        $n = 1;
+    }
     $kinds = ['device', 'widget', 'layout', 'dashboard'];
     foreach ($kinds as $kind) {
         list($startMarker, $endMarker) = configwriter_editor_markers($kind, $n);
