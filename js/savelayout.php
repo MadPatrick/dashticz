@@ -89,9 +89,38 @@ foreach ($data['items'] as $entry) {
 /*
  * Every visual editor finishes with this endpoint. Consolidate the temporary
  * device/widget sections for the active screen into one readable generated
- * area: all blocks, then columns, then screens. Widget settings are moved
- * into the regular config group above it (screen 1 / shared settings).
+ * area. Standby (screen 0) writes columns_standby instead of screens[].
  */
+if ($screenNumber === 0) {
+    // $blockLines was extracted at request start, after saveblocks/savewidgets
+    // already wrote the new block definitions into temporary editor sections.
+    $config = configwriter_remove_editor_sections($config, 0);
+    $config = configwriter_remove_section(
+        $config,
+        '// [standby-editor-start]',
+        '// [standby-editor-end]'
+    );
+    $config = rtrim($config);
+
+    $startMarker = '// [standby-editor-start]';
+    $endMarker = '// [standby-editor-end]';
+    if (!empty($items)) {
+        $section = configwriter_build_standby_layout_section($blockLines, $items, 12);
+    } else {
+        $section = configwriter_emit_columns_standby([], 12);
+    }
+    $config .= configwriter_wrap_section($startMarker, $endMarker, $section);
+
+    $writeError = configwriter_write_config($configPath, $customDir, $config);
+    if ($writeError !== null) {
+        dashticz_json_error(500, $writeError);
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'screen' => 'standby']);
+    exit;
+}
+
 list($startMarker, $endMarker) = configwriter_editor_markers(
     'dashboard',
     $screenNumber

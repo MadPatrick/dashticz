@@ -1,4 +1,4 @@
-/* global Domoticz settings columns blocks blocktypes screens DashticzScreenSwitcher */
+/* global Domoticz settings columns columns_standby blocks blocktypes screens DashticzScreenSwitcher standbyActive */
 // eslint-disable-next-line no-unused-vars
 var DashticzDeviceEditor = (function () {
   'use strict';
@@ -198,93 +198,111 @@ var DashticzDeviceEditor = (function () {
     return entry;
   }
 
-  function _activeScreenNumber() {
+  function _activeScreenTarget() {
     if (
       typeof DashticzScreenSwitcher !== 'undefined' &&
       DashticzScreenSwitcher.getActiveScreenNumber
     ) {
-      var active = DashticzScreenSwitcher.getActiveScreenNumber();
-      if (active === 'standby') return 1;
-      var n = parseInt(active, 10);
-      if (n > 0) return n;
+      return DashticzScreenSwitcher.getActiveScreenNumber();
     }
-    var $active = $('.screen.swiper-slide-active[data-screenindex]');
-    if (!$active.length) $active = $('.screen[data-screenindex]:visible').first();
+    if (typeof standbyActive !== 'undefined' && standbyActive) {
+      return 'standby';
+    }
+    var $active = $('.dt-container .screen.swiper-slide-active[data-screenindex]');
+    if (!$active.length) {
+      $active = $('.dt-container .screen[data-screenindex]:visible').first();
+    }
+    if ($('.screenstandby:visible').length) return 'standby';
     var fromDom = parseInt($active.attr('data-screenindex'), 10);
     return fromDom > 0 ? fromDom : 1;
+  }
+
+  /** Numeric screen for PHP endpoints; standby is sent as the string "standby". */
+  function _activeScreenPayload() {
+    var target = _activeScreenTarget();
+    return target === 'standby' ? 'standby' : parseInt(target, 10) || 1;
+  }
+
+  function _activeScreenDom() {
+    if (_activeScreenTarget() === 'standby') {
+      var $standby = $('.screenstandby:visible');
+      if ($standby.length) return $standby;
+      return $('.screenstandby').first();
+    }
+    var num = _activeScreenPayload();
+    var $byIndex = $(
+      '.dt-container .screen[data-screenindex="' + num + '"]'
+    );
+    if ($byIndex.length) return $byIndex.first();
+    var $active = $('.dt-container .screen.swiper-slide-active');
+    if ($active.length) return $active;
+    return $('.dt-container .screen:visible').first();
   }
 
   function _getAllManagedItems() {
     var seen = {};
     var ordered = [];
-    if (typeof columns !== 'undefined') {
-      var columnKeys = [];
-      var $activeScreen = $('.screen.swiper-slide-active');
-      if (!$activeScreen.length) $activeScreen = $('.screen:visible').first();
-      $activeScreen.find('[data-colindex]').each(function () {
-        var columnKey = String($(this).attr('data-colindex'));
-        if (columnKeys.indexOf(columnKey) < 0) {
-          columnKeys.push(columnKey);
-        }
-      });
-      var screenNum = _activeScreenNumber();
-      var screenColumns = null;
-      if (typeof screens !== 'undefined') {
-        if (screens[screenNum] && Array.isArray(screens[screenNum].columns)) {
-          screenColumns = screens[screenNum].columns;
-        } else if (screens[1] && Array.isArray(screens[1].columns)) {
-          screenColumns = screens[1].columns;
-        }
+    if (typeof columns === 'undefined') return ordered;
+
+    var columnKeys = [];
+    var $activeScreen = _activeScreenDom();
+    $activeScreen.find('[data-colindex]').each(function () {
+      var columnKey = String($(this).attr('data-colindex'));
+      if (columnKeys.indexOf(columnKey) < 0) {
+        columnKeys.push(columnKey);
       }
-      if (screenColumns) {
-        screenColumns.forEach(function (columnKey) {
-          columnKey = String(columnKey);
-          if (columnKeys.indexOf(columnKey) < 0) {
-            columnKeys.push(columnKey);
-          }
-        });
-      }
-      // Prefer columns already on the active screen; only fall back to all
-      // columns when the active screen has no managed tiles yet.
-      if (!columnKeys.length) {
-        Object.keys(columns).forEach(function (colKey) {
+    });
+
+    // Standby uses columns_standby, not screens[].
+    if (_activeScreenTarget() === 'standby') {
+      if (typeof columns_standby !== 'undefined' && columns_standby) {
+        Object.keys(columns_standby).forEach(function (colKey) {
           if (columnKeys.indexOf(String(colKey)) < 0) {
             columnKeys.push(String(colKey));
           }
         });
       }
-      columnKeys.forEach(function (colKey) {
-        var col = columns[colKey];
-        if (col && Array.isArray(col.blocks)) {
-          col.blocks.forEach(function (b) {
-            var ck = _toCompositeKey(b);
-            /* non-numeric string block keys → look up in global blocks object */
-            if (!ck && typeof b === 'string' &&
-                typeof blocks !== 'undefined' && blocks[b]) {
-              ck = _toCompositeKey(blocks[b]);
-            }
-            if (ck) {
-              var deviceKey = _deviceOrderKey(ck);
-              if (!seen[deviceKey]) {
-                seen[deviceKey] = true;
-                ordered.push({
-                  kind: 'device',
-                  ck: ck,
-                  orderKey: deviceKey,
-                });
-              }
-              return;
-            }
-
-            var widget = _widgetFromReference(b);
-            if (widget && !seen[widget.orderKey]) {
-              seen[widget.orderKey] = true;
-              ordered.push(widget);
-            }
-          });
-        }
-      });
     }
+
+    columnKeys.forEach(function (colKey) {
+      var col =
+        _activeScreenTarget() === 'standby' &&
+        typeof columns_standby !== 'undefined' &&
+        columns_standby[colKey]
+          ? columns_standby[colKey]
+          : columns[colKey];
+      if (col && Array.isArray(col.blocks)) {
+        col.blocks.forEach(function (b) {
+          var ck = _toCompositeKey(b);
+          if (
+            !ck &&
+            typeof b === 'string' &&
+            typeof blocks !== 'undefined' &&
+            blocks[b]
+          ) {
+            ck = _toCompositeKey(blocks[b]);
+          }
+          if (ck) {
+            var deviceKey = _deviceOrderKey(ck);
+            if (!seen[deviceKey]) {
+              seen[deviceKey] = true;
+              ordered.push({
+                kind: 'device',
+                ck: ck,
+                orderKey: deviceKey,
+              });
+            }
+            return;
+          }
+
+          var widget = _widgetFromReference(b);
+          if (widget && !seen[widget.orderKey]) {
+            seen[widget.orderKey] = true;
+            ordered.push(widget);
+          }
+        });
+      }
+    });
     return ordered;
   }
 
@@ -729,12 +747,12 @@ var DashticzDeviceEditor = (function () {
         var token = data.token;
         return _postEditorData(
           'js/saveblocks.php',
-          { devices: devicePayload, screen: _activeScreenNumber() },
+          { devices: devicePayload, screen: _activeScreenPayload() },
           token
         ).then(function (deviceResult) {
           return _postEditorData(
             'js/savewidgets.php',
-            { widgets: widgetPayload, screen: _activeScreenNumber() },
+            { widgets: widgetPayload, screen: _activeScreenPayload() },
             token
           ).then(function (widgetResult) {
             var deviceRefs = {};
@@ -759,9 +777,12 @@ var DashticzDeviceEditor = (function () {
               if (height) entry.height = height;
               return entry;
             });
+            if (_activeScreenTarget() === 'standby') {
+              layoutItems = _preserveStandbyExtraBlocks(layoutItems);
+            }
             return _postEditorData(
               'js/savelayout.php',
-              { items: layoutItems, screen: _activeScreenNumber() },
+              { items: layoutItems, screen: _activeScreenPayload() },
               token
             );
           });
@@ -785,6 +806,29 @@ var DashticzDeviceEditor = (function () {
         $btn.prop('disabled', false).text('Save');
         alert('Error: ' + msg);
       });
+  }
+
+  function _preserveStandbyExtraBlocks(layoutItems) {
+    var known = {};
+    layoutItems.forEach(function (item) {
+      if (item && item.ref) known[item.ref] = true;
+    });
+    var preserved = [];
+    if (
+      typeof columns_standby !== 'undefined' &&
+      columns_standby &&
+      columns_standby[1] &&
+      Array.isArray(columns_standby[1].blocks)
+    ) {
+      columns_standby[1].blocks.forEach(function (ref) {
+        if (typeof ref !== 'string' || known[ref]) return;
+        // Keep simple/hand-written standby blocks (clock, weather, …).
+        if (_toCompositeKey(ref) || _widgetFromReference(ref)) return;
+        preserved.push({ ref: ref, width: 12 });
+        known[ref] = true;
+      });
+    }
+    return preserved.concat(layoutItems);
   }
 
   function _postEditorData(url, payload, token) {

@@ -1,4 +1,4 @@
-/* global settings columns blocks screens language DashticzScreenSwitcher */
+/* global settings columns columns_standby blocks screens language DashticzScreenSwitcher standbyActive */
 // eslint-disable-next-line no-unused-vars
 var DashticzWidgetEditor = (function () {
   'use strict';
@@ -460,45 +460,66 @@ var DashticzWidgetEditor = (function () {
     });
   }
 
-  function _activeScreenNumber() {
+  function _activeScreenTarget() {
     if (
       typeof DashticzScreenSwitcher !== 'undefined' &&
       DashticzScreenSwitcher.getActiveScreenNumber
     ) {
-      var active = DashticzScreenSwitcher.getActiveScreenNumber();
-      if (active === 'standby') return 1;
-      var n = parseInt(active, 10);
-      if (n > 0) return n;
+      return DashticzScreenSwitcher.getActiveScreenNumber();
     }
-    var $active = $('.screen.swiper-slide-active[data-screenindex]');
-    if (!$active.length) $active = $('.screen[data-screenindex]:visible').first();
+    if (typeof standbyActive !== 'undefined' && standbyActive) {
+      return 'standby';
+    }
+    if ($('.screenstandby:visible').length) return 'standby';
+    var $active = $('.dt-container .screen.swiper-slide-active[data-screenindex]');
+    if (!$active.length) {
+      $active = $('.dt-container .screen[data-screenindex]:visible').first();
+    }
     var fromDom = parseInt($active.attr('data-screenindex'), 10);
     return fromDom > 0 ? fromDom : 1;
   }
 
+  function _activeScreenPayload() {
+    var target = _activeScreenTarget();
+    return target === 'standby' ? 'standby' : parseInt(target, 10) || 1;
+  }
+
+  function _activeScreenDom() {
+    if (_activeScreenTarget() === 'standby') {
+      var $standby = $('.screenstandby:visible');
+      if ($standby.length) return $standby;
+      return $('.screenstandby').first();
+    }
+    var num = _activeScreenPayload();
+    var $byIndex = $(
+      '.dt-container .screen[data-screenindex="' + num + '"]'
+    );
+    if ($byIndex.length) return $byIndex.first();
+    var $active = $('.dt-container .screen.swiper-slide-active');
+    if ($active.length) return $active;
+    return $('.dt-container .screen:visible').first();
+  }
+
   function _orderedColumnKeys() {
     var result = [];
-    var screenNum = _activeScreenNumber();
-    if (typeof screens !== 'undefined') {
-      if (screens[screenNum] && Array.isArray(screens[screenNum].columns)) {
-        result = screens[screenNum].columns.map(String);
-      } else if (screens[1] && Array.isArray(screens[1].columns)) {
-        result = screens[1].columns.map(String);
-      }
-    }
-    var $activeScreen = $('.screen.swiper-slide-active');
-    if (!$activeScreen.length) $activeScreen = $('.screen:visible').first();
+    var $activeScreen = _activeScreenDom();
     $activeScreen.find('[data-colindex]').each(function () {
       var columnKey = String($(this).attr('data-colindex'));
       if (result.indexOf(columnKey) < 0) result.push(columnKey);
     });
-    if (!result.length && typeof columns !== 'undefined') {
-      Object.keys(columns).forEach(function (columnKey) {
-        if (result.indexOf(String(columnKey)) < 0) {
-          result.push(String(columnKey));
-        }
-      });
+
+    if (_activeScreenTarget() === 'standby') {
+      if (typeof columns_standby !== 'undefined' && columns_standby) {
+        Object.keys(columns_standby).forEach(function (columnKey) {
+          if (result.indexOf(String(columnKey)) < 0) {
+            result.push(String(columnKey));
+          }
+        });
+      }
+      return result;
     }
+
+    // Do not fall back to other screens' columns — empty screen stays empty.
     return result;
   }
 
@@ -512,8 +533,18 @@ var DashticzWidgetEditor = (function () {
   function _readManagedLayoutOrder() {
     var seen = {};
     _orderedColumnKeys().forEach(function (columnKey) {
-      if (!/^(de|we|le)_s\d+_col\d+$|^(de|we|le)_col\d+$|^col_\d+$/.test(String(columnKey))) return;
-      var column = columns[columnKey];
+      var isStandby = _activeScreenTarget() === 'standby';
+      if (
+        !isStandby &&
+        !/^(de|we|le)_s\d+_col\d+$|^(de|we|le)_col\d+$|^col_\d+$/.test(
+          String(columnKey)
+        )
+      ) {
+        return;
+      }
+      var column = isStandby
+        ? columns_standby && columns_standby[columnKey]
+        : columns[columnKey];
       if (!column || !Array.isArray(column.blocks)) return;
 
       column.blocks.forEach(function (reference) {
@@ -1269,7 +1300,7 @@ var DashticzWidgetEditor = (function () {
 
     var $save = $('#we-save-btn').prop('disabled', true).text('Opslaan…');
     $('.we-message').removeClass('text-danger').text('');
-    var screenNumber = _activeScreenNumber();
+    var screenNumber = _activeScreenPayload();
 
     $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
       .then(function (data) {

@@ -558,12 +558,19 @@ function configwriter_managed_column_regex_js()
 
 /**
  * Editor section markers. Screen 1 keeps legacy markers for backward compatibility.
+ * Screen 0 = standby overlay.
  *
  * @return array{0:string,1:string} [start, end]
  */
 function configwriter_editor_markers($kind, $screenNumber = 1)
 {
-    $n = max(1, (int)$screenNumber);
+    $n = (int)$screenNumber;
+    if ($n === 0) {
+        return [
+            '// [' . $kind . '-editor-standby-start]',
+            '// [' . $kind . '-editor-standby-end]',
+        ];
+    }
     if ($n === 1) {
         return ['// [' . $kind . '-editor-start]', '// [' . $kind . '-editor-end]'];
     }
@@ -578,7 +585,10 @@ function configwriter_editor_markers($kind, $screenNumber = 1)
  */
 function configwriter_column_prefix($kind, $screenNumber = 1)
 {
-    $n = max(1, (int)$screenNumber);
+    $n = (int)$screenNumber;
+    if ($n === 0) {
+        return $kind . '_standby_col';
+    }
     if ($n === 1) {
         return $kind . '_col';
     }
@@ -587,11 +597,15 @@ function configwriter_column_prefix($kind, $screenNumber = 1)
 
 /**
  * Normalize and validate a screen number from request JSON.
+ * Returns 0 for standby, or 1..99 for numbered screens.
  */
 function configwriter_parse_screen_number($data, $default = 1)
 {
     if (!is_array($data) || !array_key_exists('screen', $data)) {
         return max(1, (int)$default);
+    }
+    if ($data['screen'] === 'standby' || $data['screen'] === 'S' || $data['screen'] === 0 || $data['screen'] === '0') {
+        return 0;
     }
     $n = (int)$data['screen'];
     if ($n < 1 || $n > 99) {
@@ -749,6 +763,32 @@ function configwriter_emit_columns_standby($blockKeys, $width = 12)
         . "];\n";
     $section .= "columns_standby[1]['width'] = " . max(1, min(12, (int)$width)) . ";\n";
 
+    return $section;
+}
+
+/**
+ * Build a standby layout section including block definitions used on standby.
+ */
+function configwriter_build_standby_layout_section($blockLines, $items, $width = 12)
+{
+    $section = configwriter_section_header('BLOCKS') . "\n";
+    $section .= "if (typeof blocks === 'undefined') var blocks = {}\n";
+
+    $blockKeys = [];
+    $usedRefs = [];
+    foreach ($items as $item) {
+        if (!isset($item['ref']) || !is_string($item['ref'])) {
+            continue;
+        }
+        $ref = $item['ref'];
+        $blockKeys[] = $ref;
+        if (isset($blockLines[$ref]) && !isset($usedRefs[$ref])) {
+            $section .= "blocks['" . $ref . "'] = " . $blockLines[$ref] . "\n";
+            $usedRefs[$ref] = true;
+        }
+    }
+
+    $section .= "\n" . configwriter_emit_columns_standby($blockKeys, $width);
     return $section;
 }
 

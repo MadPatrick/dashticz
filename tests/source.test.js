@@ -279,7 +279,7 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(editor, /\(de\|we\|le\)_col/);
   assert.match(editor, /col_\\d\+/);
   assert.match(editor, /screen: screenNumber/);
-  assert.match(editor, /function _activeScreenNumber/);
+  assert.match(editor, /function _activeScreenPayload/);
   assert.match(editor, /col-xs-/);
   assert.match(editor, /(?:widgetEntry|deviceEntry)\.height = item\.height/);
   assert.match(editor, /dle-cancel/);
@@ -308,10 +308,10 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
     deviceEditor,
     /var ck\s+= String\(\$\(this\)\.attr\('data-ck'\)\)/
   );
-  assert.match(deviceEditor, /screens\[screenNum\]\.columns|screens\[1\]\.columns/);
+  assert.match(deviceEditor, /function _activeScreenPayload/);
+  assert.match(deviceEditor, /function _activeScreenDom/);
   assert.match(deviceEditor, /\$activeScreen\.find\('\[data-colindex\]'\)/);
-  assert.match(deviceEditor, /function _activeScreenNumber/);
-  assert.match(deviceEditor, /screen: _activeScreenNumber\(\)/);
+  assert.match(deviceEditor, /screen: _activeScreenPayload\(\)/);
   assert.match(deviceEditor, /function _widgetFromReference/);
   assert.match(deviceEditor, /widget_alarmmeldingen: \{ id: 'alarmmeldingen', title: '112' \}/);
   assert.match(deviceEditor, /return _widgetPayload\(orderKey\)/);
@@ -681,21 +681,27 @@ test('topbar screen switcher supports standby and extra screens', () => {
   assert.match(main, /js\/screenswitcher\.js/);
   assert.match(main, /DashticzScreenSwitcher\.init\(\)/);
   assert.match(main, /DashticzScreenSwitcher\.mountIntoStandby\(\)/);
+  assert.match(main, /screenswitcher/);
+  assert.match(main, /isStandbyEditMode/);
   assert.match(simpleBlock, /dt-screen-switcher-host/);
+  assert.match(simpleBlock, /screenswitcher/);
   assert.match(switcher, /data-screen="standby"/);
   assert.match(switcher, /title="Standby">S</);
   assert.match(switcher, /dt-screen-add/);
   assert.match(switcher, /js\/savescreens\.php/);
   assert.match(switcher, /enterStandbyManual/);
+  assert.match(switcher, /standbyEditMode/);
   assert.match(styles, /\.dt-screen-btn\s*\{/);
   assert.match(styles, /border-radius: 4px/);
   assert.match(styles, /\.dt-screen-btn\.active/);
+  assert.match(styles, /dt-screen-switcher-host/);
   assert.match(savescreens, /dashticz_require_csrf\(\)/);
   assert.match(savescreens, /action.*add/);
   assert.match(writer, /function configwriter_replace_screens_section/);
   assert.match(writer, /function configwriter_emit_new_screen/);
   assert.match(writer, /function configwriter_editor_markers/);
   assert.match(writer, /function configwriter_column_prefix/);
+  assert.match(writer, /function configwriter_build_standby_layout_section/);
 });
 
 test('migration sources use LF line endings', () => {

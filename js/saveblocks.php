@@ -133,8 +133,10 @@ if (!empty($devices)) {
         );
     }
 
-    $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
-    $section .= configwriter_emit_screen_columns($screenNumber, $columnKeys, 'merge');
+    if ($screenNumber > 0) {
+        $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
+        $section .= configwriter_emit_screen_columns($screenNumber, $columnKeys, 'merge');
+    }
 
     $wrapped = configwriter_wrap_section($startMarker, $endMarker, $section);
 

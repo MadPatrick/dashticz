@@ -6,6 +6,10 @@ var DT_simpleblock = (function () {
       defaultWidth: 2,
       render: renderLogo,
     },
+    screenswitcher: {
+      defaultWidth: 2,
+      render: renderScreenSwitcher,
+    },
     settings: {
       defaultWidth: 2,
       render: renderSettings,
@@ -130,6 +134,25 @@ var DT_simpleblock = (function () {
     );
   }
 
+  function renderScreenSwitcher(me) {
+    var content =
+      '<div class="col-xs-' +
+      me.block.width +
+      ' dt-screen-switcher-host"></div>';
+    setTimeout(function () {
+      if (typeof DashticzScreenSwitcher !== 'undefined') {
+        DashticzScreenSwitcher.init();
+      } else {
+        DT_function.loadDTScript('js/screenswitcher.js').then(function () {
+          if (typeof DashticzScreenSwitcher !== 'undefined') {
+            DashticzScreenSwitcher.init();
+          }
+        });
+      }
+    }, 0);
+    return content;
+  }
+
   function renderSettings(me) {
     var icons = ['settings', 'fullscreen'];
     if (typeof settings['settings_icons'] !== 'undefined') {
@@ -150,8 +173,6 @@ var DT_simpleblock = (function () {
       '<div class="col-xs-' +
       me.block.width +
       ' text-right topbar-settings-wrap">';
-    // Screen switcher (S / 1 / 2 / +) is mounted by DashticzScreenSwitcher.init().
-    content += '<div class="dt-screen-switcher-host"></div>';
     content +=
       '<span class="settings config-mode-switch" role="group" aria-label="Config mode">' +
       '<button type="button" class="config-mode-btn' +
@@ -204,18 +225,6 @@ var DT_simpleblock = (function () {
       }
     }
     content += '</div>';
-    // Screen switcher mounts after this HTML is inserted into the DOM.
-    setTimeout(function () {
-      if (typeof DashticzScreenSwitcher !== 'undefined') {
-        DashticzScreenSwitcher.init();
-      } else {
-        DT_function.loadDTScript('js/screenswitcher.js').then(function () {
-          if (typeof DashticzScreenSwitcher !== 'undefined') {
-            DashticzScreenSwitcher.init();
-          }
-        });
-      }
-    }, 0);
     return content;
   }
 

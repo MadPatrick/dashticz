@@ -8,6 +8,16 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 Recent changes
 ---------------
 
+v3.21.4 beta (29-7-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* Screens: widgets/devices added on Screen 2+ are saved to that screen (no longer fall back to Screen 1).
+* Standby: opening ``S`` enters an editable standby screen — mouse movement no longer exits it. Device/Widget/Layout editors work on standby; leave via ``1`` / ``2`` / …
+* Topbar: screen buttons (``S`` / ``1`` / ``2``) sit left of the Custom/Wizard controls so they no longer crowd them.
+
 v3.21.3 beta (29-7-2026)
 --------------------------
 

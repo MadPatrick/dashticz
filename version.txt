@@ -1,8 +1,9 @@
 {
-"version": "3.21.3",
+"version": "3.21.4",
 "branch": "beta",
-"last_changes": "Topbar screen switcher (S/1/2/+), multi-screen editor saves, add screens from wizard",
+"last_changes": "Fix multi-screen/standby editing: active screen saves, editable standby, screen buttons left of Custom/Wizard",
 "changelog" : {
+            "3.21.4": "Fix multi-screen/standby editing: active screen saves, editable standby, screen buttons left of Custom/Wizard",
             "3.21.3": "Topbar screen switcher (S/1/2/+), multi-screen editor saves, add screens from wizard",
             "3.21.2": "Keep CONFIG.js settings, blocks, columns, and screens grouped after editor saves",
             "3.21.1": "Restore large Modern Dark selector buttons and document the complete browser editors and installer",

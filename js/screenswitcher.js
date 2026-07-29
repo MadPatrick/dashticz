@@ -5,6 +5,10 @@ var DashticzScreenSwitcher = (function () {
 
   var initialized = false;
   var addingScreen = false;
+  /** @type {number|'standby'} */
+  var activeScreen = 1;
+  /** Manual S-edit mode: mouse/keyboard must not exit standby. */
+  var standbyEditMode = false;
 
   function getScreenNumbers() {
     var nums = [];
@@ -18,16 +22,39 @@ var DashticzScreenSwitcher = (function () {
     return nums.length ? nums : [1];
   }
 
-  function getActiveScreenNumber() {
+  function syncActiveFromDom() {
     if (typeof standbyActive !== 'undefined' && standbyActive) {
-      return 'standby';
+      activeScreen = 'standby';
+      return activeScreen;
     }
-    var $active = $('.dt-container .screen.swiper-slide-active[data-screenindex]');
+    var $active = $(
+      '.dt-container .screen.swiper-slide-active[data-screenindex]'
+    );
     if (!$active.length) {
       $active = $('.dt-container .screen[data-screenindex]:visible').first();
     }
     var n = parseInt($active.attr('data-screenindex'), 10);
-    return n > 0 ? n : 1;
+    if (n > 0) activeScreen = n;
+    return activeScreen;
+  }
+
+  function getActiveScreenNumber() {
+    if (typeof standbyActive !== 'undefined' && standbyActive) {
+      activeScreen = 'standby';
+      return 'standby';
+    }
+    if (activeScreen === 'standby') {
+      syncActiveFromDom();
+    }
+    return activeScreen;
+  }
+
+  function isStandbyEditMode() {
+    return !!standbyEditMode;
+  }
+
+  function setStandbyEditMode(enabled) {
+    standbyEditMode = !!enabled;
   }
 
   function slideIndexForScreen(screenNumber) {
@@ -42,16 +69,19 @@ var DashticzScreenSwitcher = (function () {
   }
 
   function enterStandbyManual() {
+    standbyEditMode = true;
+    activeScreen = 'standby';
     if (typeof standbyActive !== 'undefined' && standbyActive) {
+      mountIntoStandby();
       updateActive();
       return;
     }
     $('body').addClass('standby');
+    $('body').addClass('standby-edit');
     $('.dt-container').hide();
     if (typeof buildStandby === 'function') {
       buildStandby();
     }
-    // Mark active without firing idle standby call URLs.
     if (typeof standbyActive !== 'undefined') {
       standbyActive = true;
     }
@@ -67,6 +97,9 @@ var DashticzScreenSwitcher = (function () {
 
     var num = parseInt(screenNumber, 10);
     if (!(num > 0)) return;
+
+    activeScreen = num;
+    standbyEditMode = false;
 
     if (typeof standbyActive !== 'undefined' && standbyActive) {
       if (typeof disableStandby === 'function') {
@@ -132,7 +165,7 @@ var DashticzScreenSwitcher = (function () {
   function renderInto($host) {
     if (!$host || !$host.length) return;
     $host.find('.dt-screen-switcher').remove();
-    $host.prepend(buildButtonsHtml());
+    $host.append(buildButtonsHtml());
   }
 
   function refreshAll() {
@@ -148,6 +181,24 @@ var DashticzScreenSwitcher = (function () {
     $('.dt-screen-btn[data-screen="' + active + '"]').addClass('active');
   }
 
+  function mountEditorIcons($bar) {
+    if (!$bar || !$bar.length) return;
+    if (typeof isCustomConfigMode === 'function' && isCustomConfigMode()) {
+      return;
+    }
+    if ($bar.children('.dt-standby-editor-icons').length) return;
+    var html =
+      '<span class="dt-standby-editor-icons">' +
+      '<span class="settings deviceeditoricon" role="button" title="Devices toevoegen">' +
+      '<i class="fas fa-plus" aria-hidden="true"></i></span>' +
+      '<span class="settings widgeteditoricon" role="button" title="Widgets toevoegen">' +
+      '<i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>' +
+      '<span class="settings layouteditoricon" role="button" title="Tegels verplaatsen en schalen">' +
+      '<i class="fas fa-arrows-alt" aria-hidden="true"></i></span>' +
+      '</span>';
+    $bar.append(html);
+  }
+
   function mountIntoStandby() {
     var $standby = $('.screenstandby .row').first();
     if (!$standby.length) return;
@@ -156,7 +207,9 @@ var DashticzScreenSwitcher = (function () {
         '<div class="dt-screen-switcher-bar col-xs-12"></div>'
       );
     }
-    renderInto($standby.children('.dt-screen-switcher-bar'));
+    var $bar = $standby.children('.dt-screen-switcher-bar');
+    renderInto($bar);
+    mountEditorIcons($bar);
   }
 
   function addScreen() {
@@ -199,41 +252,47 @@ var DashticzScreenSwitcher = (function () {
       });
   }
 
-  function init() {
-    if (initialized) {
-      refreshAll();
-      return;
-    }
-    initialized = true;
+  function onSwiperChange() {
+    if (typeof standbyActive !== 'undefined' && standbyActive) return;
+    syncActiveFromDom();
+    updateActive();
+  }
 
-    $('.dt-screen-switcher-host, .topbar-settings-wrap').each(function () {
-      var $host = $(this).hasClass('dt-screen-switcher-host')
-        ? $(this)
-        : $(this).children('.dt-screen-switcher-host');
-      if (!$host.length) $host = $(this);
-      renderInto($host);
+  function init() {
+    if (!initialized) {
+      initialized = true;
+      syncActiveFromDom();
+
+      $(document)
+        .off('click.screenswitcher')
+        .on('click.screenswitcher', '.dt-screen-btn', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          var screen = String($(this).data('screen') || '');
+          if (screen === 'add') {
+            addScreen();
+            return;
+          }
+          goToScreen(screen);
+        });
+    }
+
+    $('.dt-screen-switcher-host').each(function () {
+      renderInto($(this));
     });
 
-    $(document)
-      .off('click.screenswitcher')
-      .on('click.screenswitcher', '.dt-screen-btn', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        var screen = String($(this).data('screen') || '');
-        if (screen === 'add') {
-          addScreen();
-          return;
-        }
-        goToScreen(screen);
-      });
-
     if (typeof myswiper !== 'undefined' && myswiper) {
-      myswiper.on('slideChange transitionEnd', updateActive);
+      myswiper.off('slideChange.screenswitcher');
+      myswiper.off('transitionEnd.screenswitcher');
+      myswiper.on('slideChange.screenswitcher', onSwiperChange);
+      myswiper.on('transitionEnd.screenswitcher', onSwiperChange);
     } else {
-      // Swiper may initialize shortly after topbar.
       setTimeout(function () {
         if (typeof myswiper !== 'undefined' && myswiper) {
-          myswiper.on('slideChange transitionEnd', updateActive);
+          myswiper.off('slideChange.screenswitcher');
+          myswiper.off('transitionEnd.screenswitcher');
+          myswiper.on('slideChange.screenswitcher', onSwiperChange);
+          myswiper.on('transitionEnd.screenswitcher', onSwiperChange);
         }
       }, 500);
     }
@@ -250,6 +309,8 @@ var DashticzScreenSwitcher = (function () {
     getScreenNumbers: getScreenNumbers,
     mountIntoStandby: mountIntoStandby,
     buildButtonsHtml: buildButtonsHtml,
+    isStandbyEditMode: isStandbyEditMode,
+    setStandbyEditMode: setStandbyEditMode,
   };
 })();
 
