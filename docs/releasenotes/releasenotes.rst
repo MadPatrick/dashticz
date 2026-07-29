@@ -8,6 +8,16 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 Recent changes
 ---------------
 
+v3.21.1 beta (29-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Topbar: square screen buttons ``S`` / ``1`` / ``2`` … switch between Standby and dashboard screens. Standby (``S``) and Screen ``1`` are always available; Wizard mode shows a ``+`` button to add Screen 2, 3, …
+* Screens: Device, Widget, and Layout editors save tiles to the currently active screen (not only screen 1). Extra screens are stored in ``custom/CONFIG.js``.
+* Standby: choosing ``S`` opens the standby overlay immediately (with its configured tiles/background). Choosing a numbered screen exits standby and shows that screen. The same switcher remains available on the standby overlay.
+
 v3.21.0 beta (28-7-2026)
 --------------------------
 

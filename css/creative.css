@@ -918,6 +918,76 @@ next css sets the default height of the frame popup
   margin-right: 4px;
 }
 
+/* Screen switcher (S / 1 / 2 / +) in the topbar */
+.dt-screen-switcher-host {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.dt-screen-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.dt-screen-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dt-screen-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dt-screen-btn.active {
+  background: rgba(255, 255, 255, 0.92);
+  color: #212529;
+  border-color: #fff;
+}
+
+.dt-screen-btn.dt-screen-add {
+  font-size: 16px;
+  font-weight: 700;
+  border-style: dashed;
+  opacity: 0.9;
+}
+
+.dt-screen-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.dt-screen-switcher-bar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px 0;
+  pointer-events: auto;
+}
+
+.screenstandby .dt-screen-switcher-bar .dt-screen-btn {
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
 /* Visual Layout Editor */
 body.dle-active {
   user-select: none;

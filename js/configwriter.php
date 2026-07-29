@@ -454,6 +454,59 @@ function configwriter_chunk_items_by_width($items, $columnWidth)
 }
 
 /**
+ * Managed editor column keys: de_col1, we_s2_col3, le_col2, col_4, etc.
+ * Returns a JavaScript RegExp literal (including slashes).
+ */
+function configwriter_managed_column_regex_js()
+{
+    return '/^(de|we|le)_s\\d+_col\\d+$|^(de|we|le)_col\\d+$|^col_\\d+$/';
+}
+
+/**
+ * Editor section markers. Screen 1 keeps legacy markers for backward compatibility.
+ *
+ * @return array{0:string,1:string} [start, end]
+ */
+function configwriter_editor_markers($kind, $screenNumber = 1)
+{
+    $n = max(1, (int)$screenNumber);
+    if ($n === 1) {
+        return ['// [' . $kind . '-editor-start]', '// [' . $kind . '-editor-end]'];
+    }
+    return [
+        '// [' . $kind . '-editor-s' . $n . '-start]',
+        '// [' . $kind . '-editor-s' . $n . '-end]',
+    ];
+}
+
+/**
+ * Column key prefix for packed editor columns on a given screen.
+ */
+function configwriter_column_prefix($kind, $screenNumber = 1)
+{
+    $n = max(1, (int)$screenNumber);
+    if ($n === 1) {
+        return $kind . '_col';
+    }
+    return $kind . '_s' . $n . '_col';
+}
+
+/**
+ * Normalize and validate a screen number from request JSON.
+ */
+function configwriter_parse_screen_number($data, $default = 1)
+{
+    if (!is_array($data) || !array_key_exists('screen', $data)) {
+        return max(1, (int)$default);
+    }
+    $n = (int)$data['screen'];
+    if ($n < 1 || $n > 99) {
+        dashticz_json_error(400, 'Invalid screen number.');
+    }
+    return $n;
+}
+
+/**
  * Emit screens[N]['columns'] as a direct assignment (flat CONFIG style).
  *
  * replace — overwrite the managed editor columns with the provided keys
@@ -466,6 +519,7 @@ function configwriter_emit_screen_columns($screenNumber, $columnKeys, $mode = 'm
         return "'" . configwriter_js_string_escape($columnKey) . "'";
     }, $columnKeys);
     $list = '[' . implode(', ', $quoted) . ']';
+    $managedRe = configwriter_managed_column_regex_js();
 
     $out = "if (typeof screens === 'undefined') var screens = {}\n"
         . "if (typeof screens[{$n}] === 'undefined') screens[{$n}] = {}\n";
@@ -474,7 +528,7 @@ function configwriter_emit_screen_columns($screenNumber, $columnKeys, $mode = 'm
         // Keep non-managed columns (e.g. hand-written ones), then set the full list.
         $out .= "screens[{$n}]['columns'] = (Array.isArray(screens[{$n}]['columns']) "
             . "? screens[{$n}]['columns'].filter(function (columnKey) {"
-            . " return !/^(de|we|le)_col\\d+$|^col_\\d+$/.test(String(columnKey)); })"
+            . " return !{$managedRe}.test(String(columnKey)); })"
             . " : []).concat({$list});\n";
         return $out;
     }
@@ -487,6 +541,66 @@ function configwriter_emit_screen_columns($screenNumber, $columnKeys, $mode = 'm
     }
 
     return $out;
+}
+
+/**
+ * Emit a new empty screens[N] definition (for the screen switcher "+" action).
+ */
+function configwriter_emit_new_screen($screenNumber, $background = '')
+{
+    $n = max(1, (int)$screenNumber);
+    $bg = is_string($background) ? trim($background) : '';
+    $out = "if (typeof screens === 'undefined') var screens = {}\n"
+        . "if (typeof screens[{$n}] === 'undefined') screens[{$n}] = {}\n"
+        . "if (!Array.isArray(screens[{$n}]['columns'])) screens[{$n}]['columns'] = []\n";
+    if ($bg !== '') {
+        $safe = configwriter_js_string_escape($bg);
+        $out .= "if (typeof screens[{$n}]['background'] === 'undefined') "
+            . "screens[{$n}]['background'] = '{$safe}'\n";
+    }
+    return $out;
+}
+
+/**
+ * Replace or append a marked screens-editor section that adds screens[N].
+ */
+function configwriter_replace_screens_section($config, $screenNumber, $background = '')
+{
+    $startMarker = '// [screens-editor-start]';
+    $endMarker = '// [screens-editor-end]';
+    $n = max(1, (int)$screenNumber);
+
+    // Keep previously added screens by appending inside the same marked section.
+    $existingBody = '';
+    $startPos = strpos($config, $startMarker);
+    if ($startPos !== false) {
+        $endPos = strpos($config, $endMarker, $startPos);
+        if ($endPos !== false) {
+            $existingBody = trim(substr(
+                $config,
+                $startPos + strlen($startMarker),
+                $endPos - $startPos - strlen($startMarker)
+            ));
+        }
+    }
+
+    $config = configwriter_remove_section($config, $startMarker, $endMarker);
+
+    $body = '';
+    if ($existingBody !== '') {
+        // Drop a duplicated SCREENS section header if we re-wrap the body.
+        $existingBody = preg_replace(
+            '/^\/\/\s*-{5,}.*\R\/\/\s*SCREENS.*\R\/\/\s*-{5,}.*\R?/m',
+            '',
+            $existingBody,
+            1
+        );
+        $body .= trim($existingBody) . "\n";
+    }
+    $body = configwriter_section_header('SCREENS') . "\n" . $body;
+    $body .= configwriter_emit_new_screen($n, $background);
+
+    return rtrim($config) . configwriter_wrap_section($startMarker, $endMarker, $body);
 }
 
 function configwriter_build_layout_section($blockLines, $items, $screenNumber = 1, $columnWidth = 12)
@@ -509,8 +623,9 @@ function configwriter_build_layout_section($blockLines, $items, $screenNumber = 
     $section .= "\n" . configwriter_section_header('COLUMNS') . "\n";
     $section .= "if (typeof columns === 'undefined') var columns = {}\n";
 
+    $prefix = configwriter_column_prefix('le', $screenNumber);
     $columnKeys = [];
-    foreach (configwriter_pack_columns_by_height($items, $columnWidth, 'le_col') as $column) {
+    foreach (configwriter_pack_columns_by_height($items, $columnWidth, $prefix) as $column) {
         $columnKeys[] = $column['key'];
         $section .= configwriter_emit_column_line(
             $column['key'],

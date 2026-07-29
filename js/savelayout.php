@@ -61,11 +61,11 @@ foreach ($data['items'] as $entry) {
 }
 
 /*
- * Only replace the layout section. Device/widget sections (and their
- * widget-specific config settings) must stay intact.
+ * Only replace the layout section for the active screen. Device/widget
+ * sections (and their widget-specific config settings) must stay intact.
  */
-$startMarker = '// [layout-editor-start]';
-$endMarker = '// [layout-editor-end]';
+$screenNumber = configwriter_parse_screen_number($data, 1);
+list($startMarker, $endMarker) = configwriter_editor_markers('layout', $screenNumber);
 $config = configwriter_remove_section($config, $startMarker, $endMarker);
 $config = rtrim($config);
 
@@ -78,7 +78,8 @@ if (!empty($items)) {
      * Height-aware packing emits columns whose widths sum to 12 when a tall
      * tile creates a virtual side column. See configwriter_pack_columns_by_height().
      */
-    foreach (configwriter_pack_columns_by_height($items, 12, 'le_col') as $column) {
+    $prefix = configwriter_column_prefix('le', $screenNumber);
+    foreach (configwriter_pack_columns_by_height($items, 12, $prefix) as $column) {
         $columnKeys[] = $column['key'];
         $section .= configwriter_emit_column_line(
             $column['key'],
@@ -88,7 +89,7 @@ if (!empty($items)) {
     }
 
     $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
-    $section .= configwriter_emit_screen_columns(1, $columnKeys, 'replace');
+    $section .= configwriter_emit_screen_columns($screenNumber, $columnKeys, 'replace');
 
     $config .= configwriter_wrap_section($startMarker, $endMarker, $section);
 }
