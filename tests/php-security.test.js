@@ -229,6 +229,22 @@ test('git update endpoint allowlists branches and requires CSRF', () => {
   assert.doesNotMatch(source, /shell_exec|exec\(|passthru|system\(/);
 });
 
+test('standby editor section removal does not target screen 1', () => {
+  const writer = read('js/configwriter.php');
+  // Previously max(1, (int)$screenNumber) turned standby (0) into screen 1
+  // and deleted the dashboard section.
+  assert.match(
+    writer,
+    /function configwriter_remove_editor_sections\(\$config, \$screenNumber = 1\)/
+  );
+  assert.match(writer, /Screen 0 = standby; do not coerce to 1/);
+  assert.doesNotMatch(
+    writer,
+    /function configwriter_remove_editor_sections[\s\S]{0,200}max\(1,\s*\(int\)\$screenNumber\)/
+  );
+  assert.match(writer, /\$n === 0[\s\S]{0,80}editor-standby-start/);
+});
+
 test('settings writer persists columns_standby from standby_blocks', () => {
   const source = read('js/savesettings.php');
   const writer = read('js/configwriter.php');
