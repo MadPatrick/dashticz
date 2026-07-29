@@ -852,6 +852,11 @@ function onLoad() {
   DT_function.loadDTScript('js/topbar.js').then(function () {
     DashticzTopbar.init();
   });
+  DT_function.loadDTScript('js/screenswitcher.js').then(function () {
+    if (typeof DashticzScreenSwitcher !== 'undefined') {
+      DashticzScreenSwitcher.init();
+    }
+  });
 
   setClockDateWeekday();
   setInterval(
@@ -1097,6 +1102,10 @@ function buildStandby() {
     }
 
     $('.screenstandby').on('click touchend', function (event) {
+      // Keep screen-switcher clicks from exiting standby.
+      if ($(event.target).closest('.dt-screen-switcher, .dt-screen-btn').length) {
+        return;
+      }
       Debug.log('Click or touchend in standby');
       disableStandby();
       event.stopPropagation();
@@ -1104,6 +1113,11 @@ function buildStandby() {
     });
   } else {
     $('.screenstandby').show();
+  }
+
+  if (typeof DashticzScreenSwitcher !== 'undefined') {
+    DashticzScreenSwitcher.mountIntoStandby();
+    DashticzScreenSwitcher.updateActive();
   }
 }
 
@@ -1364,13 +1378,15 @@ function disableStandby() {
     }
   }
 
-  if (objectlength(columns_standby) > 0) {
-    $('div.screen').show();
-  }
+  // Restore regular screens after standby (manual switch or idle timeout).
+  $('div.dt-container .screen').show();
   $('.screenstandby').hide(); //hide instead of remove, because removing blocks including unsubscribe has not been implemented.
   $('body').removeClass('standby');
   $('.dt-container').show();
   standbyActive = false;
+  if (typeof DashticzScreenSwitcher !== 'undefined') {
+    DashticzScreenSwitcher.updateActive();
+  }
 }
 
 //END OF STANDBY FUNCTION

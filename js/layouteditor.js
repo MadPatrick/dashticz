@@ -1,4 +1,4 @@
-/* global Domoticz settings columns blocks myswiper */
+/* global Domoticz settings columns blocks myswiper DashticzScreenSwitcher */
 // eslint-disable-next-line no-unused-vars
 var DashticzLayoutEditor = (function () {
   'use strict';
@@ -21,7 +21,7 @@ var DashticzLayoutEditor = (function () {
     var $screen = $('.screen.swiper-slide-active');
     if (!$screen.length) $screen = $('.screen:visible').first();
 
-    var managedColumnRe = /^(de|we|le)_col\d+$|^col_\d+$/;
+    var managedColumnRe = /^(de|we|le)_s\d+_col\d+$|^(de|we|le)_col\d+$|^col_\d+$/;
     var $managedColumns = $screen.find('[data-colindex]').filter(function () {
       return managedColumnRe.test(String($(this).attr('data-colindex')));
     });
@@ -635,6 +635,22 @@ var DashticzLayoutEditor = (function () {
       });
   }
 
+  function _activeScreenNumber() {
+    if (
+      typeof DashticzScreenSwitcher !== 'undefined' &&
+      DashticzScreenSwitcher.getActiveScreenNumber
+    ) {
+      var active = DashticzScreenSwitcher.getActiveScreenNumber();
+      if (active === 'standby') return 1;
+      var n = parseInt(active, 10);
+      if (n > 0) return n;
+    }
+    var $active = $('.screen.swiper-slide-active[data-screenindex]');
+    if (!$active.length) $active = $('.screen[data-screenindex]:visible').first();
+    var fromDom = parseInt($active.attr('data-screenindex'), 10);
+    return fromDom > 0 ? fromDom : 1;
+  }
+
   function _save() {
     var $save = $toolbar.find('.dle-save').prop('disabled', true);
     $toolbar.find('.dle-cancel').prop('disabled', true);
@@ -659,17 +675,19 @@ var DashticzLayoutEditor = (function () {
       devices.push(deviceEntry);
     });
 
+    var screenNumber = _activeScreenNumber();
+
     $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
       .then(function (data) {
         var token = data.token;
         return _postLayoutData(
           'js/saveblocks.php',
-          { devices: devices },
+          { devices: devices, screen: screenNumber },
           token
         ).then(function (deviceResult) {
           return _postLayoutData(
             'js/savewidgets.php',
-            { widgets: widgets },
+            { widgets: widgets, screen: screenNumber },
             token
           ).then(function (widgetResult) {
             var deviceIndex = 0;
@@ -685,7 +703,7 @@ var DashticzLayoutEditor = (function () {
             });
             return _postLayoutData(
               'js/savelayout.php',
-              { items: layoutItems },
+              { items: layoutItems, screen: screenNumber },
               token
             );
           });

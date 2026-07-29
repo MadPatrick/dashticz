@@ -95,8 +95,9 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   assert.match(writer, /typeof blocks/);
   assert.match(writer, /typeof columns/);
   assert.match(writer, /typeof screens/);
-  assert.match(source, /device-editor-start/);
-  assert.match(source, /widget-editor-start/);
+  assert.match(source, /configwriter_editor_markers\('device'/);
+  assert.match(source, /configwriter_editor_markers\('widget'/);
+  assert.match(writer, /function configwriter_editor_markers/);
   assert.match(source, /blockKeys/);
   /* accepts both legacy bare integers and {idx,name} objects */
   assert.match(source, /is_int\(\$entry\)/);
@@ -143,7 +144,7 @@ test('widget writer whitelists widgets and protects CONFIG.js writes', () => {
   assert.match(source, /Unknown clock type/);
   assert.match(source, /Calendar requires a valid http\(s\) ICS URL/);
   assert.match(source, /Camera requires a valid http\(s\) image URL/);
-  assert.match(source, /widget-editor-start/);
+  assert.match(source, /configwriter_editor_markers\('widget'/);
   assert.match(source, /blockKeys/);
   assert.match(source, /configwriter_write_config/);
 });
@@ -155,21 +156,22 @@ test('layout writer stores safe references in one grouped dashboard section', ()
   assert.match(source, /dashticz_require_csrf\(\)/);
   assert.match(source, /REQUEST_METHOD.*POST/);
   assert.match(source, /\^\[A-Za-z_\]\[A-Za-z0-9_\]\*\$/);
-  assert.match(source, /dashboard-editor-start/);
+  assert.match(source, /configwriter_editor_markers\(\s*'dashboard'/);
   assert.match(source, /configwriter\.php/);
   assert.match(source, /configwriter_extract_section_config_settings/);
   assert.match(source, /configwriter_extract_wrapped_section/);
   assert.match(source, /configwriter_remove_editor_sections/);
   assert.match(source, /configwriter_upsert_root_config_settings/);
   assert.match(source, /configwriter_build_layout_section/);
+  assert.match(source, /configwriter_parse_screen_number/);
   assert.match(writer, /function configwriter_upsert_root_config_settings/);
   assert.match(writer, /function configwriter_extract_wrapped_section/);
-  assert.match(writer, /dashboard-editor-start/);
+  assert.match(writer, /function configwriter_editor_markers/);
   assert.match(writer, /configwriter_section_header\('BLOCKS'\)/);
   assert.match(writer, /configwriter_section_header\('COLUMNS'\)/);
   assert.match(writer, /configwriter_section_header\('SCREENS'\)/);
   assert.match(writer, /\(de\|we\|le\)_col/);
-  assert.match(writer, /le_col/);
+  assert.match(writer, /configwriter_column_prefix\('le'/);
   assert.match(source, /configwriter_write_config/);
 });
 
@@ -244,4 +246,17 @@ test('background list endpoint only exposes img/bg* files', () => {
   assert.match(source, /preg_match\(\'\/\^\(bg/);
   assert.doesNotMatch(source, /\$_GET\[/);
   assert.doesNotMatch(source, /\$_POST\[/);
+});
+
+test('screens writer can add extra screens with CSRF protection', () => {
+  const source = read('js/savescreens.php');
+  const writer = read('js/configwriter.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  assert.match(source, /dashticz_require_csrf\(\)/);
+  assert.match(source, /REQUEST_METHOD.*POST/);
+  assert.match(source, /configwriter_replace_screens_section/);
+  assert.match(source, /Only extra screens/);
+  assert.match(writer, /function configwriter_replace_screens_section/);
+  assert.match(writer, /function configwriter_emit_new_screen/);
+  assert.match(writer, /screens-editor-start/);
 });

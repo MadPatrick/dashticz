@@ -30,12 +30,28 @@ if ($readError !== null) {
     dashticz_json_error(500, $readError);
 }
 
+$screenNumber = configwriter_parse_screen_number($data, 1);
 $blockLines = configwriter_extract_block_lines($config);
+list($widgetStartMarker, $widgetEndMarker) = configwriter_editor_markers(
+    'widget',
+    $screenNumber
+);
 $widgetSettings = configwriter_extract_section_config_settings(
     $config,
-    '// [widget-editor-start]',
-    '// [widget-editor-end]'
+    $widgetStartMarker,
+    $widgetEndMarker
 );
+if (empty($widgetSettings) && $screenNumber !== 1) {
+    list($widgetStartMarker1, $widgetEndMarker1) = configwriter_editor_markers(
+        'widget',
+        1
+    );
+    $widgetSettings = configwriter_extract_section_config_settings(
+        $config,
+        $widgetStartMarker1,
+        $widgetEndMarker1
+    );
+}
 $standbySection = configwriter_extract_wrapped_section(
     $config,
     '// [standby-editor-start]',
@@ -72,36 +88,40 @@ foreach ($data['items'] as $entry) {
 
 /*
  * Every visual editor finishes with this endpoint. Consolidate the temporary
- * device/widget sections and any older layout section into one readable
- * generated area: all blocks, then columns, then screens. Widget settings are
- * moved into the regular config group above it.
+ * device/widget sections for the active screen into one readable generated
+ * area: all blocks, then columns, then screens. Widget settings are moved
+ * into the regular config group above it (screen 1 / shared settings).
  */
-$startMarker = '// [dashboard-editor-start]';
-$endMarker = '// [dashboard-editor-end]';
-$config = configwriter_remove_editor_sections($config);
-$config = configwriter_remove_section(
-    $config,
-    '// [standby-editor-start]',
-    '// [standby-editor-end]'
+list($startMarker, $endMarker) = configwriter_editor_markers(
+    'dashboard',
+    $screenNumber
 );
-$config = configwriter_upsert_root_config_settings(
-    $config,
-    $widgetSettings,
-    true
-);
+$config = configwriter_remove_editor_sections($config, $screenNumber);
+if ($screenNumber === 1) {
+    $config = configwriter_remove_section(
+        $config,
+        '// [standby-editor-start]',
+        '// [standby-editor-end]'
+    );
+    $config = configwriter_upsert_root_config_settings(
+        $config,
+        $widgetSettings,
+        true
+    );
+}
 $config = rtrim($config);
 
 if (!empty($items)) {
     list($section, $columnKeys) = configwriter_build_layout_section(
         $blockLines,
         $items,
-        1,
+        $screenNumber,
         12
     );
 
     $config .= configwriter_wrap_section($startMarker, $endMarker, $section);
 }
-if ($standbySection !== '') {
+if ($screenNumber === 1 && $standbySection !== '') {
     $config = rtrim($config) . "\n\n" . $standbySection;
 }
 

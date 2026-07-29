@@ -1,4 +1,4 @@
-/* global Domoticz settings columns blocks blocktypes screens */
+/* global Domoticz settings columns blocks blocktypes screens DashticzScreenSwitcher */
 // eslint-disable-next-line no-unused-vars
 var DashticzDeviceEditor = (function () {
   'use strict';
@@ -198,6 +198,22 @@ var DashticzDeviceEditor = (function () {
     return entry;
   }
 
+  function _activeScreenNumber() {
+    if (
+      typeof DashticzScreenSwitcher !== 'undefined' &&
+      DashticzScreenSwitcher.getActiveScreenNumber
+    ) {
+      var active = DashticzScreenSwitcher.getActiveScreenNumber();
+      if (active === 'standby') return 1;
+      var n = parseInt(active, 10);
+      if (n > 0) return n;
+    }
+    var $active = $('.screen.swiper-slide-active[data-screenindex]');
+    if (!$active.length) $active = $('.screen[data-screenindex]:visible').first();
+    var fromDom = parseInt($active.attr('data-screenindex'), 10);
+    return fromDom > 0 ? fromDom : 1;
+  }
+
   function _getAllManagedItems() {
     var seen = {};
     var ordered = [];
@@ -211,23 +227,32 @@ var DashticzDeviceEditor = (function () {
           columnKeys.push(columnKey);
         }
       });
-      if (
-        typeof screens !== 'undefined' &&
-        screens[1] &&
-        Array.isArray(screens[1].columns)
-      ) {
-        screens[1].columns.forEach(function (columnKey) {
+      var screenNum = _activeScreenNumber();
+      var screenColumns = null;
+      if (typeof screens !== 'undefined') {
+        if (screens[screenNum] && Array.isArray(screens[screenNum].columns)) {
+          screenColumns = screens[screenNum].columns;
+        } else if (screens[1] && Array.isArray(screens[1].columns)) {
+          screenColumns = screens[1].columns;
+        }
+      }
+      if (screenColumns) {
+        screenColumns.forEach(function (columnKey) {
           columnKey = String(columnKey);
           if (columnKeys.indexOf(columnKey) < 0) {
             columnKeys.push(columnKey);
           }
         });
       }
-      Object.keys(columns).forEach(function (colKey) {
-        if (columnKeys.indexOf(String(colKey)) < 0) {
-          columnKeys.push(String(colKey));
-        }
-      });
+      // Prefer columns already on the active screen; only fall back to all
+      // columns when the active screen has no managed tiles yet.
+      if (!columnKeys.length) {
+        Object.keys(columns).forEach(function (colKey) {
+          if (columnKeys.indexOf(String(colKey)) < 0) {
+            columnKeys.push(String(colKey));
+          }
+        });
+      }
       columnKeys.forEach(function (colKey) {
         var col = columns[colKey];
         if (col && Array.isArray(col.blocks)) {
@@ -704,12 +729,12 @@ var DashticzDeviceEditor = (function () {
         var token = data.token;
         return _postEditorData(
           'js/saveblocks.php',
-          { devices: devicePayload },
+          { devices: devicePayload, screen: _activeScreenNumber() },
           token
         ).then(function (deviceResult) {
           return _postEditorData(
             'js/savewidgets.php',
-            { widgets: widgetPayload },
+            { widgets: widgetPayload, screen: _activeScreenNumber() },
             token
           ).then(function (widgetResult) {
             var deviceRefs = {};
@@ -736,7 +761,7 @@ var DashticzDeviceEditor = (function () {
             });
             return _postEditorData(
               'js/savelayout.php',
-              { items: layoutItems },
+              { items: layoutItems, screen: _activeScreenNumber() },
               token
             );
           });
