@@ -356,6 +356,7 @@
             "standard_graph": "Graphique standard",
             "standby_after": "Veille après (minutes, 0 = jamais)",
             "title": "Écran",
+            "topbar_timeout": "Masquer la barre supérieure après (secondes 0 = Désactivé)",
             "security_button_icons": "Icônes au lieu du texte sur le bouton de sécurité",
             "blink_color": "Couleur et opacité du flash (RGBA)",
             "blink_color_help": "Définir la couleur et l’opacité du flash (rouge, vert, bleu, alpha)",
