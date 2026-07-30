@@ -45,12 +45,15 @@ test('settings writes require CSRF and serialize values as JSON', () => {
 
 test('config mode writer only accepts custom or wizard', () => {
   const source = read('js/saveconfigmode.php');
+  const writer = read('js/configwriter.php');
   assert.match(source, /dashticz_require_same_origin\(\)/);
   assert.match(source, /dashticz_require_csrf\(\)/);
   assert.match(source, /REQUEST_METHOD.*POST/);
   assert.match(source, /config_mode/);
   assert.match(source, /custom/);
   assert.match(source, /wizard/);
+  assert.match(source, /configwriter_set_config_mode/);
+  assert.match(writer, /function configwriter_set_config_mode/);
   assert.match(source, /configwriter_write_config/);
 });
 
@@ -198,6 +201,9 @@ test('grid layout writer validates and stores positions without column packing',
   assert.match(source, /\^\[A-Za-z_\]\[A-Za-z0-9_\]\*\$/);
   assert.match(source, /FILTER_VALIDATE_INT/);
   assert.match(source, /configwriter_extract_declared_block_refs/);
+  assert.match(source, /gridlayout_inline_props/);
+  assert.match(source, /configwriter_make_block_key/);
+  assert.match(source, /configwriter_set_config_mode/);
   assert.match(source, /configwriter_normalise_grid_position/);
   assert.match(source, /configwriter_build_grid_layout_section/);
   assert.match(source, /configwriter_editor_markers\(\s*'grid-layout'/);
@@ -207,6 +213,8 @@ test('grid layout writer validates and stores positions without column packing',
   assert.match(writer, /function configwriter_extract_declared_block_refs/);
   assert.match(writer, /function configwriter_normalise_grid_position/);
   assert.match(writer, /function configwriter_build_grid_layout_section/);
+  assert.match(writer, /isset\(\$item\['props'\]\)/);
+  assert.match(writer, /isset\(\$item\['propsLiteral'\]\)/);
   assert.match(writer, /screens\[.*\]\['layout'\] = 'grid'/);
   assert.match(writer, /blocks\['.*'\]\['grid'\]/);
 });

@@ -2,6 +2,31 @@
 require_once(__DIR__ . '/../vendor/dashticz/security.php');
 require_once(__DIR__ . '/configwriter.php');
 
+function gridlayout_inline_props($props)
+{
+    if (!is_array($props) || count($props) > 50) {
+        return null;
+    }
+    $clean = [];
+    foreach ($props as $key => $value) {
+        if (!is_string($key)
+            || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key)
+            || $key === 'grid'
+        ) {
+            continue;
+        }
+        if (!(is_null($value) || is_scalar($value) || is_array($value))) {
+            return null;
+        }
+        $encoded = json_encode($value);
+        if ($encoded === false || strlen($encoded) > 10000) {
+            return null;
+        }
+        $clean[$key] = $value;
+    }
+    return $clean;
+}
+
 dashticz_require_same_origin();
 dashticz_require_csrf();
 
@@ -65,22 +90,80 @@ list($config, $readError) = configwriter_read_config($configPath);
 if ($readError !== null) {
     dashticz_json_error(500, $readError);
 }
+list($startMarker, $endMarker) = configwriter_editor_markers(
+    'grid-layout',
+    $screenNumber
+);
+$existingGridSection = configwriter_extract_wrapped_section(
+    $config,
+    $startMarker,
+    $endMarker
+);
+$existingGridBlocks = configwriter_extract_block_lines($existingGridSection);
 $declaredRefs = configwriter_extract_declared_block_refs($config);
 $items = [];
 $usedRefs = [];
+$usedBlockKeys = array_keys($declaredRefs);
 foreach ($data['items'] as $index => $entry) {
     if (!is_array($entry)
-        || !isset($entry['ref'])
-        || !is_string($entry['ref'])
-        || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $entry['ref'])
         || !isset($entry['grid'])
         || !is_array($entry['grid'])
     ) {
         dashticz_json_error(400, 'Each grid item requires a safe block reference and grid position.');
     }
-    $ref = $entry['ref'];
-    if (!isset($declaredRefs[$ref])) {
-        dashticz_json_error(400, 'Grid block "' . $ref . '" is not declared in CONFIG.js.');
+    $requestedRef =
+        isset($entry['ref'])
+        && is_string($entry['ref'])
+        && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $entry['ref'])
+            ? $entry['ref']
+            : '';
+    $ref = $requestedRef;
+    $props = null;
+    $propsLiteral = null;
+    if ($ref === '' || !isset($declaredRefs[$ref])) {
+        if (!isset($entry['create']) || !is_array($entry['create'])) {
+            dashticz_json_error(400, 'Grid block is not declared and cannot be created.');
+        }
+        $create = $entry['create'];
+        $name = isset($create['name']) && is_string($create['name'])
+            ? trim(substr($create['name'], 0, 100))
+            : ($requestedRef !== '' ? $requestedRef : ('Grid block ' . ($index + 1)));
+        if (($create['kind'] ?? '') === 'device') {
+            $idx = isset($create['idx']) ? (int)$create['idx'] : 0;
+            if ($idx < 1) {
+                dashticz_json_error(400, 'A converted device requires a positive idx.');
+            }
+            $width = isset($create['width'])
+                ? max(1, min(12, (int)$create['width']))
+                : 3;
+            $props = [
+                'idx' => $idx,
+                'title' => $name,
+                'width' => $width,
+            ];
+            if (!empty($create['subidx'])) {
+                $props['idx'] = $idx . '_' . (int)$create['subidx'];
+            }
+            if (!empty($create['height'])) {
+                $props['height'] = max(
+                    50,
+                    min(2000, (int)(round((int)$create['height'] / 10) * 10))
+                );
+            }
+        } elseif (($create['kind'] ?? '') === 'inline') {
+            $props = gridlayout_inline_props($create['props'] ?? null);
+            if ($props === null) {
+                dashticz_json_error(400, 'Inline grid block properties are invalid.');
+            }
+        } else {
+            dashticz_json_error(400, 'Unsupported converted block type.');
+        }
+        $ref = configwriter_make_block_key(
+            $requestedRef !== '' ? $requestedRef : $name,
+            $usedBlockKeys
+        );
+    } elseif (isset($existingGridBlocks[$ref])) {
+        $propsLiteral = $existingGridBlocks[$ref];
     }
     if (isset($usedRefs[$ref])) {
         dashticz_json_error(400, 'Duplicate grid block reference.');
@@ -105,12 +188,13 @@ foreach ($data['items'] as $index => $entry) {
             $index + 1
         ),
     ];
+    if ($props !== null) {
+        $items[count($items) - 1]['props'] = $props;
+    } elseif ($propsLiteral !== null) {
+        $items[count($items) - 1]['propsLiteral'] = $propsLiteral;
+    }
 }
 
-list($startMarker, $endMarker) = configwriter_editor_markers(
-    'grid-layout',
-    $screenNumber
-);
 $config = configwriter_remove_section($config, $startMarker, $endMarker);
 $section = configwriter_build_grid_layout_section(
     $items,
@@ -122,6 +206,15 @@ $section = configwriter_build_grid_layout_section(
 );
 $config = rtrim($config)
     . configwriter_wrap_section($startMarker, $endMarker, $section);
+if (isset($data['configMode'])) {
+    if ($data['configMode'] !== 'wizard') {
+        dashticz_json_error(400, 'Grid conversion only supports Wizard mode.');
+    }
+    $config = configwriter_set_config_mode($config, 'wizard');
+    if ($config === null) {
+        dashticz_json_error(409, 'CONFIG.js does not contain the expected config marker.');
+    }
+}
 
 $writeError = configwriter_write_config($configPath, $customDir, $config);
 if ($writeError !== null) {

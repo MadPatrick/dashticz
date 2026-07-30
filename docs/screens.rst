@@ -161,6 +161,14 @@ Cancel restores the previous positions. Blocks must have a safe named
 and Widget editors remain disabled while a grid screen is active, preventing
 them from replacing the grid with a column layout.
 
+Wizard mode always uses the grid Layout Editor. When an existing columns screen
+is opened in the Wizard Layout Editor, Dashticz asks for confirmation and
+converts its devices, widgets and inline blocks to named grid blocks. The
+initial conversion compacts each block into the first free cells at its current
+horizontal position, so a tall neighbouring block no longer creates an empty
+row. Switching from Custom to Wizard shows the same confirmation before the
+current screen is converted.
+
 
 Usage
 -----

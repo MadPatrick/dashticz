@@ -95,6 +95,29 @@ function configwriter_remove_editor_sections($config, $screenNumber = 1)
     return rtrim($config);
 }
 
+function configwriter_set_config_mode($config, $mode)
+{
+    $value = strtolower((string)$mode) === 'custom' ? 'custom' : 'wizard';
+    $line = 'config["config_mode"] = ' . json_encode($value) . ';';
+    if (preg_match('/config\[[\'"]config_mode[\'"]\]\s*=\s*[^;]+;/', $config)) {
+        return preg_replace(
+            '/config\[[\'"]config_mode[\'"]\]\s*=\s*[^;]+;/',
+            $line,
+            $config,
+            1
+        );
+    }
+    $marker = 'var config = {}';
+    $pos = strpos($config, $marker);
+    if ($pos === false) {
+        return null;
+    }
+    $insertAt = $pos + strlen($marker);
+    return substr($config, 0, $insertAt)
+        . "\n" . $line
+        . substr($config, $insertAt);
+}
+
 /**
  * Move editor-owned config values into the main config block.
  *
@@ -235,7 +258,11 @@ function configwriter_emit_config_settings($settings, $raw = false)
 
 function configwriter_js_string_escape($value)
 {
-    return str_replace(['\\', "'"], ['\\\\', "\\'"], $value);
+    return str_replace(
+        ['\\', "'", "\r", "\n", "\u{2028}", "\u{2029}"],
+        ['\\\\', "\\'", '\\r', '\\n', '\\u2028', '\\u2029'],
+        $value
+    );
 }
 
 function configwriter_managed_column_pattern()
@@ -888,8 +915,19 @@ function configwriter_build_grid_layout_section(
             $index + 1
         );
         $refs[] = $ref;
-        $section .= "blocks['" . $ref . "']['grid'] = "
-            . configwriter_format_props($position) . ";\n";
+        if (isset($item['propsLiteral']) && is_string($item['propsLiteral'])) {
+            $section .= "blocks['" . $ref . "'] = "
+                . $item['propsLiteral'] . ";\n";
+            $section .= "blocks['" . $ref . "']['grid'] = "
+                . configwriter_format_props($position) . ";\n";
+        } elseif (isset($item['props']) && is_array($item['props'])) {
+            $props = $item['props'];
+            $props['grid'] = $position;
+            $section .= configwriter_emit_block_line($ref, $props);
+        } else {
+            $section .= "blocks['" . $ref . "']['grid'] = "
+                . configwriter_format_props($position) . ";\n";
+        }
     }
 
     $quotedRefs = array_map(function ($ref) {

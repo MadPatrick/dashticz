@@ -1,4 +1,4 @@
-/* global Domoticz settings columns columns_standby blocks myswiper DashticzGridLayout DashticzScreenSwitcher standbyActive */
+/* global Domoticz settings columns columns_standby blocks myswiper DashticzGridLayout DashticzScreenSwitcher isCustomConfigMode standbyActive */
 // eslint-disable-next-line no-unused-vars
 var DashticzLayoutEditor = (function () {
   'use strict';
@@ -54,6 +54,21 @@ var DashticzLayoutEditor = (function () {
       _buildToolbar();
       _attachHandlers();
       _disableSwiper();
+      return;
+    }
+    if (
+      _activeScreenTarget() !== 'standby' &&
+      typeof isCustomConfigMode === 'function' &&
+      !isCustomConfigMode()
+    ) {
+      convertCurrentScreenToGrid(false).done(function () {
+        try {
+          sessionStorage.setItem('dashticz_open_grid_editor', '1');
+        } catch (error) {
+          // Session storage is optional.
+        }
+        window.location.reload();
+      });
       return;
     }
 
@@ -132,6 +147,318 @@ var DashticzLayoutEditor = (function () {
     var $active = $('.dt-container .screen.swiper-slide-active');
     if ($active.length) return $active;
     return $('.dt-container .screen:visible').first();
+  }
+
+  function convertCurrentScreenToGrid(skipConfirmation, targetMode) {
+    var deferred = $.Deferred();
+    var $screen = _activeScreenDom();
+    var screenNumber = _activeScreenPayload();
+    if (screenNumber === 'standby') {
+      alert('Ga eerst naar een normaal scherm voordat je Wizard inschakelt.');
+      deferred.reject();
+      return deferred.promise();
+    }
+    if (!$screen.length) {
+      alert('Er is geen normaal scherm gevonden om naar grid om te zetten.');
+      deferred.reject();
+      return deferred.promise();
+    }
+    if ($screen.hasClass('dt-grid-screen')) {
+      deferred.resolve({ alreadyGrid: true });
+      return deferred.promise();
+    }
+    if (window.innerWidth < 768) {
+      alert(
+        'Zet het scherm minimaal 768 pixels breed voordat je een columns-layout naar grid omzet.'
+      );
+      deferred.reject();
+      return deferred.promise();
+    }
+
+    var conversion = _buildColumnGridConversion($screen, screenNumber);
+    if (conversion.error) {
+      alert(conversion.error);
+      deferred.reject();
+      return deferred.promise();
+    }
+    if (
+      !skipConfirmation &&
+      !window.confirm(
+        'Wizard gebruikt een vrije grid-layout. Het huidige columns-scherm wordt naar een 24-koloms grid omgezet. Doorgaan?'
+      )
+    ) {
+      deferred.reject();
+      return deferred.promise();
+    }
+    if (targetMode === 'wizard') {
+      conversion.payload.configMode = 'wizard';
+    }
+
+    $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
+      .then(function (data) {
+        return _postLayoutData(
+          'js/savegridlayout.php',
+          conversion.payload,
+          data.token
+        );
+      })
+      .done(function (result) {
+        deferred.resolve(result);
+      })
+      .fail(function (xhr) {
+        var message =
+          xhr.responseJSON && xhr.responseJSON.error
+            ? xhr.responseJSON.error
+            : 'Het columns-scherm kon niet naar grid worden omgezet.';
+        alert(message);
+        deferred.reject(xhr);
+      });
+    return deferred.promise();
+  }
+
+  function _buildColumnGridConversion($screen, screenNumber) {
+    var gridColumns = 24;
+    var rowHeight = 40;
+    var gap = 5;
+    var screenRect = $screen[0].getBoundingClientRect();
+    var converted = [];
+    var usedReferences = {};
+    var error = '';
+
+    $screen
+      .find('.row > [data-colindex]')
+      .filter(function () {
+        return String($(this).attr('data-colindex')) !== 'bar';
+      })
+      .each(function () {
+        if (error) return;
+        var $column = $(this);
+        var columnKey = String($column.attr('data-colindex'));
+        var refs =
+          typeof columns !== 'undefined' &&
+          columns[columnKey] &&
+          Array.isArray(columns[columnKey].blocks)
+            ? columns[columnKey].blocks
+            : [];
+        var wrappers = $column.children('div[id^="block_"]').toArray();
+        if (refs.length !== wrappers.length) {
+          error =
+            'Conversie gestopt: wacht tot alle blocks geladen zijn en probeer opnieuw.';
+          return;
+        }
+
+        wrappers.forEach(function (wrapper, index) {
+          if (error) return;
+          var reference = refs[index];
+          var safeReference =
+            typeof reference === 'string' &&
+            /^[A-Za-z_][A-Za-z0-9_]*$/.test(reference)
+              ? reference
+              : '';
+          var resolved = _resolveBlock(reference);
+          var definition =
+            safeReference &&
+            typeof blocks !== 'undefined' &&
+            blocks[safeReference]
+              ? blocks[safeReference]
+              : reference && typeof reference === 'object'
+                ? reference
+                : resolved
+                  ? resolved.definition
+                  : safeReference
+                    ? { type: safeReference }
+                    : null;
+          if (!definition) {
+            error = 'Conversie gestopt: een block kon niet worden herkend.';
+            return;
+          }
+          if (safeReference && usedReferences[safeReference]) {
+            error =
+              'Conversie gestopt: block "' +
+              safeReference +
+              '" staat meerdere keren op hetzelfde scherm.';
+            return;
+          }
+          if (safeReference) usedReferences[safeReference] = true;
+
+          var rect = _wrapperContentRect(wrapper);
+          if (!rect) {
+            error =
+              'Conversie gestopt: wacht tot alle blocks geladen zijn en probeer opnieuw.';
+            return;
+          }
+          var width12 = _configuredWidth(definition, rect.element);
+          var width = Math.max(
+            1,
+            Math.min(
+              gridColumns,
+              Math.round(
+                (rect.width / Math.max(1, screenRect.width)) * gridColumns
+              )
+            )
+          );
+          var x = Math.round(
+            ((rect.left - screenRect.left) / Math.max(1, screenRect.width)) *
+              gridColumns
+          );
+          x = Math.max(1, Math.min(gridColumns - width + 1, x + 1));
+          var height = Math.max(
+            1,
+            Math.ceil((rect.height + gap) / (rowHeight + gap))
+          );
+          var position = _firstFreeGridPosition(
+            converted,
+            x,
+            width,
+            height,
+            gridColumns
+          );
+          var create = _gridCreateDefinition(
+            reference,
+            safeReference,
+            definition,
+            resolved,
+            width12,
+            rect.height
+          );
+          if (!create && !safeReference) {
+            error =
+              'Conversie gestopt: block "' +
+              (safeReference || index + 1) +
+              '" bevat functies of andere instellingen die niet veilig automatisch kunnen worden omgezet.';
+            return;
+          }
+          var entry = {
+            grid: position,
+          };
+          if (create) entry.create = create;
+          if (safeReference) entry.ref = safeReference;
+          converted.push(entry);
+        });
+      });
+
+    if (error) return { error: error };
+    if (!converted.length) {
+      return { error: 'Er zijn geen blocks gevonden om naar grid om te zetten.' };
+    }
+    return {
+      payload: {
+        screen: screenNumber,
+        gridColumns: gridColumns,
+        rowHeight: rowHeight,
+        gap: gap,
+        mobileLayout: 'stack',
+        items: converted,
+      },
+    };
+  }
+
+  function _wrapperContentRect(wrapper) {
+    var elements = $(wrapper).children('.mh, .dt_block').toArray();
+    if (!elements.length) elements = $(wrapper).children().toArray();
+    if (!elements.length) return null;
+    var rects = elements.map(function (element) {
+      return element.getBoundingClientRect();
+    });
+    var left = Math.min.apply(
+      null,
+      rects.map(function (rect) {
+        return rect.left;
+      })
+    );
+    var right = Math.max.apply(
+      null,
+      rects.map(function (rect) {
+        return rect.right;
+      })
+    );
+    var top = Math.min.apply(
+      null,
+      rects.map(function (rect) {
+        return rect.top;
+      })
+    );
+    var bottom = Math.max.apply(
+      null,
+      rects.map(function (rect) {
+        return rect.bottom;
+      })
+    );
+    return {
+      element: elements[0],
+      left: left,
+      top: top,
+      width: right - left,
+      height: bottom - top,
+    };
+  }
+
+  function _gridCreateDefinition(
+    reference,
+    safeReference,
+    definition,
+    resolved,
+    width,
+    measuredHeight
+  ) {
+    if (resolved && resolved.kind === 'device') {
+      return {
+        kind: 'device',
+        idx: resolved.idx,
+        subidx: resolved.subidx || 0,
+        name: resolved.name,
+        width: width,
+        height: Math.round(measuredHeight),
+      };
+    }
+    if (!_isGridSerializable(definition)) return null;
+    var props = JSON.parse(JSON.stringify(definition));
+    return {
+      kind: 'inline',
+      name:
+        definition.title ||
+        safeReference ||
+        definition.type ||
+        'Grid block',
+      props: props,
+    };
+  }
+
+  function _isGridSerializable(value) {
+    if (
+      value === null ||
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      return true;
+    }
+    if (typeof value === 'undefined' || typeof value === 'function') {
+      return false;
+    }
+    if (Array.isArray(value)) {
+      return value.every(_isGridSerializable);
+    }
+    if (Object.prototype.toString.call(value) !== '[object Object]') {
+      return false;
+    }
+    return Object.keys(value).every(function (key) {
+      return _isGridSerializable(value[key]);
+    });
+  }
+
+  function _firstFreeGridPosition(items, preferredX, width, height, columns) {
+    var x = Math.max(1, Math.min(columns - width + 1, preferredX));
+    var y = 1;
+    while (y < 10000) {
+      var candidate = { x: x, y: y, w: width, h: height };
+      var overlaps = items.some(function (item) {
+        return _gridPositionsOverlap(candidate, item.grid);
+      });
+      if (!overlaps) return candidate;
+      y++;
+    }
+    return { x: x, y: 10000, w: width, h: height };
   }
 
   function _collectItems($managedColumns) {
@@ -1296,6 +1623,7 @@ var DashticzLayoutEditor = (function () {
 
   return {
     open: open,
+    convertCurrentScreenToGrid: convertCurrentScreenToGrid,
   };
 })();
 

@@ -13,6 +13,110 @@ test.describe('optional screen grid layout', () => {
     await expect(page.locator('.screen1 .dt-grid-layout')).toHaveCount(0);
   });
 
+  test('converts a Wizard column screen to a compact grid after confirmation', async ({
+    page,
+  }) => {
+    let conversionRequest = null;
+    await page.route('**/info.php?get=csrf', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'conversion-token' }),
+      });
+    });
+    await page.route('**/js/savegridlayout.php', async (route) => {
+      conversionRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    const confirmation = page.waitForEvent('dialog');
+    await page.locator('.screen1 .layouteditoricon').click();
+    const dialog = await confirmation;
+    expect(dialog.message()).toContain('24-koloms grid');
+    await dialog.accept();
+
+    await expect.poll(() => conversionRequest).not.toBeNull();
+    expect(conversionRequest.gridColumns).toBe(24);
+    expect(conversionRequest.rowHeight).toBe(40);
+    expect(conversionRequest.items.length).toBeGreaterThan(10);
+    const numericDevice = conversionRequest.items.find(
+      (item) => item.create && item.create.idx === 43
+    );
+    expect(numericDevice.create.kind).toBe('device');
+    expect(numericDevice.grid.x).toBeGreaterThanOrEqual(1);
+
+    for (let i = 0; i < conversionRequest.items.length; i++) {
+      for (let j = i + 1; j < conversionRequest.items.length; j++) {
+        const left = conversionRequest.items[i].grid;
+        const right = conversionRequest.items[j].grid;
+        const overlaps =
+          left.x < right.x + right.w &&
+          left.x + left.w > right.x &&
+          left.y < right.y + right.h &&
+          left.y + left.h > right.y;
+        expect(overlaps).toBe(false);
+      }
+    }
+  });
+
+  test('converts Custom to Wizard grid in one confirmed save', async ({
+    page,
+  }) => {
+    let conversionRequest = null;
+    let separateModeWrites = 0;
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `\nconfig['config_mode'] = 'custom';\n`,
+      });
+    });
+    await page.route('**/info.php?get=csrf', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'mode-conversion-token' }),
+      });
+    });
+    await page.route('**/js/savegridlayout.php', async (route) => {
+      conversionRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+    await page.route('**/js/saveconfigmode.php', async (route) => {
+      separateModeWrites++;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    await expect(page.locator('.config-mode-btn[data-mode="custom"]')).toHaveClass(
+      /active/
+    );
+    const confirmation = page.waitForEvent('dialog');
+    await page.locator('.config-mode-btn[data-mode="wizard"]').click();
+    const dialog = await confirmation;
+    expect(dialog.message()).toContain('Wizard gebruikt altijd');
+    await dialog.accept();
+
+    await expect.poll(() => conversionRequest).not.toBeNull();
+    expect(conversionRequest.configMode).toBe('wizard');
+    expect(separateModeWrites).toBe(0);
+  });
+
   test('places blocks at explicit coordinates and stacks on mobile', async ({
     page,
   }) => {
