@@ -168,6 +168,10 @@ columns_standby[1] = {blocks: ['tc1', 'tc2'], width: 12};
       .first()
       .click();
     await expect(page.locator('.screenstandby')).toBeVisible();
+    await page.mouse.move(10, 10);
+    await expect(
+      page.locator('.screenstandby .layouteditoricon')
+    ).toBeVisible();
 
     const confirmation = page.waitForEvent('dialog');
     await page.locator('.screenstandby .layouteditoricon').click();

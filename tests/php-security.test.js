@@ -56,7 +56,6 @@ test('config mode writer only accepts custom or wizard', () => {
   assert.match(source, /custom/);
   assert.match(source, /wizard/);
   assert.match(source, /configwriter_set_config_mode/);
-  assert.match(source, /\$forceClone = \$screenNumber === 0/);
   assert.match(writer, /function configwriter_set_config_mode/);
   assert.match(source, /configwriter_write_config/);
 });
@@ -209,6 +208,7 @@ test('grid layout writer validates and stores positions without column packing',
   assert.match(source, /is_object\(\$decodedProps\)/);
   assert.match(source, /configwriter_make_block_key/);
   assert.match(source, /configwriter_set_config_mode/);
+  assert.match(source, /\$forceClone = \$screenNumber === 0/);
   assert.match(source, /configwriter_normalise_grid_position/);
   assert.match(source, /configwriter_build_grid_layout_section/);
   assert.match(source, /configwriter_editor_markers\(\s*'grid-layout'/);
@@ -224,7 +224,7 @@ test('grid layout writer validates and stores positions without column packing',
   assert.match(writer, /function configwriter_build_grid_layout_section/);
   assert.match(writer, /isset\(\$item\['props'\]\)/);
   assert.match(writer, /isset\(\$item\['propsLiteral'\]\)/);
-  assert.match(writer, /screens\[.*\]\['layout'\] = 'grid'/);
+  assert.match(writer, /\$target \. "\['layout'\] = 'grid'/);
   assert.match(writer, /blocks\['.*'\]\['grid'\]/);
   assert.match(writer, /standby_screen/);
   assert.doesNotMatch(source, /not available for standby/);
