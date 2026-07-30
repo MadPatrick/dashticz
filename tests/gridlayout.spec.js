@@ -42,13 +42,41 @@ blocks['grid_weather'] = {
   layout: 2,
   grid: {x: 1, y: 13, w: 8, h: 4}
 };
+blocks['grid_calendar'] = {
+  type: 'calendar',
+  icalurl: 'data:text/calendar,BEGIN:VCALENDAR%0AEND:VCALENDAR',
+  grid: {x: 1, y: 18, w: 7, h: 6}
+};
+blocks['grid_graph'] = {
+  devices: [708],
+  grid: {x: 9, y: 18, w: 7, h: 6}
+};
+blocks['grid_frame'] = {
+  frameurl: 'about:blank',
+  grid: {x: 17, y: 18, w: 8, h: 6}
+};
+blocks['grid_text'] = {
+  type: 'blocktitle',
+  title: 'Grid text',
+  grid: {x: 1, y: 26, w: 8, h: 2}
+};
 screens[1] = {
   layout: 'grid',
   gridColumns: 24,
   rowHeight: 40,
   gap: 5,
   mobileLayout: 'stack',
-  blocks: ['tc1', 'tc2', 'tc4', 'grid_camera', 'grid_weather']
+  blocks: [
+    'tc1',
+    'tc2',
+    'tc4',
+    'grid_camera',
+    'grid_weather',
+    'grid_calendar',
+    'grid_graph',
+    'grid_frame',
+    'grid_text'
+  ]
 };
 `,
       });
@@ -62,6 +90,10 @@ screens[1] = {
     const third = grid.locator('[data-grid-block="tc4"]');
     const camera = grid.locator('[data-grid-block="grid_camera"]');
     const weather = grid.locator('[data-grid-block="grid_weather"]');
+    const calendar = grid.locator('[data-grid-block="grid_calendar"]');
+    const graph = grid.locator('[data-grid-block="grid_graph"]');
+    const frame = grid.locator('[data-grid-block="grid_frame"]');
+    const text = grid.locator('[data-grid-block="grid_text"]');
 
     await expect(grid).toHaveCSS('display', 'grid');
     await expect(first).toHaveCSS('grid-column-start', '1');
@@ -90,6 +122,15 @@ screens[1] = {
       (element) => parseFloat(getComputedStyle(element).fontSize)
     );
     expect(weatherFontSize).toBeGreaterThan(weatherWidth / 15);
+    await expect(calendar.locator('.calendar.dt_block')).toBeVisible();
+    await expect(graph.locator('canvas')).toBeAttached();
+    await expect(frame.locator('iframe')).toBeAttached();
+    await expect(text.locator('.dt_title')).toHaveText('Grid text');
+    await expect(first.locator('.mh')).toBeVisible();
+
+    for (const item of [calendar, graph, frame, text]) {
+      await expect(item).toHaveCSS('overflow', 'auto');
+    }
 
     const editorWarning = page.waitForEvent('dialog');
     await page.locator('.screen1 .deviceeditoricon').click();
