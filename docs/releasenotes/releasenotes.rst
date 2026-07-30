@@ -6,6 +6,15 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.21.4 beta (30-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Screens: optional CSS Grid layouts place blocks at explicit ``x``, ``y``, ``w`` and ``h`` coordinates while preserving empty cells. Grid dimensions, row height and gap are configurable per screen.
+* Grid screens: invalid positions receive safe fallbacks with console warnings, overlapping blocks remain rendered and are marked for diagnosis, and mobile screens stack blocks in configured order.
+
 v3.21.3 beta (30-7-2026)
 --------------------------
 

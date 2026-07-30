@@ -74,7 +74,7 @@ var previousblock = 0;
 function addBlock2Column(columndiv, c, b) {
   if (typeof b === 'undefined') {
     console.log('Block undefined after block ', previousblock);
-    return;
+    return null;
   }
   previousblock = b;
   var myblockselector = Dashticz.mountNewContainer(columndiv);
@@ -87,13 +87,13 @@ function addBlock2Column(columndiv, c, b) {
         addBlock2Column(myblockselector, '', aBlock);
       });
       $(myblockselector).attr('data-id', newBlock.key);
-      return;
+      return myblockselector;
     }
     if (Array.isArray(newBlock)) {
       newBlock.forEach(function (aBlock) {
         addBlock2Column(myblockselector, '', aBlock);
       });
-      return;
+      return myblockselector;
     }
 
     if (!Dashticz.mount(myblockselector, newBlock))
@@ -101,6 +101,7 @@ function addBlock2Column(columndiv, c, b) {
   } catch (error) {
     renderUnavailableBlock(myblockselector, newBlock, b, error);
   }
+  return myblockselector;
 }
 
 function renderUnavailableBlock(mountPoint, block, key, error) {

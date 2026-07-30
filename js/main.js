@@ -8,7 +8,7 @@
 
 /*from blocks.js*/
 /*global initMap */
-/* global Dashticz Domoticz DT_secpanel*/
+/* global Dashticz DashticzGridLayout Domoticz DT_secpanel*/
 var language = {};
 // eslint-disable-next-line no-unused-vars
 var blocks = {};
@@ -580,6 +580,7 @@ function configureDashticz() {
     DT_function.loadDTScript('js/tempcontrol.js'),
     DT_function.loadDTScript('js/dashticz.js'),
     DT_function.loadDTScript('js/blocks.js'),
+    DT_function.loadDTScript('js/gridlayout.js'),
     DT_function.loadDTScript('js/login.js'),
     DT_function.loadDTScript('js/moon.js'),
     DT_function.loadDTScript('js/colorpicker.js'),
@@ -1205,7 +1206,12 @@ function buildDefaultScreens() {
 }
 
 function buildScreens() {
-  if (screens[1] && !screens[1].columns.length && settings['auto_positioning']) {
+  if (
+    screens[1] &&
+    screens[1].layout !== 'grid' &&
+    (!Array.isArray(screens[1].columns) || !screens[1].columns.length) &&
+    settings['auto_positioning']
+  ) {
     buildDefaultScreens();
   }
   var allscreens = {};
@@ -1282,10 +1288,18 @@ function buildScreens() {
             getBlock(columns['bar'], 'bar', 'div.screen' + s, false);
           }
 
-          for (var cs in screens[t][s]['columns']) {
-            if (typeof screens[t] !== 'undefined') {
-              var c = screens[t][s]['columns'][cs];
-              getBlock(columns[c], c, 'div.screen' + s, false);
+          if (screens[t][s].layout === 'grid') {
+            DashticzGridLayout.renderGridScreen(
+              screens[t][s],
+              'div.screen' + s
+            );
+          } else {
+            var screenColumns = screens[t][s]['columns'] || [];
+            for (var cs in screenColumns) {
+              if (typeof screens[t] !== 'undefined') {
+                var c = screenColumns[cs];
+                getBlock(columns[c], c, 'div.screen' + s, false);
+              }
             }
           }
         }

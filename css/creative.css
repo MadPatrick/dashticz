@@ -30,6 +30,75 @@
   overflow-y: auto;
 }
 
+/* Optional screen-level grid. Legacy column screens never receive these classes. */
+.dt-grid-screen > .dt-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(var(--dt-grid-columns, 24), minmax(0, 1fr));
+  grid-auto-rows: var(--dt-grid-row-height, 40px);
+  gap: var(--dt-grid-gap, 0);
+  align-items: stretch;
+  width: 100%;
+}
+
+.dt-grid-screen > .dt-grid-topbar:empty {
+  display: none;
+}
+
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item {
+  grid-column-start: var(--dt-grid-x);
+  grid-column-end: span var(--dt-grid-w);
+  grid-row-start: var(--dt-grid-y);
+  grid-row-end: span var(--dt-grid-h);
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* A grid item owns the width; Bootstrap block widths remain local to columns. */
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > [class*='col-'] {
+  float: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .dt_block,
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .mh {
+  box-sizing: border-box;
+  min-height: 100%;
+}
+
+.dt-grid-screen > .dt-grid-layout > .dt-grid-overlap {
+  outline: 1px dashed rgba(255, 165, 0, 0.8);
+  outline-offset: -1px;
+}
+
+@media (max-width: 767.98px) {
+  .dt-grid-screen > .dt-grid-layout.dt-grid-mobile-stack {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .dt-grid-screen > .dt-grid-layout.dt-grid-mobile-stack > .dt-grid-item {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .dt-grid-screen
+    > .dt-grid-layout.dt-grid-mobile-stack
+    > .dt-grid-item
+    > .dt_block,
+  .dt-grid-screen > .dt-grid-layout.dt-grid-mobile-stack > .dt-grid-item > .mh {
+    min-height: 0;
+  }
+
+  .dt-grid-screen.swiper-slide {
+    overflow-y: auto;
+  }
+}
+
 #loadingMessage {
   width: 100%;
   height: 100%;

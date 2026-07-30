@@ -58,6 +58,10 @@ var DT_frame = {
     $iframe.css(iframecss);
   },
 
+  onResize: function (me) {
+    DT_frame.run(me);
+  },
+
   refresh: function (me) {
     if (typeof me.block.frameurl !== 'undefined') {
       me.$mountPoint
