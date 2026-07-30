@@ -193,6 +193,8 @@ test('grid layout writer validates and stores positions without column packing',
   assert.match(source, /dashticz_require_same_origin\(\)/);
   assert.match(source, /dashticz_require_csrf\(\)/);
   assert.match(source, /REQUEST_METHOD.*POST/);
+  assert.match(source, /CONTENT_LENGTH/);
+  assert.match(source, /1048576/);
   assert.match(source, /\^\[A-Za-z_\]\[A-Za-z0-9_\]\*\$/);
   assert.match(source, /FILTER_VALIDATE_INT/);
   assert.match(source, /configwriter_extract_declared_block_refs/);

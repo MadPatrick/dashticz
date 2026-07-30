@@ -8,6 +8,11 @@ dashticz_require_csrf();
 if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
     dashticz_json_error(405, 'Only POST requests are allowed.');
 }
+if (isset($_SERVER['CONTENT_LENGTH'])
+    && (int)$_SERVER['CONTENT_LENGTH'] > 1048576
+) {
+    dashticz_json_error(413, 'Grid layout request is too large.');
+}
 
 $rawBody = file_get_contents('php://input');
 if ($rawBody !== false && strlen($rawBody) > 1048576) {
