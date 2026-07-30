@@ -832,6 +832,82 @@ function configwriter_strip_legacy_columns_standby($config)
     return $config;
 }
 
+function configwriter_extract_declared_block_refs($config)
+{
+    $refs = [];
+    if (preg_match_all(
+        '/blocks\s*\[\s*([\'"])([A-Za-z_][A-Za-z0-9_]*)\1\s*\]\s*=/',
+        $config,
+        $matches
+    )) {
+        foreach ($matches[2] as $ref) {
+            $refs[$ref] = true;
+        }
+    }
+    return $refs;
+}
+
+function configwriter_normalise_grid_position($grid, $gridColumns, $fallbackY = 1)
+{
+    $columns = max(1, min(100, (int)$gridColumns));
+    $x = isset($grid['x']) ? (int)$grid['x'] : 1;
+    $y = isset($grid['y']) ? (int)$grid['y'] : (int)$fallbackY;
+    $w = isset($grid['w']) ? (int)$grid['w'] : $columns;
+    $h = isset($grid['h']) ? (int)$grid['h'] : 1;
+
+    $x = max(1, min($columns, $x));
+    $y = max(1, min(10000, $y));
+    $w = max(1, min($columns - $x + 1, $w));
+    $h = max(1, min(1000, $h));
+
+    return ['x' => $x, 'y' => $y, 'w' => $w, 'h' => $h];
+}
+
+function configwriter_build_grid_layout_section(
+    $items,
+    $screenNumber,
+    $gridColumns,
+    $rowHeight,
+    $gap,
+    $mobileLayout = 'stack'
+) {
+    $n = max(1, min(99, (int)$screenNumber));
+    $columns = max(1, min(100, (int)$gridColumns));
+    $row = max(1, min(2000, (int)$rowHeight));
+    $gridGap = max(0, min(200, (float)$gap));
+    $mobile = $mobileLayout === 'stack' ? 'stack' : 'stack';
+    $refs = [];
+
+    $section = configwriter_section_header('GRID LAYOUT') . "\n";
+    $section .= "if (typeof blocks === 'undefined') var blocks = {}\n";
+    foreach ($items as $index => $item) {
+        $ref = $item['ref'];
+        $position = configwriter_normalise_grid_position(
+            $item['grid'],
+            $columns,
+            $index + 1
+        );
+        $refs[] = $ref;
+        $section .= "blocks['" . $ref . "']['grid'] = "
+            . configwriter_format_props($position) . ";\n";
+    }
+
+    $quotedRefs = array_map(function ($ref) {
+        return "'" . configwriter_js_string_escape($ref) . "'";
+    }, $refs);
+    $section .= "\nif (typeof screens === 'undefined') var screens = {}\n";
+    $section .= "if (typeof screens[" . $n . "] === 'undefined') screens[" . $n . "] = {};\n";
+    $section .= "screens[" . $n . "]['layout'] = 'grid';\n";
+    $section .= "screens[" . $n . "]['gridColumns'] = " . $columns . ";\n";
+    $section .= "screens[" . $n . "]['rowHeight'] = " . $row . ";\n";
+    $section .= "screens[" . $n . "]['gap'] = " . $gridGap . ";\n";
+    $section .= "screens[" . $n . "]['mobileLayout'] = '" . $mobile . "';\n";
+    $section .= "screens[" . $n . "]['blocks'] = ["
+        . implode(', ', $quotedRefs) . "];\n";
+
+    return $section;
+}
+
 function configwriter_extract_block_lines($config)
 {
     $blocks = [];

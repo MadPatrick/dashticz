@@ -334,6 +334,13 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(editor, /dle-remove-button/);
   assert.match(editor, /js\/savewidgets\.php/);
   assert.match(editor, /js\/savelayout\.php/);
+  assert.match(editor, /js\/savegridlayout\.php/);
+  assert.match(editor, /function _collectGridItems/);
+  assert.match(editor, /function _moveGridItem/);
+  assert.match(editor, /function _resizeGridItem/);
+  assert.match(editor, /function _saveGrid/);
+  assert.match(editor, /--dt-grid-x/);
+  assert.match(editor, /--dt-grid-h/);
   assert.match(editor, /widgetResult\.blockKeys/);
   assert.match(editor, /widget_alarmmeldingen: 'alarmmeldingen'/);
   assert.match(editor, /widgets\.push\(_widgetPayload\(item\)\)/);

@@ -152,5 +152,77 @@ screens[1] = {
     );
     expect(mobileBoxes[0].y).toBeLessThan(mobileBoxes[1].y);
     expect(mobileBoxes[1].y).toBeLessThan(mobileBoxes[2].y);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    let savedGridRequest = null;
+    await page.route('**/info.php?get=csrf', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'grid-test-token' }),
+      });
+    });
+    await page.route('**/js/savegridlayout.php', async (route) => {
+      savedGridRequest = {
+        headers: route.request().headers(),
+        payload: route.request().postDataJSON(),
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await page.locator('.screen1 .layouteditoricon').click();
+    await expect(page.locator('body')).toHaveClass(/dle-active/);
+    await expect(grid).toHaveClass(/dle-grid-canvas/);
+
+    const firstOverlay = first.locator('.dle-overlay').first();
+    const dragBox = await firstOverlay.boundingBox();
+    expect(dragBox).not.toBeNull();
+    await page.mouse.move(dragBox.x + dragBox.width / 2, dragBox.y + 25);
+    await page.mouse.down();
+    await page.mouse.move(
+      dragBox.x + dragBox.width / 2 + 160,
+      dragBox.y + 115,
+      { steps: 5 }
+    );
+    await page.mouse.up();
+    await expect
+      .poll(() =>
+        first.evaluate((element) =>
+          element.style.getPropertyValue('--dt-grid-x')
+        )
+      )
+      .not.toBe('1');
+
+    const resizeHandle = first.locator('.dle-resize-handle').last();
+    const resizeBox = await resizeHandle.boundingBox();
+    expect(resizeBox).not.toBeNull();
+    await page.mouse.move(
+      resizeBox.x + resizeBox.width / 2,
+      resizeBox.y + resizeBox.height / 2
+    );
+    await page.mouse.down();
+    await page.mouse.move(resizeBox.x + 110, resizeBox.y + 65, { steps: 5 });
+    await page.mouse.up();
+    await expect
+      .poll(() =>
+        first.evaluate((element) =>
+          element.style.getPropertyValue('--dt-grid-h')
+        )
+      )
+      .not.toBe('3');
+
+    await page.locator('.dle-save').click();
+    await expect.poll(() => savedGridRequest).not.toBeNull();
+    expect(savedGridRequest.headers['x-dashticz-csrf']).toBe('grid-test-token');
+    const savedFirst = savedGridRequest.payload.items.find(
+      (item) => item.ref === 'tc1'
+    );
+    expect(savedFirst.grid.x).toBeGreaterThan(1);
+    expect(savedFirst.grid.h).toBeGreaterThan(3);
+    expect(savedGridRequest.payload.gridColumns).toBe(24);
   });
 });

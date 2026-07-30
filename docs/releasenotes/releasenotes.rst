@@ -6,6 +6,14 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.21.5 beta (30-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Grid Layout Editor: named blocks on a grid screen can be dragged to new ``x``/``y`` coordinates and resized in ``w``/``h`` grid units. Save persists a safe grid-only override in ``CONFIG.js``; Cancel restores the original layout.
+
 v3.21.4 beta (30-7-2026)
 --------------------------
 
@@ -13,7 +21,7 @@ Enhancements
 ~~~~~~~~~~~~
 
 * Screens: optional CSS Grid layouts place blocks at explicit ``x``, ``y``, ``w`` and ``h`` coordinates while preserving empty cells. Grid dimensions, row height and gap are configurable per screen.
-* Grid screens: invalid positions receive safe fallbacks with console warnings, overlapping blocks remain rendered and are marked for diagnosis, mobile screens stack blocks in configured order, and column-based visual editors are disabled to protect manual grid configuration.
+* Grid screens: invalid positions receive safe fallbacks with console warnings, overlapping blocks remain rendered and are marked for diagnosis, mobile screens stack blocks in configured order, and column-based Device/Widget editors are disabled to protect grid configuration.
 
 v3.21.3 beta (30-7-2026)
 --------------------------

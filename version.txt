@@ -1,8 +1,9 @@
 {
-"version": "3.21.4",
+"version": "3.21.5",
 "branch": "beta",
-"last_changes": "Add optional free-positioned CSS Grid screens with mobile stacking",
+"last_changes": "Add drag-and-resize editing and persistence for grid screens",
 "changelog" : {
+            "3.21.5": "Add drag-and-resize editing and persistence for grid screens",
             "3.21.4": "Add optional free-positioned CSS Grid screens with mobile stacking",
             "3.21.3": "Use compact widget defaults, multi-camera configuration, and stable layout saves",
             "3.21.2": "Keep CONFIG.js settings, blocks, columns, and screens grouped after editor saves",

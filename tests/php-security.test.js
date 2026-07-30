@@ -187,6 +187,28 @@ test('layout writer stores safe references in one grouped dashboard section', ()
   assert.match(source, /configwriter_write_config/);
 });
 
+test('grid layout writer validates and stores positions without column packing', () => {
+  const source = read('js/savegridlayout.php');
+  const writer = read('js/configwriter.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  assert.match(source, /dashticz_require_csrf\(\)/);
+  assert.match(source, /REQUEST_METHOD.*POST/);
+  assert.match(source, /\^\[A-Za-z_\]\[A-Za-z0-9_\]\*\$/);
+  assert.match(source, /FILTER_VALIDATE_INT/);
+  assert.match(source, /configwriter_extract_declared_block_refs/);
+  assert.match(source, /configwriter_normalise_grid_position/);
+  assert.match(source, /configwriter_build_grid_layout_section/);
+  assert.match(source, /configwriter_editor_markers\(\s*'grid-layout'/);
+  assert.match(source, /configwriter_write_config/);
+  assert.doesNotMatch(source, /configwriter_pack_columns_by_height/);
+  assert.doesNotMatch(source, /configwriter_build_layout_section/);
+  assert.match(writer, /function configwriter_extract_declared_block_refs/);
+  assert.match(writer, /function configwriter_normalise_grid_position/);
+  assert.match(writer, /function configwriter_build_grid_layout_section/);
+  assert.match(writer, /screens\[.*\]\['layout'\] = 'grid'/);
+  assert.match(writer, /blocks\['.*'\]\['grid'\]/);
+});
+
 test('device and widget writers keep the grouped layout until consolidation', () => {
   const devices = read('js/saveblocks.php');
   const widgets = read('js/savewidgets.php');

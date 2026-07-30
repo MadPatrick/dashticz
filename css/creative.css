@@ -1115,6 +1115,24 @@ body.dle-active {
   width: 100% !important;
 }
 
+.dt-grid-layout.dle-grid-canvas {
+  position: relative;
+  background-color: rgba(13, 110, 253, 0.04);
+  background-image:
+    linear-gradient(rgba(90, 162, 255, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90, 162, 255, 0.2) 1px, transparent 1px);
+  background-size:
+    var(--dle-grid-column-stride, 40px)
+      calc(var(--dt-grid-row-height, 40px) + var(--dt-grid-gap, 0px));
+}
+
+@media (max-width: 767.98px) {
+  .dt-grid-screen
+    > .dt-grid-layout.dt-grid-mobile-stack.dle-grid-canvas {
+    display: grid;
+  }
+}
+
 .dle-block {
   position: relative;
   outline: 2px dashed rgba(13, 110, 253, 0.9);

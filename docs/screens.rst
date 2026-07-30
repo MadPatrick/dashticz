@@ -149,9 +149,15 @@ The following complete example deliberately leaves cells empty between blocks::
 Grid mode only changes the outer screen layout. Domoticz updates, click handlers,
 component refreshes and pixel-based block heights continue to use the normal
 block implementation. Content that is taller than its configured grid item can
-be scrolled inside that item. Grid coordinates are configured manually; the
-Device, Widget and visual Layout editors are disabled while a grid screen is
-active so that they cannot replace it with a column layout.
+be scrolled inside that item.
+
+The visual Layout Editor can move and resize named grid blocks. Drag a block to
+change ``x`` and ``y``; use its bottom-right handle to change ``w`` and ``h``.
+Save stores the positions as a marked override section in ``CONFIG.js`` and
+Cancel restores the previous positions. Blocks must have a safe named
+``blocks['name']`` definition so their positions can be persisted. The Device
+and Widget editors remain disabled while a grid screen is active, preventing
+them from replacing the grid with a column layout.
 
 
 Usage
