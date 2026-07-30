@@ -44,7 +44,7 @@ test.describe('optional screen grid layout', () => {
 
     await expect.poll(() => conversionRequest).not.toBeNull();
     expect(conversionRequest.gridColumns).toBe(24);
-    expect(conversionRequest.rowHeight).toBe(40);
+    expect(conversionRequest.rowHeight).toBe(20);
     expect(conversionRequest.items.length).toBeGreaterThan(10);
     const numericDevice = conversionRequest.items.find(
       (item) => item.create && item.create.idx === 43

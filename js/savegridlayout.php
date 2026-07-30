@@ -33,7 +33,7 @@ if (count($data['items']) > 500) {
 $screenNumber = configwriter_parse_screen_number($data, 1);
 
 $gridColumns = isset($data['gridColumns']) ? (int)$data['gridColumns'] : 24;
-$rowHeight = isset($data['rowHeight']) ? (int)$data['rowHeight'] : 40;
+$rowHeight = isset($data['rowHeight']) ? (int)$data['rowHeight'] : 20;
 if (isset($data['gap']) && !is_numeric($data['gap'])) {
     dashticz_json_error(400, 'gap must be numeric.');
 }
@@ -187,6 +187,31 @@ foreach ($data['items'] as $index => $entry) {
         $items[count($items) - 1]['props'] = $props;
     } elseif ($propsLiteral !== null) {
         $items[count($items) - 1]['propsLiteral'] = $propsLiteral;
+    }
+}
+
+if ($screenNumber > 0 && empty($items)) {
+    $numberedScreens = configwriter_extract_numbered_screens($config);
+    if (count($numberedScreens) > 1
+        && in_array($screenNumber, $numberedScreens, true)
+    ) {
+        $config = configwriter_remove_numbered_screen_and_compact(
+            $config,
+            $screenNumber
+        );
+        $writeError = configwriter_write_config($configPath, $customDir, $config);
+        if ($writeError !== null) {
+            dashticz_json_error(500, $writeError);
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'blocks' => [],
+            'removedScreen' => $screenNumber,
+            'screens' => range(1, count($numberedScreens) - 1),
+        ]);
+        exit;
     }
 }
 

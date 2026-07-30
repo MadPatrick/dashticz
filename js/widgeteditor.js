@@ -655,7 +655,7 @@ var DashticzWidgetEditor = (function () {
     }
     return {
       gridColumns: number('--dt-grid-columns', 24),
-      rowHeight: number('--dt-grid-row-height', 40),
+      rowHeight: number('--dt-grid-row-height', 20),
       gap: number('--dt-grid-gap', 0),
       mobileLayout: $grid.hasClass('dt-grid-mobile-stack') ? 'stack' : 'stack',
     };

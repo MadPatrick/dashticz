@@ -214,6 +214,10 @@ test('grid layout writer validates and stores positions without column packing',
   assert.match(source, /configwriter_normalise_grid_position/);
   assert.match(source, /configwriter_build_grid_layout_section/);
   assert.match(source, /configwriter_editor_markers\(\s*'grid-layout'/);
+  assert.match(source, /empty\(\$items\)/);
+  assert.match(source, /configwriter_extract_numbered_screens/);
+  assert.match(source, /configwriter_remove_numbered_screen_and_compact/);
+  assert.match(source, /'removedScreen'\s*=>\s*\$screenNumber/);
   assert.match(source, /configwriter_write_config/);
   assert.doesNotMatch(source, /configwriter_pack_columns_by_height/);
   assert.doesNotMatch(source, /configwriter_build_layout_section/);
@@ -224,6 +228,10 @@ test('grid layout writer validates and stores positions without column packing',
   assert.doesNotMatch(writer, /\\\{\[\^;\]\*\\\}/);
   assert.match(writer, /function configwriter_normalise_grid_position/);
   assert.match(writer, /function configwriter_build_grid_layout_section/);
+  assert.match(writer, /function configwriter_extract_numbered_screens/);
+  assert.match(writer, /function configwriter_remove_numbered_screen_and_compact/);
+  assert.match(writer, /\['device', 'widget', 'layout', 'dashboard', 'grid-layout'\]/);
+  assert.match(writer, /\(de\|we\|le\)_s/);
   assert.match(writer, /isset\(\$item\['props'\]\)/);
   assert.match(writer, /isset\(\$item\['propsLiteral'\]\)/);
   assert.match(writer, /\$target \. "\['layout'\] = 'grid'/);

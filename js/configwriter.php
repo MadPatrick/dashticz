@@ -123,11 +123,12 @@ function configwriter_set_config_mode($config, $mode)
  * after the regular config assignments makes CONFIG.js readable without
  * changing hand-written content outside the editor sections.
  */
-function configwriter_remove_config_key($config, $key)
+function configwriter_remove_assignment_statements(
+    $config,
+    $pattern,
+    $allowLineEnd = false
+)
 {
-    $pattern = '/^[ \t]*config\[\s*([\'"])'
-        . preg_quote((string)$key, '/')
-        . '\1\s*\]\s*=/m';
     if (!preg_match_all(
         $pattern,
         $config,
@@ -234,15 +235,23 @@ function configwriter_remove_config_key($config, $key)
             if (!ctype_space($char)) {
                 $lastSignificant = $char;
             }
-            if ($char !== ';'
+            $endsWithSemicolon = $char === ';';
+            $endsWithLine = $allowLineEnd
+                && ($char === "\n" || $char === "\r");
+            if ((!$endsWithSemicolon && !$endsWithLine)
                 || $parentheses > 0
                 || $brackets > 0
-                || $braces > 0
-            ) {
+                || $braces > 0) {
                 continue;
             }
 
             $end = $scan + 1;
+            if ($char === "\r"
+                && $end < $length
+                && $config[$end] === "\n"
+            ) {
+                $end++;
+            }
             while ($end < $length && ($config[$end] === ' ' || $config[$end] === "\t")) {
                 $end++;
             }
@@ -258,6 +267,14 @@ function configwriter_remove_config_key($config, $key)
         }
     }
     return $config;
+}
+
+function configwriter_remove_config_key($config, $key)
+{
+    $pattern = '/^[ \t]*config\[\s*([\'"])'
+        . preg_quote((string)$key, '/')
+        . '\1\s*\]\s*=/m';
+    return configwriter_remove_assignment_statements($config, $pattern);
 }
 
 function configwriter_upsert_root_config_settings($config, $settings, $raw = false)
@@ -751,6 +768,108 @@ function configwriter_column_prefix($kind, $screenNumber = 1)
         return $kind . '_col';
     }
     return $kind . '_s' . $n . '_col';
+}
+
+/**
+ * Return the numbered dashboard screens referenced anywhere in CONFIG.js.
+ */
+function configwriter_extract_numbered_screens($config)
+{
+    if (!preg_match_all(
+        '/\bscreens\s*\[\s*(\d{1,2})\s*\]/',
+        $config,
+        $matches
+    )) {
+        return [];
+    }
+
+    $screens = [];
+    foreach ($matches[1] as $screenNumber) {
+        $n = (int)$screenNumber;
+        if ($n >= 1 && $n <= 99) {
+            $screens[$n] = true;
+        }
+    }
+    $screens = array_keys($screens);
+    sort($screens, SORT_NUMERIC);
+    return $screens;
+}
+
+/**
+ * Remove one numbered screen and compact every higher editor/runtime reference.
+ */
+function configwriter_remove_numbered_screen_and_compact($config, $screenNumber)
+{
+    $removed = (int)$screenNumber;
+    if ($removed < 1 || $removed > 99) {
+        return $config;
+    }
+
+    foreach (['device', 'widget', 'layout', 'dashboard', 'grid-layout'] as $kind) {
+        list($startMarker, $endMarker) = configwriter_editor_markers(
+            $kind,
+            $removed
+        );
+        $config = configwriter_remove_section($config, $startMarker, $endMarker);
+    }
+
+    $screenPattern = '/^[ \t]*screens\s*\[\s*'
+        . $removed
+        . '\s*\](?:\s*\[\s*([\'"])[A-Za-z0-9_]+\1\s*\])?\s*=/m';
+    $config = configwriter_remove_assignment_statements(
+        $config,
+        $screenPattern,
+        true
+    );
+
+    // Generated screen initialisers and column guards are single-line statements.
+    $config = preg_replace(
+        '/^[ \t]*if\s*\([^\r\n]*\bscreens\s*\[\s*'
+            . $removed
+            . '\s*\][^\r\n]*(?:\r?\n|$)/m',
+        '',
+        $config
+    );
+
+    $config = preg_replace_callback(
+        '/\bscreens\s*\[\s*(\d{1,2})\s*\]/',
+        function ($match) use ($removed) {
+            $n = (int)$match[1];
+            return $n > $removed ? 'screens[' . ($n - 1) . ']' : $match[0];
+        },
+        $config
+    );
+
+    $config = preg_replace_callback(
+        '/\/\/ \[(device|widget|layout|dashboard|grid-layout)-editor-s(\d{1,2})-(start|end)\]/',
+        function ($match) use ($removed) {
+            $n = (int)$match[2];
+            if ($n <= $removed) {
+                return $match[0];
+            }
+            $newNumber = $n - 1;
+            $suffix = $newNumber === 1 ? '' : '-s' . $newNumber;
+            return '// [' . $match[1] . '-editor' . $suffix . '-' . $match[3] . ']';
+        },
+        $config
+    );
+
+    $config = preg_replace_callback(
+        '/\b(de|we|le)_s(\d{1,2})_col\b/',
+        function ($match) use ($removed) {
+            $n = (int)$match[2];
+            if ($n <= $removed) {
+                return $match[0];
+            }
+            $newNumber = $n - 1;
+            return $match[1]
+                . ($newNumber === 1 ? '' : '_s' . $newNumber)
+                . '_col';
+        },
+        $config
+    );
+
+    return rtrim($config);
 }
 
 /**

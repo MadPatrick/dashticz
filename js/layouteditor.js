@@ -216,7 +216,7 @@ var DashticzLayoutEditor = (function () {
 
   function _buildColumnGridConversion($screen, screenNumber) {
     var gridColumns = 24;
-    var rowHeight = 40;
+    var rowHeight = 20;
     var gap = 5;
     var screenRect = $screen[0].getBoundingClientRect();
     var converted = [];
@@ -810,7 +810,7 @@ var DashticzLayoutEditor = (function () {
     $editingScreen.addClass('dle-grid-screen-editing');
     gridConfig = {
       gridColumns: _gridCssNumber($grid[0], '--dt-grid-columns', 24),
-      rowHeight: _gridCssNumber($grid[0], '--dt-grid-row-height', 40),
+      rowHeight: _gridCssNumber($grid[0], '--dt-grid-row-height', 20),
       gap: _gridCssNumber($grid[0], '--dt-grid-gap', 0, true),
       mobileLayout: $grid.hasClass('dt-grid-mobile-stack') ? 'stack' : 'stack',
     };
@@ -1142,7 +1142,7 @@ var DashticzLayoutEditor = (function () {
       1,
       (rect.width - gap * (columns - 1)) / columns
     );
-    var rowHeight = Math.max(1, parseFloat(gridConfig.rowHeight) || 40);
+    var rowHeight = Math.max(1, parseFloat(gridConfig.rowHeight) || 20);
     return {
       rect: rect,
       columns: columns,

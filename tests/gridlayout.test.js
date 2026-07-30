@@ -41,7 +41,7 @@ test('grid screen configuration uses documented defaults and overrides', () => {
 
   assert.deepEqual(plain(layout.getGridScreenConfig({})), {
     gridColumns: 24,
-    rowHeight: 40,
+    rowHeight: 20,
     gap: 0,
     mobileLayout: 'stack',
   });
