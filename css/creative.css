@@ -1090,6 +1090,13 @@ body.standby-edit {
   cursor: default;
 }
 
+body.standby {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 /* Visual Layout Editor */
 body.dle-active {
   user-select: none;
@@ -2014,10 +2021,26 @@ hr {
 }
 
 .standby .screenstandby {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 0;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
   background-color: #313131;
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+}
+
+body.standby-edit .screenstandby.dle-grid-screen-editing {
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .standby .screenstandby .far,

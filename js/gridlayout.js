@@ -29,9 +29,14 @@ var DashticzGridLayout = (function () {
     var gridColumns = isPositiveInteger(source.gridColumns)
       ? Number(source.gridColumns)
       : defaults.gridColumns;
-    var rowHeight = isPositiveInteger(source.rowHeight)
+    var configuredRowHeight = isPositiveInteger(source.rowHeight)
       ? Number(source.rowHeight)
       : defaults.rowHeight;
+    // Grid screens created before the 20px default stored the old 40px
+    // default explicitly. Treat that value as the legacy format so existing
+    // dashboards receive the finer grid without shrinking their blocks.
+    var rowHeight =
+      configuredRowHeight === 40 ? defaults.rowHeight : configuredRowHeight;
     var gap =
       Number.isFinite(Number(source.gap)) && Number(source.gap) >= 0
         ? Number(source.gap)
@@ -80,6 +85,16 @@ var DashticzGridLayout = (function () {
       gap: gap,
       mobileLayout:
         source.mobileLayout === 'stack' ? 'stack' : defaults.mobileLayout,
+    };
+  }
+
+  function migrateLegacyGridPosition(grid, screen) {
+    if (!grid || Number((screen || {}).rowHeight) !== 40) return grid;
+    return {
+      x: grid.x,
+      y: (grid.y - 1) * 2 + 1,
+      w: grid.w,
+      h: grid.h * 2,
     };
   }
 
@@ -234,6 +249,7 @@ var DashticzGridLayout = (function () {
         var name = getBlockName(blockRef, index);
         var definition = getBlockDefinition(blockRef);
         var grid = validateGridPosition(name, definition.grid, config, index);
+        grid = migrateLegacyGridPosition(grid, screen);
         var mountPoint = addBlock2Column(
           screenSelector + ' > .dt-grid-layout',
           'grid',
@@ -259,6 +275,7 @@ var DashticzGridLayout = (function () {
   return {
     defaults: defaults,
     getGridScreenConfig: getGridScreenConfig,
+    migrateLegacyGridPosition: migrateLegacyGridPosition,
     validateGridPosition: validateGridPosition,
     applyGridPosition: applyGridPosition,
     detectGridOverlaps: detectGridOverlaps,

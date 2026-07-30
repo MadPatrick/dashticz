@@ -222,12 +222,23 @@ var standby_screen = {
       '.screenstandby.dt-grid-screen > .dt-grid-layout'
     );
     await expect(standbyGrid).toHaveCSS('display', 'grid');
+    await expect(standbyGrid).toHaveCSS('--dt-grid-row-height', '20px');
     await expect(
       standbyGrid.locator('[data-grid-block="tc1"]')
     ).toHaveCSS('grid-column-start', '2');
     await expect(
       standbyGrid.locator('[data-grid-block="tc2"]')
-    ).toHaveCSS('grid-row-end', 'span 5');
+    ).toHaveCSS('grid-row-end', 'span 10');
+    const standbyScreen = page.locator('.screenstandby');
+    await expect(standbyScreen).toHaveCSS('position', 'fixed');
+    await expect(standbyScreen).toHaveCSS('background-size', 'cover');
+    const standbyBox = await standbyScreen.boundingBox();
+    expect(standbyBox.width).toBeLessThanOrEqual(
+      page.viewportSize().width
+    );
+    expect(standbyBox.height).toBeLessThanOrEqual(
+      page.viewportSize().height
+    );
   });
 
   test('Device Editor preserves grid positions and custom blocks', async ({
@@ -251,7 +262,7 @@ blocks['grid_text'] = {
 screens[1] = {
   layout: 'grid',
   gridColumns: 24,
-  rowHeight: 40,
+  rowHeight: 20,
   gap: 5,
   mobileLayout: 'stack',
   blocks: ['tc1', 'grid_text']
@@ -329,7 +340,7 @@ blocks['grid_text'] = {
 screens[1] = {
   layout: 'grid',
   gridColumns: 24,
-  rowHeight: 40,
+  rowHeight: 20,
   gap: 5,
   mobileLayout: 'stack',
   blocks: ['grid_weather', 'grid_text']
@@ -434,7 +445,7 @@ blocks['grid_text'] = {
 screens[1] = {
   layout: 'grid',
   gridColumns: 24,
-  rowHeight: 40,
+  rowHeight: 20,
   gap: 5,
   mobileLayout: 'stack',
   blocks: [

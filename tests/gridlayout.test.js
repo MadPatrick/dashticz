@@ -61,6 +61,30 @@ test('grid screen configuration uses documented defaults and overrides', () => {
       mobileLayout: 'stack',
     }
   );
+  assert.equal(layout.getGridScreenConfig({ rowHeight: 40 }).rowHeight, 20);
+});
+
+test('legacy 40px grid positions migrate to 20px without shrinking', () => {
+  const { layout } = loadGridLayout();
+
+  assert.deepEqual(
+    plain(
+      layout.migrateLegacyGridPosition(
+        { x: 8, y: 3, w: 9, h: 6 },
+        { rowHeight: 40 }
+      )
+    ),
+    { x: 8, y: 5, w: 9, h: 12 }
+  );
+  assert.deepEqual(
+    plain(
+      layout.migrateLegacyGridPosition(
+        { x: 8, y: 3, w: 9, h: 6 },
+        { rowHeight: 50 }
+      )
+    ),
+    { x: 8, y: 3, w: 9, h: 6 }
+  );
 });
 
 test('valid grid positions are preserved exactly', () => {

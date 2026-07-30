@@ -1133,9 +1133,7 @@ function buildStandby() {
         '\');';
     }
     var screenhtml =
-      '<div class="screen screenstandby swiper-slide slidestandby" style="height:' +
-      $(window).height() +
-      'px;' +
+      '<div class="screen screenstandby swiper-slide slidestandby" style="' +
       backgroundStyle +
       '"><div class="row"></div></div>';
     $('div.screen').hide();

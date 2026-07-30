@@ -751,6 +751,11 @@ test('standby background image is not overwritten by standby CSS', () => {
     styles,
     /\.standby \.screenstandby\s*\{[^}]*background-size: cover;[^}]*\}/
   );
+  assert.match(
+    styles,
+    /\.standby \.screenstandby\s*\{[^}]*position: fixed;[^}]*inset: 0;[^}]*max-width: 100vw;[^}]*max-height: 100dvh;[^}]*overflow: hidden;[^}]*background-size: cover;[^}]*\}/
+  );
+  assert.doesNotMatch(main, /screenstandby[^]*style="height:/);
   assert.doesNotMatch(
     styles,
     /\.standby \.swiper-slide\s*\{[\s\S]*?background-image: none !important;/
