@@ -100,7 +100,7 @@ function configwriter_set_config_mode($config, $mode)
     $value = strtolower((string)$mode) === 'custom' ? 'custom' : 'wizard';
     $line = 'config["config_mode"] = ' . json_encode($value) . ';';
     $config = preg_replace(
-        '/^[ \t]*config\[[\'"]config_mode[\'"]\]\s*=\s*[^;]+;[ \t]*(?:\r?\n|$)/m',
+        '/^[ \t]*config\[[\'"]config_mode[\'"]\]\s*=\s*[^;]+;[ \t]*(?:(?:\/\/)[^\r\n]*)?(?:\r?\n|$)/m',
         '',
         $config
     );
