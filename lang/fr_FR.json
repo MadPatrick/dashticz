@@ -114,7 +114,7 @@
         },
         "widgeteditor": {
             "title": "Widgets",
-            "choose": "Choisissez les fonctions à afficher comme tuiles sur l’écran 1.",
+            "choose": "Choisissez les fonctions à afficher comme tuiles sur l’écran actuellement ouvert.",
             "close": "Fermer",
             "save": "Enregistrer",
             "saving": "Enregistrement…",
