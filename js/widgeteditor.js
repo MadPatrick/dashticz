@@ -250,6 +250,10 @@ var DashticzWidgetEditor = (function () {
   var widgetConfigs = {};
 
   function open() {
+    if (_activeScreenDom().hasClass('dt-grid-screen')) {
+      alert('Grid screens must be configured manually; the Widget Editor is not available.');
+      return;
+    }
     _readConfiguredWidgets();
     _buildAndShowModal();
   }

@@ -23,6 +23,10 @@ var DashticzLayoutEditor = (function () {
       alert('No active screen found.');
       return;
     }
+    if ($screen.hasClass('dt-grid-screen')) {
+      alert('Grid screens must be configured manually; the Layout Editor is not available.');
+      return;
+    }
 
     var managedColumnRe = /^(de|we|le)_s\d+_col\d+$|^(de|we|le)_col\d+$|^col_\d+$/;
     var isStandby = _activeScreenTarget() === 'standby';

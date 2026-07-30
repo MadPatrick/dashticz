@@ -91,6 +91,12 @@ screens[1] = {
     );
     expect(weatherFontSize).toBeGreaterThan(weatherWidth / 15);
 
+    const editorWarning = page.waitForEvent('dialog');
+    await page.locator('.screen1 .deviceeditoricon').click();
+    const dialog = await editorWarning;
+    expect(dialog.message()).toContain('Grid screens must be configured manually');
+    await dialog.accept();
+
     await page.setViewportSize({ width: 500, height: 900 });
     await expect(grid).toHaveCSS('display', 'flex');
 

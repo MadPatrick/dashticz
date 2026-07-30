@@ -149,7 +149,9 @@ The following complete example deliberately leaves cells empty between blocks::
 Grid mode only changes the outer screen layout. Domoticz updates, click handlers,
 component refreshes and pixel-based block heights continue to use the normal
 block implementation. Content that is taller than its configured grid item can
-be scrolled inside that item.
+be scrolled inside that item. Grid coordinates are configured manually; the
+Device, Widget and visual Layout editors are disabled while a grid screen is
+active so that they cannot replace it with a column layout.
 
 
 Usage

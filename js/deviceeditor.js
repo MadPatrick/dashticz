@@ -16,6 +16,10 @@ var DashticzDeviceEditor = (function () {
 
   /* ── public API ─────────────────────────────────────────────── */
   function open() {
+    if (_activeScreenDom().hasClass('dt-grid-screen')) {
+      alert('Grid screens must be configured manually; the Device Editor is not available.');
+      return;
+    }
     _init();
     _buildAndShowModal();
   }

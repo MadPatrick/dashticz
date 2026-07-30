@@ -13,7 +13,7 @@ Enhancements
 ~~~~~~~~~~~~
 
 * Screens: optional CSS Grid layouts place blocks at explicit ``x``, ``y``, ``w`` and ``h`` coordinates while preserving empty cells. Grid dimensions, row height and gap are configurable per screen.
-* Grid screens: invalid positions receive safe fallbacks with console warnings, overlapping blocks remain rendered and are marked for diagnosis, and mobile screens stack blocks in configured order.
+* Grid screens: invalid positions receive safe fallbacks with console warnings, overlapping blocks remain rendered and are marked for diagnosis, mobile screens stack blocks in configured order, and column-based visual editors are disabled to protect manual grid configuration.
 
 v3.21.3 beta (30-7-2026)
 --------------------------
