@@ -230,6 +230,157 @@ var standby_screen = {
     ).toHaveCSS('grid-row-end', 'span 5');
   });
 
+  test('Device Editor preserves grid positions and custom blocks', async ({
+    page,
+  }) => {
+    let gridRequest = null;
+    let columnSaves = 0;
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `
+blocks['tc1'].grid = {x: 2, y: 2, w: 6, h: 3};
+blocks['grid_text'] = {
+  type: 'blocktitle',
+  title: 'Keep me',
+  grid: {x: 10, y: 5, w: 8, h: 2}
+};
+screens[1] = {
+  layout: 'grid',
+  gridColumns: 24,
+  rowHeight: 40,
+  gap: 5,
+  mobileLayout: 'stack',
+  blocks: ['tc1', 'grid_text']
+};
+`,
+      });
+    });
+    await page.route('**/info.php?get=csrf', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'device-grid-token' }),
+      })
+    );
+    await page.route('**/js/saveblocks.php', async (route) => {
+      expect(route.request().postDataJSON().blocksOnly).toBe(true);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, blockKeys: ['tc1'] }),
+      });
+    });
+    await page.route('**/js/savelayout.php', async (route) => {
+      columnSaves++;
+      await route.fulfill({ status: 500, body: '{}' });
+    });
+    await page.route('**/js/savegridlayout.php', async (route) => {
+      gridRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+    await page.locator('.screen1 .deviceeditoricon').click();
+    await expect(page.locator('#deviceeditorpopup')).toBeVisible();
+    await page.locator('#de-save-btn').click();
+
+    await expect.poll(() => gridRequest).not.toBeNull();
+    expect(columnSaves).toBe(0);
+    expect(gridRequest.items).toEqual([
+      { ref: 'tc1', grid: { x: 2, y: 2, w: 6, h: 3 } },
+      { ref: 'grid_text', grid: { x: 10, y: 5, w: 8, h: 2 } },
+    ]);
+  });
+
+  test('Widget Editor updates widgets without replacing grid layout', async ({
+    page,
+  }) => {
+    let gridRequest = null;
+    let columnSaves = 0;
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `
+blocks['grid_weather'] = {
+  type: 'weather',
+  widget_provider: 'openweather',
+  grid: {x: 3, y: 2, w: 8, h: 4}
+};
+blocks['grid_text'] = {
+  type: 'blocktitle',
+  title: 'Keep me',
+  grid: {x: 12, y: 8, w: 6, h: 2}
+};
+screens[1] = {
+  layout: 'grid',
+  gridColumns: 24,
+  rowHeight: 40,
+  gap: 5,
+  mobileLayout: 'stack',
+  blocks: ['grid_weather', 'grid_text']
+};
+`,
+      });
+    });
+    await page.route('**/info.php?get=csrf', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'widget-grid-token' }),
+      })
+    );
+    await page.route('**/js/savewidgets.php', async (route) => {
+      const payload = route.request().postDataJSON();
+      expect(payload.blocksOnly).toBe(true);
+      expect(payload.widgets[0].key).toBe('grid_weather');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          blockKeys: ['grid_weather'],
+        }),
+      });
+    });
+    await page.route('**/js/savelayout.php', async (route) => {
+      columnSaves++;
+      await route.fulfill({ status: 500, body: '{}' });
+    });
+    await page.route('**/js/savegridlayout.php', async (route) => {
+      gridRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+    await page.locator('.screen1 .widgeteditoricon').click();
+    await expect(page.locator('#widgeteditorpopup')).toBeVisible();
+    await page.locator('#we-save-btn').click();
+
+    await expect.poll(() => gridRequest).not.toBeNull();
+    expect(columnSaves).toBe(0);
+    expect(gridRequest.items).toEqual([
+      { ref: 'grid_weather', grid: { x: 3, y: 2, w: 8, h: 4 } },
+      { ref: 'grid_text', grid: { x: 12, y: 8, w: 6, h: 2 } },
+    ]);
+  });
+
   test('places blocks at explicit coordinates and stacks on mobile', async ({
     page,
   }) => {
@@ -350,11 +501,13 @@ screens[1] = {
       await expect(item).toHaveCSS('overflow', 'auto');
     }
 
-    const editorWarning = page.waitForEvent('dialog');
     await page.locator('.screen1 .deviceeditoricon').click();
-    const dialog = await editorWarning;
-    expect(dialog.message()).toContain('Grid screens must be configured manually');
-    await dialog.accept();
+    await expect(page.locator('#deviceeditorpopup')).toBeVisible();
+    await page
+      .locator('#deviceeditorpopup [data-bs-dismiss="modal"]')
+      .last()
+      .click();
+    await expect(page.locator('#deviceeditorpopup')).toHaveCount(0);
 
     await page.setViewportSize({ width: 500, height: 900 });
     await expect(grid).toHaveCSS('display', 'flex');

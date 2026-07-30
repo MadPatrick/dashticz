@@ -158,8 +158,9 @@ scrolls when the pointer approaches the top or bottom of the screen.
 Save stores the positions as a marked override section in ``CONFIG.js`` and
 Cancel restores the previous positions. Blocks must have a safe named
 ``blocks['name']`` definition so their positions can be persisted. The Device
-and Widget editors remain disabled while a grid screen is active, preventing
-them from replacing the grid with a column layout.
+and Widget editors can add, remove or configure their tiles without changing
+the positions of existing grid blocks. New tiles are placed in the first free
+grid cells. Normal block buttons remain active whenever no editor is open.
 
 Wizard mode always uses the grid Layout Editor. When an existing columns screen
 is opened in the Wizard Layout Editor, Dashticz asks for confirmation and

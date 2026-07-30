@@ -105,6 +105,7 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   assert.match(source, /configwriter_editor_markers\('widget'/);
   assert.match(writer, /function configwriter_editor_markers/);
   assert.match(source, /blockKeys/);
+  assert.match(source, /\$blocksOnly/);
   /* accepts both legacy bare integers and {idx,name} objects */
   assert.match(source, /is_int\(\$entry\)/);
   assert.match(source, /\$entry\['idx'\]/);
@@ -156,6 +157,7 @@ test('widget writer whitelists widgets and protects CONFIG.js writes', () => {
   assert.match(writer, /is_array\(\$value\)/);
   assert.match(source, /configwriter_editor_markers\('widget'/);
   assert.match(source, /blockKeys/);
+  assert.match(source, /\$blocksOnly/);
   assert.match(source, /configwriter_write_config/);
 });
 

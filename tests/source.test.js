@@ -380,6 +380,9 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(deviceEditor, /var managedOrder/);
   assert.match(deviceEditor, /js\/savewidgets\.php/);
   assert.match(deviceEditor, /js\/savelayout\.php/);
+  assert.match(deviceEditor, /js\/savegridlayout\.php/);
+  assert.match(deviceEditor, /blocksOnly: gridMode/);
+  assert.match(deviceEditor, /function _getAllManagedGridItems/);
   assert.match(deviceEditor, /data-order-key/);
   assert.match(deviceEditor, /de-width-input[\s\S]*value="3"/);
   assert.match(deviceEditor, /if \(!width\) width = 3/);
@@ -496,6 +499,9 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   }
   assert.match(widgetEditor, /js\/savewidgets\.php/);
   assert.match(widgetEditor, /js\/savelayout\.php/);
+  assert.match(widgetEditor, /js\/savegridlayout\.php/);
+  assert.match(widgetEditor, /blocksOnly: gridMode/);
+  assert.match(widgetEditor, /function _readGridConfiguredWidgets/);
   assert.match(widgetEditor, /var layoutOrder = \[\]/);
   assert.match(widgetEditor, /if \(!selectedWidgets\[item\.widgetId\]\) return/);
   assert.match(widgetEditor, /layoutItems\.push\(widgetEntry\)/);

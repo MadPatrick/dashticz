@@ -13,6 +13,7 @@ Enhancements
 ~~~~~~~~~~~~
 
 * Standby: Wizard Standby now uses the same free-positioned, editable CSS Grid layout as numbered screens. Existing ``columns_standby`` layouts can be converted after confirmation.
+* Grid editors: Device and Widget Editors can add, remove and configure tiles on numbered and Standby grids while retaining existing positions; newly added tiles use the first free cells.
 
 Fixes
 ~~~~~

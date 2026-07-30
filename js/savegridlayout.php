@@ -72,6 +72,16 @@ $existingGridSection = configwriter_extract_wrapped_section(
     $endMarker
 );
 $existingGridBlocks = configwriter_extract_block_lines($existingGridSection);
+$allBlockLines = configwriter_extract_block_lines($config);
+list($widgetStartMarker, $widgetEndMarker) = configwriter_editor_markers(
+    'widget',
+    $screenNumber
+);
+$widgetSettings = configwriter_extract_section_config_settings(
+    $config,
+    $widgetStartMarker,
+    $widgetEndMarker
+);
 $declaredRefs = configwriter_extract_declared_block_refs($config);
 $items = [];
 $usedRefs = [];
@@ -147,6 +157,8 @@ foreach ($data['items'] as $index => $entry) {
         );
     } elseif (isset($existingGridBlocks[$ref])) {
         $propsLiteral = $existingGridBlocks[$ref];
+    } elseif (isset($allBlockLines[$ref])) {
+        $propsLiteral = $allBlockLines[$ref];
     }
     if (isset($usedRefs[$ref])) {
         dashticz_json_error(400, 'Duplicate grid block reference.');
@@ -178,6 +190,25 @@ foreach ($data['items'] as $index => $entry) {
     }
 }
 
+$config = configwriter_upsert_root_config_settings(
+    $config,
+    $widgetSettings,
+    true
+);
+list($deviceStartMarker, $deviceEndMarker) = configwriter_editor_markers(
+    'device',
+    $screenNumber
+);
+$config = configwriter_remove_section(
+    $config,
+    $deviceStartMarker,
+    $deviceEndMarker
+);
+$config = configwriter_remove_section(
+    $config,
+    $widgetStartMarker,
+    $widgetEndMarker
+);
 $config = configwriter_remove_section($config, $startMarker, $endMarker);
 $section = configwriter_build_grid_layout_section(
     $items,
