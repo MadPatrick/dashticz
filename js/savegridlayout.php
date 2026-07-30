@@ -9,11 +9,13 @@ function gridlayout_inline_props($props)
     }
     $clean = [];
     foreach ($props as $key => $value) {
+        if ($key === 'grid') {
+            continue;
+        }
         if (!is_string($key)
             || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key)
-            || $key === 'grid'
         ) {
-            continue;
+            return null;
         }
         if (!(is_null($value) || is_scalar($value) || is_array($value))) {
             return null;

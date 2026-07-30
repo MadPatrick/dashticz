@@ -401,7 +401,11 @@ var DashticzLayoutEditor = (function () {
     width,
     measuredHeight
   ) {
-    if (resolved && resolved.kind === 'device') {
+    var rawDeviceReference =
+      typeof reference === 'number' ||
+      (typeof reference === 'string' &&
+        /^\d+(?:_\d+)?$/.test(reference));
+    if (resolved && resolved.kind === 'device' && rawDeviceReference) {
       return {
         kind: 'device',
         idx: resolved.idx,
@@ -427,11 +431,11 @@ var DashticzLayoutEditor = (function () {
   function _isGridSerializable(value) {
     if (
       typeof value === 'string' ||
-      typeof value === 'number' ||
       typeof value === 'boolean'
     ) {
       return true;
     }
+    if (typeof value === 'number') return isFinite(value);
     if (typeof value === 'undefined' || typeof value === 'function') {
       return false;
     }
