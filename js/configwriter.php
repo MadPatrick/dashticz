@@ -142,9 +142,28 @@ function configwriter_remove_config_key($config, $key)
         $scan = $start + strlen($matches[$matchIndex][0][0]);
         $quote = null;
         $escaped = false;
+        $lineComment = false;
+        $blockComment = false;
+        $parentheses = 0;
+        $brackets = 0;
+        $braces = 0;
         $length = strlen($config);
         for (; $scan < $length; $scan++) {
             $char = $config[$scan];
+            $next = $scan + 1 < $length ? $config[$scan + 1] : '';
+            if ($lineComment) {
+                if ($char === "\n" || $char === "\r") {
+                    $lineComment = false;
+                }
+                continue;
+            }
+            if ($blockComment) {
+                if ($char === '*' && $next === '/') {
+                    $blockComment = false;
+                    $scan++;
+                }
+                continue;
+            }
             if ($quote !== null) {
                 if ($escaped) {
                     $escaped = false;
@@ -155,11 +174,38 @@ function configwriter_remove_config_key($config, $key)
                 }
                 continue;
             }
+            if ($char === '/' && $next === '/') {
+                $lineComment = true;
+                $scan++;
+                continue;
+            }
+            if ($char === '/' && $next === '*') {
+                $blockComment = true;
+                $scan++;
+                continue;
+            }
             if ($char === "'" || $char === '"' || $char === '`') {
                 $quote = $char;
                 continue;
             }
-            if ($char !== ';') {
+            if ($char === '(') {
+                $parentheses++;
+            } elseif ($char === ')') {
+                $parentheses = max(0, $parentheses - 1);
+            } elseif ($char === '[') {
+                $brackets++;
+            } elseif ($char === ']') {
+                $brackets = max(0, $brackets - 1);
+            } elseif ($char === '{') {
+                $braces++;
+            } elseif ($char === '}') {
+                $braces = max(0, $braces - 1);
+            }
+            if ($char !== ';'
+                || $parentheses > 0
+                || $brackets > 0
+                || $braces > 0
+            ) {
                 continue;
             }
 
