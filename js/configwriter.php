@@ -144,6 +144,9 @@ function configwriter_remove_config_key($config, $key)
         $escaped = false;
         $lineComment = false;
         $blockComment = false;
+        $regexLiteral = false;
+        $regexClass = false;
+        $lastSignificant = null;
         $parentheses = 0;
         $brackets = 0;
         $braces = 0;
@@ -161,6 +164,21 @@ function configwriter_remove_config_key($config, $key)
                 if ($char === '*' && $next === '/') {
                     $blockComment = false;
                     $scan++;
+                }
+                continue;
+            }
+            if ($regexLiteral) {
+                if ($escaped) {
+                    $escaped = false;
+                } elseif ($char === '\\') {
+                    $escaped = true;
+                } elseif ($char === '[') {
+                    $regexClass = true;
+                } elseif ($char === ']') {
+                    $regexClass = false;
+                } elseif ($char === '/' && !$regexClass) {
+                    $regexLiteral = false;
+                    $lastSignificant = '/';
                 }
                 continue;
             }
@@ -184,6 +202,18 @@ function configwriter_remove_config_key($config, $key)
                 $scan++;
                 continue;
             }
+            $prefix = substr($config, max($start, $scan - 16), min(16, $scan - $start));
+            if ($char === '/'
+                && ($lastSignificant === null
+                    || strpos('=(:,[!&|?{;', $lastSignificant) !== false
+                    || preg_match('/\b(?:return|case|throw)\s*$/', $prefix)
+                )
+            ) {
+                $regexLiteral = true;
+                $regexClass = false;
+                $escaped = false;
+                continue;
+            }
             if ($char === "'" || $char === '"' || $char === '`') {
                 $quote = $char;
                 continue;
@@ -200,6 +230,9 @@ function configwriter_remove_config_key($config, $key)
                 $braces++;
             } elseif ($char === '}') {
                 $braces = max(0, $braces - 1);
+            }
+            if (!ctype_space($char)) {
+                $lastSignificant = $char;
             }
             if ($char !== ';'
                 || $parentheses > 0
