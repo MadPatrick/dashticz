@@ -8,6 +8,7 @@ const dashboardUrl =
 test.describe('optional screen grid layout', () => {
   test('keeps legacy column screens on the Bootstrap path', async ({ page }) => {
     await page.goto(dashboardUrl);
+    await waitForDashboard(page);
 
     await expect(page.locator('.screen1 .row .col1')).toBeVisible();
     await expect(page.locator('.screen1 .dt-grid-layout')).toHaveCount(0);
@@ -34,6 +35,7 @@ test.describe('optional screen grid layout', () => {
     });
 
     await page.goto(dashboardUrl);
+    await waitForDashboard(page);
     const confirmation = page.waitForEvent('dialog');
     await page.locator('.screen1 .layouteditoricon').click();
     const dialog = await confirmation;
@@ -103,6 +105,7 @@ test.describe('optional screen grid layout', () => {
     });
 
     await page.goto(dashboardUrl);
+    await waitForDashboard(page);
     await expect(
       page
         .locator('.screen1 .config-mode-btn[data-mode="custom"]')
@@ -192,6 +195,7 @@ screens[1] = {
     });
 
     await page.goto(dashboardUrl);
+    await waitForDashboard(page);
 
     const grid = page.locator('.screen1 > .dt-grid-layout');
     const first = grid.locator('[data-grid-block="tc1"]');
@@ -288,6 +292,7 @@ screens[1] = {
     await expect(grid).toHaveClass(/dle-grid-canvas/);
 
     const resizeHandle = first.locator('.dle-resize-handle').last();
+    await resizeHandle.hover();
     const resizeBox = await resizeHandle.boundingBox();
     expect(resizeBox).not.toBeNull();
     await page.mouse.move(
@@ -347,3 +352,10 @@ screens[1] = {
     expect(savedGridRequest.payload.gridColumns).toBe(24);
   });
 });
+
+async function waitForDashboard(page) {
+  await page.locator('#loaderHolder').waitFor({
+    state: 'hidden',
+    timeout: 15000,
+  });
+}
