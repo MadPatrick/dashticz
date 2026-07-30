@@ -201,7 +201,8 @@ test('grid layout writer validates and stores positions without column packing',
   assert.match(source, /\^\[A-Za-z_\]\[A-Za-z0-9_\]\*\$/);
   assert.match(source, /FILTER_VALIDATE_INT/);
   assert.match(source, /configwriter_extract_declared_block_refs/);
-  assert.match(source, /gridlayout_inline_props/);
+  assert.match(source, /propsJson/);
+  assert.match(source, /is_object\(\$decodedProps\)/);
   assert.match(source, /configwriter_make_block_key/);
   assert.match(source, /configwriter_set_config_mode/);
   assert.match(source, /configwriter_normalise_grid_position/);

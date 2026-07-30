@@ -99,14 +99,11 @@ function configwriter_set_config_mode($config, $mode)
 {
     $value = strtolower((string)$mode) === 'custom' ? 'custom' : 'wizard';
     $line = 'config["config_mode"] = ' . json_encode($value) . ';';
-    if (preg_match('/config\[[\'"]config_mode[\'"]\]\s*=\s*[^;]+;/', $config)) {
-        return preg_replace(
-            '/config\[[\'"]config_mode[\'"]\]\s*=\s*[^;]+;/',
-            $line,
-            $config,
-            1
-        );
-    }
+    $config = preg_replace(
+        '/^[ \t]*config\[[\'"]config_mode[\'"]\]\s*=\s*[^;]+;[ \t]*(?:\r?\n|$)/m',
+        '',
+        $config
+    );
     $marker = 'var config = {}';
     $pos = strpos($config, $marker);
     if ($pos === false) {

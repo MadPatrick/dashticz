@@ -424,7 +424,7 @@ var DashticzLayoutEditor = (function () {
         safeReference ||
         definition.type ||
         'Grid block',
-      props: props,
+      propsJson: JSON.stringify(props),
     };
   }
 

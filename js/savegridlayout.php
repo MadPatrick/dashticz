@@ -2,33 +2,6 @@
 require_once(__DIR__ . '/../vendor/dashticz/security.php');
 require_once(__DIR__ . '/configwriter.php');
 
-function gridlayout_inline_props($props)
-{
-    if (!is_array($props) || count($props) > 50) {
-        return null;
-    }
-    $clean = [];
-    foreach ($props as $key => $value) {
-        if ($key === 'grid') {
-            continue;
-        }
-        if (!is_string($key)
-            || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $key)
-        ) {
-            return null;
-        }
-        if (!(is_null($value) || is_scalar($value) || is_array($value))) {
-            return null;
-        }
-        $encoded = json_encode($value);
-        if ($encoded === false || strlen($encoded) > 10000) {
-            return null;
-        }
-        $clean[$key] = $value;
-    }
-    return $clean;
-}
-
 dashticz_require_same_origin();
 dashticz_require_csrf();
 
@@ -153,10 +126,20 @@ foreach ($data['items'] as $index => $entry) {
                 );
             }
         } elseif (($create['kind'] ?? '') === 'inline') {
-            $props = gridlayout_inline_props($create['props'] ?? null);
-            if ($props === null) {
+            $propsJson = isset($create['propsJson'])
+                && is_string($create['propsJson'])
+                ? $create['propsJson']
+                : '';
+            $decodedProps = $propsJson !== ''
+                ? json_decode($propsJson)
+                : null;
+            if (strlen($propsJson) > 10000
+                || json_last_error() !== JSON_ERROR_NONE
+                || !is_object($decodedProps)
+            ) {
                 dashticz_json_error(400, 'Inline grid block properties are invalid.');
             }
+            $propsLiteral = $propsJson;
         } else {
             dashticz_json_error(400, 'Unsupported converted block type.');
         }
