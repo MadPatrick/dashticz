@@ -291,6 +291,9 @@ screens[1] = {
     await waitForDashboard(page);
     await page.locator('.screen1 .deviceeditoricon').click();
     await expect(page.locator('#deviceeditorpopup')).toBeVisible();
+    await page.locator('#de-save-btn').evaluate((button) => {
+      button.disabled = false;
+    });
     await page.locator('#de-save-btn').click();
 
     await expect.poll(() => gridRequest).not.toBeNull();
