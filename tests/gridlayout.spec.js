@@ -180,23 +180,35 @@ screens[1] = {
 
     const firstOverlay = first.locator('.dle-overlay').first();
     const dragBox = await firstOverlay.boundingBox();
+    const editorGridBox = await grid.boundingBox();
     expect(dragBox).not.toBeNull();
+    expect(editorGridBox).not.toBeNull();
+    const targetX = 12;
+    const columnStride = (editorGridBox.width + 5) / 24;
+    const pointerOffsetX = dragBox.width / 2;
     await page.mouse.move(dragBox.x + dragBox.width / 2, dragBox.y + 25);
     await page.mouse.down();
     await page.mouse.move(
-      dragBox.x + dragBox.width / 2 + 160,
-      dragBox.y + 115,
-      { steps: 5 }
+      editorGridBox.x + pointerOffsetX + (targetX - 1) * columnStride,
+      885,
+      { steps: 8 }
     );
-    await page.mouse.up();
     await expect
-      .poll(() =>
-        first.evaluate((element) =>
-          element.style.getPropertyValue('--dt-grid-x')
-        )
+      .poll(
+        () =>
+          first.evaluate((element) =>
+            parseInt(element.style.getPropertyValue('--dt-grid-y'), 10)
+          ),
+        { timeout: 5000 }
       )
-      .not.toBe('1');
+      .toBeGreaterThan(28);
+    await page.mouse.up();
+    await expect(first).toHaveCSS('grid-column-start', String(targetX));
+    const draggedY = await first.evaluate((element) =>
+      parseInt(element.style.getPropertyValue('--dt-grid-y'), 10)
+    );
 
+    await first.scrollIntoViewIfNeeded();
     const resizeHandle = first.locator('.dle-resize-handle').last();
     const resizeBox = await resizeHandle.boundingBox();
     expect(resizeBox).not.toBeNull();
@@ -213,7 +225,7 @@ screens[1] = {
           element.style.getPropertyValue('--dt-grid-h')
         )
       )
-      .not.toBe('3');
+      .toBe('4');
 
     await page.locator('.dle-save').click();
     await expect.poll(() => savedGridRequest).not.toBeNull();
@@ -221,8 +233,9 @@ screens[1] = {
     const savedFirst = savedGridRequest.payload.items.find(
       (item) => item.ref === 'tc1'
     );
-    expect(savedFirst.grid.x).toBeGreaterThan(1);
-    expect(savedFirst.grid.h).toBeGreaterThan(3);
+    expect(savedFirst.grid.x).toBe(targetX);
+    expect(savedFirst.grid.y).toBe(draggedY);
+    expect(savedFirst.grid.h).toBe(4);
     expect(savedGridRequest.payload.gridColumns).toBe(24);
   });
 });

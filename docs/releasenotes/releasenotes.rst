@@ -6,6 +6,14 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.21.6 beta (30-7-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* Grid Layout Editor: the editing canvas now exposes and dynamically adds empty rows, scrolls automatically near the viewport edge, and keeps pointer capture outside the original block area so blocks can be dropped at any grid coordinate.
+
 v3.21.5 beta (30-7-2026)
 --------------------------
 

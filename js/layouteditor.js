@@ -19,6 +19,11 @@ var DashticzLayoutEditor = (function () {
   var originalGridWrappers = [];
   var gridCollectionError = false;
   var editingScreen = null;
+  var $editingScreen = null;
+  var gridEditorRows = 0;
+  var edgeScrollFrame = null;
+  var edgeScrollDirection = 0;
+  var lastPointerPosition = null;
 
   function open() {
     if (active) return;
@@ -29,6 +34,7 @@ var DashticzLayoutEditor = (function () {
       return;
     }
     editingScreen = _activeScreenPayload();
+    $editingScreen = $screen;
     gridMode = $screen.hasClass('dt-grid-screen');
     if (gridMode) {
       var $grid = $screen.children('.dt-grid-layout').first();
@@ -463,6 +469,7 @@ var DashticzLayoutEditor = (function () {
 
   function _prepareGridCanvas($grid) {
     $canvas = $grid.addClass('dle-grid-canvas');
+    $editingScreen.addClass('dle-grid-screen-editing');
     gridConfig = {
       gridColumns: _gridCssNumber($grid[0], '--dt-grid-columns', 24),
       rowHeight: _gridCssNumber($grid[0], '--dt-grid-row-height', 40),
@@ -476,6 +483,14 @@ var DashticzLayoutEditor = (function () {
     items.forEach(function (item) {
       item.wrapper.classList.add('dle-item-wrapper');
     });
+    var occupiedRows = items.reduce(function (highest, item) {
+      return Math.max(highest, item.grid.y + item.grid.h - 1);
+    }, 1);
+    var viewportRows = Math.ceil(
+      Math.max(0, window.innerHeight - $grid[0].getBoundingClientRect().top) /
+        (gridConfig.rowHeight + gridConfig.gap)
+    );
+    _ensureGridCanvasRows(Math.max(occupiedRows + 10, viewportRows + 6));
     _refreshGridOverlaps();
   }
 
@@ -487,6 +502,19 @@ var DashticzLayoutEditor = (function () {
       return fallback;
     }
     return value;
+  }
+
+  function _ensureGridCanvasRows(rows) {
+    var requested = Math.max(1, Math.min(10000, Math.ceil(rows)));
+    if (requested <= gridEditorRows) return;
+    gridEditorRows = requested;
+    var height =
+      gridEditorRows * gridConfig.rowHeight +
+      Math.max(0, gridEditorRows - 1) * gridConfig.gap;
+    $canvas[0].style.setProperty(
+      '--dle-grid-editor-min-height',
+      height + 'px'
+    );
   }
 
   function _decorateItems() {
@@ -556,9 +584,9 @@ var DashticzLayoutEditor = (function () {
         if (!item) return;
         if ($(event.target).closest('.dle-remove-button').length) return;
         if ($(event.target).closest('.dle-resize-handle').length) {
-          _startResize(event, item, $canvas[0]);
+          _startResize(event, item, this);
         } else {
-          _startDrag(event, item, $canvas[0]);
+          _startDrag(event, item, this);
         }
       });
 
@@ -609,7 +637,11 @@ var DashticzLayoutEditor = (function () {
     };
 
     if (captureElement.setPointerCapture) {
-      captureElement.setPointerCapture(pointerState.pointerId);
+      try {
+        captureElement.setPointerCapture(pointerState.pointerId);
+      } catch (error) {
+        // Pointer capture is optional; document-level handlers remain active.
+      }
     }
 
     item.visibleBlocks.forEach(function (block) {
@@ -637,7 +669,11 @@ var DashticzLayoutEditor = (function () {
     };
 
     if (captureElement.setPointerCapture) {
-      captureElement.setPointerCapture(pointerState.pointerId);
+      try {
+        captureElement.setPointerCapture(pointerState.pointerId);
+      } catch (error) {
+        // Pointer capture is optional; document-level handlers remain active.
+      }
     }
   }
 
@@ -652,6 +688,8 @@ var DashticzLayoutEditor = (function () {
     event.preventDefault();
     var clientX = event.originalEvent.clientX;
     var clientY = event.originalEvent.clientY;
+    lastPointerPosition = { x: clientX, y: clientY };
+    if (gridMode) _updateEdgeScroll(clientY);
 
     if (pointerState.mode === 'resize') {
       if (gridMode) {
@@ -789,6 +827,7 @@ var DashticzLayoutEditor = (function () {
       ) + 1;
     x = Math.max(1, Math.min(metrics.columns - item.grid.w + 1, x));
     y = Math.max(1, y);
+    _ensureGridCanvasRows(y + item.grid.h + 8);
     _applyGridPosition(item, {
       x: x,
       y: y,
@@ -809,6 +848,7 @@ var DashticzLayoutEditor = (function () {
       Math.round((clientY - pointerState.startY) / metrics.rowStride);
     width = Math.max(1, Math.min(metrics.columns - start.x + 1, width));
     height = Math.max(1, Math.min(1000, height));
+    _ensureGridCanvasRows(start.y + height + 8);
     _applyGridPosition(item, {
       x: start.x,
       y: start.y,
@@ -848,8 +888,65 @@ var DashticzLayoutEditor = (function () {
     );
   }
 
+  function _updateEdgeScroll(clientY) {
+    var threshold = 70;
+    if (clientY < threshold) {
+      edgeScrollDirection = -1;
+    } else if (clientY > window.innerHeight - threshold) {
+      edgeScrollDirection = 1;
+    } else {
+      edgeScrollDirection = 0;
+    }
+    if (edgeScrollDirection && edgeScrollFrame === null) {
+      edgeScrollFrame = requestAnimationFrame(_edgeScrollTick);
+    }
+  }
+
+  function _edgeScrollTick() {
+    edgeScrollFrame = null;
+    if (
+      !gridMode ||
+      !pointerState ||
+      !edgeScrollDirection ||
+      !$editingScreen ||
+      !$editingScreen.length
+    ) {
+      return;
+    }
+
+    var element = $editingScreen[0];
+    var previous = element.scrollTop;
+    element.scrollTop += edgeScrollDirection * 18;
+    if (element.scrollTop !== previous && lastPointerPosition) {
+      if (pointerState.mode === 'resize') {
+        _resizeGridItem(
+          pointerState.item,
+          lastPointerPosition.x,
+          lastPointerPosition.y
+        );
+      } else {
+        _moveGridItem(
+          pointerState.item,
+          lastPointerPosition.x,
+          lastPointerPosition.y
+        );
+      }
+      edgeScrollFrame = requestAnimationFrame(_edgeScrollTick);
+    }
+  }
+
+  function _stopEdgeScroll() {
+    edgeScrollDirection = 0;
+    lastPointerPosition = null;
+    if (edgeScrollFrame !== null) {
+      cancelAnimationFrame(edgeScrollFrame);
+      edgeScrollFrame = null;
+    }
+  }
+
   function _finishPointerAction() {
     if (!pointerState) return;
+    _stopEdgeScroll();
     if (
       pointerState.captureElement &&
       pointerState.captureElement.releasePointerCapture
@@ -1157,6 +1254,8 @@ var DashticzLayoutEditor = (function () {
     if ($canvas) $canvas.removeClass('dle-canvas');
     if ($canvas) $canvas.removeClass('dle-grid-canvas');
     if ($canvas) $canvas[0].style.removeProperty('--dle-grid-column-stride');
+    if ($canvas) $canvas[0].style.removeProperty('--dle-grid-editor-min-height');
+    if ($editingScreen) $editingScreen.removeClass('dle-grid-screen-editing');
     if ($toolbar) $toolbar.remove();
     $('.dle-drag-ghost').remove();
     $('body').removeClass('dle-active');
@@ -1182,6 +1281,9 @@ var DashticzLayoutEditor = (function () {
     originalGridWrappers = [];
     gridCollectionError = false;
     editingScreen = null;
+    $editingScreen = null;
+    gridEditorRows = 0;
+    _stopEdgeScroll();
   }
 
   function _escapeHtml(value) {

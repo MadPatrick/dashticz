@@ -1117,6 +1117,7 @@ body.dle-active {
 
 .dt-grid-layout.dle-grid-canvas {
   position: relative;
+  min-height: var(--dle-grid-editor-min-height, 100vh);
   background-color: rgba(13, 110, 253, 0.04);
   background-image:
     linear-gradient(rgba(90, 162, 255, 0.2) 1px, transparent 1px),
@@ -1124,6 +1125,15 @@ body.dle-active {
   background-size:
     var(--dle-grid-column-stride, 40px)
       calc(var(--dt-grid-row-height, 40px) + var(--dt-grid-gap, 0px));
+}
+
+.dt-grid-screen.dle-grid-screen-editing {
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+.dt-grid-layout.dle-grid-canvas > .dt-grid-item {
+  overflow: hidden;
 }
 
 @media (max-width: 767.98px) {

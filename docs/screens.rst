@@ -153,6 +153,8 @@ be scrolled inside that item.
 
 The visual Layout Editor can move and resize named grid blocks. Drag a block to
 change ``x`` and ``y``; use its bottom-right handle to change ``w`` and ``h``.
+The editor shows extra empty rows, adds more rows while dragging downward and
+scrolls when the pointer approaches the top or bottom of the screen.
 Save stores the positions as a marked override section in ``CONFIG.js`` and
 Cancel restores the previous positions. Blocks must have a safe named
 ``blocks['name']`` definition so their positions can be persisted. The Device
