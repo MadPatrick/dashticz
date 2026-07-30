@@ -66,18 +66,20 @@ function getBlock(cols, c, screendiv, standby) {
  * @param {string} columndiv - div to add block to
  * @param {string} c - Column id
  * @param {object | string | number} b - string, as key for block object, object or number
+ * @param {function} prepareContainer - optional hook before the component mounts
  *
  * If b is a number then it represents a device id.
  */
 var previousblock = 0;
 
-function addBlock2Column(columndiv, c, b) {
+function addBlock2Column(columndiv, c, b, prepareContainer) {
   if (typeof b === 'undefined') {
     console.log('Block undefined after block ', previousblock);
     return null;
   }
   previousblock = b;
   var myblockselector = Dashticz.mountNewContainer(columndiv);
+  if (prepareContainer) prepareContainer(myblockselector);
   var newBlock = b;
   try {
     if (typeof b !== 'object') newBlock = convertBlock(b, c);

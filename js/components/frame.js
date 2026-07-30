@@ -39,8 +39,13 @@ var DT_frame = {
     var width = hasIcon ? parseInt(me.$mountPoint.find('.dt_content').outerWidth()) : parseInt(me.$mountPoint.find('div').innerWidth());
     var scaling = me.block.scaletofit ? width/me.block.scaletofit : 1;
     var iframeWidth = width/scaling;
-    var dtstatecss={};
-    var iframecss={}
+    var dtstatecss={marginRight:'', marginLeft:''};
+    var iframecss={
+      '-webkit-transform': '',
+      transform: '',
+      width: '',
+      maxWidth: ''
+    }
     var scalingStr = 'scale(' + scaling + ')';
     if(scaling!==1) {
       dtstatecss= { };

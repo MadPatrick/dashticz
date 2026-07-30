@@ -27,13 +27,27 @@ test.describe('optional screen grid layout', () => {
 blocks['tc1'].grid = {x: 1, y: 1, w: 6, h: 3};
 blocks['tc2'].grid = {x: 10, y: 1, w: 5, h: 6};
 blocks['tc4'].grid = {x: 3, y: 9, w: 8, h: 3};
+blocks['grid_camera'] = {
+  type: 'camera',
+  cameras: [
+    {title: 'Front', imageUrl: 'img/dashticz.png'},
+    {title: 'Back', imageUrl: 'img/dashticz.png'}
+  ],
+  grid: {x: 17, y: 1, w: 8, h: 6}
+};
+blocks['grid_weather'] = {
+  type: 'weather',
+  widget_provider: 'openweather',
+  apikey: '',
+  grid: {x: 1, y: 13, w: 8, h: 4}
+};
 screens[1] = {
   layout: 'grid',
   gridColumns: 24,
   rowHeight: 40,
   gap: 5,
   mobileLayout: 'stack',
-  blocks: ['tc1', 'tc2', 'tc4']
+  blocks: ['tc1', 'tc2', 'tc4', 'grid_camera', 'grid_weather']
 };
 `,
       });
@@ -45,6 +59,8 @@ screens[1] = {
     const first = grid.locator('[data-grid-block="tc1"]');
     const second = grid.locator('[data-grid-block="tc2"]');
     const third = grid.locator('[data-grid-block="tc4"]');
+    const camera = grid.locator('[data-grid-block="grid_camera"]');
+    const weather = grid.locator('[data-grid-block="grid_weather"]');
 
     await expect(grid).toHaveCSS('display', 'grid');
     await expect(first).toHaveCSS('grid-column-start', '1');
@@ -64,6 +80,15 @@ screens[1] = {
     expect(desktopBoxes[2].y).toBeGreaterThan(
       desktopBoxes[1].y + desktopBoxes[1].height
     );
+    await expect(camera.locator(':scope > [id^="block_"]')).toHaveCount(2);
+
+    const weatherWidth = await weather.evaluate(
+      (element) => element.getBoundingClientRect().width
+    );
+    const weatherFontSize = await weather.locator('.dt_block').evaluate(
+      (element) => parseFloat(getComputedStyle(element).fontSize)
+    );
+    expect(weatherFontSize).toBeGreaterThan(weatherWidth / 15);
 
     await page.setViewportSize({ width: 500, height: 900 });
     await expect(grid).toHaveCSS('display', 'flex');

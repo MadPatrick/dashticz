@@ -237,14 +237,16 @@ var DashticzGridLayout = (function () {
         var mountPoint = addBlock2Column(
           screenSelector + ' > .dt-grid-layout',
           'grid',
-          blockRef
+          blockRef,
+          function (selector) {
+            var element = document.querySelector(selector);
+            if (!element) return;
+            element.setAttribute('data-grid-block', name);
+            applyGridPosition(element, grid);
+            rendered.push({ name: name, grid: grid, element: element });
+          }
         );
-        var element = document.querySelector(mountPoint);
-
-        if (!element) return;
-        element.setAttribute('data-grid-block', name);
-        applyGridPosition(element, grid);
-        rendered.push({ name: name, grid: grid, element: element });
+        if (!mountPoint) return;
       }
     );
 
