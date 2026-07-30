@@ -103,11 +103,16 @@ test.describe('optional screen grid layout', () => {
     });
 
     await page.goto(dashboardUrl);
-    await expect(page.locator('.config-mode-btn[data-mode="custom"]')).toHaveClass(
-      /active/
-    );
+    await expect(
+      page
+        .locator('.screen1 .config-mode-btn[data-mode="custom"]')
+        .first()
+    ).toHaveClass(/active/);
     const confirmation = page.waitForEvent('dialog');
-    await page.locator('.config-mode-btn[data-mode="wizard"]').click();
+    await page
+      .locator('.screen1 .config-mode-btn[data-mode="wizard"]')
+      .first()
+      .click();
     const dialog = await confirmation;
     expect(dialog.message()).toContain('Wizard gebruikt altijd');
     await dialog.accept();
