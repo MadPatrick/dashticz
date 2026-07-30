@@ -178,6 +178,24 @@ screens[1] = {
     await expect(page.locator('body')).toHaveClass(/dle-active/);
     await expect(grid).toHaveClass(/dle-grid-canvas/);
 
+    const resizeHandle = first.locator('.dle-resize-handle').last();
+    const resizeBox = await resizeHandle.boundingBox();
+    expect(resizeBox).not.toBeNull();
+    await page.mouse.move(
+      resizeBox.x + resizeBox.width / 2,
+      resizeBox.y + resizeBox.height / 2
+    );
+    await page.mouse.down();
+    await page.mouse.move(resizeBox.x + 110, resizeBox.y + 65, { steps: 5 });
+    await page.mouse.up();
+    await expect
+      .poll(() =>
+        first.evaluate((element) =>
+          element.style.getPropertyValue('--dt-grid-h')
+        )
+      )
+      .toBe('4');
+
     const firstOverlay = first.locator('.dle-overlay').first();
     const dragBox = await firstOverlay.boundingBox();
     const editorGridBox = await grid.boundingBox();
@@ -207,25 +225,6 @@ screens[1] = {
     const draggedY = await first.evaluate((element) =>
       parseInt(element.style.getPropertyValue('--dt-grid-y'), 10)
     );
-
-    await first.scrollIntoViewIfNeeded();
-    const resizeHandle = first.locator('.dle-resize-handle').last();
-    const resizeBox = await resizeHandle.boundingBox();
-    expect(resizeBox).not.toBeNull();
-    await page.mouse.move(
-      resizeBox.x + resizeBox.width / 2,
-      resizeBox.y + resizeBox.height / 2
-    );
-    await page.mouse.down();
-    await page.mouse.move(resizeBox.x + 110, resizeBox.y + 65, { steps: 5 });
-    await page.mouse.up();
-    await expect
-      .poll(() =>
-        first.evaluate((element) =>
-          element.style.getPropertyValue('--dt-grid-h')
-        )
-      )
-      .toBe('4');
 
     await page.locator('.dle-save').click();
     await expect.poll(() => savedGridRequest).not.toBeNull();
