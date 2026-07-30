@@ -357,6 +357,7 @@
             "standby_after": "Veille après (minutes, 0 = jamais)",
             "title": "Écran",
             "topbar_timeout": "Masquer la barre supérieure après (secondes 0 = Désactivé)",
+            "topbar_timeout_help": "Masquer la barre supérieure après x secondes. Il suffit de déplacer le pointeur de la souris vers le haut pour la faire réapparaître.",
             "security_button_icons": "Icônes au lieu du texte sur le bouton de sécurité",
             "blink_color": "Couleur et opacité du flash (RGBA)",
             "blink_color_help": "Définir la couleur et l’opacité du flash (rouge, vert, bleu, alpha)",
