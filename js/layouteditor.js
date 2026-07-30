@@ -584,9 +584,9 @@ var DashticzLayoutEditor = (function () {
         if (!item) return;
         if ($(event.target).closest('.dle-remove-button').length) return;
         if ($(event.target).closest('.dle-resize-handle').length) {
-          _startResize(event, item, this);
+          _startResize(event, item, $canvas[0]);
         } else {
-          _startDrag(event, item, this);
+          _startDrag(event, item, $canvas[0]);
         }
       });
 
