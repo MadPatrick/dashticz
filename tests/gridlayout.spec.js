@@ -111,14 +111,18 @@ test.describe('optional screen grid layout', () => {
         .locator('.screen1 .config-mode-btn[data-mode="custom"]')
         .first()
     ).toHaveClass(/active/);
-    const confirmation = page.waitForEvent('dialog');
+    let confirmationMessage = '';
+    page.once('dialog', async (dialog) => {
+      confirmationMessage = dialog.message();
+      await dialog.accept();
+    });
     await page
       .locator('.screen1 .config-mode-btn[data-mode="wizard"]')
       .first()
       .click();
-    const dialog = await confirmation;
-    expect(dialog.message()).toContain('Wizard gebruikt altijd');
-    await dialog.accept();
+    await expect.poll(() => confirmationMessage).toContain(
+      'Wizard gebruikt altijd'
+    );
 
     await expect.poll(() => conversionRequest).not.toBeNull();
     expect(conversionRequest.configMode).toBe('wizard');
