@@ -39,6 +39,7 @@ blocks['grid_weather'] = {
   type: 'weather',
   widget_provider: 'openweather',
   apikey: '',
+  layout: 2,
   grid: {x: 1, y: 13, w: 8, h: 4}
 };
 screens[1] = {
