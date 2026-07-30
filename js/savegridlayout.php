@@ -31,9 +31,6 @@ if (count($data['items']) > 500) {
 }
 
 $screenNumber = configwriter_parse_screen_number($data, 1);
-if ($screenNumber === 0) {
-    dashticz_json_error(400, 'Grid layout is not available for standby.');
-}
 
 $gridColumns = isset($data['gridColumns']) ? (int)$data['gridColumns'] : 24;
 $rowHeight = isset($data['rowHeight']) ? (int)$data['rowHeight'] : 40;
@@ -95,7 +92,8 @@ foreach ($data['items'] as $index => $entry) {
     $ref = $requestedRef;
     $props = null;
     $propsLiteral = null;
-    if ($ref === '' || !isset($declaredRefs[$ref])) {
+    $forceClone = $screenNumber === 0 && !empty($entry['clone']);
+    if ($forceClone || $ref === '' || !isset($declaredRefs[$ref])) {
         if (!isset($entry['create']) || !is_array($entry['create'])) {
             dashticz_json_error(400, 'Grid block is not declared and cannot be created.');
         }

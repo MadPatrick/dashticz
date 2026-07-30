@@ -791,6 +791,9 @@ test('topbar screen switcher supports standby and extra screens', () => {
   assert.match(main, /js\/screenswitcher\.js/);
   assert.match(main, /DashticzScreenSwitcher\.init\(\)/);
   assert.match(main, /DashticzScreenSwitcher\.mountIntoStandby\(\)/);
+  assert.match(main, /var standby_screen = \{\}/);
+  assert.match(main, /function hasStandbyContent/);
+  assert.match(main, /DashticzGridLayout\.renderGridScreen\(\s*standby_screen/);
   assert.match(main, /screenswitcher/);
   assert.match(main, /isStandbyEditMode/);
   assert.match(simpleBlock, /dt-screen-switcher-host/);

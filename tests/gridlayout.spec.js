@@ -129,6 +129,103 @@ test.describe('optional screen grid layout', () => {
     expect(separateModeWrites).toBe(0);
   });
 
+  test('converts legacy Standby columns to the same Wizard grid', async ({
+    page,
+  }) => {
+    let conversionRequest = null;
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `
+var columns_standby = {};
+columns_standby[1] = {blocks: ['tc1', 'tc2'], width: 12};
+`,
+      });
+    });
+    await page.route('**/info.php?get=csrf', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'standby-conversion-token' }),
+      });
+    });
+    await page.route('**/js/savegridlayout.php', async (route) => {
+      conversionRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+    await page
+      .locator('.screen1 .dt-screen-btn[data-screen="standby"]')
+      .first()
+      .click();
+    await expect(page.locator('.screenstandby')).toBeVisible();
+
+    const confirmation = page.waitForEvent('dialog');
+    await page.locator('.screenstandby .layouteditoricon').click();
+    const dialog = await confirmation;
+    expect(dialog.message()).toContain('24-koloms grid');
+    await dialog.accept();
+
+    await expect.poll(() => conversionRequest).not.toBeNull();
+    expect(conversionRequest.screen).toBe('standby');
+    expect(conversionRequest.items).toHaveLength(2);
+    expect(conversionRequest.items.every((item) => item.clone === true)).toBe(
+      true
+    );
+    expect(conversionRequest.items[0].grid.x).toBeGreaterThanOrEqual(1);
+    expect(conversionRequest.items[0].grid.w).toBeGreaterThanOrEqual(1);
+  });
+
+  test('renders a configured Standby grid', async ({ page }) => {
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `
+blocks['tc1'].grid = {x: 2, y: 2, w: 8, h: 3};
+blocks['tc2'].grid = {x: 12, y: 1, w: 10, h: 5};
+var standby_screen = {
+  layout: 'grid',
+  gridColumns: 24,
+  rowHeight: 40,
+  gap: 5,
+  mobileLayout: 'stack',
+  blocks: ['tc1', 'tc2']
+};
+`,
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+    await page
+      .locator('.screen1 .dt-screen-btn[data-screen="standby"]')
+      .first()
+      .click();
+
+    const standbyGrid = page.locator(
+      '.screenstandby.dt-grid-screen > .dt-grid-layout'
+    );
+    await expect(standbyGrid).toHaveCSS('display', 'grid');
+    await expect(
+      standbyGrid.locator('[data-grid-block="tc1"]')
+    ).toHaveCSS('grid-column-start', '2');
+    await expect(
+      standbyGrid.locator('[data-grid-block="tc2"]')
+    ).toHaveCSS('grid-row-end', 'span 5');
+  });
+
   test('places blocks at explicit coordinates and stacks on mobile', async ({
     page,
   }) => {

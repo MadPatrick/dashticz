@@ -29,6 +29,7 @@ var audio = {};
 var screens = {};
 var columns = {};
 var columns_standby = {};
+var standby_screen = {};
 var defaultcolumns = false;
 //move var allblocks = {};
 var myswiper;
@@ -977,7 +978,7 @@ function onLoad() {
         if (inactiveFor >= settings['standby_after'] * 1000 * 60) {
           $('body').addClass('standby');
           $('.dt-container').hide();
-          if (objectlength(columns_standby) > 0) buildStandby();
+          if (hasStandbyContent()) buildStandby();
           if (
             typeof _STANDBY_CALL_URL !== 'undefined' &&
             _STANDBY_CALL_URL !== ''
@@ -1111,6 +1112,15 @@ function toSlide(num) {
   if (typeof myswiper !== 'undefined') myswiper.slideTo(num, 0, true);
 }
 
+function hasStandbyContent() {
+  return (
+    (standby_screen &&
+      standby_screen.layout === 'grid' &&
+      Array.isArray(standby_screen.blocks)) ||
+    objectlength(columns_standby) > 0
+  );
+}
+
 function buildStandby() {
   if ($('.screenstandby').length == 0) {
     var standbyBackground =
@@ -1132,8 +1142,19 @@ function buildStandby() {
     $('#settingspopup').modal('hide');
     $('div.dt-container').before(screenhtml);
 
-    for (var c in columns_standby) {
-      getBlock(columns_standby[c], 'standby' + c, 'div.screenstandby', true);
+    if (
+      standby_screen &&
+      standby_screen.layout === 'grid' &&
+      Array.isArray(standby_screen.blocks)
+    ) {
+      DashticzGridLayout.renderGridScreen(
+        standby_screen,
+        'div.screenstandby'
+      );
+    } else {
+      for (var c in columns_standby) {
+        getBlock(columns_standby[c], 'standby' + c, 'div.screenstandby', true);
+      }
     }
 
     $('.screenstandby').on('click touchend', function (event) {

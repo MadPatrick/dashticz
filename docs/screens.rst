@@ -211,6 +211,33 @@ Standby Screen
 There is the ability to let Dashticz go into standby mode. This defined with the ``config['standby_after']`` parameter in the CONFIG.js file.
 The screen get sort of grayed out and you can show items on the standby theme. These items MUST have been declared and used in the Dashboard.
 
+Wizard Standby uses the same free-positioned grid as numbered screens. Its
+configuration is stored separately in ``standby_screen``::
+
+    var standby_screen = {
+        layout: 'grid',
+        gridColumns: 24,
+        rowHeight: 40,
+        gap: 5,
+        mobileLayout: 'stack',
+        blocks: ['standby_clock', 'standby_weather']
+    };
+
+    blocks['standby_clock'] = {
+        type: 'clock',
+        grid: {x: 1, y: 1, w: 6, h: 3}
+    };
+
+    blocks['standby_weather'] = {
+        type: 'weather',
+        grid: {x: 10, y: 1, w: 10, h: 5}
+    };
+
+Open **S** and then the Layout Editor to drag or resize these blocks. Existing
+``columns_standby`` configurations remain supported. In Wizard mode, opening
+their Layout Editor asks for confirmation and converts them to
+``standby_screen`` grid configuration.
+
 You can also open Standby manually with the **S** button in the topbar screen switcher (and return with **1**, **2**, …)::
 
     config['standby_after'] = 5;  //Enter standby mode after 5 minutes

@@ -57,13 +57,15 @@ var DashticzLayoutEditor = (function () {
       return;
     }
     if (
-      _activeScreenTarget() !== 'standby' &&
       typeof isCustomConfigMode === 'function' &&
       !isCustomConfigMode()
     ) {
       convertCurrentScreenToGrid(false).done(function () {
         try {
-          sessionStorage.setItem('dashticz_open_grid_editor', '1');
+          sessionStorage.setItem(
+            'dashticz_open_grid_editor',
+            String(_activeScreenPayload())
+          );
         } catch (error) {
           // Session storage is optional.
         }
@@ -153,11 +155,6 @@ var DashticzLayoutEditor = (function () {
     var deferred = $.Deferred();
     var $screen = _activeScreenDom();
     var screenNumber = _activeScreenPayload();
-    if (screenNumber === 'standby') {
-      alert('Ga eerst naar een normaal scherm voordat je Wizard inschakelt.');
-      deferred.reject();
-      return deferred.promise();
-    }
     if (!$screen.length) {
       alert('Er is geen normaal scherm gevonden om naar grid om te zetten.');
       deferred.reject();
@@ -203,6 +200,7 @@ var DashticzLayoutEditor = (function () {
         );
       })
       .done(function (result) {
+        result.gridScreen = screenNumber;
         deferred.resolve(result);
       })
       .fail(function (xhr) {
@@ -234,11 +232,17 @@ var DashticzLayoutEditor = (function () {
         if (error) return;
         var $column = $(this);
         var columnKey = String($column.attr('data-colindex'));
+        var isStandby = screenNumber === 'standby';
+        var sourceColumns = isStandby ? columns_standby : columns;
+        var lookupKey =
+          isStandby && /^standby/.test(columnKey)
+            ? columnKey.replace(/^standby/, '')
+            : columnKey;
         var refs =
-          typeof columns !== 'undefined' &&
-          columns[columnKey] &&
-          Array.isArray(columns[columnKey].blocks)
-            ? columns[columnKey].blocks
+          sourceColumns &&
+          sourceColumns[lookupKey] &&
+          Array.isArray(sourceColumns[lookupKey].blocks)
+            ? sourceColumns[lookupKey].blocks
             : [];
         var wrappers = $column.children('div[id^="block_"]').toArray();
         if (refs.length !== wrappers.length) {
@@ -321,7 +325,10 @@ var DashticzLayoutEditor = (function () {
             width12,
             rect.height
           );
-          if (!create && !safeReference) {
+          if (
+            !create &&
+            (!safeReference || screenNumber === 'standby')
+          ) {
             error =
               'Conversie gestopt: block "' +
               (safeReference || index + 1) +
@@ -331,6 +338,7 @@ var DashticzLayoutEditor = (function () {
           var entry = {
             grid: position,
           };
+          if (screenNumber === 'standby') entry.clone = true;
           if (create) entry.create = create;
           if (safeReference) entry.ref = safeReference;
           converted.push(entry);

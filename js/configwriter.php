@@ -123,6 +123,64 @@ function configwriter_set_config_mode($config, $mode)
  * after the regular config assignments makes CONFIG.js readable without
  * changing hand-written content outside the editor sections.
  */
+function configwriter_remove_config_key($config, $key)
+{
+    $pattern = '/^[ \t]*config\[\s*([\'"])'
+        . preg_quote((string)$key, '/')
+        . '\1\s*\]\s*=/m';
+    if (!preg_match_all(
+        $pattern,
+        $config,
+        $matches,
+        PREG_SET_ORDER | PREG_OFFSET_CAPTURE
+    )) {
+        return $config;
+    }
+
+    for ($matchIndex = count($matches) - 1; $matchIndex >= 0; $matchIndex--) {
+        $start = $matches[$matchIndex][0][1];
+        $scan = $start + strlen($matches[$matchIndex][0][0]);
+        $quote = null;
+        $escaped = false;
+        $length = strlen($config);
+        for (; $scan < $length; $scan++) {
+            $char = $config[$scan];
+            if ($quote !== null) {
+                if ($escaped) {
+                    $escaped = false;
+                } elseif ($char === '\\') {
+                    $escaped = true;
+                } elseif ($char === $quote) {
+                    $quote = null;
+                }
+                continue;
+            }
+            if ($char === "'" || $char === '"' || $char === '`') {
+                $quote = $char;
+                continue;
+            }
+            if ($char !== ';') {
+                continue;
+            }
+
+            $end = $scan + 1;
+            while ($end < $length && ($config[$end] === ' ' || $config[$end] === "\t")) {
+                $end++;
+            }
+            if (substr($config, $end, 2) !== '//') {
+                if (substr($config, $end, 2) === "\r\n") {
+                    $end += 2;
+                } elseif ($end < $length && ($config[$end] === "\n" || $config[$end] === "\r")) {
+                    $end++;
+                }
+            }
+            $config = substr($config, 0, $start) . substr($config, $end);
+            break;
+        }
+    }
+    return $config;
+}
+
 function configwriter_upsert_root_config_settings($config, $settings, $raw = false)
 {
     if (empty($settings)) {
@@ -135,10 +193,7 @@ function configwriter_upsert_root_config_settings($config, $settings, $raw = fal
             continue;
         }
 
-        $pattern = '/^[ \t]*config\[([\'"])'
-            . preg_quote((string)$key, '/')
-            . '\1\]\s*=\s*[^;\r\n]+;[ \t]*(?:\r?\n|$)/m';
-        $config = preg_replace($pattern, '', $config);
+        $config = configwriter_remove_config_key($config, $key);
 
         $expression = $raw
             ? trim((string)$value)
@@ -895,7 +950,7 @@ function configwriter_build_grid_layout_section(
     $gap,
     $mobileLayout = 'stack'
 ) {
-    $n = max(1, min(99, (int)$screenNumber));
+    $n = max(0, min(99, (int)$screenNumber));
     $columns = max(1, min(100, (int)$gridColumns));
     $row = max(1, min(2000, (int)$rowHeight));
     $gridGap = max(0, min(200, (float)$gap));
@@ -930,14 +985,20 @@ function configwriter_build_grid_layout_section(
     $quotedRefs = array_map(function ($ref) {
         return "'" . configwriter_js_string_escape($ref) . "'";
     }, $refs);
-    $section .= "\nif (typeof screens === 'undefined') var screens = {}\n";
-    $section .= "if (typeof screens[" . $n . "] === 'undefined') screens[" . $n . "] = {};\n";
-    $section .= "screens[" . $n . "]['layout'] = 'grid';\n";
-    $section .= "screens[" . $n . "]['gridColumns'] = " . $columns . ";\n";
-    $section .= "screens[" . $n . "]['rowHeight'] = " . $row . ";\n";
-    $section .= "screens[" . $n . "]['gap'] = " . $gridGap . ";\n";
-    $section .= "screens[" . $n . "]['mobileLayout'] = '" . $mobile . "';\n";
-    $section .= "screens[" . $n . "]['blocks'] = ["
+    if ($n === 0) {
+        $section .= "\nif (typeof standby_screen === 'undefined') var standby_screen = {}\n";
+        $target = 'standby_screen';
+    } else {
+        $section .= "\nif (typeof screens === 'undefined') var screens = {}\n";
+        $section .= "if (typeof screens[" . $n . "] === 'undefined') screens[" . $n . "] = {};\n";
+        $target = 'screens[' . $n . ']';
+    }
+    $section .= $target . "['layout'] = 'grid';\n";
+    $section .= $target . "['gridColumns'] = " . $columns . ";\n";
+    $section .= $target . "['rowHeight'] = " . $row . ";\n";
+    $section .= $target . "['gap'] = " . $gridGap . ";\n";
+    $section .= $target . "['mobileLayout'] = '" . $mobile . "';\n";
+    $section .= $target . "['blocks'] = ["
         . implode(', ', $quotedRefs) . "];\n";
 
     return $section;

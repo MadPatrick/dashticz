@@ -253,7 +253,10 @@ var DT_simpleblock = (function () {
               'wizard'
             ).done(function (result) {
               try {
-                sessionStorage.setItem('dashticz_open_grid_editor', '1');
+                sessionStorage.setItem(
+                  'dashticz_open_grid_editor',
+                  String((result && result.gridScreen) || '1')
+                );
               } catch (error) {
                 // Session storage is optional.
               }
@@ -285,18 +288,29 @@ var DT_simpleblock = (function () {
   }
 
   function _openPendingGridEditor() {
-    var shouldOpen = false;
+    var pendingScreen = '';
     try {
-      shouldOpen =
-        sessionStorage.getItem('dashticz_open_grid_editor') === '1';
-      if (shouldOpen) {
+      pendingScreen =
+        sessionStorage.getItem('dashticz_open_grid_editor') || '';
+      if (pendingScreen) {
         sessionStorage.removeItem('dashticz_open_grid_editor');
       }
     } catch (error) {
       return;
     }
-    if (!shouldOpen) return;
+    if (!pendingScreen) return;
     setTimeout(function () {
+      if (
+        pendingScreen === 'standby' &&
+        typeof DashticzScreenSwitcher !== 'undefined'
+      ) {
+        DashticzScreenSwitcher.goToScreen('standby');
+      } else if (
+        parseInt(pendingScreen, 10) > 0 &&
+        typeof DashticzScreenSwitcher !== 'undefined'
+      ) {
+        DashticzScreenSwitcher.goToScreen(parseInt(pendingScreen, 10));
+      }
       DT_function.loadDTScript('js/layouteditor.js').then(function () {
         DashticzLayoutEditor.open();
       });

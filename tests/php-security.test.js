@@ -32,15 +32,18 @@ test('calendar fetching is URL validated and does not expose stack traces', () =
 
 test('settings writes require CSRF and serialize values as JSON', () => {
   const source = read('js/savesettings.php');
+  const writer = read('js/configwriter.php');
   assert.match(source, /dashticz_require_same_origin\(\)/);
   assert.match(source, /dashticz_require_csrf\(\)/);
   assert.match(source, /json_decode\(\$serializedValue/);
-  assert.match(source, /file_put_contents\(\$configPath, \$newContents, LOCK_EX\)/);
-  assert.match(source, /if \(file_exists\(\$configPath\)\)/);
-  assert.match(source, /trim\(\$config\) !== '#EMPTY#'/);
-  assert.match(source, /!file_exists\(\$configPath\) && !is_writable\(\$customDir\)/);
-  assert.match(source, /\$customMode/);
-  assert.doesNotMatch(source, /\$newconf\.="config/);
+  assert.match(source, /configwriter_read_config/);
+  assert.match(source, /configwriter_upsert_root_config_settings/);
+  assert.match(source, /configwriter_write_config/);
+  assert.match(writer, /function configwriter_upsert_root_config_settings/);
+  assert.match(writer, /function configwriter_remove_config_key/);
+  assert.match(writer, /PREG_OFFSET_CAPTURE/);
+  assert.doesNotMatch(source, /\$rows/);
+  assert.doesNotMatch(source, /unset\(\$rows/);
 });
 
 test('config mode writer only accepts custom or wizard', () => {
@@ -53,6 +56,7 @@ test('config mode writer only accepts custom or wizard', () => {
   assert.match(source, /custom/);
   assert.match(source, /wizard/);
   assert.match(source, /configwriter_set_config_mode/);
+  assert.match(source, /\$forceClone = \$screenNumber === 0/);
   assert.match(writer, /function configwriter_set_config_mode/);
   assert.match(source, /configwriter_write_config/);
 });
@@ -222,6 +226,8 @@ test('grid layout writer validates and stores positions without column packing',
   assert.match(writer, /isset\(\$item\['propsLiteral'\]\)/);
   assert.match(writer, /screens\[.*\]\['layout'\] = 'grid'/);
   assert.match(writer, /blocks\['.*'\]\['grid'\]/);
+  assert.match(writer, /standby_screen/);
+  assert.doesNotMatch(source, /not available for standby/);
 });
 
 test('device and widget writers keep the grouped layout until consolidation', () => {
@@ -297,7 +303,7 @@ test('settings writer leaves the standby layout untouched', () => {
   const source = read('js/savesettings.php');
   assert.doesNotMatch(source, /standby_blocks/);
   assert.doesNotMatch(source, /configwriter_replace_standby_section/);
-  assert.doesNotMatch(source, /configwriter\.php/);
+  assert.match(source, /configwriter_upsert_root_config_settings/);
 });
 
 test('background list endpoint safely exposes bundled and custom images', () => {
