@@ -950,16 +950,53 @@ function configwriter_extract_block_lines($config)
 {
     $blocks = [];
     if (!preg_match_all(
-        "/blocks\\['([^']+)'\\]\\s*=\\s*(\\{[^;]*\\})\\s*;?/",
+        '/blocks\s*\[\s*([\'"])([^\'"]+)\1\s*\]\s*=\s*\{/',
         $config,
         $matches,
-        PREG_SET_ORDER
+        PREG_SET_ORDER | PREG_OFFSET_CAPTURE
     )) {
         return $blocks;
     }
 
     foreach ($matches as $match) {
-        $blocks[$match[1]] = $match[2];
+        $key = $match[2][0];
+        $matchText = $match[0][0];
+        $objectStart = $match[0][1] + strrpos($matchText, '{');
+        $depth = 0;
+        $quote = null;
+        $escaped = false;
+        $length = strlen($config);
+
+        for ($index = $objectStart; $index < $length; $index++) {
+            $char = $config[$index];
+            if ($quote !== null) {
+                if ($escaped) {
+                    $escaped = false;
+                } elseif ($char === '\\') {
+                    $escaped = true;
+                } elseif ($char === $quote) {
+                    $quote = null;
+                }
+                continue;
+            }
+            if ($char === "'" || $char === '"' || $char === '`') {
+                $quote = $char;
+                continue;
+            }
+            if ($char === '{') {
+                $depth++;
+            } elseif ($char === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    $blocks[$key] = substr(
+                        $config,
+                        $objectStart,
+                        $index - $objectStart + 1
+                    );
+                    break;
+                }
+            }
+        }
     }
 
     return $blocks;

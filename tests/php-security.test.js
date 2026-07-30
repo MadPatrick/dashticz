@@ -211,6 +211,10 @@ test('grid layout writer validates and stores positions without column packing',
   assert.doesNotMatch(source, /configwriter_pack_columns_by_height/);
   assert.doesNotMatch(source, /configwriter_build_layout_section/);
   assert.match(writer, /function configwriter_extract_declared_block_refs/);
+  assert.match(writer, /PREG_OFFSET_CAPTURE/);
+  assert.match(writer, /\$objectStart/);
+  assert.match(writer, /\$depth\+\+/);
+  assert.doesNotMatch(writer, /\\\{\[\^;\]\*\\\}/);
   assert.match(writer, /function configwriter_normalise_grid_position/);
   assert.match(writer, /function configwriter_build_grid_layout_section/);
   assert.match(writer, /isset\(\$item\['props'\]\)/);

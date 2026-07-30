@@ -426,7 +426,6 @@ var DashticzLayoutEditor = (function () {
 
   function _isGridSerializable(value) {
     if (
-      value === null ||
       typeof value === 'string' ||
       typeof value === 'number' ||
       typeof value === 'boolean'
