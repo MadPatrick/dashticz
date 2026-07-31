@@ -78,7 +78,7 @@ test('first-run setup uses its own wizard and removes the legacy browser fallbac
   assert.match(source, /Check again/);
   assert.match(source, /showSetupWizard\(\)/);
   assert.match(source, /id="dt-setup-wizard"/);
-  assert.match(source, /url: 'js\/savesettings\.php'/);
+  assert.match(source, /url: configEditorUrl\('js\/savesettings\.php'\)/);
   assert.match(
     source,
     /id: 'topbar_timeout',[\s\S]*?def: '5'/
@@ -832,6 +832,36 @@ test('topbar screen switcher supports standby and extra screens', () => {
   assert.match(switcher, /setStandbyBarVisible/);
   assert.match(switcher, /bindStandbyBarHover/);
   assert.match(switcher, /clientY\s*<\s*56/);
+});
+
+test('topbar and layout editor keep controls usable', () => {
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const editor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+  const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+  const blocks = fs.readFileSync(path.join(root, 'js/blocks.js'), 'utf8');
+
+  assert.match(styles, /\.colbar\s*\{[^}]*display:\s*flex !important;[^}]*flex-wrap:\s*nowrap;/s);
+  assert.match(styles, /\.dt-topbar-logo,[\s\S]*order:\s*1;[\s\S]*flex:\s*0 0 15%;/);
+  assert.match(styles, /\.dt-topbar-miniclock,[\s\S]*order:\s*2;[\s\S]*flex:\s*1 1 0;/);
+  assert.match(styles, /\.dt-topbar-screenswitcher,[\s\S]*order:\s*3;[\s\S]*margin-left:\s*auto;/);
+  assert.match(styles, /\.dt-topbar-settings,[\s\S]*order:\s*4;[\s\S]*flex-shrink:\s*0;/);
+  assert.match(styles, /div:first-child:nth-last-child\(4\) \+ div \+ div[\s\S]*margin-left:\s*auto;/);
+  assert.match(blocks, /dt-topbar-item dt-topbar-/);
+  assert.match(main, /\['logo', 'miniclock', 'screenswitcher', 'settings'\]/);
+  assert.match(editor, /var MIN_GRID_SPAN = 2;/);
+  assert.match(editor, /item\.grid\.w < MIN_GRID_SPAN \|\| item\.grid\.h < MIN_GRID_SPAN/);
+  assert.match(editor, /width = Math\.max\(\s*MIN_GRID_SPAN,/s);
+  assert.match(editor, /height = Math\.max\(MIN_GRID_SPAN,/);
+});
+
+test('garbage dates use the selected interface language', () => {
+  const garbage = fs.readFileSync(
+    path.join(root, 'js/components/garbage.js'),
+    'utf8'
+  );
+
+  assert.match(garbage, /garbage\.date\.locale\(settings\['language'\]\)/);
+  assert.match(garbage, /localizedDate\.format\('dddd'\)/);
 });
 
 test('migration sources use LF line endings', () => {

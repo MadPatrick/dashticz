@@ -123,6 +123,7 @@
 
 .dt_block {
   display: flex;
+  align-items: flex-start;
   background: rgba(0, 0, 0, 0.2);
   background-clip: padding-box;
   border: 7px solid rgba(255, 255, 255, 0);
@@ -921,14 +922,56 @@ next css sets the default height of the frame popup
   white-space: normal;
 }
 
-/* Keep the settings/fullscreen icons pinned to the right edge,
-   independent of the (now absolutely positioned) miniclock block.
-   The margin-left:auto must sit on the actual flex item (the wrapper
-   div Dashticz mounts each block in), not on the nested .text-right
-   element itself, or it has no effect on the flex layout. */
-.colbar > div:has(.text-right) {
+/* Keep every topbar block on one row.
+   IMPORTANT: Dashticz mounts each block in a wrapper div (#block_0, #block_1,
+   ...) that has `display: contents` (confirmed via devtools). An element
+   with display:contents generates no box of its own, so ANY box-level CSS
+   put on ".colbar > div" (margin, flex-shrink, order, width, ...) is silently
+   ignored - the browser only lays out the wrapper's *children* as the real
+   flex items of .colbar. Every rule below therefore targets those inner
+   elements (.logo, .miniclock, .dt-screen-switcher-host,
+   .topbar-settings-wrap) directly instead of their wrapper. */
+.colbar {
+  /* !important beats the inline display:block that jQuery's .show() writes
+     onto this element when the bar is revealed. */
+  display: flex !important;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: 100%;
+}
+
+.colbar .logo {
+  order: 1;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The date/clock may shrink (and ellipsis) before anything else - this
+   guarantees the screen-switcher and settings icons never get pushed off
+   the right edge of the bar when space is tight. */
+.colbar .miniclock {
+  order: 2;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Screen selection and configuration controls form one right-aligned
+   cluster: margin-left:auto on the first of the two pushes both all the
+   way to the right edge, and neither is allowed to shrink or wrap. */
+.colbar .dt-screen-switcher-host {
+  order: 3;
+  flex: 0 0 auto;
   margin-left: auto;
-  margin-right: -5px;
+  margin-right: 12px;
+}
+
+.colbar .topbar-settings-wrap {
+  order: 4;
+  flex: 0 0 auto;
+  margin-left: 0;
 }
 
 .colbar .text-right {
@@ -985,17 +1028,6 @@ next css sets the default height of the frame popup
 .colbar span.layouteditoricon {
   cursor: pointer;
   margin-right: 4px;
-}
-
-/* Screen switcher lives in its own topbar block, left of settings */
-.colbar > div:has(.dt-screen-switcher-host) {
-  flex: 0 0 auto;
-  margin-left: auto;
-  margin-right: 12px;
-}
-
-.colbar > div:has(.topbar-settings-wrap) {
-  margin-left: 0;
 }
 
 .dt-screen-switcher-host {
