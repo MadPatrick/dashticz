@@ -25,6 +25,26 @@
         "last_month": "dernier mois",
         "today": "aujourd’hui"
     },
+   "garbage": {
+        "no_data": "Aucune donnée de collecte trouvée",
+        "provider_not_found": "Fournisseur de collecte des déchets introuvable",
+        "load_error": "Erreur lors du chargement des données de collecte",
+        "types": {
+            "gft": "Déchets organiques",
+            "pmd": "PMC",
+            "rest": "Déchets résiduels",
+            "papier": "Papier",
+            "kca": "Déchets chimiques",
+            "brown": "Bac brun",
+            "black": "Bac noir",
+            "milieu": "Déchets recyclables",
+            "kerstboom": "Sapin de Noël",
+            "aeea": "Déchets électroniques",
+            "textiel": "Textiles",
+            "sorti": "Déchets triés",
+            "duo": "Bac duo"
+        }
+    },
     "misc": {
         "download": "Cliquez ici pour télécharger",
         "last_update": "Dernière mise à jour",
@@ -46,6 +66,15 @@
         "enter_pincode": "Entrez le code PIN",
         "wrong_code": "Code PIN incorrect",
         "platform": "Quai"
+        "no_appointments": "Aucun rendez-vous.",
+        "calendar_missing": "L'URL du calendrier est manquante.",
+        "no_traffic": "Aucune annonce de trafic.",
+        "traffic_api_missing": "La clé API ANWB n'est pas configurée.",
+        "no_alerts": "Aucune alerte en cours.",
+        "weather_loading": "Chargement de la météo...",
+        "weather_api_missing": "Aucune clé API météo valide.",
+        "no_downloads": "Aucun téléchargement actif ou aucune connexion.",
+        "nzbget_host_missing": "L'hôte NZBGet n'est pas configuré."
     },
     "settings": {
         "title": "Paramètres Dashticz",
