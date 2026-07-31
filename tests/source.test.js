@@ -272,6 +272,7 @@ test('configured topbar timeout loads and initializes the auto-hide behavior', (
   const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
   const topbar = fs.readFileSync(path.join(root, 'js/topbar.js'), 'utf8');
   const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
 
   assert.match(
     main,
@@ -284,7 +285,12 @@ test('configured topbar timeout loads and initializes the auto-hide behavior', (
   );
   assert.match(topbar, /settings\['topbar_timeout'\]/);
   assert.match(topbar, /getBars\(\)\.slideUp\(400\)/);
-  assert.match(topbar, /getBars\(\)\.slideDown\(400\)/);
+  assert.match(topbar, /getBars\(\)\.slideDown\(400,/);
+  assert.match(topbar, /\.css\('display', 'flex'\)/);
+  assert.doesNotMatch(
+    styles,
+    /\.colbar\s*\{[^}]*display:\s*flex !important;/s
+  );
   assert.doesNotMatch(main, /id: 'editmode'/);
   assert.equal(fs.existsSync(path.join(root, 'js/editmode.js')), false);
   assert.match(settings, /settingList\['screen'\]\['topbar_timeout'\]/);
@@ -812,6 +818,14 @@ test('topbar screen switcher supports standby and extra screens', () => {
   assert.match(switcher, /data-screen="standby"/);
   assert.match(switcher, /title="Standby">S</);
   assert.match(switcher, /dt-screen-add/);
+  assert.match(switcher, /dt-screen-delete/);
+  assert.match(switcher, /screens\.length > 1/);
+  assert.match(switcher, /disabled aria-disabled="true"/);
+  assert.match(switcher, /\.dt-screen-delete'[\s\S]*\.prop\('disabled', !canDelete\)/);
+  assert.ok(
+    switcher.indexOf('dt-screen-add') < switcher.indexOf('dt-screen-delete'),
+    'the minus button must render directly after the plus button'
+  );
   assert.match(switcher, /js\/savescreens\.php/);
   assert.match(switcher, /enterStandbyManual/);
   assert.match(switcher, /standbyEditMode/);
@@ -840,18 +854,18 @@ test('topbar and layout editor keep controls usable', () => {
   const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
   const blocks = fs.readFileSync(path.join(root, 'js/blocks.js'), 'utf8');
 
-  assert.match(styles, /\.colbar\s*\{[^}]*display:\s*flex !important;[^}]*flex-wrap:\s*nowrap;/s);
-  assert.match(styles, /\.dt-topbar-logo,[\s\S]*order:\s*1;[\s\S]*flex:\s*0 0 15%;/);
-  assert.match(styles, /\.dt-topbar-miniclock,[\s\S]*order:\s*2;[\s\S]*flex:\s*1 1 0;/);
-  assert.match(styles, /\.dt-topbar-screenswitcher,[\s\S]*order:\s*3;[\s\S]*margin-left:\s*auto;/);
-  assert.match(styles, /\.dt-topbar-settings,[\s\S]*order:\s*4;[\s\S]*flex-shrink:\s*0;/);
-  assert.match(styles, /div:first-child:nth-last-child\(4\) \+ div \+ div[\s\S]*margin-left:\s*auto;/);
+  assert.match(styles, /\.colbar\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;/s);
+  assert.match(styles, /\.colbar \.logo\s*\{[^}]*order:\s*1;[^}]*flex:\s*0 1 auto;/s);
+  assert.match(styles, /\.colbar \.miniclock\s*\{[^}]*order:\s*2;[^}]*flex:\s*1 1 auto;/s);
+  assert.match(styles, /\.colbar \.dt-screen-switcher-host\s*\{[^}]*order:\s*3;[^}]*margin-left:\s*auto;/s);
+  assert.match(styles, /\.colbar \.topbar-settings-wrap\s*\{[^}]*order:\s*4;[^}]*flex:\s*0 0 auto;/s);
   assert.match(blocks, /dt-topbar-item dt-topbar-/);
   assert.match(main, /\['logo', 'miniclock', 'screenswitcher', 'settings'\]/);
-  assert.match(editor, /var MIN_GRID_SPAN = 2;/);
-  assert.match(editor, /item\.grid\.w < MIN_GRID_SPAN \|\| item\.grid\.h < MIN_GRID_SPAN/);
-  assert.match(editor, /width = Math\.max\(\s*MIN_GRID_SPAN,/s);
-  assert.match(editor, /height = Math\.max\(MIN_GRID_SPAN,/);
+  assert.match(editor, /var MIN_GRID_WIDTH = 2;/);
+  assert.match(editor, /var MIN_GRID_HEIGHT = 4;/);
+  assert.match(editor, /item\.grid\.w < MIN_GRID_WIDTH \|\| item\.grid\.h < MIN_GRID_HEIGHT/);
+  assert.match(editor, /width = Math\.max\(\s*MIN_GRID_WIDTH,/s);
+  assert.match(editor, /height = Math\.max\(MIN_GRID_HEIGHT,/);
 });
 
 test('garbage dates use the selected interface language', () => {

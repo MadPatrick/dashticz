@@ -141,7 +141,7 @@ screen 1. Blocks created by the Device Editor receive a blue edit overlay:
 - select the red minus button at the bottom-left to remove a device;
 - width snaps to the 12-column dashboard grid;
 - height snaps to steps of 10 pixels;
-- free-grid blocks cannot be resized below 2x2 grid cells;
+- free-grid blocks cannot be resized below 2x4 grid cells;
 - select **Save** to update `custom/CONFIG.js`, or **Cancel**/Escape to restore
   the original layout.
 
@@ -152,9 +152,9 @@ the same ordering. Manually configured blocks and topbar blocks are deliberately
 left unchanged. Saved heights are applied to classic Domoticz device blocks as
 well as the `modern-dark` theme.
 
-Use the minus control beside the screen selector to delete the active extra
-screen. Screen 1 cannot be deleted; higher screen numbers are compacted after
-deletion.
+Use the minus control directly beside the plus control to delete the active
+extra screen. The minus control is disabled for Standby, screen 1 and when only
+one numbered screen remains. Higher screen numbers are compacted after deletion.
 
 After any visual editor is saved, Dashticz automatically consolidates its
 generated output between `// [dashboard-editor-start]` and
