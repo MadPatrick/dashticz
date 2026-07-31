@@ -65,7 +65,7 @@
         "value": "Valeur",
         "enter_pincode": "Entrez le code PIN",
         "wrong_code": "Code PIN incorrect",
-        "platform": "Quai"
+        "platform": "Quai",
         "no_appointments": "Aucun rendez-vous.",
         "calendar_missing": "L'URL du calendrier est manquante.",
         "no_traffic": "Aucune annonce de trafic.",
