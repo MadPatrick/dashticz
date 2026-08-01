@@ -577,6 +577,10 @@ test('xmltv widget uses its own proxy and preserves optional block settings', ()
     path.join(root, 'js/savewidgets.php'),
     'utf8'
   );
+  const savegridlayout = fs.readFileSync(
+    path.join(root, 'js/savegridlayout.php'),
+    'utf8'
+  );
 
   assert.match(tvguide, /typeof block\.xmltvurl === 'undefined'/);
   assert.match(xmltv, /xmltv\.php\?url=/);
@@ -588,9 +592,16 @@ test('xmltv widget uses its own proxy and preserves optional block settings', ()
   assert.match(widgetEditor, /entry\.layout = parseInt\(xcfg\.layout, 10\) === 1 \? 1 : 0;/);
   assert.match(widgetEditor, /entry\.separator = xcfg\.separator \|\| '-';/);
   assert.match(widgetEditor, /entry\.refresh = parseInt\(xcfg\.refresh, 10\) \|\| 3600;/);
+  // _hydrateGridWidget must read back layout, separator and refresh so reopening
+  // the settings popup shows the previously saved values in grid mode.
+  assert.match(widgetEditor, /item\.id === 'xmltvguide'[\s\S]*widgetConfigs\.xmltvguide\.layout[\s\S]*widgetConfigs\.xmltvguide\.separator[\s\S]*widgetConfigs\.xmltvguide\.refresh/s);
   assert.match(layouteditor, /item\.widgetId === 'xmltvguide'[\s\S]*entry\.layout = definition\.layout[\s\S]*entry\.separator = definition\.separator[\s\S]*entry\.refresh = definition\.refresh/s);
   assert.match(savewidgets, /\$id === 'xmltvguide'[\s\S]*\$widget\['layout'\][\s\S]*\$widget\['separator'\][\s\S]*\$widget\['refresh'\]/s);
   assert.match(savewidgets, /case 'xmltvguide':[\s\S]*\$props\['layout'\][\s\S]*\$props\['separator'\][\s\S]*\$props\['refresh'\]/s);
+  // savegridlayout must prefer $allBlockLines over $existingGridBlocks so that a
+  // URL change saved by savewidgets.php (blocksOnly) is not silently discarded
+  // when savegridlayout.php runs immediately afterwards.
+  assert.match(savegridlayout, /isset\(\$allBlockLines\[[\s\S]*?\$propsLiteral = \$allBlockLines\[[\s\S]*?isset\(\$existingGridBlocks\[/s);
 });
 
 test('Hayman clock does not depend on Moment locale internals for rendering', () => {

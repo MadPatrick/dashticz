@@ -887,6 +887,15 @@ var DashticzWidgetEditor = (function () {
       if (typeof definition.maxitems !== 'undefined') {
         widgetConfigs.xmltvguide.maxitems = String(definition.maxitems);
       }
+      if (typeof definition.layout !== 'undefined') {
+        widgetConfigs.xmltvguide.layout = String(definition.layout);
+      }
+      if (typeof definition.separator === 'string') {
+        widgetConfigs.xmltvguide.separator = definition.separator;
+      }
+      if (typeof definition.refresh !== 'undefined') {
+        widgetConfigs.xmltvguide.refresh = String(definition.refresh);
+      }
     }
   }
 
