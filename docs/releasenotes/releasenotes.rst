@@ -6,6 +6,24 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.22.7 beta (1-8-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Widget editor: an **iFrame** widget has been added to the widget catalog.  It uses the existing ``DT_frame`` component and generates a block with ``frameurl`` in ``CONFIG.js``.  Configurable options are: URL (required), height (px), scrollbars (on/off), scale-to-fit width, force cache refresh, and refresh interval.  Translations for the new widget and its settings have been added to ``en_US``, ``nl_NL``, and ``fr_FR``.  Existing hand-written ``frames.*`` blocks (using ``frameurl``) are automatically recognised by the widget editor when the screen is opened.
+
+Code
+~~~~
+
+* ``js/widgeteditor.js``: added ``iframe`` catalog entry, ``_widgetHasConfig`` branch, ``widgetConfigs.iframe`` initialisation, ``_hydrateGridWidget``/managed-layout hydration, config-modal fields, save-validation, payload building, and ``frameurl``-based type detection in ``_catalogItemForDefinition``.
+* ``js/savewidgets.php``: added ``iframe`` to the server-side catalog, URL and option validation, and the ``case 'iframe'`` block in ``_widgetBlockProps``.
+* ``lang/en_US.json``, ``lang/nl_NL.json``, ``lang/fr_FR.json``: added ``iframe_*`` translation keys under ``settings.widgeteditor``.
+
+~~~~~~~~~~~~
+
+
 v3.22.3 beta (1-8-2026)
 --------------------------
 
