@@ -259,19 +259,35 @@ var DashticzWidgetEditor = (function () {
   var selectedWidgets = {};
   var widgetDimensions = {};
   var layoutOrder = [];
-  var weatherProvider = 'openweather';
-  var calendarUrl = '';
-  var clockType = 'basicclock';
-  var publicTransportStation = 'UT';
-  var publicTransportProvider = 'treinen';
-  var cameraConfigs = [];
-  var alarmRss = 'https://www.alarmeringen.nl/feeds/all.rss';
-  var alarmFilter = '';
   var widgetConfigs = {};
   var gridMode = false;
   var gridConfig = null;
   var gridPositions = {};
   var widgetBlockRefs = {};
+
+  function _defaultCameraConfig(index) {
+    return {
+      title: _t('camera', 'Camera') + ' ' + (index + 1),
+      imageUrl: '',
+      videoUrl: '',
+    };
+  }
+
+  function _defaultCameraConfigs() {
+    return [_defaultCameraConfig(0)];
+  }
+
+  function _cameraWidgetConfig() {
+    if (!widgetConfigs.camera) {
+      widgetConfigs.camera = { cameras: _defaultCameraConfigs() };
+    } else if (
+      !Array.isArray(widgetConfigs.camera.cameras) ||
+      !widgetConfigs.camera.cameras.length
+    ) {
+      widgetConfigs.camera.cameras = _defaultCameraConfigs();
+    }
+    return widgetConfigs.camera;
+  }
 
   function open() {
     gridMode = _activeScreenDom().hasClass('dt-grid-screen');
@@ -286,18 +302,6 @@ var DashticzWidgetEditor = (function () {
     gridPositions = {};
     widgetBlockRefs = {};
     gridConfig = gridMode ? _readGridConfig() : null;
-    weatherProvider =
-      settings['owm_api'] || !settings['wu_api']
-        ? 'openweather'
-        : 'wunderground';
-    calendarUrl = '';
-    clockType = 'basicclock';
-    publicTransportStation = 'UT';
-    publicTransportProvider = 'treinen';
-    cameraConfigs = [{ title: 'Camera 1', imageUrl: '', videoUrl: '' }];
-    alarmRss = 'https://www.alarmeringen.nl/feeds/all.rss';
-    alarmFilter = '';
-
     function _n(key, def) {
       return typeof settings[key] !== 'undefined' ? Number(settings[key]) : (def !== undefined ? def : 0);
     }
@@ -309,6 +313,10 @@ var DashticzWidgetEditor = (function () {
 
     widgetConfigs = {
       weather: {
+        provider:
+          settings['owm_api'] || !settings['wu_api']
+            ? 'openweather'
+            : 'wunderground',
         owm_api: _s('owm_api'),
         owm_city: _s('owm_city'),
         owm_name: _s('owm_name'),
@@ -331,6 +339,7 @@ var DashticzWidgetEditor = (function () {
         translate_windspeed: _n('translate_windspeed', 1),
       },
       clock: {
+        clockType: 'basicclock',
         boss_stationclock: _s('boss_stationclock', 'RedBoss'),
         hide_seconds: _n('hide_seconds'),
         hide_seconds_stationclock: _n('hide_seconds_stationclock'),
@@ -373,12 +382,24 @@ var DashticzWidgetEditor = (function () {
         spot_clientid: _s('spot_clientid'),
       },
       calendar: {
+        icalurl: '',
         calendarformat: _s('calendarformat', 'dd DD.MM HH:mm'),
         calendarlanguage: _s('calendarlanguage', 'en_US'),
+      },
+      publictransport: {
+        provider: 'treinen',
+        station: 'UT',
       },
       secpanel: {
         security_button_icons: _n('security_button_icons'),
         security_panel_lock: _n('security_panel_lock'),
+      },
+      alarmmeldingen: {
+        rss: 'https://www.alarmeringen.nl/feeds/all.rss',
+        filter: '',
+      },
+      camera: {
+        cameras: _defaultCameraConfigs(),
       },
       trafficinfo: {
         anwb_apikey: _s('anwb_apikey'),
@@ -422,9 +443,7 @@ var DashticzWidgetEditor = (function () {
 
     if (gridMode) {
       _readGridConfiguredWidgets();
-      if (!cameraConfigs.length) {
-        cameraConfigs = [{ title: 'Camera 1', imageUrl: '', videoUrl: '' }];
-      }
+      _cameraWidgetConfig();
       return;
     }
     if (typeof columns === 'undefined') return;
@@ -453,7 +472,7 @@ var DashticzWidgetEditor = (function () {
           item.id === 'weather' &&
           definition.widget_provider === 'wunderground'
         ) {
-          weatherProvider = 'wunderground';
+          widgetConfigs.weather.provider = 'wunderground';
         }
         if (item.id === 'weather') {
           if (typeof definition.showRain !== 'undefined') {
@@ -476,7 +495,7 @@ var DashticzWidgetEditor = (function () {
           item.id === 'calendar' &&
           typeof definition.icalurl === 'string'
         ) {
-          calendarUrl = definition.icalurl;
+          widgetConfigs.calendar.icalurl = definition.icalurl;
         }
         if (
           item.id === 'clock' &&
@@ -484,7 +503,7 @@ var DashticzWidgetEditor = (function () {
             definition.type
           )
         ) {
-          clockType = definition.type;
+          widgetConfigs.clock.clockType = definition.type;
           if (typeof definition.size !== 'undefined' && definition.size !== null && definition.size !== '') {
             widgetConfigs.clock.size = definition.size;
           }
@@ -524,15 +543,18 @@ var DashticzWidgetEditor = (function () {
         }
         if (item.id === 'publictransport') {
           if (typeof definition.station === 'string') {
-            publicTransportStation = definition.station;
+            widgetConfigs.publictransport.station = definition.station;
           }
           if (typeof definition.provider === 'string') {
-            publicTransportProvider = definition.provider;
+            widgetConfigs.publictransport.provider = definition.provider;
           }
         }
         if (item.id === 'camera') {
           if (Array.isArray(definition.cameras) && definition.cameras.length) {
-            cameraConfigs = definition.cameras.map(function (camera, index) {
+            widgetConfigs.camera.cameras = definition.cameras.map(function (
+              camera,
+              index
+            ) {
               return {
                 title:
                   camera && typeof camera.title === 'string'
@@ -549,7 +571,7 @@ var DashticzWidgetEditor = (function () {
               };
             });
           } else if (typeof definition.imageUrl === 'string') {
-            cameraConfigs = [
+            widgetConfigs.camera.cameras = [
               {
                 title:
                   typeof definition.title === 'string'
@@ -566,10 +588,10 @@ var DashticzWidgetEditor = (function () {
         }
         if (item.id === 'alarmmeldingen') {
           if (typeof definition.rss === 'string') {
-            alarmRss = definition.rss;
+            widgetConfigs.alarmmeldingen.rss = definition.rss;
           }
           if (typeof definition.filter === 'string') {
-            alarmFilter = definition.filter;
+            widgetConfigs.alarmmeldingen.filter = definition.filter;
           }
         }
         // Hydrate iframe widget settings from an existing block definition (managed layout)
@@ -619,9 +641,7 @@ var DashticzWidgetEditor = (function () {
       });
     });
 
-    if (!cameraConfigs.length) {
-      cameraConfigs = [{ title: 'Camera 1', imageUrl: '', videoUrl: '' }];
-    }
+    _cameraWidgetConfig();
   }
 
   function _activeScreenTarget() {
@@ -824,7 +844,7 @@ var DashticzWidgetEditor = (function () {
 
   function _hydrateGridWidget(item, definition) {
     if (item.id === 'weather') {
-      weatherProvider =
+      widgetConfigs.weather.provider =
         definition.widget_provider ||
         (definition.type === 'wunderground' ? 'wunderground' : 'openweather');
       [
@@ -843,9 +863,9 @@ var DashticzWidgetEditor = (function () {
         widgetConfigs.weather.weather_icons = definition.icons;
       }
     } else if (item.id === 'calendar' && typeof definition.icalurl === 'string') {
-      calendarUrl = definition.icalurl;
+      widgetConfigs.calendar.icalurl = definition.icalurl;
     } else if (item.id === 'clock') {
-      clockType = definition.type || 'basicclock';
+      widgetConfigs.clock.clockType = definition.type || 'basicclock';
       [
         'size',
         'scale',
@@ -865,13 +885,13 @@ var DashticzWidgetEditor = (function () {
         }
       });
     } else if (item.id === 'publictransport') {
-      publicTransportStation = definition.station || 'UT';
-      publicTransportProvider = definition.provider || 'treinen';
+      widgetConfigs.publictransport.station = definition.station || 'UT';
+      widgetConfigs.publictransport.provider = definition.provider || 'treinen';
     } else if (item.id === 'camera') {
       if (Array.isArray(definition.cameras) && definition.cameras.length) {
-        cameraConfigs = definition.cameras;
+        widgetConfigs.camera.cameras = definition.cameras;
       } else if (definition.imageUrl) {
-        cameraConfigs = [
+        widgetConfigs.camera.cameras = [
           {
             title: definition.title || 'Camera',
             imageUrl: definition.imageUrl,
@@ -880,8 +900,9 @@ var DashticzWidgetEditor = (function () {
         ];
       }
     } else if (item.id === 'alarmmeldingen') {
-      alarmRss = definition.rss || alarmRss;
-      alarmFilter = definition.filter || '';
+      widgetConfigs.alarmmeldingen.rss =
+        definition.rss || widgetConfigs.alarmmeldingen.rss;
+      widgetConfigs.alarmmeldingen.filter = definition.filter || '';
     } else if (item.id === 'iframe') {
       // Hydrate iframe widget settings from an existing block definition
       if (typeof definition.frameurl === 'string') {
@@ -1193,12 +1214,12 @@ var DashticzWidgetEditor = (function () {
         '<div class="mb-3">' +
         '<label class="form-label we-field-label" for="we-cfg-weather-provider">Provider</label>' +
         '<select class="form-select form-select-sm we-widget-field" id="we-cfg-weather-provider">' +
-        '<option value="openweather"' + (weatherProvider === 'openweather' ? ' selected' : '') + '>OpenWeather</option>' +
-        '<option value="wunderground"' + (weatherProvider === 'wunderground' ? ' selected' : '') + '>Weather Underground</option>' +
+        '<option value="openweather"' + (cfg.provider === 'openweather' ? ' selected' : '') + '>OpenWeather</option>' +
+        '<option value="wunderground"' + (cfg.provider === 'wunderground' ? ' selected' : '') + '>Weather Underground</option>' +
         '</select></div>';
       fields +=
         '<div class="we-weather-group" data-weather-provider="openweather"' +
-        (weatherProvider === 'openweather' ? '' : ' style="display:none"') +
+        (cfg.provider === 'openweather' ? '' : ' style="display:none"') +
         '>';
       fields += _cfgHeading('OpenWeather');
       fields += _cfgField('owm_api', lw.owm_api || 'OpenWeather API key', 'text', cfg.owm_api);
@@ -1218,7 +1239,7 @@ var DashticzWidgetEditor = (function () {
       fields += '</div>';
       fields +=
         '<div class="we-weather-group" data-weather-provider="wunderground"' +
-        (weatherProvider === 'wunderground' ? '' : ' style="display:none"') +
+        (cfg.provider === 'wunderground' ? '' : ' style="display:none"') +
         '>';
       fields += _cfgHeading('Weather Underground');
       fields += _cfgField('wu_api', lw.wu_api || 'Weather Underground API key', 'text', cfg.wu_api);
@@ -1237,7 +1258,7 @@ var DashticzWidgetEditor = (function () {
         '<div class="mb-3">' +
         '<label class="form-label we-field-label" for="we-cfg-calendar-url">ICS-URL</label>' +
         '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-calendar-url" ' +
-        'placeholder="https://…/calendar.ics" value="' + _esc(calendarUrl) + '"></div>';
+        'placeholder="https://…/calendar.ics" value="' + _esc(ccal.icalurl || '') + '"></div>';
       fields += _cfgField('calendarformat', ll.calendarformat || 'Calendar format', 'text', ccal.calendarformat);
       fields += _cfgField(
         'calendarlanguage',
@@ -1305,18 +1326,19 @@ var DashticzWidgetEditor = (function () {
         '24': _t('clock_24_hour', '24-hour'),
         '12': _t('clock_12_hour', '12-hour'),
       };
-      var showSizeScale = clockType !== 'miniclock';
+      var currentClockType = ccfg.clockType || 'basicclock';
+      var showSizeScale = currentClockType !== 'miniclock';
       fields +=
         '<div class="mb-3">' +
         '<label class="form-label we-field-label" for="we-cfg-clock-type">' +
         _t('clock_type', 'Clock type') +
         '</label>' +
         '<select class="form-select form-select-sm we-widget-field" id="we-cfg-clock-type">' +
-        _clockOption('basicclock', 'Basic clock') +
-        _clockOption('stationclock', _t('station_clock', 'Station clock')) +
-        _clockOption('flipclock', 'Flipclock') +
-        _clockOption('haymanclock', 'Hayman clock') +
-        _clockOption('miniclock', 'Miniclock') +
+        _clockOption('basicclock', 'Basic clock', currentClockType) +
+        _clockOption('stationclock', _t('station_clock', 'Station clock'), currentClockType) +
+        _clockOption('flipclock', 'Flipclock', currentClockType) +
+        _clockOption('haymanclock', 'Hayman clock', currentClockType) +
+        _clockOption('miniclock', 'Miniclock', currentClockType) +
         '</select></div>';
 
       fields +=
@@ -1343,7 +1365,7 @@ var DashticzWidgetEditor = (function () {
 
       fields +=
         '<div class="we-clock-group" data-clock-type="flipclock"' +
-        (clockType === 'flipclock' ? '' : ' style="display:none"') +
+        (currentClockType === 'flipclock' ? '' : ' style="display:none"') +
         '>';
       fields += _cfgHeading('Flipclock');
       fields += _cfgField(
@@ -1364,7 +1386,7 @@ var DashticzWidgetEditor = (function () {
 
       fields +=
         '<div class="we-clock-group" data-clock-type="stationclock"' +
-        (clockType === 'stationclock' ? '' : ' style="display:none"') +
+        (currentClockType === 'stationclock' ? '' : ' style="display:none"') +
         '>';
       fields += _cfgHeading(_t('station_clock', 'Station clock'));
       fields += _cfgField('body', _t('clock_body', 'Body'), 'select', ccfg.body || 'RoundBody', bodyOpts);
@@ -1381,7 +1403,7 @@ var DashticzWidgetEditor = (function () {
 
       fields +=
         '<div class="we-clock-group" data-clock-type="miniclock"' +
-        (clockType === 'miniclock' ? '' : ' style="display:none"') +
+        (currentClockType === 'miniclock' ? '' : ' style="display:none"') +
         '>';
       fields +=
         '<p class="form-text" style="font-size:12px;color:#6c757d">' +
@@ -1429,15 +1451,16 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField('security_panel_lock', ls.security_panel_lock || 'Security panel fullscreen', 'checkbox', sec.security_panel_lock, null, ls.security_panel_lock_help || '');
 
     } else if (item.id === 'publictransport') {
+      var ptcfg = widgetConfigs.publictransport || {};
       fields +=
         '<div class="mb-3">' +
         '<label class="form-label we-field-label" for="we-cfg-pt-provider">Provider</label>' +
         '<select class="form-select form-select-sm we-widget-field" id="we-cfg-pt-provider">' +
-        _ptOption('treinen', _t('trains_nl', 'Trains (NL)')) +
-        _ptOption('ovapi', 'OV API (NL)') +
-        _ptOption('drgl', 'DRGL (NL)') +
-        _ptOption('irailbe', 'iRail (BE)') +
-        _ptOption('delijnbe', 'De Lijn (BE)') +
+        _ptOption('treinen', _t('trains_nl', 'Trains (NL)'), ptcfg.provider || 'treinen') +
+        _ptOption('ovapi', 'OV API (NL)', ptcfg.provider || 'treinen') +
+        _ptOption('drgl', 'DRGL (NL)', ptcfg.provider || 'treinen') +
+        _ptOption('irailbe', 'iRail (BE)', ptcfg.provider || 'treinen') +
+        _ptOption('delijnbe', 'De Lijn (BE)', ptcfg.provider || 'treinen') +
         '</select></div>';
       fields +=
         '<div class="mb-3">' +
@@ -1445,7 +1468,7 @@ var DashticzWidgetEditor = (function () {
         _t('station_stop', 'Station / stop') +
         '</label>' +
         '<input type="text" class="form-control form-control-sm we-widget-field" id="we-cfg-pt-station" value="' +
-        _esc(publicTransportStation) +
+        _esc(ptcfg.station || 'UT') +
         '">' +
         '<div class="form-text" style="font-size:11px;color:#6c757d">' +
         _t('station_help', 'For example UT for Utrecht Centraal (trains).') +
@@ -1457,11 +1480,12 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField('anwb_apikey', lwgt.anwb_apikey || 'ANWB API key', 'text', tcfg.anwb_apikey, null, lwgt.anwb_apikey_help || '');
 
     } else if (item.id === 'alarmmeldingen') {
+      var acfg = widgetConfigs.alarmmeldingen || {};
       fields +=
         '<div class="mb-3">' +
         '<label class="form-label we-field-label" for="we-cfg-alarm-rss">RSS-feed</label>' +
         '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-alarm-rss" value="' +
-        _esc(alarmRss) +
+        _esc(acfg.rss || '') +
         '"></div>';
       fields +=
         '<div class="mb-3">' +
@@ -1469,7 +1493,7 @@ var DashticzWidgetEditor = (function () {
         _t('filter_optional', 'Filter (optional)') +
         '</label>' +
         '<input type="text" class="form-control form-control-sm we-widget-field" id="we-cfg-alarm-filter" value="' +
-        _esc(alarmFilter) +
+        _esc(acfg.filter || '') +
         '">' +
         '<div class="form-text" style="font-size:11px;color:#6c757d">' +
         _t(
@@ -1479,8 +1503,9 @@ var DashticzWidgetEditor = (function () {
         '</div></div>';
 
     } else if (item.id === 'camera') {
+      var camcfg = _cameraWidgetConfig();
       fields += '<div id="we-cfg-camera-list">';
-      cameraConfigs.forEach(function (camera, index) {
+      camcfg.cameras.forEach(function (camera, index) {
         fields += _cameraRowHtml(camera, index);
       });
       fields +=
@@ -1644,11 +1669,7 @@ var DashticzWidgetEditor = (function () {
       var index = $cfgModal.find('.we-camera-row').length;
       $('#we-cfg-camera-list').append(
         _cameraRowHtml(
-          {
-            title: _t('camera', 'Camera') + ' ' + (index + 1),
-            imageUrl: '',
-            videoUrl: '',
-          },
+          _defaultCameraConfig(index),
           index
         )
       );
@@ -1693,7 +1714,7 @@ var DashticzWidgetEditor = (function () {
       });
 
       if (widgetId === 'weather') {
-        weatherProvider = $('#we-cfg-weather-provider').val() || 'openweather';
+        collected.provider = $('#we-cfg-weather-provider').val() || 'openweather';
         widgetConfigs.weather = collected;
       } else if (widgetId === 'calendar') {
         var url = $.trim($('#we-cfg-calendar-url').val() || '');
@@ -1704,11 +1725,11 @@ var DashticzWidgetEditor = (function () {
           $('#we-cfg-calendar-url').trigger('focus');
           valid = false;
         } else {
-          calendarUrl = url;
+          collected.icalurl = url;
           widgetConfigs.calendar = collected;
         }
       } else if (widgetId === 'clock') {
-        clockType = $('#we-cfg-clock-type').val() || 'basicclock';
+        collected.clockType = $('#we-cfg-clock-type').val() || 'basicclock';
         widgetConfigs.clock = collected;
       } else if (widgetId === 'garbage') {
         widgetConfigs.garbage = collected;
@@ -1719,8 +1740,10 @@ var DashticzWidgetEditor = (function () {
       } else if (widgetId === 'secpanel') {
         widgetConfigs.secpanel = collected;
       } else if (widgetId === 'publictransport') {
-        publicTransportProvider = $('#we-cfg-pt-provider').val() || 'treinen';
-        publicTransportStation = $.trim($('#we-cfg-pt-station').val() || '') || 'UT';
+        widgetConfigs.publictransport = {
+          provider: $('#we-cfg-pt-provider').val() || 'treinen',
+          station: $.trim($('#we-cfg-pt-station').val() || '') || 'UT',
+        };
       } else if (widgetId === 'trafficinfo') {
         widgetConfigs.trafficinfo = collected;
       } else if (widgetId === 'alarmmeldingen') {
@@ -1731,8 +1754,10 @@ var DashticzWidgetEditor = (function () {
             .text(_t('invalid_rss_url', 'Enter a valid HTTP(S) RSS URL.'));
           valid = false;
         } else {
-          alarmRss = rss;
-          alarmFilter = $.trim($('#we-cfg-alarm-filter').val() || '');
+          widgetConfigs.alarmmeldingen = {
+            rss: rss,
+            filter: $.trim($('#we-cfg-alarm-filter').val() || ''),
+          };
         }
       } else if (widgetId === 'camera') {
         var cameras = [];
@@ -1766,7 +1791,7 @@ var DashticzWidgetEditor = (function () {
             videoUrl: videoUrl,
           });
         });
-        if (valid) cameraConfigs = cameras;
+        if (valid) widgetConfigs.camera = { cameras: cameras };
       } else if (widgetId === 'map') {
         widgetConfigs.map = collected;
       } else if (widgetId === 'longfonds') {
@@ -1831,24 +1856,24 @@ var DashticzWidgetEditor = (function () {
     ).show();
   }
 
-  function _clockOption(value, label) {
+  function _clockOption(value, label, currentClockType) {
     return (
       '<option value="' +
       value +
       '"' +
-      (clockType === value ? ' selected' : '') +
+      (currentClockType === value ? ' selected' : '') +
       '>' +
       label +
       '</option>'
     );
   }
 
-  function _ptOption(value, label) {
+  function _ptOption(value, label, currentProvider) {
     return (
       '<option value="' +
       value +
       '"' +
-      (publicTransportProvider === value ? ' selected' : '') +
+      (currentProvider === value ? ' selected' : '') +
       '>' +
       label +
       '</option>'
@@ -1910,8 +1935,9 @@ var DashticzWidgetEditor = (function () {
   function _save() {
     if (
       selectedWidgets.calendar &&
-      calendarUrl &&
-      !/^https?:\/\/\S+$/i.test(calendarUrl)
+      widgetConfigs.calendar &&
+      widgetConfigs.calendar.icalurl &&
+      !/^https?:\/\/\S+$/i.test(widgetConfigs.calendar.icalurl)
     ) {
       $('.we-message')
         .addClass('text-danger')
@@ -1925,8 +1951,8 @@ var DashticzWidgetEditor = (function () {
     }
     if (
       selectedWidgets.camera &&
-      (!cameraConfigs.length ||
-        cameraConfigs.some(function (camera) {
+      (!_cameraWidgetConfig().cameras.length ||
+        _cameraWidgetConfig().cameras.some(function (camera) {
           return (
             !/^https?:\/\/\S+$/i.test(camera.imageUrl || '') ||
             (camera.videoUrl &&
@@ -1961,27 +1987,65 @@ var DashticzWidgetEditor = (function () {
 
     // Collect flattened config settings from all widget configs
     var configSettings = {};
-    var configWidgets = [
-      'weather',
-      'clock',
-      'garbage',
-      'sonarr',
-      'spotify',
-      'calendar',
-      'secpanel',
-      'trafficinfo',
-      'map',
-      'longfonds',
-      'moon',
-      'news',
-    ];
-    configWidgets.forEach(function (id) {
-      if (widgetConfigs[id]) {
-        var cfg = widgetConfigs[id];
-        Object.keys(cfg).forEach(function (key) {
+    var configWidgets = {
+      weather: [
+        'owm_api',
+        'owm_city',
+        'owm_name',
+        'owm_country',
+        'owm_lang',
+        'owm_days',
+        'owm_cnt',
+        'owm_min',
+        'weather_show_rain',
+        'weather_show_description',
+        'weather_show_wind',
+        'weather_show_gust',
+        'weather_icons',
+        'wu_api',
+        'wu_city',
+        'wu_name',
+        'wu_country',
+        'use_fahrenheit',
+        'use_beaufort',
+        'translate_windspeed',
+      ],
+      clock: ['boss_stationclock', 'hide_seconds', 'hide_seconds_stationclock'],
+      garbage: [
+        'garbage_company',
+        'garbage_icalurl',
+        'google_api_key',
+        'garbage_calendar_id',
+        'garbage_zipcode',
+        'garbage_street',
+        'garbage_housenumber',
+        'garbage_housenumberadd',
+        'garbage_maxitems',
+        'garbage_width',
+        'garbage_hideicon',
+        'garbage_icon_use_colors',
+        'garbage_use_colors',
+        'garbage_use_names',
+        'garbage_use_cors_prefix',
+      ],
+      sonarr: ['sonarr_url', 'sonarr_apikey', 'sonarr_maxitems'],
+      spotify: ['spot_clientid'],
+      calendar: ['calendarformat', 'calendarlanguage'],
+      secpanel: ['security_button_icons', 'security_panel_lock'],
+      trafficinfo: ['anwb_apikey'],
+      map: ['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude'],
+      longfonds: ['longfonds_zipcode', 'longfonds_housenumber'],
+      moon: ['idx_moonpicture'],
+      news: ['default_news_url', 'news_scroll_after'],
+    };
+    Object.keys(configWidgets).forEach(function (id) {
+      var cfg = widgetConfigs[id];
+      if (!cfg) return;
+      configWidgets[id].forEach(function (key) {
+        if (typeof cfg[key] !== 'undefined') {
           configSettings[key] = cfg[key];
-        });
-      }
+        }
+      });
     });
     if (widgetConfigs.xmltvguide) {
       configSettings.xmltv_url = widgetConfigs.xmltvguide.xmltvurl || '';
@@ -2005,7 +2069,7 @@ var DashticzWidgetEditor = (function () {
         entry.height = dimensions.height || item.height;
       }
       if (item.id === 'garbage') entry.displayTitle = _widgetTitle(item);
-      if (item.id === 'weather') entry.provider = weatherProvider;
+      if (item.id === 'weather') entry.provider = widgetConfigs.weather.provider;
       if (item.id === 'weather' && widgetConfigs.weather) {
         var wcfg = widgetConfigs.weather;
         entry.showRain = Number(wcfg.weather_show_rain) ? 1 : 0;
@@ -2014,8 +2078,9 @@ var DashticzWidgetEditor = (function () {
         entry.showGust = Number(wcfg.weather_show_gust) ? 1 : 0;
         entry.icons = wcfg.weather_icons || 'line';
       }
-      if (item.id === 'calendar') entry.icalurl = calendarUrl;
+      if (item.id === 'calendar') entry.icalurl = widgetConfigs.calendar.icalurl;
       if (item.id === 'clock') {
+        var clockType = widgetConfigs.clock.clockType || 'basicclock';
         entry.clockType = clockType;
         var ccfg = widgetConfigs.clock || {};
         if (clockType !== 'miniclock') {
@@ -2042,23 +2107,26 @@ var DashticzWidgetEditor = (function () {
         }
       }
       if (item.id === 'publictransport') {
-        entry.station = publicTransportStation;
-        entry.provider = publicTransportProvider;
+        entry.station = widgetConfigs.publictransport.station;
+        entry.provider = widgetConfigs.publictransport.provider;
       }
       if (item.id === 'camera') {
-        if (cameraConfigs.length === 1) {
-          entry.title = cameraConfigs[0].title;
-          entry.imageUrl = cameraConfigs[0].imageUrl;
-          if (cameraConfigs[0].videoUrl) {
-            entry.videoUrl = cameraConfigs[0].videoUrl;
+        var cameras = _cameraWidgetConfig().cameras;
+        if (cameras.length === 1) {
+          entry.title = cameras[0].title;
+          entry.imageUrl = cameras[0].imageUrl;
+          if (cameras[0].videoUrl) {
+            entry.videoUrl = cameras[0].videoUrl;
           }
         } else {
-          entry.cameras = cameraConfigs;
+          entry.cameras = cameras;
         }
       }
       if (item.id === 'alarmmeldingen') {
-        entry.rss = alarmRss;
-        if (alarmFilter) entry.filter = alarmFilter;
+        entry.rss = widgetConfigs.alarmmeldingen.rss;
+        if (widgetConfigs.alarmmeldingen.filter) {
+          entry.filter = widgetConfigs.alarmmeldingen.filter;
+        }
       }
       // Add iframe-specific block properties to the widget payload entry
       if (item.id === 'iframe') {

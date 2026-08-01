@@ -493,7 +493,17 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.match(widgetEditor, /we-cfg-clock-type/);
   assert.match(widgetEditor, /id="we-camera-add"/);
   assert.match(widgetEditor, /class="we-camera-row/);
-  assert.match(widgetEditor, /entry\.cameras = cameraConfigs/);
+  assert.match(widgetEditor, /weather:\s*\{[\s\S]*provider:/);
+  assert.match(widgetEditor, /clock:\s*\{[\s\S]*clockType:\s*'basicclock'/);
+  assert.match(widgetEditor, /calendar:\s*\{[\s\S]*icalurl:\s*''/);
+  assert.match(widgetEditor, /publictransport:\s*\{[\s\S]*provider:\s*'treinen'[\s\S]*station:\s*'UT'/);
+  assert.match(widgetEditor, /alarmmeldingen:\s*\{[\s\S]*rss:\s*'https:\/\/www\.alarmeringen\.nl\/feeds\/all\.rss'[\s\S]*filter:\s*''/);
+  assert.match(widgetEditor, /camera:\s*\{[\s\S]*cameras:\s*_defaultCameraConfigs\(\)/);
+  assert.match(widgetEditor, /entry\.cameras = cameras/);
+  assert.doesNotMatch(widgetEditor, /var weatherProvider =/);
+  assert.doesNotMatch(widgetEditor, /var calendarUrl =/);
+  assert.doesNotMatch(widgetEditor, /var publicTransportStation =/);
+  assert.doesNotMatch(widgetEditor, /var alarmRss =/);
   assert.equal(english.settings.widgeteditor.weather_title, 'Weather');
   assert.equal(english.settings.widgeteditor.camera_title, 'Cameras');
   assert.equal(dutch.settings.widgeteditor.weather_title, 'Weer');
