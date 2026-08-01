@@ -222,6 +222,7 @@ var DashticzDeviceEditor = (function () {
       width: _parseWidth(widgetWidths[orderKey]),
     };
     if (widgetHeights[orderKey]) entry.height = widgetHeights[orderKey];
+    if (widget.id === 'garbage') entry.displayTitle = widget.title;
 
     if (widget.id === 'weather') {
       entry.provider =
