@@ -585,7 +585,7 @@ test('xmltv widget uses its own proxy and preserves optional block settings', ()
   assert.match(tvguide, /typeof block\.xmltvurl === 'undefined'/);
   assert.match(xmltv, /xmltv\.php\?url=/);
   assert.match(xmltv, /function _fetchXmltvText/);
-  assert.match(widgetEditor, /xmltvguide:\s*\{[\s\S]*layout:\s*'0'[\s\S]*separator:\s*'-'[\s\S]*refresh:\s*'3600'/);
+  assert.match(widgetEditor, /xmltvguide:\s*\{[\s\S]*xmltvurl:\s*_s\('xmltv_url'\)[\s\S]*layout:\s*_s\('xmltv_layout', '0'\)[\s\S]*separator:\s*_s\('xmltv_separator', '-'\)[\s\S]*refresh:\s*_s\('xmltv_refresh', '3600'\)/);
   assert.match(widgetEditor, /data-cfg-key="xmltv_layout"/);
   assert.match(widgetEditor, /data-cfg-key="xmltv_separator"/);
   assert.match(widgetEditor, /data-cfg-key="xmltv_refresh"/);
