@@ -81,6 +81,22 @@ var DashticzDeviceEditor = (function () {
     return /^s\d+$/.test(String(ck));
   }
 
+  /* Sort rank for available-device list: Groups first, Scenes second, Devices last */
+  function _typeOrder(type) {
+    if (type === 'Group') return 0;
+    if (type === 'Scene') return 1;
+    return 2;
+  }
+
+  /* Sort available[] by category (Group < Scene < Device) then alphabetically */
+  function _sortAvailable(list) {
+    list.sort(function (a, b) {
+      var diff = _typeOrder(a.type) - _typeOrder(b.type);
+      if (diff !== 0) return diff;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
   /* Convert a block reference (number / string / object) to a composite key */
   function _toCompositeKey(b) {
     if (typeof b === 'number' && b > 0) return String(b);
@@ -566,7 +582,7 @@ var DashticzDeviceEditor = (function () {
       }
     });
 
-    available.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    _sortAvailable(available);
     return available;
   }
 
@@ -723,7 +739,7 @@ var DashticzDeviceEditor = (function () {
     html += '<option value="">— Select a device —</option>';
     deviceList.forEach(function (d) {
       var dispIdx = d.subidx ? (d.idx + '_' + d.subidx) : String(d.idx);
-      html += '<option value="' + _esc(d.key) + '">' + _esc(d.name) + ' (IDX\u00a0' + dispIdx + ')</option>';
+      html += '<option value="' + _esc(d.key) + '" data-type-order="' + _typeOrder(d.type) + '">' + _esc(d.name) + ' (IDX\u00a0' + dispIdx + ')</option>';
     });
     html += '</select>';
     html += '<input type="number" class="form-control form-control-sm de-width-input" min="1" max="12" value="3" title="Column width (1-12)" aria-label="Column width">';
@@ -769,18 +785,25 @@ var DashticzDeviceEditor = (function () {
       if (!available.some(function (d) { return d.key === ck; })) {
         available.push({ key: ck, idx: p.idx, subidx: p.subidx,
                          name: displayName, plainName: isGroup ? rawName : null, type: type });
-        available.sort(function (a, b) { return a.name.localeCompare(b.name); });
+        _sortAvailable(available);
       }
 
-      var optHtml = '<option value="' + _esc(ck) + '">' + _esc(displayName) +
-                    ' (IDX\u00a0' + dispIdx + ')</option>';
+      var newTypeOrder = _typeOrder(type);
+      var newText = displayName + ' (IDX\u00a0' + dispIdx + ')';
+      var optHtml = '<option value="' + _esc(ck) + '" data-type-order="' + newTypeOrder + '">' +
+                    _esc(displayName) + ' (IDX\u00a0' + dispIdx + ')</option>';
 
       var $select = $('#de-add-rows .de-device-select');
       if ($select.length) {
-        /* insert in alphabetical order */
+        /* insert in category + alphabetical order */
         var inserted = false;
         $select.find('option').each(function () {
-          if ($(this).val() && $(this).text().localeCompare(displayName + ' (IDX\u00a0' + dispIdx + ')') > 0) {
+          if (!$(this).val()) return;
+          var optTypeOrder = parseInt($(this).attr('data-type-order') || '2', 10);
+          var cmp = newTypeOrder !== optTypeOrder
+            ? newTypeOrder - optTypeOrder
+            : newText.localeCompare($(this).text());
+          if (cmp < 0) {
             $(this).before(optHtml);
             inserted = true;
             return false;
