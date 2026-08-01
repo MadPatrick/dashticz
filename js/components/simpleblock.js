@@ -231,17 +231,17 @@ var DT_simpleblock = (function () {
 
   /**
    * Returns icon HTML for a topbar button.
-   * When settings['topbar_use_png_icons'] is 1 (or true), uses a Font Awesome <i> element.
-   * When it is 0 (or falsy), uses an <img> from img/icons/.
+   * When settings['topbar_use_png_icons'] is 1 (or true), uses a custom PNG <img> from img/icons/.
+   * When it is 0 (or falsy, the default), uses a Font Awesome <i> element.
    * @param {string} faClass  e.g. 'fas fa-cog'
    * @param {string} imgSrc   e.g. 'img/icons/Cog.png'
    * @returns {string}
    */
   function _topbarIconHtml(faClass, imgSrc) {
-    if (Number(settings['topbar_use_png_icons']) !== 0) {
-      return '<i class="' + faClass + '" aria-hidden="true"></i>';
+    if (Number(settings['topbar_use_png_icons']) === 1) {
+      return '<img src="' + imgSrc + '" class="dt-topbar-icon-img" aria-hidden="true" alt="">';
     }
-    return '<img src="' + imgSrc + '" class="dt-topbar-icon-img" aria-hidden="true" alt="">';
+    return '<i class="' + faClass + '" aria-hidden="true"></i>';
   }
 
   function _registerConfigModeClick() {

@@ -2,7 +2,7 @@
 function getFullScreenIcon() {
   var usePng =
     typeof settings !== 'undefined' &&
-    Number(settings['topbar_use_png_icons']) === 0;
+    Number(settings['topbar_use_png_icons']) === 1;
   var iconInner = usePng
     ? '<img src="img/icons/Expand.png" id="fullScreenToggleIcon" class="dt-topbar-icon-img" aria-hidden="true" alt="">'
     : '<em class="fas fa-expand" id="fullScreenToggleIcon" />';
@@ -49,7 +49,7 @@ function exitFullScreen() {
 function toggleFullScreen(element) {
   var usePng =
     typeof settings !== 'undefined' &&
-    Number(settings['topbar_use_png_icons']) === 0;
+    Number(settings['topbar_use_png_icons']) === 1;
   if (isFullScreen()) {
     exitFullScreen();
     if (usePng) {

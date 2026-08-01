@@ -132,11 +132,11 @@ settingList['screen']['show_topbar_clock'] = {
 settingList['screen']['topbar_use_png_icons'] = {
   title:
     language.settings.screen.topbar_use_png_icons ||
-    'Default iconen topbalk',
+    'Custom iconen topbalk',
   type: 'checkbox',
   help:
     language.settings.screen.topbar_use_png_icons_help ||
-    'Aan (standaard): Font Awesome iconen. Uit: afbeeldingen uit img/icons/ (Plus.png, Puzzle.png, Arrows.png, Cog.png, Expand.png, Minus.png).',
+    'Aan: Custom iconen uit img/icons/ (Plus.png, Puzzle.png, Arrows.png, Cog.png, Expand.png, Minus.png). Uit (standaard): Font Awesome iconen.',
 };
 
 settingList['screen']['theme'] = {};

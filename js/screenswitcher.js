@@ -271,7 +271,7 @@ var DashticzScreenSwitcher = (function () {
       typeof widgetEditorTranslations !== 'undefined' ? widgetEditorTranslations : {};
     var usePng =
       typeof settings !== 'undefined' &&
-      Number(settings['topbar_use_png_icons']) === 0;
+      Number(settings['topbar_use_png_icons']) === 1;
     function _icon(faClass, imgSrc) {
       return usePng
         ? '<img src="' + imgSrc + '" class="dt-topbar-icon-img" aria-hidden="true" alt="">'
