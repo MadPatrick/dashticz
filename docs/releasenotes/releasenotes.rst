@@ -6,6 +6,15 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.22.5 beta (1-8-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Device Editor: Domoticz groups and scenes are now listed in the "Add device from Domoticz" dropdown with a ``Group_`` (or ``Scene_``) prefix so they can be added to any screen.  Saved group blocks use the group's scene key (e.g. ``s1``) directly as the block reference, matching the hand-written CONFIG.js convention.
+
+
 v3.22.4 beta (1-8-2026)
 --------------------------
 
