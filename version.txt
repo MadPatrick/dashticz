@@ -1,5 +1,5 @@
 {
-    "version": "3.22.6",
+    "version": "3.22.3",
     "branch": "beta",
     "last_changes": "Device Editor: sort available devices as Groups, Scenes, then Devices",
     "changelog": {
