@@ -6,6 +6,15 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.23.0 beta (1-8-2026)
+--------------------------
+
+Code
+~~~~
+
+* Version alignment: set all version references (``version.txt``, ``package.json``) to 3.23.0.
+
+
 v3.22.3 beta (1-8-2026)
 --------------------------
 
