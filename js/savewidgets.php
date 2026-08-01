@@ -671,6 +671,7 @@ function _widgetBlockProps($widget)
             $props['title'] = 'Security Panel';
             break;
         case 'publictransport':
+            $props['type'] = 'publictransport';
             $props['title'] = 'OV';
             $props['provider'] = $widget['provider'];
             $props['station'] = $widget['station'];
@@ -686,6 +687,7 @@ function _widgetBlockProps($widget)
             $props['results'] = 50;
             break;
         case 'alarmmeldingen':
+            $props['type'] = 'alarmmeldingen';
             $props['title'] = '112';
             $props['rss'] = $widget['rss'];
             $props['results'] = 5;

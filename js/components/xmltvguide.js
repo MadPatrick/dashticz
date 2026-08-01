@@ -61,12 +61,15 @@ var DT_xmltvguide = {
 
     // Resolve language strings with fallback to English literals.
     var lang_loading =
-      (language.misc && language.misc.loading) || 'Loading…';
+      (language.xmltvguide && language.xmltvguide.loading) ||
+      (language.misc && language.misc.loading) ||
+      'Loading…';
     var lang_error =
       (language.xmltvguide && language.xmltvguide.error) ||
       'Error loading TV guide.';
     var lang_no_programs =
       (language.xmltvguide && language.xmltvguide.no_programs) ||
+      (language.misc && language.misc.no_alerts) ||
       'No upcoming programs found.';
 
     tvobject.html('<span class="xmltv-loading">' + lang_loading + '</span>');

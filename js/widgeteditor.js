@@ -437,14 +437,14 @@ var DashticzWidgetEditor = (function () {
 
       column.blocks.forEach(function (reference) {
         if (typeof reference !== 'string') return;
-        var item = _catalogItemByBlockKey(reference);
-        if (!item) return;
-
-        selectedWidgets[item.id] = true;
         var definition =
           typeof blocks !== 'undefined' && blocks[reference]
             ? blocks[reference]
             : {};
+        var item = _catalogItemForDefinition(reference, definition);
+        if (!item) return;
+
+        selectedWidgets[item.id] = true;
         widgetDimensions[item.id] = {
           width: parseInt(definition.width, 10) || null,
           height: parseInt(definition.height, 10) || null,
@@ -704,6 +704,33 @@ var DashticzWidgetEditor = (function () {
     // Blocks identified by an xmltvurl property map to xmltvguide
     if (definition && typeof definition.xmltvurl === 'string') {
       return catalog.find(function (item) { return item.id === 'xmltvguide'; }) || null;
+    }
+    if (
+      definition &&
+      (typeof definition.station === 'string' || typeof definition.tpc === 'string')
+    ) {
+      return (
+        catalog.find(function (item) {
+          return item.id === 'publictransport';
+        }) || null
+      );
+    }
+    if (definition && typeof definition.rss === 'string') {
+      return (
+        catalog.find(function (item) {
+          return item.id === 'alarmmeldingen';
+        }) || null
+      );
+    }
+    if (
+      definition &&
+      (Array.isArray(definition.cameras) || typeof definition.imageUrl === 'string')
+    ) {
+      return (
+        catalog.find(function (item) {
+          return item.id === 'camera';
+        }) || null
+      );
     }
     var type = String((definition && definition.type) || '').toLowerCase();
     var typeMap = {
