@@ -6,6 +6,31 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.23.0 beta (1-8-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Widget editor / screenswitcher: widget tile names and editor-icon tooltips ("Add devices", "Add widgets", "Move and scale tiles") are now translated using the active language file (``/lang/<locale>.json``).  English is used as fallback when a key is missing.  New keys ``add_devices``, ``add_widgets``, and ``move_tiles`` have been added under ``settings.widgeteditor`` for ``en_US``, ``nl_NL``, and ``fr_FR``.
+
+* Device Editor: the "Add device from Domoticz" dropdown now lists items in the order Groups, Scenes, then Devices (each group alphabetically), instead of a flat alphabetical sort across all types.
+* Device Editor: Domoticz groups and scenes are now listed in the "Add device from Domoticz" dropdown with a ``Group_`` (or ``Scene_``) prefix so they can be added to any screen.  Saved group blocks use the group's scene key (e.g. ``s1``) directly as the block reference, matching the hand-written CONFIG.js convention.
+
+* Widget editor: an **iFrame** widget has been added to the widget catalog.  It uses the existing ``DT_frame`` component and generates a block with ``frameurl`` in ``CONFIG.js``.  Configurable options are: URL (required), height (px), scrollbars (on/off), scale-to-fit width, force cache refresh, and refresh interval.  Translations for the new widget and its settings have been added to ``en_US``, ``nl_NL``, and ``fr_FR``.  Existing hand-written ``frames.*`` blocks (using ``frameurl``) are automatically recognised by the widget editor when the screen is opened.
+
+* A new **XMLTV TV Guide** widget (``DT_xmltvguide``) has been added.  It fetches guide data from any XMLTV-compatible source (WebGrab+Plus, EPG123, Jellyfin, Tvheadend, etc.) and displays current and upcoming programmes.  The ``xmltvurl`` block property selects the data source; ``channels`` filters by channel id or display-name; ``maxitems``, ``layout``, and ``separator`` control the presentation.  Translation strings for loading, error, and no-programme states have been added to all supported language files.  See :ref:`xmltvguide` for full documentation.
+
+~~~~~~~~~~~~
+
+
+Fixes
+~~~~~
+
+* Widget editor: widget tile names now always reflect the active language when the device-editor popup opens, even when a hardcoded ``title`` (e.g. ``title:'Afval'``) is present in the ``blocks[...]`` definition in ``CONFIG.js``.  The translated name from the language file (``settings.widgeteditor.*_title``) now takes priority over any stored title for all known widget types.  Type-mapped widgets (blocks defined with a ``type:`` property rather than a ``widget_xxx`` key) are fixed in the same way.
+
+
+
 v3.22.2 beta (1-8-2026)
 --------------------------
 

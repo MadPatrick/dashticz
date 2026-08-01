@@ -19,7 +19,8 @@ var DashticzWidgetEditor = (function () {
       title: 'Garbage',
       description: 'Upcoming waste collections.',
       icon: 'fas fa-trash-alt',
-      width: 6,
+      width: 5,
+      height: 160,
     },
     {
       id: 'spotify',
@@ -134,6 +135,25 @@ var DashticzWidgetEditor = (function () {
       icon: 'fas fa-newspaper',
       width: 4,
       height: 240,
+    },
+    // iframe widget: embeds any external URL in an inline frame
+    {
+      id: 'iframe',
+      blockKey: 'widget_iframe',
+      title: 'iFrame',
+      description: 'Embed any website or local URL in a frame.',
+      icon: 'fas fa-window-maximize',
+      width: 6,
+      height: 400,
+    },
+    {
+      id: 'xmltvguide',
+      blockKey: 'widget_xmltvguide',
+      title: 'XMLTV TV Guide',
+      description: 'TV programme guide from an XMLTV-format URL.',
+      icon: 'fas fa-tv',
+      width: 6,
+      height: 300,
     },
   ];
 
@@ -380,6 +400,21 @@ var DashticzWidgetEditor = (function () {
         default_news_url: _s('default_news_url', 'https://www.nu.nl/rss/Algemeen'),
         news_scroll_after: _s('news_scroll_after', '7'),
       },
+      // iframe widget block properties (block-specific, not global config settings)
+      iframe: {
+        frameurl: '',
+        height: '400',
+        scrollbars: 1,
+        scaletofit: '',
+        forcerefresh: 0,
+        refresh: '300',
+      },
+      // xmltvguide widget block properties (block-specific, not global config settings)
+      xmltvguide: {
+        xmltvurl: '',
+        channels: '',
+        maxitems: '10',
+      },
     };
 
     if (gridMode) {
@@ -534,6 +569,41 @@ var DashticzWidgetEditor = (function () {
             alarmFilter = definition.filter;
           }
         }
+        // Hydrate iframe widget settings from an existing block definition (managed layout)
+        if (item.id === 'iframe') {
+          if (typeof definition.frameurl === 'string') {
+            widgetConfigs.iframe.frameurl = definition.frameurl;
+          }
+          if (typeof definition.height !== 'undefined') {
+            widgetConfigs.iframe.height = String(definition.height);
+          }
+          if (typeof definition.scrollbars !== 'undefined') {
+            widgetConfigs.iframe.scrollbars = definition.scrollbars === false ? 0 : 1;
+          }
+          if (typeof definition.scaletofit !== 'undefined') {
+            widgetConfigs.iframe.scaletofit = String(definition.scaletofit);
+          }
+          if (typeof definition.forcerefresh !== 'undefined') {
+            widgetConfigs.iframe.forcerefresh = definition.forcerefresh ? 1 : 0;
+          }
+          if (typeof definition.refresh !== 'undefined') {
+            widgetConfigs.iframe.refresh = String(definition.refresh);
+          }
+        }
+        // Hydrate xmltvguide widget settings from an existing block definition (managed layout)
+        if (item.id === 'xmltvguide') {
+          if (typeof definition.xmltvurl === 'string') {
+            widgetConfigs.xmltvguide.xmltvurl = definition.xmltvurl;
+          }
+          if (Array.isArray(definition.channels)) {
+            widgetConfigs.xmltvguide.channels = definition.channels.join(', ');
+          } else if (typeof definition.channels === 'string') {
+            widgetConfigs.xmltvguide.channels = definition.channels;
+          }
+          if (typeof definition.maxitems !== 'undefined') {
+            widgetConfigs.xmltvguide.maxitems = String(definition.maxitems);
+          }
+        }
       });
     });
 
@@ -615,6 +685,14 @@ var DashticzWidgetEditor = (function () {
   function _catalogItemForDefinition(reference, definition) {
     var byKey = _catalogItemByBlockKey(reference);
     if (byKey) return byKey;
+    // Blocks identified by a frameurl property (no type needed) map to iframe
+    if (definition && typeof definition.frameurl === 'string') {
+      return catalog.find(function (item) { return item.id === 'iframe'; }) || null;
+    }
+    // Blocks identified by an xmltvurl property map to xmltvguide
+    if (definition && typeof definition.xmltvurl === 'string') {
+      return catalog.find(function (item) { return item.id === 'xmltvguide'; }) || null;
+    }
     var type = String((definition && definition.type) || '').toLowerCase();
     var typeMap = {
       weather: 'weather',
@@ -637,6 +715,8 @@ var DashticzWidgetEditor = (function () {
       flipclock: 'clock',
       haymanclock: 'clock',
       miniclock: 'clock',
+      // blocks with frameurl are treated as iframe widgets
+      frame: 'iframe',
     };
     var id = typeMap[type];
     if (!id) return null;
@@ -762,6 +842,39 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'alarmmeldingen') {
       alarmRss = definition.rss || alarmRss;
       alarmFilter = definition.filter || '';
+    } else if (item.id === 'iframe') {
+      // Hydrate iframe widget settings from an existing block definition
+      if (typeof definition.frameurl === 'string') {
+        widgetConfigs.iframe.frameurl = definition.frameurl;
+      }
+      if (typeof definition.height !== 'undefined') {
+        widgetConfigs.iframe.height = String(definition.height);
+      }
+      if (typeof definition.scrollbars !== 'undefined') {
+        widgetConfigs.iframe.scrollbars = definition.scrollbars === false ? 0 : 1;
+      }
+      if (typeof definition.scaletofit !== 'undefined') {
+        widgetConfigs.iframe.scaletofit = String(definition.scaletofit);
+      }
+      if (typeof definition.forcerefresh !== 'undefined') {
+        widgetConfigs.iframe.forcerefresh = definition.forcerefresh ? 1 : 0;
+      }
+      if (typeof definition.refresh !== 'undefined') {
+        widgetConfigs.iframe.refresh = String(definition.refresh);
+      }
+    } else if (item.id === 'xmltvguide') {
+      // Hydrate xmltvguide widget settings from an existing block definition
+      if (typeof definition.xmltvurl === 'string') {
+        widgetConfigs.xmltvguide.xmltvurl = definition.xmltvurl;
+      }
+      if (Array.isArray(definition.channels)) {
+        widgetConfigs.xmltvguide.channels = definition.channels.join(', ');
+      } else if (typeof definition.channels === 'string') {
+        widgetConfigs.xmltvguide.channels = definition.channels;
+      }
+      if (typeof definition.maxitems !== 'undefined') {
+        widgetConfigs.xmltvguide.maxitems = String(definition.maxitems);
+      }
     }
   }
 
@@ -897,7 +1010,9 @@ var DashticzWidgetEditor = (function () {
       id === 'map' ||
       id === 'longfonds' ||
       id === 'moon' ||
-      id === 'news'
+      id === 'news' ||
+      id === 'iframe' ||
+      id === 'xmltvguide'
     );
   }
 
@@ -1347,6 +1462,49 @@ var DashticzWidgetEditor = (function () {
       var lg2 = lng.general || {};
       fields += _cfgField('default_news_url', lg2.default_news_url || 'News URL', 'text', ncfg.default_news_url);
       fields += _cfgField('news_scroll_after', lg2.news_scroll_after || 'Scroll after (seconds)', 'text', ncfg.news_scroll_after);
+
+    } else if (item.id === 'iframe') {
+      // Config fields for the iframe widget
+      var icfg = widgetConfigs.iframe || {};
+      var li = lng.widgeteditor || {};
+      fields +=
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-iframe-url">' +
+        (li.iframe_url || 'URL') +
+        ' <span class="text-danger" aria-hidden="true">*</span></label>' +
+        '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-iframe-url" ' +
+        'data-cfg-key="frameurl" placeholder="http://192.168.1.x:8080" value="' + _esc(String(icfg.frameurl || '')) + '">' +
+        '<div class="form-text" style="font-size:11px;color:#6c757d">' +
+        (li.iframe_url_help || 'Full URL including http(s)://. The remote server must allow embedding (no X-Frame-Options: DENY).') +
+        '</div></div>';
+      fields += _cfgField('iframe_height', li.iframe_height || 'Height (px)', 'text', icfg.height,
+        null, li.iframe_height_help || 'Height of the iframe in pixels. Leave empty to use the block height.');
+      fields += _cfgField('iframe_scrollbars', li.iframe_scrollbars || 'Show scrollbars', 'checkbox', icfg.scrollbars);
+      fields += _cfgField('iframe_scaletofit', li.iframe_scaletofit || 'Scale-to-fit width (px)',
+        'text', icfg.scaletofit, null,
+        li.iframe_scaletofit_help || 'Design width of the embedded page (e.g. 1024). The page will be scaled so it fits the tile width. Leave empty to disable scaling.');
+      fields += _cfgField('iframe_forcerefresh', li.iframe_forcerefresh || 'Force cache refresh', 'checkbox', icfg.forcerefresh);
+      fields += _cfgField('iframe_refresh', li.iframe_refresh || 'Refresh interval (seconds)', 'text', icfg.refresh,
+        null, li.iframe_refresh_help || 'How often to reload the iframe. Default: 300 seconds.');
+    } else if (item.id === 'xmltvguide') {
+      // Config fields for the XMLTV TV Guide widget
+      var xcfg = widgetConfigs.xmltvguide || {};
+      var lx = lng.widgeteditor || {};
+      fields +=
+        '<div class="mb-3">' +
+        '<label class="form-label we-field-label" for="we-cfg-xmltv-url">' +
+        (lx.xmltv_url || 'XMLTV URL') +
+        ' <span class="text-danger" aria-hidden="true">*</span></label>' +
+        '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-xmltv-url" ' +
+        'data-cfg-key="xmltvurl" placeholder="http://my-epg-server/guide.xml" value="' + _esc(String(xcfg.xmltvurl || '')) + '">' +
+        '<div class="form-text" style="font-size:11px;color:#6c757d">' +
+        (lx.xmltv_url_help || 'URL of an XMLTV-format XML file (e.g. from Jellyfin, Emby, WebGrab+).') +
+        '</div></div>';
+      fields += _cfgField('xmltv_channels', lx.xmltv_channels || 'Channels (comma-separated)',
+        'text', xcfg.channels, null,
+        lx.xmltv_channels_help || 'Channel IDs or display-names to show, separated by commas. Leave empty to show all channels.');
+      fields += _cfgField('xmltv_maxitems', lx.xmltv_maxitems || 'Max items', 'text', xcfg.maxitems,
+        null, lx.xmltv_maxitems_help || 'Maximum number of programme rows to display (default: 10).');
     }
 
     return (
@@ -1541,6 +1699,41 @@ var DashticzWidgetEditor = (function () {
         widgetConfigs.moon = collected;
       } else if (widgetId === 'news') {
         widgetConfigs.news = collected;
+      } else if (widgetId === 'iframe') {
+        // Validate and store iframe-specific config
+        var iframeUrl = $.trim($('#we-cfg-iframe-url').val() || '');
+        if (!iframeUrl) {
+          $('.we-cfg-message')
+            .addClass('text-danger')
+            .text(_t('invalid_iframe_url', 'Enter a valid URL for the iframe (e.g. http://192.168.1.x:8080).'));
+          $('#we-cfg-iframe-url').trigger('focus');
+          valid = false;
+        } else {
+          widgetConfigs.iframe = {
+            frameurl: iframeUrl,
+            height: $.trim($cfgModal.find('[data-cfg-key="iframe_height"]').val() || '') || '400',
+            scrollbars: $cfgModal.find('[data-cfg-key="iframe_scrollbars"]').is(':checked') ? 1 : 0,
+            scaletofit: $.trim($cfgModal.find('[data-cfg-key="iframe_scaletofit"]').val() || ''),
+            forcerefresh: $cfgModal.find('[data-cfg-key="iframe_forcerefresh"]').is(':checked') ? 1 : 0,
+            refresh: $.trim($cfgModal.find('[data-cfg-key="iframe_refresh"]').val() || '') || '300',
+          };
+        }
+      } else if (widgetId === 'xmltvguide') {
+        // Validate and store xmltvguide-specific config
+        var xmltvUrl = $.trim($('#we-cfg-xmltv-url').val() || '');
+        if (!xmltvUrl) {
+          $('.we-cfg-message')
+            .addClass('text-danger')
+            .text(_t('invalid_xmltv_url', 'Enter a valid URL for the XMLTV TV Guide (e.g. http://my-epg-server/guide.xml).'));
+          $('#we-cfg-xmltv-url').trigger('focus');
+          valid = false;
+        } else {
+          widgetConfigs.xmltvguide = {
+            xmltvurl: xmltvUrl,
+            channels: $.trim($cfgModal.find('[data-cfg-key="xmltv_channels"]').val() || ''),
+            maxitems: $.trim($cfgModal.find('[data-cfg-key="xmltv_maxitems"]').val() || '') || '10',
+          };
+        }
       }
 
       if (valid) {
@@ -1672,6 +1865,20 @@ var DashticzWidgetEditor = (function () {
         );
       return;
     }
+    // Validate that a URL has been configured for the iframe widget
+    if (selectedWidgets.iframe && !widgetConfigs.iframe.frameurl) {
+      $('.we-message')
+        .addClass('text-danger')
+        .text(_t('iframe_needs_url', 'Enter a URL for the iFrame widget in its settings.'));
+      return;
+    }
+    // Validate that a URL has been configured for the xmltvguide widget
+    if (selectedWidgets.xmltvguide && !widgetConfigs.xmltvguide.xmltvurl) {
+      $('.we-message')
+        .addClass('text-danger')
+        .text(_t('xmltvguide_needs_url', 'Enter an XMLTV URL for the TV Guide widget in its settings.'));
+      return;
+    }
 
     // Collect flattened config settings from all widget configs
     var configSettings = {};
@@ -1710,6 +1917,7 @@ var DashticzWidgetEditor = (function () {
       if (dimensions.height || item.height) {
         entry.height = dimensions.height || item.height;
       }
+      if (item.id === 'garbage') entry.displayTitle = _widgetTitle(item);
       if (item.id === 'weather') entry.provider = weatherProvider;
       if (item.id === 'weather' && widgetConfigs.weather) {
         var wcfg = widgetConfigs.weather;
@@ -1764,6 +1972,35 @@ var DashticzWidgetEditor = (function () {
       if (item.id === 'alarmmeldingen') {
         entry.rss = alarmRss;
         if (alarmFilter) entry.filter = alarmFilter;
+      }
+      // Add iframe-specific block properties to the widget payload entry
+      if (item.id === 'iframe') {
+        var icfg = widgetConfigs.iframe || {};
+        entry.frameurl = icfg.frameurl || '';
+        entry.scrollbars = Number(icfg.scrollbars) === 1;
+        if (icfg.height && icfg.height !== '') {
+          entry.iframeHeight = parseInt(icfg.height, 10) || 400;
+        }
+        if (icfg.scaletofit && icfg.scaletofit !== '') {
+          entry.scaletofit = parseInt(icfg.scaletofit, 10) || 0;
+        }
+        if (Number(icfg.forcerefresh)) {
+          entry.forcerefresh = true;
+        }
+        if (icfg.refresh && icfg.refresh !== '') {
+          entry.refresh = parseInt(icfg.refresh, 10) || 300;
+        }
+      }
+      // Add xmltvguide-specific block properties to the widget payload entry
+      if (item.id === 'xmltvguide') {
+        var xcfg = widgetConfigs.xmltvguide || {};
+        entry.xmltvurl = xcfg.xmltvurl || '';
+        if (xcfg.channels && xcfg.channels !== '') {
+          entry.channels = xcfg.channels.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        } else {
+          entry.channels = [];
+        }
+        entry.maxitems = parseInt(xcfg.maxitems, 10) || 10;
       }
       payload.push(entry);
     });

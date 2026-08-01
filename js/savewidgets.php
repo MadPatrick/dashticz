@@ -154,7 +154,7 @@ if (isset($data['settings']) && is_array($data['settings'])) {
 
 $catalog = [
     'weather' => ['key' => 'widget_weather', 'width' => 4, 'height' => 120],
-    'garbage' => ['key' => 'widget_garbage', 'width' => 6],
+    'garbage' => ['key' => 'widget_garbage', 'width' => 5, 'height' => 160],
     'spotify' => ['key' => 'widget_spotify', 'width' => 4, 'height' => 120],
     'sonarr' => ['key' => 'widget_sonarr', 'width' => 4, 'height' => 120],
     'clock' => ['key' => 'widget_clock', 'width' => 4],
@@ -168,6 +168,10 @@ $catalog = [
     'longfonds' => ['key' => 'widget_longfonds', 'width' => 4, 'height' => 120],
     'moon' => ['key' => 'widget_moon', 'width' => 3],
     'news' => ['key' => 'widget_news', 'width' => 4, 'height' => 240],
+    // iframe widget: embeds any URL in an inline frame
+    'iframe' => ['key' => 'widget_iframe', 'width' => 6, 'height' => 400],
+    // xmltvguide widget: TV programme guide from an XMLTV-format URL
+    'xmltvguide' => ['key' => 'widget_xmltvguide', 'width' => 6, 'height' => 300],
 ];
 
 $widgets = [];
@@ -200,6 +204,12 @@ foreach ($data['widgets'] as $entry) {
             ? $catalog[$id]['height']
             : null,
     ];
+    if ($id === 'garbage' && isset($entry['displayTitle']) && is_string($entry['displayTitle'])) {
+        $displayTitle = trim($entry['displayTitle']);
+        if ($displayTitle !== '' && strlen($displayTitle) <= 100) {
+            $widget['displayTitle'] = $displayTitle;
+        }
+    }
     if (array_key_exists('height', $entry) && $entry['height'] !== null && $entry['height'] !== '') {
         $height = (int)(round(((int)$entry['height']) / 10) * 10);
         $widget['height'] = max(50, min(2000, $height));
@@ -396,6 +406,82 @@ foreach ($data['widgets'] as $entry) {
         }
     }
 
+    // Validate and store iframe-specific block properties
+    if ($id === 'iframe') {
+        $frameurl = isset($entry['frameurl']) && is_string($entry['frameurl'])
+            ? trim($entry['frameurl'])
+            : '';
+        if ($frameurl === '' || strlen($frameurl) > 2048) {
+            dashticz_json_error(400, 'iFrame requires a non-empty URL (max 2048 characters).');
+        }
+        $widget['frameurl'] = $frameurl;
+
+        // Optional: scrollbars (boolean, default true)
+        $widget['scrollbars'] = !isset($entry['scrollbars']) || (bool)$entry['scrollbars'];
+
+        // Optional: height in pixels
+        if (isset($entry['iframeHeight']) && is_numeric($entry['iframeHeight'])) {
+            $h = (int)$entry['iframeHeight'];
+            if ($h > 0 && $h <= 5000) {
+                $widget['iframeHeight'] = $h;
+            }
+        }
+
+        // Optional: scale-to-fit width
+        if (isset($entry['scaletofit']) && is_numeric($entry['scaletofit'])) {
+            $s = (int)$entry['scaletofit'];
+            if ($s > 0 && $s <= 10000) {
+                $widget['scaletofit'] = $s;
+            }
+        }
+
+        // Optional: force cache refresh
+        if (!empty($entry['forcerefresh'])) {
+            $widget['forcerefresh'] = true;
+        }
+
+        // Optional: refresh interval in seconds
+        if (isset($entry['refresh']) && is_numeric($entry['refresh'])) {
+            $r = (int)$entry['refresh'];
+            if ($r > 0 && $r <= 86400) {
+                $widget['refresh'] = $r;
+            }
+        }
+    }
+
+    // Validate and store xmltvguide-specific block properties
+    if ($id === 'xmltvguide') {
+        $xmltvurl = isset($entry['xmltvurl']) && is_string($entry['xmltvurl'])
+            ? trim($entry['xmltvurl'])
+            : '';
+        if ($xmltvurl === '' || strlen($xmltvurl) > 2048) {
+            dashticz_json_error(400, 'XMLTV TV Guide requires a non-empty XMLTV URL (max 2048 characters).');
+        }
+        $widget['xmltvurl'] = $xmltvurl;
+
+        // Optional: channel filter (array of channel IDs or display-names)
+        if (isset($entry['channels']) && is_array($entry['channels'])) {
+            $channels = [];
+            foreach ($entry['channels'] as $ch) {
+                if (is_string($ch) && strlen($ch) > 0 && strlen($ch) <= 256) {
+                    $channels[] = $ch;
+                }
+            }
+            if (count($channels) > 100) {
+                dashticz_json_error(400, 'XMLTV TV Guide supports up to 100 channels.');
+            }
+            $widget['channels'] = $channels;
+        }
+
+        // Optional: max items
+        if (isset($entry['maxitems']) && is_numeric($entry['maxitems'])) {
+            $m = (int)$entry['maxitems'];
+            if ($m > 0 && $m <= 500) {
+                $widget['maxitems'] = $m;
+            }
+        }
+    }
+
     $widgets[] = $widget;
 }
 
@@ -518,7 +604,7 @@ function _widgetBlockProps($widget)
             break;
         case 'garbage':
             $props['type'] = 'garbage';
-            $props['title'] = 'Afval';
+            $props['title'] = isset($widget['displayTitle']) ? $widget['displayTitle'] : 'Afval';
             break;
         case 'spotify':
             $props['type'] = 'spotify';
@@ -622,6 +708,36 @@ function _widgetBlockProps($widget)
         case 'news':
             $props['type'] = 'news';
             $props['title'] = 'News';
+            break;
+        case 'iframe':
+            // iframe widget: generates a block with frameurl for the DT_frame component
+            $props['title'] = 'iFrame';
+            $props['frameurl'] = $widget['frameurl'];
+            $props['scrollbars'] = !empty($widget['scrollbars']);
+            if (!empty($widget['iframeHeight'])) {
+                // Override the column height with the configured iframe height
+                $props['height'] = $widget['iframeHeight'];
+            }
+            if (!empty($widget['scaletofit'])) {
+                $props['scaletofit'] = $widget['scaletofit'];
+            }
+            if (!empty($widget['forcerefresh'])) {
+                $props['forcerefresh'] = true;
+            }
+            if (!empty($widget['refresh'])) {
+                $props['refresh'] = $widget['refresh'];
+            }
+            break;
+        case 'xmltvguide':
+            // xmltvguide widget: TV programme guide from an XMLTV-format URL
+            $props['title'] = 'TV Guide';
+            $props['xmltvurl'] = $widget['xmltvurl'];
+            if (!empty($widget['channels'])) {
+                $props['channels'] = $widget['channels'];
+            }
+            if (!empty($widget['maxitems'])) {
+                $props['maxitems'] = $widget['maxitems'];
+            }
             break;
     }
 
