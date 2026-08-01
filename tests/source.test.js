@@ -380,7 +380,7 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(deviceEditor, /\$activeScreen\.find\('\[data-colindex\]'\)/);
   assert.match(deviceEditor, /screen: _activeScreenPayload\(\)/);
   assert.match(deviceEditor, /function _widgetFromReference/);
-  assert.match(deviceEditor, /widget_alarmmeldingen: \{ id: 'alarmmeldingen', title: t\.alarmmeldingen_title \|\| '112' \}/);
+  assert.match(deviceEditor, /widget_alarmmeldingen:\s+\{ id: 'alarmmeldingen',\s+title: translatedTitles\.alarmmeldingen \}/);
   assert.match(deviceEditor, /_widgetPayload\(orderKey\)/);
   assert.match(deviceEditor, /Widget - /);
   assert.match(deviceEditor, /var managedOrder/);
