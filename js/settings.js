@@ -129,6 +129,16 @@ settingList['screen']['show_topbar_clock'] = {
     'Show the date/time clock in the topbar.',
 };
 
+settingList['screen']['topbar_use_png_icons'] = {
+  title:
+    language.settings.screen.topbar_use_png_icons ||
+    'Default iconen topbalk',
+  type: 'checkbox',
+  help:
+    language.settings.screen.topbar_use_png_icons_help ||
+    'Aan (standaard): Font Awesome iconen. Uit: afbeeldingen uit img/icons/ (Plus.png, Puzzle.png, Arrows.png, Cog.png, Expand.png, Minus.png).',
+};
+
 settingList['screen']['theme'] = {};
 settingList['screen']['theme']['title'] =
   language.settings.screen.dashticz_themes;
@@ -856,6 +866,7 @@ var defaultSettings = {
   auto_positioning: 0,
   topbar_timeout: 5,
   show_topbar_clock: 0,
+  topbar_use_png_icons: 0,
   use_favorites: 0,
   use_hidden: 0,
   translate_windspeed: 1,

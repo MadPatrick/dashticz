@@ -1094,6 +1094,16 @@ next css sets the default height of the frame popup
   pointer-events: none;
 }
 
+/* PNG icon images used in topbar action buttons (settings, editor, fullscreen) */
+.dt-topbar-icon-img {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  pointer-events: none;
+  vertical-align: middle;
+}
+
 /* Font Awesome icons inside screen-switcher buttons */
 .dt-screen-btn i[aria-hidden] {
   pointer-events: none;

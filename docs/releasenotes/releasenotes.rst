@@ -6,6 +6,18 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.23.1 beta (1-8-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* **Topbar icons — PNG mode**: a new setting **"Default iconen topbalk"** (``topbar_use_png_icons``) has been added to the *Screen* settings tab.  When the checkbox is **on** (default), the topbar action buttons (Add devices +, Add widgets 🧩, Move tiles ✤, Settings ⚙, Fullscreen ⛶) continue to use Font Awesome icons as before.  When it is **off**, they switch to custom image files from ``img/icons/``: ``Plus.png``, ``Puzzle.png``, ``Arrows.png``, ``Cog.png``, ``Expand.png`` (and ``Minus.png`` for the compressed-fullscreen state).  The setting also applies to the editor icons shown on the Standby screen.  Existing configs without the setting behave exactly as before.
+
+~~~~~~~~~~~~
+
+
+
 v3.23.0 beta (1-8-2026)
 --------------------------
 

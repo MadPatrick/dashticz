@@ -269,17 +269,25 @@ var DashticzScreenSwitcher = (function () {
     // widgetEditorTranslations is a global set by settings.js from /lang/<locale>.json.
     var t =
       typeof widgetEditorTranslations !== 'undefined' ? widgetEditorTranslations : {};
+    var usePng =
+      typeof settings !== 'undefined' &&
+      Number(settings['topbar_use_png_icons']) === 0;
+    function _icon(faClass, imgSrc) {
+      return usePng
+        ? '<img src="' + imgSrc + '" class="dt-topbar-icon-img" aria-hidden="true" alt="">'
+        : '<i class="' + faClass + '" aria-hidden="true"></i>';
+    }
     var html =
       '<span class="dt-standby-editor-icons">' +
       '<span class="settings deviceeditoricon" role="button" title="' +
         (t.add_devices || 'Add devices') + '">' +
-      '<i class="fas fa-plus" aria-hidden="true"></i></span>' +
+      _icon('fas fa-plus', 'img/icons/Plus.png') + '</span>' +
       '<span class="settings widgeteditoricon" role="button" title="' +
         (t.add_widgets || 'Add widgets') + '">' +
-      '<i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>' +
+      _icon('fas fa-puzzle-piece', 'img/icons/Puzzle.png') + '</span>' +
       '<span class="settings layouteditoricon" role="button" title="' +
         (t.move_tiles || 'Move and scale tiles') + '">' +
-      '<i class="fas fa-arrows-alt" aria-hidden="true"></i></span>' +
+      _icon('fas fa-arrows-alt', 'img/icons/Arrows.png') + '</span>' +
       '</span>';
     $bar.append(html);
   }

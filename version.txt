@@ -1,8 +1,9 @@
 {
-    "version": "3.23.0",
+    "version": "3.23.1",
     "branch": "beta",
-    "last_changes": "Add per-screen custom icons in topbar screen-switcher buttons",
+    "last_changes": "Add topbar_use_png_icons setting to switch editor icons between Font Awesome and img/icons/ PNG files",
     "changelog": {
+        "3.23.1": "Add topbar_use_png_icons setting to switch editor icons between Font Awesome and img/icons/ PNG files",
         "3.23.0": "Add per-screen custom icons in topbar screen-switcher; XMLTV TV Guide widget; i18n for all screenswitcher labels",
         "3.22.2": "Auto-detect custom mode when config_mode is absent from CONFIG.js",
         "3.22.1": "Always show editor delete button; calendar agenda auto-expands to fit content",
