@@ -213,18 +213,27 @@ var DashticzScreenSwitcher = (function () {
     });
 
     if (!customMode) {
+      var usePng =
+        typeof settings !== 'undefined' &&
+        Number(settings['topbar_use_png_icons']) === 1;
       var addLabel = st.add_screen || 'Add screen';
+      var addContent = usePng
+        ? '<img src="img/icons/Plus.png" class="dt-screen-icon-img" aria-hidden="true" alt="">'
+        : '+';
       html +=
         '<button type="button" class="dt-screen-btn dt-screen-add" data-screen="add" ' +
-        'title="' + addLabel + '" aria-label="' + addLabel + '">+</button>';
+        'title="' + addLabel + '" aria-label="' + addLabel + '">' + addContent + '</button>';
       var canDelete =
         screenNums.length > 1 && typeof active === 'number' && active > 1;
       var delLabel = st.delete_screen || 'Delete screen';
+      var delContent = usePng
+        ? '<img src="img/icons/Minus.png" class="dt-screen-icon-img" aria-hidden="true" alt="">'
+        : '&minus;';
       html +=
         '<button type="button" class="dt-screen-btn dt-screen-delete" data-screen="delete" ' +
         'title="' + delLabel + '" aria-label="' + delLabel + '"' +
         (canDelete ? '' : ' disabled aria-disabled="true"') +
-        '>&minus;</button>';
+        '>' + delContent + '</button>';
     }
 
     html += '</div>';
