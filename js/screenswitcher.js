@@ -127,6 +127,26 @@ var DashticzScreenSwitcher = (function () {
     updateActive();
   }
 
+  function usePngScreenIcons() {
+    return (
+      typeof settings !== 'undefined' &&
+      Number(settings['topbar_use_png_icons']) === 1
+    );
+  }
+
+  function getDefaultScreenIconPath(screenNum) {
+    if (!usePngScreenIcons()) return null;
+    var defaultIcons = {
+      standby: 'Standby',
+      1: 'One',
+      2: 'Two',
+      3: 'Three',
+      4: 'Four',
+    };
+    var iconName = defaultIcons[screenNum];
+    return iconName ? 'img/icons/' + iconName + '.png' : null;
+  }
+
   /**
    * Resolve the icon HTML for a given screen button.
    * Supports Font Awesome class strings (e.g. 'fas fa-home') and
@@ -160,6 +180,10 @@ var DashticzScreenSwitcher = (function () {
       }
     }
 
+    if (!icon) {
+      icon = getDefaultScreenIconPath(screenNum);
+    }
+
     if (!icon) return null;
 
     // Font Awesome icon: class string such as 'fas fa-home', 'fab fa-github', 'fa-home'
@@ -168,7 +192,7 @@ var DashticzScreenSwitcher = (function () {
     }
 
     // Image path (e.g. 'img/icons/home.svg' or 'img/icons/home.png')
-    return '<img src="' + icon + '" class="dt-screen-icon-img" alt="" aria-hidden="true">';
+    return '<img src="' + icon + '" class="dt-screen-icon-img dt-screen-main-icon-img" alt="" aria-hidden="true">';
   }
 
   function buildButtonsHtml() {

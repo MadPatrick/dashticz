@@ -885,7 +885,14 @@ test('topbar screen switcher supports standby and extra screens', () => {
   assert.match(simpleBlock, /dt-screen-switcher-host/);
   assert.match(simpleBlock, /screenswitcher/);
   assert.match(switcher, /data-screen="standby"/);
-  // Standby button falls back to 'S' when no icon is configured
+  assert.match(switcher, /function getDefaultScreenIconPath/);
+  assert.match(switcher, /topbar_use_png_icons/);
+  assert.match(switcher, /standby: 'Standby'/);
+  assert.match(switcher, /1: 'One'/);
+  assert.match(switcher, /2: 'Two'/);
+  assert.match(switcher, /3: 'Three'/);
+  assert.match(switcher, /4: 'Four'/);
+  // Standby button falls back to 'S' when no custom or built-in PNG icon is configured
   assert.match(switcher, /getScreenIconHtml\('standby'\) \|\| 'S'/);
   assert.match(switcher, /dt-screen-add/);
   assert.match(switcher, /dt-screen-delete/);
@@ -900,6 +907,8 @@ test('topbar screen switcher supports standby and extra screens', () => {
   assert.match(switcher, /enterStandbyManual/);
   assert.match(switcher, /standbyEditMode/);
   assert.match(styles, /\.dt-screen-btn\s*\{/);
+  assert.match(styles, /width: 30px/);
+  assert.match(styles, /\.dt-screen-btn \.dt-screen-main-icon-img/);
   assert.match(styles, /border-radius: 4px/);
   assert.match(styles, /\.dt-screen-btn\.active/);
   assert.match(styles, /dt-screen-switcher-host/);

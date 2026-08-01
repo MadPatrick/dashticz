@@ -1,8 +1,9 @@
 {
-    "version": "3.23.2",
+    "version": "3.23.3",
     "branch": "beta",
-    "last_changes": "Fix topbar custom icon selector: rename to Custom iconen, invert logic so ON=custom PNG and OFF=Font Awesome",
+    "last_changes": "Use bundled Standby/One/Two/Three/Four PNG icons for the screen switcher in custom topbar mode",
     "changelog": {
+        "3.23.3": "Use bundled Standby/One/Two/Three/Four PNG icons for the screen switcher in custom topbar mode",
         "3.23.1": "Add topbar_use_png_icons setting to switch editor icons between Font Awesome and img/icons/ PNG files",
         "3.23.0": "Add per-screen custom icons in topbar screen-switcher; XMLTV TV Guide widget; i18n for all screenswitcher labels",
         "3.22.2": "Auto-detect custom mode when config_mode is absent from CONFIG.js",

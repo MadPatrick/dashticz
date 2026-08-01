@@ -1048,8 +1048,8 @@ next css sets the default height of the frame popup
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   margin: 0;
   border: 2px solid rgba(255, 255, 255, 0.85);
@@ -1092,6 +1092,11 @@ next css sets the default height of the frame popup
   height: 20px;
   object-fit: contain;
   pointer-events: none;
+}
+
+.dt-screen-btn .dt-screen-main-icon-img {
+  width: 30px;
+  height: 30px;
 }
 
 /* PNG icon images used in topbar action buttons (settings, editor, fullscreen) */
