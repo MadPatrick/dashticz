@@ -589,15 +589,19 @@ test('xmltv widget uses its own proxy and preserves optional block settings', ()
   assert.match(widgetEditor, /data-cfg-key="xmltv_layout"/);
   assert.match(widgetEditor, /data-cfg-key="xmltv_separator"/);
   assert.match(widgetEditor, /data-cfg-key="xmltv_refresh"/);
+  assert.match(widgetEditor, /configSettings\.xmltv_url = widgetConfigs\.xmltvguide\.xmltvurl \|\| '';/);
+  assert.match(widgetEditor, /configSettings\.xmltv_layout = widgetConfigs\.xmltvguide\.layout \|\| '0';/);
+  assert.match(widgetEditor, /configSettings\.xmltv_refresh = widgetConfigs\.xmltvguide\.refresh \|\| '3600';/);
   assert.match(widgetEditor, /entry\.layout = parseInt\(xcfg\.layout, 10\) === 1 \? 1 : 0;/);
   assert.match(widgetEditor, /entry\.separator = xcfg\.separator \|\| '-';/);
   assert.match(widgetEditor, /entry\.refresh = parseInt\(xcfg\.refresh, 10\) \|\| 3600;/);
   // _hydrateGridWidget must read back layout, separator and refresh so reopening
   // the settings popup shows the previously saved values in grid mode.
   assert.match(widgetEditor, /item\.id === 'xmltvguide'[\s\S]*widgetConfigs\.xmltvguide\.layout[\s\S]*widgetConfigs\.xmltvguide\.separator[\s\S]*widgetConfigs\.xmltvguide\.refresh/s);
-  assert.match(layouteditor, /item\.widgetId === 'xmltvguide'[\s\S]*entry\.layout = definition\.layout[\s\S]*entry\.separator = definition\.separator[\s\S]*entry\.refresh = definition\.refresh/s);
+  assert.match(layouteditor, /item\.widgetId === 'xmltvguide'[\s\S]*settings\['xmltv_url'\][\s\S]*settings\['xmltv_layout'\][\s\S]*settings\['xmltv_refresh'\]/s);
+  assert.match(savewidgets, /'xmltv_url'\s*=>\s*'string'/);
   assert.match(savewidgets, /\$id === 'xmltvguide'[\s\S]*\$widget\['layout'\][\s\S]*\$widget\['separator'\][\s\S]*\$widget\['refresh'\]/s);
-  assert.match(savewidgets, /case 'xmltvguide':[\s\S]*\$props\['layout'\][\s\S]*\$props\['separator'\][\s\S]*\$props\['refresh'\]/s);
+  assert.match(savewidgets, /case 'xmltvguide':[\s\S]*\$props\['type'\] = 'xmltvguide';[\s\S]*\$props\['title'\] = 'TV Guide';/s);
   // savegridlayout must prefer $allBlockLines over $existingGridBlocks so that a
   // URL change saved by savewidgets.php (blocksOnly) is not silently discarded
   // when savegridlayout.php runs immediately afterwards.

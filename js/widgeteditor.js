@@ -409,14 +409,14 @@ var DashticzWidgetEditor = (function () {
         forcerefresh: 0,
         refresh: '300',
       },
-      // xmltvguide widget block properties (block-specific, not global config settings)
+      // xmltvguide widget settings (saved in global config, but block overrides remain supported)
       xmltvguide: {
-        xmltvurl: '',
-        channels: '',
-        maxitems: '10',
-        layout: '0',
-        separator: '-',
-        refresh: '3600',
+        xmltvurl: _s('xmltv_url'),
+        channels: _s('xmltv_channels'),
+        maxitems: _s('xmltv_maxitems', '10'),
+        layout: _s('xmltv_layout', '0'),
+        separator: _s('xmltv_separator', '-'),
+        refresh: _s('xmltv_refresh', '3600'),
       },
     };
 
@@ -756,6 +756,7 @@ var DashticzWidgetEditor = (function () {
       miniclock: 'clock',
       // blocks with frameurl are treated as iframe widgets
       frame: 'iframe',
+      xmltvguide: 'xmltvguide',
     };
     var id = typeMap[type];
     if (!id) return null;
@@ -1982,6 +1983,14 @@ var DashticzWidgetEditor = (function () {
         });
       }
     });
+    if (widgetConfigs.xmltvguide) {
+      configSettings.xmltv_url = widgetConfigs.xmltvguide.xmltvurl || '';
+      configSettings.xmltv_channels = widgetConfigs.xmltvguide.channels || '';
+      configSettings.xmltv_maxitems = widgetConfigs.xmltvguide.maxitems || '10';
+      configSettings.xmltv_layout = widgetConfigs.xmltvguide.layout || '0';
+      configSettings.xmltv_separator = widgetConfigs.xmltvguide.separator || '-';
+      configSettings.xmltv_refresh = widgetConfigs.xmltvguide.refresh || '3600';
+    }
 
     var payload = [];
     catalog.forEach(function (item) {

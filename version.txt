@@ -1,8 +1,9 @@
 {
-    "version": "3.23.5",
+    "version": "3.23.6",
     "branch": "beta",
-    "last_changes": "Fix XMLTV widget URL not saved or read back when changed in grid-mode widget editor settings",
+    "last_changes": "Store XMLTV widget editor settings in global config entries for consistency with other widgets",
     "changelog": {
+        "3.23.6": "Store XMLTV widget editor settings in global config entries for consistency with other widgets",
         "3.23.5": "Fix XMLTV widget URL not saved or read back when changed in grid-mode widget editor settings",
         "3.23.4": "Fix the XMLTV widget so it keeps its own source/settings and supports cached XML, GZ and ZIP feeds",
         "3.23.3": "Use bundled Standby/One/Two/Three/Four PNG icons for the screen switcher in custom topbar mode",

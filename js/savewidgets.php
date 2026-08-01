@@ -96,6 +96,13 @@ $allowedSettings = [
     // news
     'default_news_url'       => 'string',
     'news_scroll_after'      => 'number',
+    // xmltvguide
+    'xmltv_url'              => 'string',
+    'xmltv_channels'         => 'string',
+    'xmltv_maxitems'         => 'number',
+    'xmltv_layout'           => 'number',
+    'xmltv_separator'        => 'string',
+    'xmltv_refresh'          => 'number',
 ];
 
 $allowedGarbageCompanies = [
@@ -746,24 +753,9 @@ function _widgetBlockProps($widget)
             }
             break;
         case 'xmltvguide':
+            $props['type'] = 'xmltvguide';
             // xmltvguide widget: TV programme guide from an XMLTV-format URL
             $props['title'] = 'TV Guide';
-            $props['xmltvurl'] = $widget['xmltvurl'];
-            if (!empty($widget['channels'])) {
-                $props['channels'] = $widget['channels'];
-            }
-            if (!empty($widget['maxitems'])) {
-                $props['maxitems'] = $widget['maxitems'];
-            }
-            if (isset($widget['layout'])) {
-                $props['layout'] = $widget['layout'];
-            }
-            if (!empty($widget['separator'])) {
-                $props['separator'] = $widget['separator'];
-            }
-            if (!empty($widget['refresh'])) {
-                $props['refresh'] = $widget['refresh'];
-            }
             break;
     }
 

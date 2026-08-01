@@ -6,6 +6,14 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.23.6 beta (1-8-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* **XMLTV TV Guide — consistent setting storage**: the Widget Editor now stores the XMLTV widget's URL, channel filter, maximum items, layout, separator, and refresh interval as global ``config['xmltv_*']`` settings, matching the pattern already used by widgets such as Sonarr.  Generated XMLTV blocks now use ``type: 'xmltvguide'`` and read those shared settings automatically, while existing hand-written blocks that keep ``xmltvurl`` / ``channels`` / ``maxitems`` directly on the block remain supported as overrides.
+
 v3.23.5 beta (1-8-2026)
 --------------------------
 
