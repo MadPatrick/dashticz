@@ -1,9 +1,9 @@
 {
     "version": "3.23.0",
     "branch": "beta",
-    "last_changes": "Add XMLTV TV Guide widget (DT_xmltvguide)",
+    "last_changes": "Add per-screen custom icons in topbar screen-switcher buttons",
     "changelog": {
-        "3.23.0": "Add XMLTV TV Guide widget (DT_xmltvguide) with multi-language support",
+        "3.23.0": "Add per-screen custom icons in topbar screen-switcher; XMLTV TV Guide widget; i18n for all screenswitcher labels",
         "3.22.2": "Auto-detect custom mode when config_mode is absent from CONFIG.js",
         "3.22.1": "Always show editor delete button; calendar agenda auto-expands to fit content",
         "3.22.0": "Preserve widget settings and add Standby grid parity",

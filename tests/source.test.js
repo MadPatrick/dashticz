@@ -885,10 +885,11 @@ test('topbar screen switcher supports standby and extra screens', () => {
   assert.match(simpleBlock, /dt-screen-switcher-host/);
   assert.match(simpleBlock, /screenswitcher/);
   assert.match(switcher, /data-screen="standby"/);
-  assert.match(switcher, /title="Standby">S</);
+  // Standby button falls back to 'S' when no icon is configured
+  assert.match(switcher, /getScreenIconHtml\('standby'\) \|\| 'S'/);
   assert.match(switcher, /dt-screen-add/);
   assert.match(switcher, /dt-screen-delete/);
-  assert.match(switcher, /screens\.length > 1/);
+  assert.match(switcher, /screenNums\.length > 1/);
   assert.match(switcher, /disabled aria-disabled="true"/);
   assert.match(switcher, /\.dt-screen-delete'[\s\S]*\.prop\('disabled', !canDelete\)/);
   assert.ok(

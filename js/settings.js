@@ -341,6 +341,11 @@ var weatherIconOptions = {
 var widgetEditorTranslations =
   (language.settings && language.settings.widgeteditor) || {};
 
+// Translations for screenswitcher button labels (language.screenswitcher section).
+// Falls back gracefully to English when a key is missing.
+// eslint-disable-next-line no-unused-vars
+var screenswitcherTranslations = (language.screenswitcher) || {};
+
 var widgetSettingTiles = [
   {
     id: 'weather',

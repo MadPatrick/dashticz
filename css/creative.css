@@ -1085,6 +1085,22 @@ next css sets the default height of the frame popup
   outline-offset: 2px;
 }
 
+/* Custom icon image inside a screen-switcher button (e.g. from img/icons/) */
+.dt-screen-btn .dt-screen-icon-img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Font Awesome icons inside screen-switcher buttons */
+.dt-screen-btn i[aria-hidden] {
+  pointer-events: none;
+  font-size: 13px;
+  line-height: 1;
+}
+
 /* Standby chrome: S/1/2/+ next to editor icons; auto-hide unless hovered */
 .dt-screen-switcher-bar {
   position: relative;
