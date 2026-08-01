@@ -242,7 +242,7 @@ var DashticzScreenSwitcher = (function () {
         Number(settings['topbar_use_png_icons']) === 1;
       var addLabel = st.add_screen || 'Add screen';
       var addContent = usePng
-        ? '<img src="img/icons/Plus.png" class="dt-screen-icon-img" aria-hidden="true" alt="">'
+        ? '<img src="img/icons/Add_layer.png" class="dt-screen-icon-img" aria-hidden="true" alt="">'
         : '+';
       html +=
         '<button type="button" class="dt-screen-btn dt-screen-add" data-screen="add" ' +
