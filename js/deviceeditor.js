@@ -113,22 +113,33 @@ var DashticzDeviceEditor = (function () {
   }
 
   function _widgetFromReference(reference) {
+    // Use translations from the active language file (widgetEditorTranslations is defined
+    // in settings.js and populated from /lang/<locale>.json settings.widgeteditor section).
+    // Fall back to English when the key is missing or the variable is not yet available.
+    var t =
+      typeof widgetEditorTranslations !== 'undefined' ? widgetEditorTranslations : {};
     var catalog = {
-      widget_weather: { id: 'weather', title: 'Weer' },
-      widget_garbage: { id: 'garbage', title: 'Afval' },
-      widget_spotify: { id: 'spotify', title: 'Spotify' },
-      widget_sonarr: { id: 'sonarr', title: 'Sonarr' },
-      widget_clock: { id: 'clock', title: 'Klok' },
-      widget_calendar: { id: 'calendar', title: 'Kalender' },
-      widget_secpanel: { id: 'secpanel', title: 'Security panel' },
-      widget_publictransport: { id: 'publictransport', title: 'Openbaar vervoer' },
-      widget_trafficinfo: { id: 'trafficinfo', title: 'Verkeersinfo' },
-      widget_alarmmeldingen: { id: 'alarmmeldingen', title: '112' },
-      widget_cameras: { id: 'camera', title: "Camera's" },
-      widget_map: { id: 'map', title: 'Google Maps' },
-      widget_longfonds: { id: 'longfonds', title: 'Luchtkwaliteit' },
-      widget_moon: { id: 'moon', title: 'Maan' },
-      widget_news: { id: 'news', title: 'Nieuws' },
+      widget_weather: { id: 'weather', title: t.weather_title || 'Weather' },
+      widget_garbage: { id: 'garbage', title: t.garbage_title || 'Garbage' },
+      widget_spotify: { id: 'spotify', title: t.spotify_title || 'Spotify' },
+      widget_sonarr: { id: 'sonarr', title: t.sonarr_title || 'Sonarr' },
+      widget_clock: { id: 'clock', title: t.clock_title || 'Clock' },
+      widget_calendar: { id: 'calendar', title: t.calendar_title || 'Calendar (ICS)' },
+      widget_secpanel: { id: 'secpanel', title: t.secpanel_title || 'Security panel' },
+      widget_publictransport: {
+        id: 'publictransport',
+        title: t.publictransport_title || 'Public transport',
+      },
+      widget_trafficinfo: {
+        id: 'trafficinfo',
+        title: t.trafficinfo_title || 'Traffic information',
+      },
+      widget_alarmmeldingen: { id: 'alarmmeldingen', title: t.alarmmeldingen_title || '112' },
+      widget_cameras: { id: 'camera', title: t.camera_title || 'Cameras' },
+      widget_map: { id: 'map', title: t.map_title || 'Google Maps' },
+      widget_longfonds: { id: 'longfonds', title: t.longfonds_title || 'Air quality' },
+      widget_moon: { id: 'moon', title: t.moon_title || 'Moon' },
+      widget_news: { id: 'news', title: t.news_title || 'News' },
     };
     if (typeof blocks === 'undefined' || !blocks[reference]) {
       return null;
