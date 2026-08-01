@@ -71,13 +71,10 @@ var DT_xmltvguide = {
 
     tvobject.html('<span class="xmltv-loading">' + lang_loading + '</span>');
 
-    var url = _CORS_PATH + block.xmltvurl;
+    var proxyUrl = _xmltvRequestUrl(block.xmltvurl);
+    var fallbackUrl = _CORS_PATH + block.xmltvurl;
 
-    $.ajax({
-      url: url,
-      dataType: 'text',
-      cache: true,
-    })
+    _fetchXmltvText(proxyUrl, fallbackUrl)
       .done(function (responseText) {
         var parsed = _parseXmltvData(responseText, block, lang_no_programs);
         if (!parsed) {
@@ -113,11 +110,42 @@ var DT_xmltvguide = {
           });
       })
       .fail(function () {
-        console.error('[xmltvguide] Failed to load XMLTV data from:', url);
+        console.error(
+          '[xmltvguide] Failed to load XMLTV data from:',
+          block.xmltvurl
+        );
         tvobject.html('<span class="xmltv-error">' + lang_error + '</span>');
       });
   },
 };
+
+function _xmltvRequestUrl(xmltvurl) {
+  var phpPath =
+    typeof settings !== 'undefined' && settings['dashticz_php_path']
+      ? settings['dashticz_php_path']
+      : '';
+  if (phpPath) {
+    return phpPath + 'xmltv.php?url=' + encodeURIComponent(xmltvurl);
+  }
+  return _CORS_PATH + xmltvurl;
+}
+
+function _fetchXmltvText(primaryUrl, fallbackUrl) {
+  return $.ajax({
+    url: primaryUrl,
+    dataType: 'text',
+    cache: true,
+  }).then(null, function () {
+    if (fallbackUrl && fallbackUrl !== primaryUrl) {
+      return $.ajax({
+        url: fallbackUrl,
+        dataType: 'text',
+        cache: true,
+      });
+    }
+    return $.Deferred().reject().promise();
+  });
+}
 
 /**
  * Parse raw XMLTV XML text and return an array of programme objects that

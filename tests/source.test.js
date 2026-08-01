@@ -556,6 +556,43 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.doesNotMatch(main, /id: 'use_favorites'/);
 });
 
+test('xmltv widget uses its own proxy and preserves optional block settings', () => {
+  const xmltv = fs.readFileSync(
+    path.join(root, 'js/components/xmltvguide.js'),
+    'utf8'
+  );
+  const tvguide = fs.readFileSync(
+    path.join(root, 'js/components/tvguide.js'),
+    'utf8'
+  );
+  const widgetEditor = fs.readFileSync(
+    path.join(root, 'js/widgeteditor.js'),
+    'utf8'
+  );
+  const layouteditor = fs.readFileSync(
+    path.join(root, 'js/layouteditor.js'),
+    'utf8'
+  );
+  const savewidgets = fs.readFileSync(
+    path.join(root, 'js/savewidgets.php'),
+    'utf8'
+  );
+
+  assert.match(tvguide, /typeof block\.xmltvurl === 'undefined'/);
+  assert.match(xmltv, /xmltv\.php\?url=/);
+  assert.match(xmltv, /function _fetchXmltvText/);
+  assert.match(widgetEditor, /xmltvguide:\s*\{[\s\S]*layout:\s*'0'[\s\S]*separator:\s*'-'[\s\S]*refresh:\s*'3600'/);
+  assert.match(widgetEditor, /data-cfg-key="xmltv_layout"/);
+  assert.match(widgetEditor, /data-cfg-key="xmltv_separator"/);
+  assert.match(widgetEditor, /data-cfg-key="xmltv_refresh"/);
+  assert.match(widgetEditor, /entry\.layout = parseInt\(xcfg\.layout, 10\) === 1 \? 1 : 0;/);
+  assert.match(widgetEditor, /entry\.separator = xcfg\.separator \|\| '-';/);
+  assert.match(widgetEditor, /entry\.refresh = parseInt\(xcfg\.refresh, 10\) \|\| 3600;/);
+  assert.match(layouteditor, /item\.widgetId === 'xmltvguide'[\s\S]*entry\.layout = definition\.layout[\s\S]*entry\.separator = definition\.separator[\s\S]*entry\.refresh = definition\.refresh/s);
+  assert.match(savewidgets, /\$id === 'xmltvguide'[\s\S]*\$widget\['layout'\][\s\S]*\$widget\['separator'\][\s\S]*\$widget\['refresh'\]/s);
+  assert.match(savewidgets, /case 'xmltvguide':[\s\S]*\$props\['layout'\][\s\S]*\$props\['separator'\][\s\S]*\$props\['refresh'\]/s);
+});
+
 test('Hayman clock does not depend on Moment locale internals for rendering', () => {
   const source = fs.readFileSync(
     path.join(root, 'js/components/haymanclock.js'),

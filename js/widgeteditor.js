@@ -414,6 +414,9 @@ var DashticzWidgetEditor = (function () {
         xmltvurl: '',
         channels: '',
         maxitems: '10',
+        layout: '0',
+        separator: '-',
+        refresh: '3600',
       },
     };
 
@@ -602,6 +605,15 @@ var DashticzWidgetEditor = (function () {
           }
           if (typeof definition.maxitems !== 'undefined') {
             widgetConfigs.xmltvguide.maxitems = String(definition.maxitems);
+          }
+          if (typeof definition.layout !== 'undefined') {
+            widgetConfigs.xmltvguide.layout = String(definition.layout);
+          }
+          if (typeof definition.separator === 'string') {
+            widgetConfigs.xmltvguide.separator = definition.separator;
+          }
+          if (typeof definition.refresh !== 'undefined') {
+            widgetConfigs.xmltvguide.refresh = String(definition.refresh);
           }
         }
       });
@@ -1505,6 +1517,33 @@ var DashticzWidgetEditor = (function () {
         lx.xmltv_channels_help || 'Channel IDs or display-names to show, separated by commas. Leave empty to show all channels.');
       fields += _cfgField('xmltv_maxitems', lx.xmltv_maxitems || 'Max items', 'text', xcfg.maxitems,
         null, lx.xmltv_maxitems_help || 'Maximum number of programme rows to display (default: 10).');
+      fields += _cfgField(
+        'xmltv_layout',
+        lx.xmltv_layout || 'Layout',
+        'select',
+        xcfg.layout,
+        {
+          0: lx.xmltv_layout_with_channel || 'Time, channel and title',
+          1: lx.xmltv_layout_compact || 'Time and title only',
+        },
+        lx.xmltv_layout_help || 'Choose whether the channel column is shown.'
+      );
+      fields += _cfgField(
+        'xmltv_separator',
+        lx.xmltv_separator || 'Separator',
+        'text',
+        xcfg.separator,
+        null,
+        lx.xmltv_separator_help || 'Character shown between the columns.'
+      );
+      fields += _cfgField(
+        'xmltv_refresh',
+        lx.xmltv_refresh || 'Refresh interval (seconds)',
+        'text',
+        xcfg.refresh,
+        null,
+        lx.xmltv_refresh_help || 'How often to refresh the widget from the cached XMLTV data.'
+      );
     }
 
     return (
@@ -1732,6 +1771,9 @@ var DashticzWidgetEditor = (function () {
             xmltvurl: xmltvUrl,
             channels: $.trim($cfgModal.find('[data-cfg-key="xmltv_channels"]').val() || ''),
             maxitems: $.trim($cfgModal.find('[data-cfg-key="xmltv_maxitems"]').val() || '') || '10',
+            layout: $.trim($cfgModal.find('[data-cfg-key="xmltv_layout"]').val() || '') || '0',
+            separator: $.trim($cfgModal.find('[data-cfg-key="xmltv_separator"]').val() || '') || '-',
+            refresh: $.trim($cfgModal.find('[data-cfg-key="xmltv_refresh"]').val() || '') || '3600',
           };
         }
       }
@@ -2001,6 +2043,9 @@ var DashticzWidgetEditor = (function () {
           entry.channels = [];
         }
         entry.maxitems = parseInt(xcfg.maxitems, 10) || 10;
+        entry.layout = parseInt(xcfg.layout, 10) === 1 ? 1 : 0;
+        entry.separator = xcfg.separator || '-';
+        entry.refresh = parseInt(xcfg.refresh, 10) || 3600;
       }
       payload.push(entry);
     });

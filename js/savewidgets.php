@@ -480,6 +480,21 @@ foreach ($data['widgets'] as $entry) {
                 $widget['maxitems'] = $m;
             }
         }
+        if (isset($entry['layout']) && is_numeric($entry['layout'])) {
+            $widget['layout'] = ((int)$entry['layout'] === 1) ? 1 : 0;
+        }
+        if (isset($entry['separator']) && is_string($entry['separator'])) {
+            $separator = trim($entry['separator']);
+            if ($separator !== '' && strlen($separator) <= 10) {
+                $widget['separator'] = $separator;
+            }
+        }
+        if (isset($entry['refresh']) && is_numeric($entry['refresh'])) {
+            $r = (int)$entry['refresh'];
+            if ($r > 0 && $r <= 86400) {
+                $widget['refresh'] = $r;
+            }
+        }
     }
 
     $widgets[] = $widget;
@@ -737,6 +752,15 @@ function _widgetBlockProps($widget)
             }
             if (!empty($widget['maxitems'])) {
                 $props['maxitems'] = $widget['maxitems'];
+            }
+            if (isset($widget['layout'])) {
+                $props['layout'] = $widget['layout'];
+            }
+            if (!empty($widget['separator'])) {
+                $props['separator'] = $widget['separator'];
+            }
+            if (!empty($widget['refresh'])) {
+                $props['refresh'] = $widget['refresh'];
             }
             break;
     }

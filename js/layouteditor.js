@@ -783,6 +783,15 @@ var DashticzLayoutEditor = (function () {
       if (definition.maxitems) {
         entry.maxitems = definition.maxitems;
       }
+      if (typeof definition.layout !== 'undefined') {
+        entry.layout = definition.layout;
+      }
+      if (typeof definition.separator === 'string') {
+        entry.separator = definition.separator;
+      }
+      if (typeof definition.refresh !== 'undefined') {
+        entry.refresh = definition.refresh;
+      }
     }
 
     return entry;
