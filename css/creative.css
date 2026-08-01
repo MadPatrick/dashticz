@@ -1088,8 +1088,8 @@ next css sets the default height of the frame popup
 /* Custom icon image inside a screen-switcher button (e.g. from img/icons/) */
 .dt-screen-btn .dt-screen-icon-img {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
   pointer-events: none;
 }
@@ -1102,8 +1102,8 @@ next css sets the default height of the frame popup
 /* PNG icon images used in topbar action buttons (settings, editor, fullscreen) */
 .dt-topbar-icon-img {
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
   pointer-events: none;
   vertical-align: middle;
