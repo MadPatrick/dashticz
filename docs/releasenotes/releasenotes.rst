@@ -9,6 +9,11 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 v3.23.6 beta (1-8-2026)
 --------------------------
 
+* **XMLTV grid sizing**: the TV Guide tile now follows its assigned grid row
+  span in both movement mode and the dashboard. Only programme rows that fit
+  completely are shown, extra rows return when enlarged, and no internal
+  scrollbar is displayed.
+
 Enhancements
 ~~~~~~~~~~~~
 

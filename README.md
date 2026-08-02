@@ -137,6 +137,10 @@ Widget Editor.
 | News | RSS URL and automatic-scroll interval |
 | XMLTV TV Guide | XMLTV source URL; channel filter (id or display-name); maximum items, layout and refresh interval |
 
+In grid layouts, the XMLTV TV Guide follows its assigned row height. It shows
+only complete programme rows that fit and never adds an internal scrollbar;
+enlarging the tile makes the additional rows visible again.
+
 Widget-specific settings are kept together with the other `config[...]`
 settings at the top of `custom/CONFIG.js`.
 

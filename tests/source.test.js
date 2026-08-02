@@ -660,6 +660,20 @@ test('xmltv widget uses its own proxy and preserves optional block settings', ()
   assert.match(savegridlayout, /isset\(\$allBlockLines\[[\s\S]*?\$propsLiteral = \$allBlockLines\[[\s\S]*?isset\(\$existingGridBlocks\[/s);
 });
 
+test('XMLTV grid tiles fit complete rows without an internal scrollbar', () => {
+  const component = fs.readFileSync(
+    path.join(root, 'js/components/xmltvguide.js'),
+    'utf8'
+  );
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  assert.match(component, /new ResizeObserver\(function \(\) \{[\s\S]*_fitXmltvRows\(me\)/);
+  assert.match(component, /function _fitXmltvRows\(me\)/);
+  assert.match(component, /getBoundingClientRect\(\)\.bottom > availableBottom/);
+  assert.match(css, /> \.xmltvguide \{[\s\S]*height: 100% !important;[\s\S]*overflow: hidden !important;/);
+  assert.match(css, /\.xmltvguide \.dt_state \{[\s\S]*overflow: hidden !important;/);
+});
+
 test('Hayman clock does not depend on Moment locale internals for rendering', () => {
   const source = fs.readFileSync(
     path.join(root, 'js/components/haymanclock.js'),

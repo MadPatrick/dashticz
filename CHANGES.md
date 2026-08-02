@@ -2,6 +2,11 @@
 
 ## 3.23.6 — Device Editor helper blocks
 
+- **XMLTV grid sizing**: the rendered TV Guide tile now matches its saved row
+  span in movement mode and on the dashboard. Partially clipped programme rows
+  are hidden, return automatically when enlarged, and no internal scrollbar is
+  shown.
+
 - **Device Editor helper blocks**: the add selector now offers a Dummy device
   with a user-entered IDX and a Title block with user-entered text, above the
   Group/Scene/Device entries. Both types remain editable in column and grid

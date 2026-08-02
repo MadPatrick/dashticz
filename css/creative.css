@@ -5599,6 +5599,25 @@ canvas {
   color: #e74c3c;
 }
 
+/* In a grid the XMLTV tile must follow the saved row span instead of its
+   legacy pixel height. Programme rows are fitted by the component, so a
+   scrollbar would only make the editor and dashboard layouts disagree. */
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .xmltvguide {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .xmltvguide .dt_content {
+  min-height: 0;
+  overflow: hidden;
+}
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .xmltvguide .dt_state {
+  flex: 1 1 auto;
+  height: auto !important;
+  min-height: 0;
+  overflow: hidden !important;
+}
+
 /*end xmltvguide*/
 
 /*debug*/
