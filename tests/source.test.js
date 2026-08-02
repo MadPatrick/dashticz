@@ -843,8 +843,11 @@ test('modern dark theme is portable and documented', () => {
   assert.match(theme, /\.mh \.btn\.active/);
   assert.match(
     theme,
-    /\.blocktitle \{[\s\S]*height: var\(--height-block-default\) !important/
+    /\.transbg\.titlegroups,[\s\S]*height: var\(--height-block-default\) !important[\s\S]*min-height: var\(--height-block-default\) !important/
   );
+  assert.match(theme, /\.titlegroups \.dt_content,[\s\S]*justify-content: center !important/);
+  assert.match(theme, /\.titlegroups \.dt_title,[\s\S]*text-align: center !important/);
+  assert.match(theme, /\.titlegroups \.dt_state,[\s\S]*display: none !important/);
   assert.match(theme, /\.transbg\.titlegroups/);
   assert.match(theme, /\.titlegroups[\s\S]*background: var\(--blocktitle\) !important/);
   assert.match(theme, /\.colbar \.miniclock[\s\S]*background: transparent !important/);
