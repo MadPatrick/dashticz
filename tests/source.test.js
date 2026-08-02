@@ -678,7 +678,9 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.match(garbage, /maxitems: settings\['garbage_maxitems'\] \|\| 4/);
   assert.match(garbage, /maxdays: settings\['garbage_maxdays'\] \|\| 32/);
   assert.match(calendar, /isDefined\(settings\['calendar_maxitems'\]\)/);
-  assert.match(dashticz, /special\.name === 'garbage'[\s\S]*block\.title === 'Afval'[\s\S]*garbage_title/s);
+  assert.match(dashticz, /function getWidgetTitle\(block, special\)/);
+  assert.match(dashticz, /garbage: 'garbage_title'/);
+  assert.match(dashticz, /cfg\.title = widgetTitle/);
   assert.match(widgetEditor, /js\/savewidgets\.php/);
   assert.match(widgetEditor, /js\/savelayout\.php/);
   assert.match(widgetEditor, /js\/savegridlayout\.php/);
