@@ -845,13 +845,15 @@ test('modern dark theme is portable and documented', () => {
     theme,
     /\.transbg\.titlegroups,[\s\S]*height: var\(--height-block-default\) !important[\s\S]*min-height: var\(--height-block-default\) !important/
   );
-  assert.match(theme, /\.titlegroups \.dt_content,[\s\S]*justify-content: center !important/);
-  assert.match(theme, /\.titlegroups \.dt_title,[\s\S]*text-align: center !important/);
+  assert.match(theme, /\.titlegroups \.dt_content,[\s\S]*justify-content: flex-start !important/);
+  assert.match(theme, /\.titlegroups \.dt_title,[\s\S]*text-align: left !important/);
   assert.match(theme, /\.titlegroups \.dt_state,[\s\S]*display: none !important/);
   assert.match(theme, /\.transbg\.titlegroups/);
-  assert.match(theme, /\.titlegroups[\s\S]*background: var\(--blocktitle\) !important/);
+  assert.match(theme, /\.titlegroups[\s\S]*background: var\(--main-bg\) !important/);
+  assert.match(theme, /\.titlegroups[\s\S]*border: var\(--block-gap\) solid transparent !important/);
+  assert.match(theme, /\.titlegroups[\s\S]*border-radius: var\(--radius-border\) !important/);
   assert.match(theme, /\.colbar \.miniclock[\s\S]*background: transparent !important/);
-  assert.match(theme, /\.titlegroups[\s\S]*box-shadow: none !important/);
+  assert.match(theme, /\.titlegroups[\s\S]*var\(--panel-shadow\) !important/);
   assert.match(theme, /\.titlegroups \.col-icon img\.icon/);
   assert.match(theme, /@media \(max-width: 767\.98px\)/);
   assert.match(theme, /\.standby \.transbg[\s\S]*background: #000 !important/);

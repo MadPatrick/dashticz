@@ -6,7 +6,8 @@
   with a user-entered IDX and a Title block with user-entered text, above the
   Group/Scene/Device entries. Both types remain editable in column and grid
   layouts and use localized labels with an English fallback. Title blocks
-  default to 120px and retain the dedicated title styling in Modern Dark.
+  default to 120px; Modern Dark gives them its panel background and border,
+  with the title text aligned at the top left.
 
 ## 3.23.0 — Screen-switcher icons & i18n (1-8-2026)
 
