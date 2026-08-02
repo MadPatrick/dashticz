@@ -8,7 +8,7 @@ header("Pragma: no-cache");
 
 try {
     $url = isset($_GET['url']) ? (string) $_GET['url'] : '';
-    $url = dashticz_validate_remote_url($url);
+    $url = dashticz_validate_remote_url($url, true);
 
     $cacheFile = dashticz_xmltv_cache_file($url);
     $ttl = 86400;
@@ -20,7 +20,7 @@ try {
     }
 
     try {
-        $response = dashticz_fetch_remote($url, 52428800, 3);
+        $response = dashticz_fetch_remote($url, 52428800, 3, true);
         $xml = dashticz_xmltv_normalize_response(
             $response['body'],
             $response['contentType'],

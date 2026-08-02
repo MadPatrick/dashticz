@@ -25,8 +25,8 @@ test('remote proxy endpoints use the validated fetch helper', () => {
 test('xmltv proxy validates remote URLs and keeps cache handling local', () => {
   const source = read('vendor/dashticz/xmltv.php');
   assert.match(source, /dashticz_require_same_origin\(\)/);
-  assert.match(source, /dashticz_validate_remote_url\(\$url\)/);
-  assert.match(source, /dashticz_fetch_remote\(\$url,\s*52428800,\s*3\)/);
+  assert.match(source, /dashticz_validate_remote_url\(\$url,\s*true\)/);
+  assert.match(source, /dashticz_fetch_remote\(\$url,\s*52428800,\s*3,\s*true\)/);
   assert.match(source, /sha1\(\$url\)/);
   assert.match(source, /86400/);
   assert.match(source, /gzdecode/);
