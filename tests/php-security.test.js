@@ -142,6 +142,9 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   assert.match(writer, /function configwriter_editor_markers/);
   assert.match(source, /blockKeys/);
   assert.match(source, /configwriter_make_device_block_key/);
+  assert.match(source, /\$keyCollisionConfig = configwriter_remove_editor_sections/);
+  assert.match(source, /configwriter_editor_markers\(\s*'grid-layout'/);
+  assert.match(source, /extract_declared_block_refs\(\$keyCollisionConfig\)/);
   assert.match(writer, /function configwriter_make_device_block_key/);
   assert.match(writer, /'device_'\s*\.\s*\(int\)\$idx/);
   assert.match(writer, /if \(\$isGroup\) \{\s*\$props\['title'\] = \$title;/);
@@ -257,6 +260,8 @@ test('grid layout writer validates and stores positions without column packing',
   assert.match(source, /\^\[A-Za-z_\]\[A-Za-z0-9_\]\*\$/);
   assert.match(source, /FILTER_VALIDATE_INT/);
   assert.match(source, /configwriter_extract_declared_block_refs/);
+  assert.match(source, /configwriter_remove_editor_sections\(\$config, \$screenNumber\)/);
+  assert.match(source, /\/\/ \[standby-editor-start\]/);
   assert.match(source, /propsJson/);
   assert.match(source, /is_object\(\$decodedProps\)/);
   assert.match(source, /configwriter_make_block_key/);

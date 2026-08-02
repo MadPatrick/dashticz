@@ -189,7 +189,36 @@ $config = rtrim($config);
 $blockKeys = [];
 $blocksOnly = !empty($data['blocksOnly']);
 if (!empty($devices)) {
-    $usedKeys = array_keys(configwriter_extract_declared_block_refs($config));
+    $keyCollisionConfig = $config;
+    if ($blocksOnly) {
+        /* The active screen's editor sections are replaced by savegridlayout.php
+         * immediately after this request. Ignore their keys for collision
+         * detection so device_1498 is reused instead of becoming device_1498_2.
+         * Hand-written blocks outside these sections still reserve their keys. */
+        $keyCollisionConfig = configwriter_remove_editor_sections(
+            $keyCollisionConfig,
+            $screenNumber
+        );
+        list($gridStartMarker, $gridEndMarker) = configwriter_editor_markers(
+            'grid-layout',
+            $screenNumber
+        );
+        $keyCollisionConfig = configwriter_remove_section(
+            $keyCollisionConfig,
+            $gridStartMarker,
+            $gridEndMarker
+        );
+        if ($screenNumber === 0) {
+            $keyCollisionConfig = configwriter_remove_section(
+                $keyCollisionConfig,
+                '// [standby-editor-start]',
+                '// [standby-editor-end]'
+            );
+        }
+    }
+    $usedKeys = array_keys(
+        configwriter_extract_declared_block_refs($keyCollisionConfig)
+    );
     $requestKeys = [];
     foreach ($devices as &$device) {
         if (isset($device['kind']) && in_array($device['kind'], ['dummy', 'title'], true)) {
