@@ -67,6 +67,15 @@
   min-height: 100%;
 }
 
+/* Grid title bars follow their assigned row height instead of forcing their
+   CONFIG.js pixel height and creating a scrollbar in a shorter grid cell. */
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .titlegroups,
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .blocktitle {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
 .dt-grid-screen > .dt-grid-layout > .dt-grid-overlap {
   outline: 1px dashed rgba(255, 165, 0, 0.8);
   outline-offset: -1px;

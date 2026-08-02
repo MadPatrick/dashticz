@@ -19,6 +19,7 @@ var DashticzDeviceEditor = (function () {
   var gridPositions  = {};   // order key -> {x,y,w,h}
   var gridRefs       = {};   // order key -> block reference
   var gridExtras     = [];   // non-device/widget blocks
+  var TITLE_GRID_HEIGHT = 3;
 
   function _translations() {
     var configured =
@@ -1285,13 +1286,18 @@ var DashticzDeviceEditor = (function () {
                       )
                     )
                   );
-                  var height = Math.max(
-                    1,
-                    Math.ceil(
-                      ((pixelHeight || 120) + gridConfig.gap) /
-                        (gridConfig.rowHeight + gridConfig.gap)
-                    )
-                  );
+                  var isTitleBlock =
+                    orderKey.indexOf('special:') === 0 &&
+                    managedSpecials[orderKey].specialType === 'title';
+                  var height = isTitleBlock
+                    ? TITLE_GRID_HEIGHT
+                    : Math.max(
+                        1,
+                        Math.ceil(
+                          ((pixelHeight || 120) + gridConfig.gap) /
+                            (gridConfig.rowHeight + gridConfig.gap)
+                        )
+                      );
                   position = _firstFreeGridPosition(
                     occupied,
                     width,

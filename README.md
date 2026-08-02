@@ -107,6 +107,8 @@ separated by divider rows. Their labels and input validation use the selected
 Dashticz language; English is used when a locale has no Device Editor strings.
 In the Modern Dark theme, title blocks use the theme panel background, border,
 rounded corners and shadow. Their title text is aligned at the top left.
+In grid layouts a new title block is three rows high by default. Title blocks
+may be resized down to three rows and never show an internal scrollbar.
 
 ### Widget Editor
 

@@ -7,7 +7,8 @@
   Group/Scene/Device entries. Both types remain editable in column and grid
   layouts and use localized labels with an English fallback. Title blocks
   default to 120px; Modern Dark gives them its panel background and border,
-  with the title text aligned at the top left.
+  with the title text aligned at the top left. Grid titles default to three
+  rows and suppress scrollbars when displayed at that smaller height.
 
 ## 3.23.0 — Screen-switcher icons & i18n (1-8-2026)
 

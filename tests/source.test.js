@@ -424,6 +424,8 @@ test('device editor supports translated dummy and title blocks', () => {
   assert.match(writer, /'type' => 'blocktitle'/);
   assert.match(writer, /'hide_data' => true/);
   assert.match(editor, /height: specialType === 'title' \? 120 : null/);
+  assert.match(editor, /var TITLE_GRID_HEIGHT = 3/);
+  assert.match(editor, /isTitleBlock[\s\S]*\? TITLE_GRID_HEIGHT/);
   assert.match(writer, /'height' =>[\s\S]*: 120/);
   assert.match(
     writer,
@@ -1067,9 +1069,15 @@ test('topbar and layout editor keep controls usable', () => {
   assert.match(main, /\['logo', 'miniclock', 'screenswitcher', 'settings'\]/);
   assert.match(editor, /var MIN_GRID_WIDTH = 2;/);
   assert.match(editor, /var MIN_GRID_HEIGHT = 4;/);
-  assert.match(editor, /item\.grid\.w < MIN_GRID_WIDTH \|\| item\.grid\.h < MIN_GRID_HEIGHT/);
+  assert.match(editor, /var MIN_TITLE_GRID_HEIGHT = 3;/);
+  assert.match(editor, /function _minimumGridHeight/);
+  assert.match(editor, /item\.grid\.w < MIN_GRID_WIDTH \|\| item\.grid\.h < minimumHeight/);
   assert.match(editor, /width = Math\.max\(\s*MIN_GRID_WIDTH,/s);
-  assert.match(editor, /height = Math\.max\(MIN_GRID_HEIGHT,/);
+  assert.match(editor, /height = Math\.max\(_minimumGridHeight\(item\),/);
+  assert.match(
+    styles,
+    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.titlegroups,[\s\S]*height: 100% !important;[\s\S]*min-height: 0 !important;[\s\S]*overflow: hidden !important;/
+  );
 });
 
 test('garbage dates use the selected interface language', () => {
