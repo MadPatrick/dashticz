@@ -52,10 +52,6 @@
     var(--panel-shadow) !important;
 }
 
-.transbg.titlegroups,
-.titlegroups,
-.transbg.blocktitle,
-.blocktitle,
 .miniclock {
   margin: 0 !important;
   border: 0 !important;
@@ -173,7 +169,7 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  height: 40px !important;
+  height: var(--height-block-default) !important;
 }
 
 .blocktitle .dt_title {

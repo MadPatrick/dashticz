@@ -1362,6 +1362,9 @@ function configwriter_special_block_props($block)
             'width' => $width,
             'type' => 'blocktitle',
             'title' => $title,
+            'height' => isset($block['height']) && is_int($block['height'])
+                ? $block['height']
+                : 120,
         ];
     } else {
         $props = [
@@ -1372,7 +1375,7 @@ function configwriter_special_block_props($block)
         ];
     }
 
-    if (isset($block['height']) && is_int($block['height'])) {
+    if ($kind !== 'title' && isset($block['height']) && is_int($block['height'])) {
         $props['height'] = $block['height'];
     }
     return $props;

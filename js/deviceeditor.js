@@ -1040,7 +1040,7 @@ var DashticzDeviceEditor = (function () {
             ? rawValue.slice(0, 100)
             : 'Dummy_' + (numberMatch ? numberMatch[1] : '1'),
           width: _parseWidth($row.find('.de-width-input').val()),
-          height: null,
+          height: specialType === 'title' ? 120 : null,
         };
         managedSpecials[specialOrderKey] = special;
         managedOrder.push(specialOrderKey);

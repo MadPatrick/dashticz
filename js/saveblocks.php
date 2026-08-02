@@ -49,7 +49,7 @@ foreach ($data['devices'] as $entry) {
         }
         $width = isset($entry['width']) ? (int)$entry['width'] : ($kind === 'title' ? 12 : 3);
         $width = max(1, min(12, $width));
-        $height = null;
+        $height = $kind === 'title' ? 120 : null;
         if (array_key_exists('height', $entry) && $entry['height'] !== null && $entry['height'] !== '') {
             $height = max(50, min(2000, (int)(round((int)$entry['height'] / 10) * 10)));
         }

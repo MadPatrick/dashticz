@@ -423,6 +423,8 @@ test('device editor supports translated dummy and title blocks', () => {
   assert.match(writer, /function configwriter_special_block_props/);
   assert.match(writer, /'type' => 'blocktitle'/);
   assert.match(writer, /'hide_data' => true/);
+  assert.match(editor, /height: specialType === 'title' \? 120 : null/);
+  assert.match(writer, /'height' =>[\s\S]*: 120/);
   assert.match(
     writer,
     /'idx' => \(int\)\$block\['idx'\][\s\S]*'width' => \$width[\s\S]*'hide_data' => true[\s\S]*'title' => \$title/
@@ -839,10 +841,15 @@ test('modern dark theme is portable and documented', () => {
   assert.match(theme, /\.transbg select:focus,[\s\S]*border-color: var\(--border-color-selector\) !important/);
   assert.doesNotMatch(theme, /linear-gradient/);
   assert.match(theme, /\.mh \.btn\.active/);
-  assert.match(theme, /\.transbg\.titlegroups/);
-  assert.match(theme, /\.titlegroups[\s\S]*background: var\(--blocktitle\) !important/);
+  assert.match(
+    theme,
+    /\.blocktitle \{[\s\S]*height: var\(--height-block-default\) !important/
+  );
+  assert.doesNotMatch(
+    theme,
+    /\.transbg\.titlegroups,[\s\S]{0,120}background: var\(--blocktitle\) !important/
+  );
   assert.match(theme, /\.colbar \.miniclock[\s\S]*background: transparent !important/);
-  assert.match(theme, /\.titlegroups[\s\S]*box-shadow: none !important/);
   assert.match(theme, /\.titlegroups \.col-icon img\.icon/);
   assert.match(theme, /@media \(max-width: 767\.98px\)/);
   assert.match(theme, /\.standby \.transbg[\s\S]*background: #000 !important/);

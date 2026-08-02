@@ -155,6 +155,7 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   assert.match(source, /\^Title_/);
   assert.match(source, /positive integer idx/);
   assert.match(source, /configwriter_special_block_props/);
+  assert.match(source, /\$height = \$kind === 'title' \? 120 : null/);
   assert.match(source, /Special block key already exists/);
   assert.match(source, /\$device\['preserveExisting'\] = in_array/);
   assert.match(source, /if \(!empty\(\$device\['preserveExisting'\]\)\)/);

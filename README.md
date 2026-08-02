@@ -90,7 +90,7 @@ the topbar to open the **Device Editor**. The editor can:
 - add a **Dummy device** by entering a positive IDX; it is saved as
   `blocks['dummyblock_N'] = {idx: ..., width: 3, hide_data: true, title: 'Dummy_N'}`;
 - add a **Title** by entering its text; it is saved without an IDX as
-  `blocks['Title_N'] = {width: 12, type: 'blocktitle', title: '...'}`;
+  `blocks['Title_N'] = {width: 12, type: 'blocktitle', title: '...', height: 120}`;
 - remove devices from the generated dashboard configuration;
 - change the mixed device and widget order by dragging rows;
 - set each block width from 1 through 12 (new devices default to 3);
@@ -105,6 +105,8 @@ editor.
 Dummy and Title appear above Groups, Scenes and Devices in the add selector,
 separated by divider rows. Their labels and input validation use the selected
 Dashticz language; English is used when a locale has no Device Editor strings.
+In the Modern Dark theme, title blocks use the same panel background, border,
+rounded corners and shadow as other blocks.
 
 ### Widget Editor
 
