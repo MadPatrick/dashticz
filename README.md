@@ -87,6 +87,10 @@ After Dashticz has started, select the plus icon next to the settings icon in
 the topbar to open the **Device Editor**. The editor can:
 
 - add devices and sub-devices detected in Domoticz;
+- add a **Dummy device** by entering a positive IDX; it is saved as
+  `blocks['dummyblock_N'] = {idx: ..., width: 3, hide_data: true, title: 'Dummy_N'}`;
+- add a **Title** by entering its text; it is saved without an IDX as
+  `blocks['Title_N'] = {width: 12, type: 'blocktitle', title: '...'}`;
 - remove devices from the generated dashboard configuration;
 - change the mixed device and widget order by dragging rows;
 - set each block width from 1 through 12 (new devices default to 3);
@@ -97,6 +101,10 @@ Select **Save** to write the generated blocks and columns to
 `custom/CONFIG.js`. Generated columns are added to screen 1 and the dashboard
 reloads after saving. Back up an existing `CONFIG.js` before first using the
 editor.
+
+Dummy and Title appear above Groups, Scenes and Devices in the add selector,
+separated by divider rows. Their labels and input validation use the selected
+Dashticz language; English is used when a locale has no Device Editor strings.
 
 ### Widget Editor
 

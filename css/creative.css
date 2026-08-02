@@ -1493,6 +1493,16 @@ body.dle-active {
   flex: 0 0 78px;
 }
 
+.de-add-row .de-special-value {
+  flex: 0 1 180px;
+  min-width: 110px;
+}
+
+.de-special-item {
+  background: #fff8e1;
+  border-color: #ffe082;
+}
+
 .de-empty {
   font-size: 13px;
   color: #6c757d;

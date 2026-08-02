@@ -401,6 +401,44 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(domoticzBlock, /setProperty\('height'.*'important'\)/s);
 });
 
+test('device editor supports translated dummy and title blocks', () => {
+  const editor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+  const writer = fs.readFileSync(
+    path.join(root, 'js/configwriter.php'),
+    'utf8'
+  );
+
+  assert.match(editor, /value="__dummy__"/);
+  assert.match(editor, /value="__title__"/);
+  assert.match(editor, />------<\/option>/);
+  assert.match(editor, /placeholder: t\.enter_idx/);
+  assert.match(editor, /placeholder: t\.enter_title/);
+  assert.match(editor, /'dummyblock_'/);
+  assert.match(editor, /'Title_'/);
+  assert.match(editor, /kind: special\.specialType/);
+  assert.match(editor, /language\.settings\.deviceeditor/);
+  assert.match(writer, /function configwriter_special_block_props/);
+  assert.match(writer, /'type' => 'blocktitle'/);
+  assert.match(writer, /'hide_data' => true/);
+  assert.match(
+    writer,
+    /'idx' => \(int\)\$block\['idx'\][\s\S]*'width' => \$width[\s\S]*'hide_data' => true[\s\S]*'title' => \$title/
+  );
+
+  for (const locale of ['en_US', 'nl_NL', 'fr_FR']) {
+    const translations = JSON.parse(
+      fs.readFileSync(path.join(root, 'lang', `${locale}.json`), 'utf8')
+    ).settings.deviceeditor;
+    assert.ok(translations.dummy_device, `${locale} dummy translation`);
+    assert.ok(translations.title_block, `${locale} title translation`);
+    assert.ok(translations.enter_idx, `${locale} IDX translation`);
+    assert.ok(translations.enter_title, `${locale} title-field translation`);
+  }
+});
+
 test('widget editor exposes the supported catalog and keeps legacy options out of settings UI', () => {
   const simpleBlock = fs.readFileSync(
     path.join(root, 'js/components/simpleblock.js'),

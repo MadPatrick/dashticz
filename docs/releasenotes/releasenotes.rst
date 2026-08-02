@@ -14,6 +14,8 @@ Enhancements
 
 * **Dynamic theme selector**: **Settings > Display > Dashticz-Theme** is now a dropdown populated from valid theme folders in ``themes/``. A theme is listed when ``themes/<name>/<name>.css`` exists; **Default** and existing manually configured values remain available.
 
+* **Device Editor helper blocks**: the add selector now starts with **Dummy device** and **Title**, separated from Groups, Scenes and Devices by divider rows. Dummy devices request a positive IDX and generate ``blocks['dummyblock_N']`` with ``hide_data: true``; titles request text and generate an IDX-free ``blocks['Title_N']`` with ``type: 'blocktitle'`` and width 12. Both types work in column and grid layouts. Dutch, English and French strings are included; other locales safely use the English fallback.
+
 Fixes
 ~~~~~
 

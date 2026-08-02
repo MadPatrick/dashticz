@@ -1,5 +1,12 @@
 # Dashticz — Change log for recent update work
 
+## 3.23.6 — Device Editor helper blocks
+
+- **Device Editor helper blocks**: the add selector now offers a Dummy device
+  with a user-entered IDX and a Title block with user-entered text, above the
+  Group/Scene/Device entries. Both types remain editable in column and grid
+  layouts and use localized labels with an English fallback.
+
 ## 3.23.0 — Screen-switcher icons & i18n (1-8-2026)
 
 - **Compact default topbar**: the topbar now uses the same height, padding and
@@ -27,7 +34,7 @@
 - Fixed repeated Clock settings saves and localized Garbage collection labels
   and status messages through the language JSON files.
 
-The runtime and package version remain `3.22.0` for this beta maintenance set.
+The runtime and package version remain `3.23.6` for this beta maintenance set.
 
 > **Version: 3.20.0**  
 > This document describes every change made during three related tasks:
