@@ -5,8 +5,236 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
-Recent changes
----------------
+
+v3.23.6 beta (1-8-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* **Dynamic theme selector**: **Settings > Display > Dashticz-Theme** is now a dropdown populated from valid theme folders in ``themes/``. A theme is listed when ``themes/<name>/<name>.css`` exists; **Default** and existing manually configured values remain available.
+
+Fixes
+~~~~~
+
+* **XMLTV TV Guide — consistent setting storage**: the Widget Editor now stores the XMLTV widget's URL, channel filter, maximum items, layout, separator, and refresh interval as global ``config['xmltv_*']`` settings, matching the pattern already used by widgets such as Sonarr.  Generated XMLTV blocks now use ``type: 'xmltvguide'`` and read those shared settings automatically, while existing hand-written blocks that keep ``xmltvurl`` / ``channels`` / ``maxitems`` directly on the block remain supported as overrides.
+
+v3.23.5 beta (1-8-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* **XMLTV TV Guide — settings not saved**: in grid mode, changing the XMLTV URL (or any other XMLTV widget setting) via the widget-editor settings popup now persists correctly.  Previously ``savegridlayout.php`` would re-apply the stale block definition from the old grid-layout section of ``CONFIG.js`` instead of the freshly-saved definition written by ``savewidgets.php``, silently discarding the change.  Additionally, the widget editor now reads back ``layout``, ``separator`` and ``refresh`` from an existing saved block when the settings popup is opened in grid mode.
+
+v3.23.4 beta (1-8-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* **XMLTV TV Guide**: the XMLTV widget now stays on its own XMLTV data path instead of falling back to the legacy ``tvgids.nl`` JSON API when ``channels`` is configured.  Widget saves now preserve the XMLTV-specific ``layout``, ``separator`` and ``refresh`` options during Widget/Layout Editor updates.  Public XMLTV feeds can now be fetched through a dedicated PHP endpoint that caches downloads for 24 hours and accepts plain XML plus ``.gz`` and ``.zip`` guide files.
+
+v3.23.3 beta (1-8-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* **Default topbar height**: when no theme is selected, the topbar now uses the same compact height as Modern Dark.
+* **Topbar screen-switcher PNG icons**: when **Custom iconen topbalk** is enabled, the Standby and screen buttons now automatically use the bundled ``Standby.png``, ``One.png``, ``Two.png``, ``Three.png``, and ``Four.png`` assets when no explicit per-screen icon is configured.  These screen-switcher PNG icons now render at 30px.
+
+v3.23.2 beta (1-8-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* **Topbar custom icons**: renamed the topbar icon setting from *"Default iconen topbalk"* to **"Custom iconen topbalk"** and corrected the logic so that **off** (default) keeps Font Awesome icons and **on** switches to custom PNG images from ``img/icons/``.  The fix applies consistently to the main topbar, the Standby-screen editor icons, and the fullscreen toggle.
+
+v3.23.1 beta (1-8-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* **Topbar icons — PNG mode**: a new setting **"Default iconen topbalk"** (``topbar_use_png_icons``) has been added to the *Screen* settings tab.  When the checkbox is **on** (default), the topbar action buttons (Add devices +, Add widgets 🧩, Move tiles ✤, Settings ⚙, Fullscreen ⛶) continue to use Font Awesome icons as before.  When it is **off**, they switch to custom image files from ``img/icons/``: ``Plus.png``, ``Puzzle.png``, ``Arrows.png``, ``Cog.png``, ``Expand.png`` (and ``Minus.png`` for the compressed-fullscreen state).  The setting also applies to the editor icons shown on the Standby screen.  Existing configs without the setting behave exactly as before.
+
+~~~~~~~~~~~~
+
+
+
+v3.23.0 beta (1-8-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Widget editor / screenswitcher: widget tile names and editor-icon tooltips ("Add devices", "Add widgets", "Move and scale tiles") are now translated using the active language file (``/lang/<locale>.json``).  English is used as fallback when a key is missing.  New keys ``add_devices``, ``add_widgets``, and ``move_tiles`` have been added under ``settings.widgeteditor`` for ``en_US``, ``nl_NL``, and ``fr_FR``.
+
+* **Screen-switcher icons**: the topbar buttons for Screen 1, 2, 3 … and the Standby button now support custom icons.  Set ``screens[n]['icon']`` in ``CONFIG.js`` to any Font Awesome class string (``'fas fa-home'``) or an image path relative to the Dashticz root (``'img/icons/home.svg'``).  For the Standby button use ``standby_screen['icon']`` or ``config['standby_icon']``.  A new ``img/icons/`` directory is provided for local icon storage; SVG, PNG, and other image formats are all supported.  All existing configs without ``icon`` keys continue to work unchanged — the buttons fall back to the original number/letter text.
+
+* **Screenswitcher i18n**: the topbar screen-switcher button labels (Standby, Screen #, Add screen, Delete screen) are now driven by a new ``screenswitcher`` section in each ``/lang/<locale>.json`` file.  Previously the "Add screen" and "Delete screen" tooltips were hard-coded in Dutch.  All 28 bundled language files have been updated.  English is the automatic fallback when a key is absent.
+
+* Device Editor: the "Add device from Domoticz" dropdown now lists items in the order Groups, Scenes, then Devices (each group alphabetically), instead of a flat alphabetical sort across all types.
+* Device Editor: Domoticz groups and scenes are now listed in the "Add device from Domoticz" dropdown with a ``Group_`` (or ``Scene_``) prefix so they can be added to any screen.  Saved group blocks use the group's scene key (e.g. ``s1``) directly as the block reference, matching the hand-written CONFIG.js convention.
+
+* Widget editor: an **iFrame** widget has been added to the widget catalog.  It uses the existing ``DT_frame`` component and generates a block with ``frameurl`` in ``CONFIG.js``.  Configurable options are: URL (required), height (px), scrollbars (on/off), scale-to-fit width, force cache refresh, and refresh interval.  Translations for the new widget and its settings have been added to ``en_US``, ``nl_NL``, and ``fr_FR``.  Existing hand-written ``frames.*`` blocks (using ``frameurl``) are automatically recognised by the widget editor when the screen is opened.
+
+* A new **XMLTV TV Guide** widget (``DT_xmltvguide``) has been added.  It fetches guide data from any XMLTV-compatible source (WebGrab+Plus, EPG123, Jellyfin, Tvheadend, etc.) and displays current and upcoming programmes.  The ``xmltvurl`` block property selects the data source; ``channels`` filters by channel id or display-name; ``maxitems``, ``layout``, and ``separator`` control the presentation.  Translation strings for loading, error, and no-programme states have been added to all supported language files.  See :ref:`xmltvguide` for full documentation.
+
+~~~~~~~~~~~~
+
+
+Fixes
+~~~~~
+
+* Widget editor: widget tile names now always reflect the active language when the device-editor popup opens, even when a hardcoded ``title`` (e.g. ``title:'Afval'``) is present in the ``blocks[...]`` definition in ``CONFIG.js``.  The translated name from the language file (``settings.widgeteditor.*_title``) now takes priority over any stored title for all known widget types.  Type-mapped widgets (blocks defined with a ``type:`` property rather than a ``widget_xxx`` key) are fixed in the same way.
+
+
+
+v3.22.2 beta (1-8-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Config mode: the Custom/Wizard switch now defaults to **Custom** when ``config["config_mode"]`` is absent from CONFIG.js (hand-written configs are treated as Custom). On startup and on every settings save the auto-detected value is written back to CONFIG.js so that subsequent loads resolve it directly.
+
+
+v3.22.1 beta (1-8-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* Grid Layout Editor: the delete (remove) and resize handles are no longer clipped when a grid item is resized very small or its content overflows the tile boundary — ``overflow`` on the grid item is now ``visible`` while the editor is active.
+* Calendar (agenda layouts 0 and 1): the block background now expands to fit all displayed agenda items instead of being capped at a fixed 120 px default.  Users who want a fixed-height scrollable agenda can still set ``height`` explicitly in their block config; layout 2 (monthly view) is unaffected.
+
+
+v3.22.0 beta (30-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Standby: Wizard Standby now uses the same free-positioned, editable CSS Grid layout as numbered screens. Existing ``columns_standby`` layouts can be converted after confirmation.
+* Grid editors: Device and Widget Editors can add, remove and configure tiles on numbered and Standby grids while retaining existing positions; newly added tiles use the first free cells.
+* Grid Layout Editor: vertical placement and resizing now use 20 px rows, giving twice the precision while the horizontal grid remains 24 columns.
+* OpenWeather: Config and Widget Editors expose ``showGust`` (No), ``showWind`` (No), ``showDescription`` (Yes), ``showRain`` (Yes), plus a five-choice icon dropdown (``line``, ``linestatic``, ``fill``, ``static`` and ``meteo``).
+* Updates: the Update control now appears only in the Info tile; newer versions produce a persistent lower-right overlay notification.
+
+Fixes
+~~~~~
+
+* General Settings: Save now updates only submitted settings instead of rebuilding all root configuration, preserving Garbage, Weather and other widget settings plus custom arrays and objects.
+* Configuration editors: every save endpoint now follows ``?cfg=...`` (for example ``CONFIG2.js``), validates the filename, and leaves unchanged settings untouched.
+* Configuration output: editor-owned settings remain deduplicated and generated layout output stays grouped as blocks, columns and screens without rewriting hand-written content.
+* Screens: saving an empty numbered grid removes that screen and renumbers every following screen sequentially from 1, including its generated editor sections and column references.
+* Screens: an explicit minus control now removes the active extra screen; screen 1 remains protected.
+* Grid Layout Editor: existing screens that explicitly stored the former 40 px row default are migrated to 20 px rows without shrinking their blocks.
+* Grid Layout Editor: resize and remove controls remain reachable on one-row tiles, and Domoticz flash updates no longer turn tiles grey while they are being moved.
+* Standby: the S-screen is constrained to the viewport; oversized background images use centered ``cover`` cropping and can no longer enlarge the standby canvas beyond the display resolution.
+* Topbar and Calendar: restored spacing between weekday and date, and constrained overflowing agenda text to the configured tile background.
+* Clock settings: repeated saves now compare against the rendered values and persist each new change.
+* Garbage: built-in collection names, empty/error states and provider errors now use language JSON entries (English and Dutch included).
+* Topbar: restored the original logo and clock proportions while grouping the screen selector, Custom/Wizard switch and configuration icons at the far-right edge.
+* Grid Layout Editor: blocks cannot be resized below two columns by four rows.
+* Garbage: collection date names now explicitly follow the language selected under Settings > Localize.
+
+v3.21.7 beta (30-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Wizard layout: opening a legacy columns screen now offers a confirmed conversion to a compact 24-column grid, including named, numeric and inline blocks. Switching from Custom to Wizard performs the same conversion, ensuring Wizard uses free grid placement.
+
+v3.21.6 beta (30-7-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* Grid Layout Editor: the editing canvas now exposes and dynamically adds empty rows, scrolls automatically near the viewport edge, and keeps pointer capture outside the original block area so blocks can be dropped at any grid coordinate.
+
+v3.21.5 beta (30-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Grid Layout Editor: named blocks on a grid screen can be dragged to new ``x``/``y`` coordinates and resized in ``w``/``h`` grid units. Save persists a safe grid-only override in ``CONFIG.js``; Cancel restores the original layout.
+
+v3.21.4 beta (30-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Screens: optional CSS Grid layouts place blocks at explicit ``x``, ``y``, ``w`` and ``h`` coordinates while preserving empty cells. Grid dimensions, row height and gap are configurable per screen.
+* Grid screens: invalid positions receive safe fallbacks with console warnings, overlapping blocks remain rendered and are marked for diagnosis, mobile screens stack blocks in configured order, and column-based Device/Widget editors are disabled to protect grid configuration.
+
+v3.21.3 beta (30-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Widget defaults: Google Maps, Camera, Air Quality, News, Weather, Spotify, Sonarr, Calendar, Public Transport, Traffic Information and 112 now use compact 4/12 widths and the requested rounded default heights.
+* Camera widget: the Widget Editor can configure multiple named cameras with image and optional MJPEG URLs, using the existing camera carousel.
+* Backgrounds: personal images named ``BG_*`` and placed in ``img/custom`` appear in both the **Screen** and **Standby** background selectors. Other filenames stay hidden, and all files in this directory are ignored by Git so updates leave them untouched.
+
+Fixes
+~~~~~
+
+* Standby settings: changing the background no longer rebuilds or clears ``columns_standby``, so standby blocks remain accessible and retain their configured widths and positions.
+* Standby settings: removed the redundant **Standby blocks** text field; standby content is managed through the Device, Widget and Layout editors.
+* Localization: the language selected in **Settings → Localize** now takes precedence over a stale browser language value after saving and reloading.
+* Widget editor: widget names, descriptions, controls, statuses and validation messages now use the language JSON files. English and Dutch translations are included.
+* Widget editor: opening the widget menu from Standby no longer makes its blue widget icons and grey settings icons white or invisible.
+* Widget editor: settings entered while adding a widget to screen 2, another numbered screen or Standby are now retained in ``CONFIG.js`` just like settings entered on screen 1.
+* Info: Domoticz, dzVents, Python and PHP versions are retained until the Info panel opens; the server operating system, version and architecture are now shown as well.
+* Version check: the comparison now follows the current Git checkout's preferred remote and branch, and its status text is translated.
+* Visual editors: saving a layout with tall and short tiles now keeps every tile on the same 12-column grid, preserving its configured width, order and height after reload.
+
+v3.21.2 beta (28-7-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* CONFIG.js: visual editor saves now consolidate generated output into one section with settings at the top, followed by grouped blocks, columns and screens. Existing separate Device, Widget and Layout Editor sections are migrated automatically on the next save.
+
+v3.21.1 beta (28-7-2026)
+--------------------------
+
+Fixes
+~~~~~
+
+* Modern Dark: restored the larger 56 x 44 pixel selector-button touch targets that were accidentally removed while adjusting the theme colours.
+
+Documentation
+~~~~~~~~~~~~~
+
+* README: documents the first-run wizard, Wizard/Custom modes, all topbar editors, the complete 15-widget catalog, standby settings, browser updates, and every supported installer directory option.
+* Automatic installer guide: documents ``-d``, ``--directory``, ``--directory=PATH``, a positional directory, ``DASHTICZ_INSTALL_DIR``, and ``--help``.
+
+v3.21.0 beta (28-7-2026)
+--------------------------
+
+Enhancements
+~~~~~~~~~~~~
+
+* Settings: the Update button is larger, with Beta/Main branch selection and **Update uitvoeren** shown beside it.
+* Settings Widgets: category tiles for widget-related settings (including Weather provider groups and Clock type-specific defaults).
+* Widget Editor / Clock: selecting a clock type shows the relevant options from the clock docs — size and scale for Basic/Hayman/Flip/Station; Flipclock ``showSeconds`` and ``clockFace``; Stationclock body, dial, hands, boss, and hand behavior. Values are saved on the clock block in ``CONFIG.js``.
+* Widget catalog: additional widgets (security panel, public transport, traffic, 112/alarmmeldingen, camera, map, longfonds, moon, news) and OpenWeather display options (rain, description, wind, gust, icon set).
+* Standby: standby screen settings available as a Settings tile.
+* Settings → Weergave: background image uses the same pulldown as Standby (``BG_*`` labels for ``img/bg*`` files), with a **Pad/URL** field underneath for custom paths or full URLs. Standby uses the same pattern.
+* Settings → Widgets → Clock: **Grootte** and **Schaal** apply as defaults; clocks (especially station clock) fit inside the device tile.
+* Topbar: Dashticz logo is shown before the app title. The topbar clock is optional via Settings → Weergave (default off).
+* Settings Update: Git commands pass ``safe.directory`` for the Dashticz checkout so updates work when the web-server user does not own the files (e.g. Docker / www-data). Permission errors show a fix hint; use ``tools/install-dashticz-write-access --git-update`` to grant write access. ``install.sh`` runs that helper after a fresh clone so first installs can use Settings → Update.
 
 v3.20.4 beta (24-7-2026)
 --------------------------

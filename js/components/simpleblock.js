@@ -1,10 +1,14 @@
-/* global Dashticz DT_function getFullScreenIcon settings loadWeather loadWeatherFull getSpotify DT_button loadSonarr getCoin loadMaps DashticzDeviceEditor DashticzWidgetEditor*/
+/* global Dashticz DT_function getFullScreenIcon settings loadWeather loadWeatherFull getSpotify DT_button loadSonarr getCoin loadMaps DashticzDeviceEditor DashticzWidgetEditor DashticzLayoutEditor isCustomConfigMode setConfigMode language DashticzScreenSwitcher */
 //# sourceURL=js/components/simpleblock.js
 var DT_simpleblock = (function () {
   var simpleBlocks = {
     logo: {
       defaultWidth: 2,
       render: renderLogo,
+    },
+    screenswitcher: {
+      defaultWidth: 2,
+      render: renderScreenSwitcher,
     },
     settings: {
       defaultWidth: 2,
@@ -116,14 +120,37 @@ var DT_simpleblock = (function () {
   }
 
   function renderLogo(me) {
+    var title = settings['app_title'] || 'Dashticz';
     return (
       '<div data-id="logo" class="logo col-xs-' +
       me.block.width +
       '">' +
-      '<img class="logo-icon" src="img/dashticz.png" alt="" />' +
-      settings['app_title'] +
-      '</div>'
+      '<img class="logo-image" src="img/dashticz.png" alt="' +
+      $('<div>').text(title).html() +
+      '">' +
+      '<span class="logo-title">' +
+      $('<div>').text(title).html() +
+      '</span></div>'
     );
+  }
+
+  function renderScreenSwitcher(me) {
+    var content =
+      '<div class="col-xs-' +
+      me.block.width +
+      ' dt-screen-switcher-host"></div>';
+    setTimeout(function () {
+      if (typeof DashticzScreenSwitcher !== 'undefined') {
+        DashticzScreenSwitcher.init();
+      } else {
+        DT_function.loadDTScript('js/screenswitcher.js').then(function () {
+          if (typeof DashticzScreenSwitcher !== 'undefined') {
+            DashticzScreenSwitcher.init();
+          }
+        });
+      }
+    }, 0);
+    return content;
   }
 
   function renderSettings(me) {
@@ -131,33 +158,66 @@ var DT_simpleblock = (function () {
     if (typeof settings['settings_icons'] !== 'undefined') {
       icons = settings['settings_icons'];
     }
+    var customMode = typeof isCustomConfigMode === 'function' && isCustomConfigMode();
+    var modeLabelCustom =
+      (language.settings &&
+        language.settings.config_mode &&
+        language.settings.config_mode.custom) ||
+      'Custom';
+    var modeLabelWizard =
+      (language.settings &&
+        language.settings.config_mode &&
+        language.settings.config_mode.wizard) ||
+      'Wizard';
     var content =
       '<div class="col-xs-' +
       me.block.width +
-      ' text-right">';
+      ' text-right topbar-settings-wrap">';
+    content +=
+      '<span class="settings config-mode-switch" role="group" aria-label="Config mode">' +
+      '<button type="button" class="config-mode-btn' +
+      (customMode ? ' active' : '') +
+      '" data-mode="custom" title="' +
+      modeLabelCustom +
+      '">' +
+      modeLabelCustom +
+      '</button>' +
+      '<button type="button" class="config-mode-btn' +
+      (!customMode ? ' active' : '') +
+      '" data-mode="wizard" title="' +
+      modeLabelWizard +
+      '">' +
+      modeLabelWizard +
+      '</button></span>';
     for (var i = 0; i < icons.length; i++) {
       switch (icons[i]) {
         case 'settings':
-          content +=
-            '<span class="settings deviceeditoricon" data-id="deviceeditor" ' +
-            'role="button" aria-label="Open device editor" title="Devices toevoegen">' +
-            '<i class="fas fa-plus" aria-hidden="true"></i></span>';
-          content +=
-            '<span class="settings widgeteditoricon" data-id="widgeteditor" ' +
-            'role="button" aria-label="Open widget editor" title="Widgets toevoegen">' +
-            '<i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>';
-          content +=
-            '<span class="settings layouteditoricon" data-id="layouteditor" ' +
-            'role="button" aria-label="Open visual layout editor" title="Tegels verplaatsen en schalen">' +
-            '<i class="fas fa-arrows-alt" aria-hidden="true"></i></span>';
+          if (!customMode) {
+            content +=
+              '<span class="settings deviceeditoricon" data-id="deviceeditor" ' +
+              'role="button" aria-label="Open device editor" title="Devices toevoegen">' +
+              _topbarIconHtml('fas fa-plus', 'img/icons/Plus.png') + '</span>';
+            content +=
+              '<span class="settings widgeteditoricon" data-id="widgeteditor" ' +
+              'role="button" aria-label="Open widget editor" title="Widgets toevoegen">' +
+              _topbarIconHtml('fas fa-puzzle-piece', 'img/icons/Puzzle.png') + '</span>';
+            content +=
+              '<span class="settings layouteditoricon" data-id="layouteditor" ' +
+              'role="button" aria-label="Open visual layout editor" title="Tegels verplaatsen en schalen">' +
+              _topbarIconHtml('fas fa-arrows-alt', 'img/icons/Arrows.png') + '</span>';
+          }
           content +=
             '<span class="settings settingsicon" data-id="settings" ' +
             'data-bs-target="#settingspopup" data-bs-toggle="modal" ' +
             'role="button" aria-label="Open settings" title="Instellingen">' +
-            '<i class="fas fa-cog" aria-hidden="true"></i></span>';
-          _registerDeviceEditorClick();
-          _registerWidgetEditorClick();
-          _registerLayoutEditorClick();
+            _topbarIconHtml('fas fa-cog', 'img/icons/Cog.png') + '</span>';
+          if (!customMode) {
+            _registerDeviceEditorClick();
+            _registerWidgetEditorClick();
+            _registerLayoutEditorClick();
+            _openPendingGridEditor();
+          }
+          _registerConfigModeClick();
           break;
 
         case 'fullscreen':
@@ -169,12 +229,107 @@ var DT_simpleblock = (function () {
     return content;
   }
 
+  /**
+   * Returns icon HTML for a topbar button.
+   * When settings['topbar_use_png_icons'] is 1 (or true), uses a custom PNG <img> from img/icons/.
+   * When it is 0 (or falsy, the default), uses a Font Awesome <i> element.
+   * @param {string} faClass  e.g. 'fas fa-cog'
+   * @param {string} imgSrc   e.g. 'img/icons/Cog.png'
+   * @returns {string}
+   */
+  function _topbarIconHtml(faClass, imgSrc) {
+    if (Number(settings['topbar_use_png_icons']) === 1) {
+      return '<img src="' + imgSrc + '" class="dt-topbar-icon-img" aria-hidden="true" alt="">';
+    }
+    return '<i class="' + faClass + '" aria-hidden="true"></i>';
+  }
+
+  function _registerConfigModeClick() {
+    $(document)
+      .off('click.configmode')
+      .on('click.configmode', '.config-mode-btn', function () {
+        var mode = String($(this).data('mode') || 'wizard');
+        var currentMode =
+          typeof isCustomConfigMode === 'function' && isCustomConfigMode()
+            ? 'custom'
+            : 'wizard';
+        if (mode === currentMode) return;
+        if (mode === 'wizard') {
+          if (
+            !window.confirm(
+              'Wizard gebruikt altijd een vrije grid-layout. Het huidige columns-scherm wordt geconverteerd voordat Wizard wordt ingeschakeld. Doorgaan?'
+            )
+          ) {
+            return;
+          }
+          DT_function.loadDTScript('js/layouteditor.js').then(function () {
+            DashticzLayoutEditor.convertCurrentScreenToGrid(
+              true,
+              'wizard'
+            ).done(function (result) {
+              try {
+                sessionStorage.setItem(
+                  'dashticz_open_grid_editor',
+                  String((result && result.gridScreen) || '1')
+                );
+              } catch (error) {
+                // Session storage is optional.
+              }
+              if (
+                result &&
+                result.alreadyGrid &&
+                typeof setConfigMode === 'function'
+              ) {
+                setConfigMode('wizard');
+              } else {
+                window.location.reload();
+              }
+            });
+          });
+          return;
+        }
+        if (typeof setConfigMode === 'function') {
+          setConfigMode(mode);
+        }
+      });
+  }
+
   function _registerDeviceEditorClick() {
     $(document).off('click.deviceeditor').on('click.deviceeditor', '.deviceeditoricon', function () {
       DT_function.loadDTScript('js/deviceeditor.js').then(function () {
         DashticzDeviceEditor.open();
       });
     });
+  }
+
+  function _openPendingGridEditor() {
+    var pendingScreen = '';
+    try {
+      pendingScreen =
+        sessionStorage.getItem('dashticz_open_grid_editor') || '';
+      if (pendingScreen) {
+        sessionStorage.removeItem('dashticz_open_grid_editor');
+      }
+    } catch (error) {
+      return;
+    }
+    if (!pendingScreen) return;
+    setTimeout(function () {
+      if (
+        pendingScreen === 'standby' &&
+        typeof DashticzScreenSwitcher !== 'undefined'
+      ) {
+        DashticzScreenSwitcher.goToScreen('standby');
+      } else if (
+        parseInt(pendingScreen, 10) > 0 &&
+        typeof DashticzScreenSwitcher !== 'undefined'
+      ) {
+        DashticzScreenSwitcher.goToScreen(parseInt(pendingScreen, 10));
+      }
+      DT_function.loadDTScript('js/layouteditor.js').then(function () {
+        DashticzLayoutEditor.open();
+      });
+    }, 300);
   }
 
   function _registerLayoutEditorClick() {

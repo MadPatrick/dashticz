@@ -11,7 +11,8 @@ var DT_alarmmeldingen = {
     rss: 'https://www.alarmeringen.nl/feeds/all.rss',
     filter: '',
     show_lastupdate: true,
-    width: 12,
+    width: 4,
+    height: 160,
     refresh: 180,
     results: 5,
     timeformat: 'ddd D MMM HH:mm',
@@ -79,7 +80,7 @@ var DT_alarmmeldingen = {
       if (isEmpty) {
         html +=
           '<li <strong>' +
-          'Geen Actuele Meldingen.....' +
+          (language.misc.no_alerts || 'No current alerts.') +
           '</strong><br />' +
           '</li>';
       }

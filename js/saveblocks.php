@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/../vendor/dashticz/security.php');
+require_once(__DIR__ . '/configwriter.php');
 
 dashticz_require_same_origin();
 dashticz_require_csrf();
@@ -22,12 +23,18 @@ if (!is_array($data['devices'])) {
     dashticz_json_error(400, 'Invalid devices list.');
 }
 
-/* ---- normalise device list --------------------------------------------- */
-/* Accept both bare integers (legacy) and {idx, name, subidx} objects     */
 $devices = [];
 foreach ($data['devices'] as $entry) {
     if (is_int($entry) && $entry > 0) {
-        $devices[] = ['idx' => $entry, 'subidx' => 0, 'name' => 'Device ' . $entry, 'width' => 3, 'height' => null];
+        $devices[] = [
+            'idx' => $entry,
+            'isGroup' => false,
+            'subidx' => 0,
+            'name' => 'Device ' . $entry,
+            'width' => 3,
+            'height' => null,
+            'key' => null,
+        ];
     } elseif (is_array($entry)
         && isset($entry['idx']) && is_int($entry['idx']) && $entry['idx'] > 0
     ) {
@@ -63,218 +70,155 @@ foreach ($data['devices'] as $entry) {
                 $height = 2000;
             }
         }
-        $devices[] = ['idx' => $entry['idx'], 'subidx' => $subidx, 'name' => $name, 'width' => $width, 'height' => $height];
+        $devices[] = [
+            'idx' => $entry['idx'],
+            'isGroup' => false,
+            'subidx' => $subidx,
+            'name' => $name,
+            'width' => $width,
+            'height' => $height,
+            'key' => isset($entry['key'])
+                && is_string($entry['key'])
+                && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $entry['key'])
+                    ? $entry['key']
+                    : null,
+        ];
+    } elseif (is_array($entry)
+        && isset($entry['idx'])
+        && is_string($entry['idx'])
+        && preg_match('/^s\d+$/', $entry['idx'])
+    ) {
+        /* Domoticz group/scene — the idx is the scene key e.g. 's1' */
+        $groupKey = $entry['idx'];
+        $name = (isset($entry['name']) && is_string($entry['name']))
+            ? substr(trim($entry['name']), 0, 100)
+            : $groupKey;
+        if ($name === '') {
+            $name = $groupKey;
+        }
+        $width = 3;
+        if (isset($entry['width'])) {
+            $width = (int)$entry['width'];
+        }
+        if ($width < 1) {
+            $width = 1;
+        } elseif ($width > 12) {
+            $width = 12;
+        }
+        $height = null;
+        if (array_key_exists('height', $entry) && $entry['height'] !== null && $entry['height'] !== '') {
+            $height = (int)$entry['height'];
+            $height = (int)(round($height / 10) * 10);
+            if ($height < 50) {
+                $height = 50;
+            } elseif ($height > 2000) {
+                $height = 2000;
+            }
+        }
+        $devices[] = [
+            'idx' => $groupKey,
+            'isGroup' => true,
+            'subidx' => 0,
+            'name' => $name,
+            'width' => $width,
+            'height' => $height,
+            'key' => $groupKey,  /* block key IS the group reference */
+        ];
     } else {
         dashticz_json_error(400, 'Each device entry must be a positive integer or an object with an integer idx.');
     }
 }
 
-/* ---- read CONFIG.js ---------------------------------------------------- */
-$customDir  = __DIR__ . '/../custom';
-$configPath = $customDir . '/CONFIG.js';
-
-if (file_exists($configPath)) {
-    $config = @file_get_contents($configPath);
-    if ($config === false) {
-        dashticz_json_error(500, 'Unable to read CONFIG.js.');
-    }
-    if (trim($config) === '#EMPTY#') {
-        $config = "var config = {}\n";
-    }
-} else {
-    $config = "var config = {}\n";
+$customDir = __DIR__ . '/../custom';
+list($configPath, $cfgFile) = configwriter_resolve_config_path($customDir);
+list($config, $readError) = configwriter_read_config($configPath);
+if ($readError !== null) {
+    dashticz_json_error(500, $readError);
 }
 
-/* A direct Device Editor save invalidates a previously combined layout. */
-$layoutStartMarker = '// [layout-editor-start]';
-$layoutEndMarker = '// [layout-editor-end]';
-$layoutStartPos = strpos($config, $layoutStartMarker);
-if ($layoutStartPos !== false) {
-    $layoutEndPos = strpos($config, $layoutEndMarker, $layoutStartPos);
-    if ($layoutEndPos !== false) {
-        $config = substr($config, 0, $layoutStartPos)
-            . substr($config, $layoutEndPos + strlen($layoutEndMarker));
-    } else {
-        $config = substr($config, 0, $layoutStartPos);
-    }
-}
-
-/* ---- remove existing device-editor section ----------------------------- */
-$startMarker = '// [device-editor-start]';
-$endMarker   = '// [device-editor-end]';
-
-$startPos = strpos($config, $startMarker);
-if ($startPos !== false) {
-    $endPos = strpos($config, $endMarker, $startPos);
-    if ($endPos !== false) {
-        $after  = substr($config, $endPos + strlen($endMarker));
-        $config = substr($config, 0, $startPos) . $after;
-    } else {
-        $config = substr($config, 0, $startPos);
-    }
-}
-
+$screenNumber = configwriter_parse_screen_number($data, 1);
+list($startMarker, $endMarker) = configwriter_editor_markers('device', $screenNumber);
+$config = configwriter_remove_section($config, $startMarker, $endMarker);
 $config = rtrim($config);
 
-/* ---- build new device-editor section ----------------------------------- */
+$blockKeys = [];
+$blocksOnly = !empty($data['blocksOnly']);
 if (!empty($devices)) {
-    /* derive unique JS identifier keys from device names */
-    $usedKeys = [];
-    foreach ($devices as &$d) {
-        $d['key'] = _makeBlockKey($d['name'], $usedKeys);
-    }
-    unset($d);
-
-    $columnWidth      = 12;
-    $defaultBlockWidth = 3;
-    $chunks           = _chunkBlockKeysByWidth($devices, $columnWidth, $defaultBlockWidth);
-
-    $section  = "\n\n" . $startMarker . "\n";
-
-    /* blocks */
-    $section .= "if(typeof blocks==='undefined') var blocks={};\n";
-    foreach ($devices as $d) {
-        $key   = $d['key'];
-        $idx   = $d['idx'];
-        $title = _jsStringEscape($d['name']);
-        $blockWidth = (isset($d['width']) && is_int($d['width']) && $d['width'] > 0)
-            ? $d['width']
-            : $defaultBlockWidth;
-        if (!empty($d['subidx']) && $d['subidx'] > 0) {
-            $blockDef = "{idx:'" . $idx . '_' . (int)$d['subidx'] . "'";
+    $usedKeys = array_keys(configwriter_extract_declared_block_refs($config));
+    $requestKeys = [];
+    foreach ($devices as &$device) {
+        if (!empty($device['isGroup'])) {
+            /* group/scene: the key is fixed to the group reference (e.g. 's1') */
+            $requestKeys[$device['key']] = true;
+        } elseif ($device['key'] !== null && !isset($requestKeys[$device['key']])) {
+            $requestKeys[$device['key']] = true;
         } else {
-            $blockDef = "{idx:" . $idx;
+            $device['key'] = configwriter_make_block_key($device['name'], $usedKeys);
+            $requestKeys[$device['key']] = true;
         }
-        $blockDef .= ",width:" . $blockWidth . ",hide_data:true,last_update:false,title:'" . $title . "'";
-        if (isset($d['height']) && is_int($d['height'])) {
-            $blockDef .= ",height:" . $d['height'];
+        $blockKeys[] = $device['key'];
+    }
+    unset($device);
+
+    $section = configwriter_section_header('BLOCKS') . "\n";
+    $section .= "if (typeof blocks === 'undefined') var blocks = {}\n";
+    foreach ($devices as $device) {
+        $section .= configwriter_emit_block_line(
+            $device['key'],
+            configwriter_device_block_props($device)
+        );
+    }
+
+    if (!$blocksOnly) {
+        $section .= "\n" . configwriter_section_header('COLUMNS') . "\n";
+        $section .= "if (typeof columns === 'undefined') var columns = {}\n";
+        $layoutItems = array_map(function ($device) {
+            $item = [
+                'ref' => $device['key'],
+                'width' => $device['width'],
+            ];
+            if (isset($device['height']) && is_int($device['height'])) {
+                $item['height'] = $device['height'];
+            }
+            return $item;
+        }, $devices);
+        $columnKeys = [];
+        $prefix = configwriter_column_prefix('de', $screenNumber);
+        foreach (configwriter_pack_columns_by_height($layoutItems, 12, $prefix) as $column) {
+            $columnKeys[] = $column['key'];
+            $section .= configwriter_emit_column_line(
+                $column['key'],
+                $column['blocks'],
+                $column['width']
+            );
         }
-        $blockDef .= "}";
-        $section .= "blocks['" . $key . "']=" . $blockDef . ";\n";
+
+        if ($screenNumber > 0) {
+            $section .= "\n" . configwriter_section_header('SCREENS') . "\n";
+            $section .= configwriter_emit_screen_columns($screenNumber, $columnKeys, 'merge');
+        }
     }
 
-    /* columns */
-    $colKeys  = [];
-    $section .= "if(typeof columns==='undefined') var columns={};\n";
-    foreach ($chunks as $i => $chunk) {
-        $colKey    = 'de_col' . ($i + 1);
-        $colKeys[] = $colKey;
-        $section  .= "columns['" . $colKey . "']={blocks:['" . implode("','", $chunk) . "'],width:" . $columnWidth . "};\n";
-    }
+    $wrapped = configwriter_wrap_section($startMarker, $endMarker, $section);
 
-    /* screens */
-    $section .= "if(typeof screens==='undefined') var screens={};\n";
-    $section .= "if(typeof screens[1]==='undefined') screens[1]={};\n";
-    $section .= "if(!Array.isArray(screens[1]['columns'])) screens[1]['columns']=[];\n";
-    foreach ($colKeys as $colKey) {
-        $section .= "if(screens[1]['columns'].indexOf('" . $colKey . "')<0) screens[1]['columns'].push('" . $colKey . "');\n";
-    }
-
-    $section .= $endMarker;
-
-    /*
-     * Keep device columns before widget columns. Both editors append their
-     * columns to screen 1, so their CONFIG.js section order determines the
-     * visible dashboard order after either editor saves.
-     */
-    $widgetStartPos = strpos($config, '// [widget-editor-start]');
+    list($widgetStartMarker) = configwriter_editor_markers('widget', $screenNumber);
+    $widgetStartPos = strpos($config, $widgetStartMarker);
     if ($widgetStartPos !== false) {
         $beforeWidgets = rtrim(substr($config, 0, $widgetStartPos));
         $widgetSection = ltrim(substr($config, $widgetStartPos));
-        $config = $beforeWidgets . $section . "\n\n" . $widgetSection;
+        $config = $beforeWidgets . $wrapped . "\n\n" . $widgetSection;
     } else {
-        $config .= $section;
+        $config .= $wrapped;
     }
 }
 
-/* ---- write CONFIG.js --------------------------------------------------- */
-if (!file_exists($configPath) && !is_writable($customDir)) {
-    dashticz_json_error(500, 'The directory "custom/" is not writable by the web server' .
-        dashticz_owner_info($customDir) .
-        '. From the Dashticz directory, run: sh tools/install-dashticz-write-access');
+$writeError = configwriter_write_config($configPath, $customDir, $config);
+if ($writeError !== null) {
+    dashticz_json_error(500, $writeError);
 }
-
-if (file_exists($configPath) && !is_writable($configPath)) {
-    @chmod($configPath, 0664);
-    if (!is_writable($configPath)) {
-        dashticz_json_error(500, 'CONFIG.js is not writable' .
-            dashticz_owner_info($configPath) .
-            '. From the Dashticz directory, run: sh tools/install-dashticz-write-access');
-    }
-}
-
-if (file_put_contents($configPath, $config . "\n", LOCK_EX) === false) {
-    dashticz_json_error(500, 'Unable to write CONFIG.js.');
-}
-@chmod($configPath, 0664);
 
 header('Content-Type: application/json');
-echo json_encode(array(
+echo json_encode([
     'success' => true,
-    'blockKeys' => array_map(function ($device) {
-        return isset($device['key']) ? $device['key'] : null;
-    }, $devices),
-));
-
-/* ---- helpers ----------------------------------------------------------- */
-
-/**
- * Escape a string for use inside a single-quoted JavaScript string literal.
- */
-function _jsStringEscape($str) {
-    return str_replace(['\\', "'"], ['\\\\', "\\'"], $str);
-}
-
-/**
- * Convert a device name into a valid, unique JavaScript identifier.
- * Spaces and non-alphanumeric characters are replaced with underscores.
- * Consecutive underscores are collapsed; leading/trailing underscores are stripped.
- * A digit-only start is prefixed with 'd'.
- * Duplicate keys get a numeric suffix (_2, _3, …).
- */
-function _makeBlockKey($name, &$usedKeys) {
-    $key = preg_replace('/[^a-zA-Z0-9_]/', '_', $name);
-    $key = preg_replace('/_+/', '_', $key);
-    $key = trim($key, '_');
-    if ($key === '' || ctype_digit(substr($key, 0, 1))) {
-        $key = 'd' . $key;
-    }
-    $base   = $key;
-    $suffix = 2;
-    while (in_array($key, $usedKeys, true)) {
-        $key = $base . '_' . $suffix++;
-    }
-    $usedKeys[] = $key;
-    return $key;
-}
-
-/**
- * Group block keys into columns by summing block widths until the column is full.
- */
-function _chunkBlockKeysByWidth($devices, $columnWidth, $defaultBlockWidth) {
-    $chunks = [];
-    $currentChunk = [];
-    $currentWidth = 0;
-
-    foreach ($devices as $device) {
-        $blockWidth = (isset($device['width']) && is_int($device['width']) && $device['width'] > 0)
-            ? $device['width']
-            : $defaultBlockWidth;
-        $blockWidth = min($blockWidth, $columnWidth);
-
-        if (!empty($currentChunk) && ($currentWidth + $blockWidth) > $columnWidth) {
-            $chunks[] = $currentChunk;
-            $currentChunk = [];
-            $currentWidth = 0;
-        }
-
-        $currentChunk[] = $device['key'];
-        $currentWidth += $blockWidth;
-    }
-
-    if (!empty($currentChunk)) {
-        $chunks[] = $currentChunk;
-    }
-
-    return $chunks;
-}
+    'blockKeys' => $blockKeys,
+]);

@@ -8,7 +8,7 @@
 
 /*from blocks.js*/
 /*global initMap */
-/* global Dashticz Domoticz DT_secpanel*/
+/* global Dashticz DashticzGridLayout Domoticz DT_secpanel*/
 var language = {};
 // eslint-disable-next-line no-unused-vars
 var blocks = {};
@@ -29,6 +29,7 @@ var audio = {};
 var screens = {};
 var columns = {};
 var columns_standby = {};
+var standby_screen = {};
 var defaultcolumns = false;
 //move var allblocks = {};
 var myswiper;
@@ -142,6 +143,17 @@ function loadConfig() {
     );
 }
 
+/**
+ * Add the active configuration filename to editor requests. Keeping this in
+ * one helper prevents a dashboard opened with ?cfg=CONFIG2.js from silently
+ * writing its changes to CONFIG.js.
+ */
+function configEditorUrl(url) {
+  var cfgFile = _PARAMS['cfg'] || 'CONFIG.js';
+  return url + (url.indexOf('?') === -1 ? '?' : '&') +
+    'cfg=' + encodeURIComponent(cfgFile);
+}
+
 function clearLegacyStoredSetupConfig() {
   try {
     localStorage.removeItem('dashticz_setup_config');
@@ -170,13 +182,13 @@ function loadConfig2() {
 function loadLanguage() {
   //Check language before loading settings and fallback to English when not set
   var setLang = 'en_US';
-  if (typeof localStorage.dashticz_language !== 'undefined') {
-    setLang = localStorage.dashticz_language;
-  } else if (
+  if (
     typeof config !== 'undefined' &&
     typeof config.language !== 'undefined'
   ) {
     setLang = config.language;
+  } else if (typeof localStorage.dashticz_language !== 'undefined') {
+    setLang = localStorage.dashticz_language;
   }
   return $.ajax({
     url: 'lang/' + setLang + '.json?v=' + _DASHTICZ_VERSION,
@@ -530,7 +542,7 @@ function showSetupWizard() {
     $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
       .then(function (data) {
         return $.ajax({
-          url: 'js/savesettings.php',
+          url: configEditorUrl('js/savesettings.php'),
           method: 'POST',
           data: postData,
           dataType: 'json',
@@ -580,6 +592,7 @@ function configureDashticz() {
     DT_function.loadDTScript('js/tempcontrol.js'),
     DT_function.loadDTScript('js/dashticz.js'),
     DT_function.loadDTScript('js/blocks.js'),
+    DT_function.loadDTScript('js/gridlayout.js'),
     DT_function.loadDTScript('js/login.js'),
     DT_function.loadDTScript('js/moon.js'),
     DT_function.loadDTScript('js/colorpicker.js'),
@@ -852,6 +865,11 @@ function onLoad() {
   DT_function.loadDTScript('js/topbar.js').then(function () {
     DashticzTopbar.init();
   });
+  DT_function.loadDTScript('js/screenswitcher.js').then(function () {
+    if (typeof DashticzScreenSwitcher !== 'undefined') {
+      DashticzScreenSwitcher.init();
+    }
+  });
 
   setClockDateWeekday();
   setInterval(
@@ -933,7 +951,15 @@ function onLoad() {
     swipebackTime = 0;
     autoSwipe = false;
 
-    if (standbyActive) {
+    // Manual Standby (S) is an editable screen — do not exit on mouse/keyboard.
+    if (
+      standbyActive &&
+      !(
+        typeof DashticzScreenSwitcher !== 'undefined' &&
+        DashticzScreenSwitcher.isStandbyEditMode &&
+        DashticzScreenSwitcher.isStandbyEditMode()
+      )
+    ) {
       Debug.log('Standby: user activity (' + event.type + ')');
       disableStandby();
     }
@@ -963,7 +989,7 @@ function onLoad() {
         if (inactiveFor >= settings['standby_after'] * 1000 * 60) {
           $('body').addClass('standby');
           $('.dt-container').hide();
-          if (objectlength(columns_standby) > 0) buildStandby();
+          if (hasStandbyContent()) buildStandby();
           if (
             typeof _STANDBY_CALL_URL !== 'undefined' &&
             _STANDBY_CALL_URL !== ''
@@ -1005,7 +1031,91 @@ function setClockDateWeekday() {
     moment().locale(settings['language']).format(settings['longdate'])
   );
   $('.weekday').html(
-    moment().locale(settings['language']).format(settings['weekday'])
+    moment().locale(settings['language']).format(settings['weekday']) + '&nbsp;'
+  );
+}
+
+function resolveBackgroundImagePath(path) {
+  var value = String(path || '').trim();
+  if (!value) return '';
+  if (/^(https?:)?\/\//i.test(value) || value.indexOf('/') >= 0) {
+    return value;
+  }
+  return 'img/' + value;
+}
+
+function isMiniclockBlock(ref) {
+  return (
+    ref === 'miniclock' ||
+    (ref && typeof ref === 'object' && ref.type === 'miniclock')
+  );
+}
+
+function buildTopbarBlocks(existingBlocks) {
+  var showClock = Number(settings['show_topbar_clock']) === 1;
+  var blocks = Array.isArray(existingBlocks) ? existingBlocks.slice() : null;
+
+  if (!blocks) {
+    blocks = showClock
+      ? ['logo', 'miniclock', 'screenswitcher', 'settings']
+      : [{ type: 'logo', width: 8 }, 'screenswitcher', 'settings'];
+  } else {
+    blocks = blocks.filter(function (ref) {
+      return !isMiniclockBlock(ref) && !isScreenSwitcherBlock(ref);
+    });
+
+    // Keep the screen switcher left of the settings cluster.
+    var settingsIdx = -1;
+    for (var i = 0; i < blocks.length; i++) {
+      if (
+        blocks[i] === 'settings' ||
+        (blocks[i] &&
+          typeof blocks[i] === 'object' &&
+          blocks[i].type === 'settings')
+      ) {
+        settingsIdx = i;
+        break;
+      }
+    }
+    blocks.splice(
+      settingsIdx >= 0 ? settingsIdx : blocks.length,
+      0,
+      'screenswitcher'
+    );
+
+    if (showClock) {
+      var logoIdx = -1;
+      for (var j = 0; j < blocks.length; j++) {
+        if (
+          blocks[j] === 'logo' ||
+          (blocks[j] && typeof blocks[j] === 'object' && blocks[j].type === 'logo')
+        ) {
+          logoIdx = j;
+          break;
+        }
+      }
+      blocks.splice(logoIdx >= 0 ? logoIdx + 1 : 0, 0, 'miniclock');
+    } else {
+      // Give the logo more room when the clock is hidden.
+      blocks = blocks.map(function (ref) {
+        if (ref === 'logo') {
+          return { type: 'logo', width: 8 };
+        }
+        if (ref && typeof ref === 'object' && ref.type === 'logo' && !ref.width) {
+          return $.extend({}, ref, { width: 8 });
+        }
+        return ref;
+      });
+    }
+  }
+
+  return blocks;
+}
+
+function isScreenSwitcherBlock(ref) {
+  return (
+    ref === 'screenswitcher' ||
+    (ref && typeof ref === 'object' && ref.type === 'screenswitcher')
   );
 }
 
@@ -1013,21 +1123,69 @@ function toSlide(num) {
   if (typeof myswiper !== 'undefined') myswiper.slideTo(num, 0, true);
 }
 
+function hasStandbyContent() {
+  return (
+    (standby_screen &&
+      standby_screen.layout === 'grid' &&
+      Array.isArray(standby_screen.blocks)) ||
+    objectlength(columns_standby) > 0
+  );
+}
+
 function buildStandby() {
   if ($('.screenstandby').length == 0) {
+    var standbyBackground =
+      settings['standby_background'] || settings['background_image'] || '';
+    var backgroundStyle = '';
+    if (standbyBackground) {
+      backgroundStyle =
+        'background-image:url(\'' +
+        resolveBackgroundImagePath(standbyBackground) +
+        '\');';
+    }
     var screenhtml =
-      '<div class="screen screenstandby swiper-slide slidestandby" style="height:' +
-      $(window).height() +
-      'px"><div class="row"></div></div>';
+      '<div class="screen screenstandby swiper-slide slidestandby" style="' +
+      backgroundStyle +
+      '"><div class="row"></div></div>';
     $('div.screen').hide();
     $('#settingspopup').modal('hide');
     $('div.dt-container').before(screenhtml);
 
-    for (var c in columns_standby) {
-      getBlock(columns_standby[c], 'standby' + c, 'div.screenstandby', true);
+    if (
+      standby_screen &&
+      standby_screen.layout === 'grid' &&
+      Array.isArray(standby_screen.blocks)
+    ) {
+      DashticzGridLayout.renderGridScreen(
+        standby_screen,
+        'div.screenstandby'
+      );
+    } else {
+      for (var c in columns_standby) {
+        getBlock(columns_standby[c], 'standby' + c, 'div.screenstandby', true);
+      }
     }
 
     $('.screenstandby').on('click touchend', function (event) {
+      // Keep switcher/editor/layout-editor clicks from exiting standby.
+      if (
+        $(event.target).closest(
+          '.dt-screen-switcher, .dt-screen-btn, .dt-standby-editor-icons, .settings, .modal, .dle-toolbar, .dle-overlay, .dle-block, .dle-canvas, .dle-item-wrapper'
+        ).length
+      ) {
+        return;
+      }
+      if ($('body').hasClass('dle-active')) {
+        return;
+      }
+      // In manual edit mode (opened via S) clicks must not exit standby.
+      if (
+        typeof DashticzScreenSwitcher !== 'undefined' &&
+        DashticzScreenSwitcher.isStandbyEditMode &&
+        DashticzScreenSwitcher.isStandbyEditMode()
+      ) {
+        return;
+      }
       Debug.log('Click or touchend in standby');
       disableStandby();
       event.stopPropagation();
@@ -1035,6 +1193,11 @@ function buildStandby() {
     });
   } else {
     $('.screenstandby').show();
+  }
+
+  if (typeof DashticzScreenSwitcher !== 'undefined') {
+    DashticzScreenSwitcher.mountIntoStandby();
+    DashticzScreenSwitcher.updateActive();
   }
 }
 
@@ -1073,7 +1236,12 @@ function buildDefaultScreens() {
 }
 
 function buildScreens() {
-  if (screens[1] && !screens[1].columns.length && settings['auto_positioning']) {
+  if (
+    screens[1] &&
+    screens[1].layout !== 'grid' &&
+    (!Array.isArray(screens[1].columns) || !screens[1].columns.length) &&
+    settings['auto_positioning']
+  ) {
     buildDefaultScreens();
   }
   var allscreens = {};
@@ -1122,30 +1290,18 @@ function buildScreens() {
             screens[t][s]['background'] = settings['background_image'];
           }
           if (typeof screens[t][s]['background'] !== 'undefined') {
-            if (screens[t][s]['background'].indexOf('/') > 0)
-              screenhtml +=
-                'style="background-image:url(\'' +
-                screens[t][s]['background'] +
-                '\');"';
-            else
-              screenhtml +=
-                'style="background-image:url(\'img/' +
-                screens[t][s]['background'] +
-                '\');"';
+            screenhtml +=
+              'style="background-image:url(\'' +
+              resolveBackgroundImagePath(screens[t][s]['background']) +
+              '\');"';
           } else if (
             typeof screens[t][s][1] !== 'undefined' &&
             typeof screens[t][s][1]['background'] !== 'undefined'
           ) {
-            if (screens[t][s][1]['background'].indexOf('/') > 0)
-              screenhtml +=
-                'style="background-image:url(\'' +
-                screens[t][s][1]['background'] +
-                '\');"';
-            else
-              screenhtml +=
-                'style="background-image:url(\'img/' +
-                screens[t][s][1]['background'] +
-                '\');"';
+            screenhtml +=
+              'style="background-image:url(\'' +
+              resolveBackgroundImagePath(screens[t][s][1]['background']) +
+              '\');"';
           }
 
           screenhtml += '><div class="row"></div></div>';
@@ -1157,15 +1313,23 @@ function buildScreens() {
           ) {
             if (typeof columns['bar'] == 'undefined') {
               columns['bar'] = {};
-              columns['bar']['blocks'] = ['logo', 'miniclock', 'settings'];
             }
+            columns['bar']['blocks'] = buildTopbarBlocks(columns['bar']['blocks']);
             getBlock(columns['bar'], 'bar', 'div.screen' + s, false);
           }
 
-          for (var cs in screens[t][s]['columns']) {
-            if (typeof screens[t] !== 'undefined') {
-              var c = screens[t][s]['columns'][cs];
-              getBlock(columns[c], c, 'div.screen' + s, false);
+          if (screens[t][s].layout === 'grid') {
+            DashticzGridLayout.renderGridScreen(
+              screens[t][s],
+              'div.screen' + s
+            );
+          } else {
+            var screenColumns = screens[t][s]['columns'] || [];
+            for (var cs in screenColumns) {
+              if (typeof screens[t] !== 'undefined') {
+                var c = screenColumns[cs];
+                getBlock(columns[c], c, 'div.screen' + s, false);
+              }
             }
           }
         }
@@ -1244,16 +1408,12 @@ function setClassByTime() {
   for (var t in screens) {
     for (var s in screens[t]) {
       if (typeof screens[t][s]['background_' + newClass] !== 'undefined') {
-        if (screens[t][s]['background_' + newClass].indexOf('/') > 0)
-          $('.screen.screen' + s).css(
-            'background-image',
-            "url('" + screens[t][s]['background_' + newClass] + "')"
-          );
-        else
-          $('.screen.screen' + s).css(
-            'background-image',
-            "url('img/" + screens[t][s]['background_' + newClass] + "')"
-          );
+        $('.screen.screen' + s).css(
+          'background-image',
+          "url('" +
+            resolveBackgroundImagePath(screens[t][s]['background_' + newClass]) +
+            "')"
+        );
       }
     }
   }
@@ -1311,13 +1471,18 @@ function disableStandby() {
     }
   }
 
-  if (objectlength(columns_standby) > 0) {
-    $('div.screen').show();
-  }
+  // Restore regular screens after standby (manual switch or idle timeout).
+  $('div.dt-container .screen').show();
   $('.screenstandby').hide(); //hide instead of remove, because removing blocks including unsubscribe has not been implemented.
-  $('body').removeClass('standby');
+  $('body').removeClass('standby standby-edit');
   $('.dt-container').show();
   standbyActive = false;
+  if (typeof DashticzScreenSwitcher !== 'undefined') {
+    if (DashticzScreenSwitcher.setStandbyEditMode) {
+      DashticzScreenSwitcher.setStandbyEditMode(false);
+    }
+    DashticzScreenSwitcher.updateActive();
+  }
 }
 
 //END OF STANDBY FUNCTION

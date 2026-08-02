@@ -1,5 +1,34 @@
 # Dashticz — Change log for recent update work
 
+## 3.23.0 — Screen-switcher icons & i18n (1-8-2026)
+
+- **Compact default topbar**: the topbar now uses the same height, padding and
+  border dimensions as the Modern Dark theme when no theme is selected.
+- **Dynamic theme selector**: Settings > Display now presents Dashticz-Theme
+  as a dropdown populated from valid theme directories in `themes/`.
+- **Per-screen custom icons**: topbar screen buttons (1, 2, 3 … and Standby) now support custom icons via `screens[n]['icon']` in `CONFIG.js`. Accepts Font Awesome class strings (`'fas fa-home'`) or image paths relative to the Dashticz root (e.g. `'img/icons/home.svg'`). The Standby button icon is set with `standby_screen['icon']` or `config['standby_icon']`. Existing configs without `icon` keys are unaffected.
+- **`img/icons/` directory**: new directory provided for local custom icon storage. SVG, PNG, and other image formats are supported. Includes a README with usage examples and links to free icon sources.
+- **Screenswitcher i18n**: "Add screen" and "Delete screen" button tooltips were previously hard-coded in Dutch. All screenswitcher labels (Standby, Screen #, Add screen, Delete screen) are now driven by a `screenswitcher` section in each `/lang/<locale>.json`. All 28 bundled language files have been updated. English is the automatic fallback when a key is absent.
+
+
+
+- Restored the original logo/clock proportions and grouped the screen selector,
+  Custom/Wizard switch and configuration icons at the far-right edge.
+- Enforced a 2x4-cell minimum while resizing blocks in the grid editor.
+- Made garbage collection date names use the selected interface locale.
+- Added the advanced OpenWeather display defaults and five-option icon selector.
+- Made all browser editors honor `?cfg=CONFIG2.js`, save only changed settings,
+  retain hand-written configuration, and deduplicate editor-owned keys.
+- Moved Update to the Info tile and made new-version notifications persistent
+  at the lower-right of the dashboard.
+- Kept grid resize/remove controls usable on very short blocks, prevented grey
+  refresh flashes while moving blocks, fixed topbar spacing and agenda overflow,
+  and added an explicit extra-screen delete control.
+- Fixed repeated Clock settings saves and localized Garbage collection labels
+  and status messages through the language JSON files.
+
+The runtime and package version remain `3.22.0` for this beta maintenance set.
+
 > **Version: 3.20.0**  
 > This document describes every change made during three related tasks:
 > 1. [Cleaning up unused files in the project](#1-cleaning-up-unused-files)

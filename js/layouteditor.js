@@ -1,4 +1,4 @@
-/* global Domoticz settings columns blocks myswiper */
+/* global Domoticz settings columns columns_standby blocks myswiper DashticzGridLayout DashticzScreenSwitcher isCustomConfigMode standbyActive */
 // eslint-disable-next-line no-unused-vars
 var DashticzLayoutEditor = (function () {
   'use strict';
@@ -6,6 +6,8 @@ var DashticzLayoutEditor = (function () {
   var HEIGHT_STEP = 10;
   var MIN_HEIGHT = 50;
   var MAX_HEIGHT = 2000;
+  var MIN_GRID_WIDTH = 2;
+  var MIN_GRID_HEIGHT = 4;
   var active = false;
   var items = [];
   var itemById = {};
@@ -14,15 +16,72 @@ var DashticzLayoutEditor = (function () {
   var $toolbar = null;
   var pointerState = null;
   var swiperTouchMove = null;
+  var gridMode = false;
+  var gridConfig = null;
+  var originalGridWrappers = [];
+  var gridCollectionError = false;
+  var editingScreen = null;
+  var $editingScreen = null;
+  var gridEditorRows = 0;
+  var edgeScrollFrame = null;
+  var edgeScrollDirection = 0;
+  var lastPointerPosition = null;
 
   function open() {
     if (active) return;
 
-    var $screen = $('.screen.swiper-slide-active');
-    if (!$screen.length) $screen = $('.screen:visible').first();
+    var $screen = _activeScreenDom();
+    if (!$screen.length) {
+      alert('No active screen found.');
+      return;
+    }
+    editingScreen = _activeScreenPayload();
+    $editingScreen = $screen;
+    gridMode = $screen.hasClass('dt-grid-screen');
+    if (gridMode) {
+      var $grid = $screen.children('.dt-grid-layout').first();
+      _collectGridItems($grid);
+      if (gridCollectionError || !items.length) {
+        alert(
+          'Grid editing requires every screen block to have a mounted, safely named blocks["name"] definition. Wait for the screen to finish loading and try again.'
+        );
+        gridMode = false;
+        editingScreen = null;
+        return;
+      }
+      active = true;
+      $('body').addClass('dle-active');
+      _prepareGridCanvas($grid);
+      _decorateItems();
+      _buildToolbar();
+      _attachHandlers();
+      _disableSwiper();
+      return;
+    }
+    if (
+      typeof isCustomConfigMode === 'function' &&
+      !isCustomConfigMode()
+    ) {
+      convertCurrentScreenToGrid(false).done(function () {
+        try {
+          sessionStorage.setItem(
+            'dashticz_open_grid_editor',
+            String(_activeScreenPayload())
+          );
+        } catch (error) {
+          // Session storage is optional.
+        }
+        window.location.reload();
+      });
+      return;
+    }
 
+    var managedColumnRe = /^(de|we|le)_s\d+_col\d+$|^(de|we|le)_col\d+$|^col_\d+$/;
+    var isStandby = _activeScreenTarget() === 'standby';
     var $managedColumns = $screen.find('[data-colindex]').filter(function () {
-      return /^(de|we|le)_col\d+$/.test(String($(this).data('colindex')));
+      var key = String($(this).attr('data-colindex'));
+      if (isStandby) return true;
+      return managedColumnRe.test(key);
     });
 
     if (!$managedColumns.length) {
@@ -44,26 +103,401 @@ var DashticzLayoutEditor = (function () {
     _decorateItems();
     _buildToolbar();
     _attachHandlers();
+    _disableSwiper();
+  }
 
+  function _disableSwiper() {
     if (typeof myswiper !== 'undefined' && myswiper) {
       swiperTouchMove = myswiper.allowTouchMove;
       myswiper.allowTouchMove = false;
     }
   }
 
+  function _activeScreenTarget() {
+    if (
+      typeof DashticzScreenSwitcher !== 'undefined' &&
+      DashticzScreenSwitcher.getActiveScreenNumber
+    ) {
+      return DashticzScreenSwitcher.getActiveScreenNumber();
+    }
+    if (typeof standbyActive !== 'undefined' && standbyActive) {
+      return 'standby';
+    }
+    if ($('.screenstandby:visible').length) return 'standby';
+    var $active = $('.dt-container .screen.swiper-slide-active[data-screenindex]');
+    if (!$active.length) {
+      $active = $('.dt-container .screen[data-screenindex]:visible').first();
+    }
+    var fromDom = parseInt($active.attr('data-screenindex'), 10);
+    return fromDom > 0 ? fromDom : 1;
+  }
+
+  function _activeScreenPayload() {
+    var target = _activeScreenTarget();
+    return target === 'standby' ? 'standby' : parseInt(target, 10) || 1;
+  }
+
+  function _activeScreenDom() {
+    if (_activeScreenTarget() === 'standby') {
+      var $standby = $('.screenstandby:visible');
+      if ($standby.length) return $standby;
+      return $('.screenstandby').first();
+    }
+    var num = _activeScreenPayload();
+    var $byIndex = $(
+      '.dt-container .screen[data-screenindex="' + num + '"]'
+    );
+    if ($byIndex.length) return $byIndex.first();
+    var $active = $('.dt-container .screen.swiper-slide-active');
+    if ($active.length) return $active;
+    return $('.dt-container .screen:visible').first();
+  }
+
+  function convertCurrentScreenToGrid(skipConfirmation, targetMode) {
+    var deferred = $.Deferred();
+    var $screen = _activeScreenDom();
+    var screenNumber = _activeScreenPayload();
+    if (!$screen.length) {
+      alert('Er is geen normaal scherm gevonden om naar grid om te zetten.');
+      deferred.reject();
+      return deferred.promise();
+    }
+    if ($screen.hasClass('dt-grid-screen')) {
+      deferred.resolve({ alreadyGrid: true });
+      return deferred.promise();
+    }
+    if (window.innerWidth < 768) {
+      alert(
+        'Zet het scherm minimaal 768 pixels breed voordat je een columns-layout naar grid omzet.'
+      );
+      deferred.reject();
+      return deferred.promise();
+    }
+
+    var conversion = _buildColumnGridConversion($screen, screenNumber);
+    if (conversion.error) {
+      alert(conversion.error);
+      deferred.reject();
+      return deferred.promise();
+    }
+    if (
+      !skipConfirmation &&
+      !window.confirm(
+        'Wizard gebruikt een vrije grid-layout. Het huidige columns-scherm wordt naar een 24-koloms grid omgezet. Doorgaan?'
+      )
+    ) {
+      deferred.reject();
+      return deferred.promise();
+    }
+    if (targetMode === 'wizard') {
+      conversion.payload.configMode = 'wizard';
+    }
+
+    $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
+      .then(function (data) {
+        return _postLayoutData(
+          'js/savegridlayout.php',
+          conversion.payload,
+          data.token
+        );
+      })
+      .done(function (result) {
+        result.gridScreen = screenNumber;
+        deferred.resolve(result);
+      })
+      .fail(function (xhr) {
+        var message =
+          xhr.responseJSON && xhr.responseJSON.error
+            ? xhr.responseJSON.error
+            : 'Het columns-scherm kon niet naar grid worden omgezet.';
+        alert(message);
+        deferred.reject(xhr);
+      });
+    return deferred.promise();
+  }
+
+  function _buildColumnGridConversion($screen, screenNumber) {
+    var gridColumns = 24;
+    var rowHeight = 20;
+    var gap = 5;
+    var screenRect = $screen[0].getBoundingClientRect();
+    var converted = [];
+    var usedReferences = {};
+    var error = '';
+
+    $screen
+      .find('.row > [data-colindex]')
+      .filter(function () {
+        return String($(this).attr('data-colindex')) !== 'bar';
+      })
+      .each(function () {
+        if (error) return;
+        var $column = $(this);
+        var columnKey = String($column.attr('data-colindex'));
+        var isStandby = screenNumber === 'standby';
+        var sourceColumns = isStandby ? columns_standby : columns;
+        var lookupKey =
+          isStandby && /^standby/.test(columnKey)
+            ? columnKey.replace(/^standby/, '')
+            : columnKey;
+        var refs =
+          sourceColumns &&
+          sourceColumns[lookupKey] &&
+          Array.isArray(sourceColumns[lookupKey].blocks)
+            ? sourceColumns[lookupKey].blocks
+            : [];
+        var wrappers = $column.children('div[id^="block_"]').toArray();
+        if (refs.length !== wrappers.length) {
+          error =
+            'Conversie gestopt: wacht tot alle blocks geladen zijn en probeer opnieuw.';
+          return;
+        }
+
+        wrappers.forEach(function (wrapper, index) {
+          if (error) return;
+          var reference = refs[index];
+          var safeReference =
+            typeof reference === 'string' &&
+            /^[A-Za-z_][A-Za-z0-9_]*$/.test(reference)
+              ? reference
+              : '';
+          var resolved = _resolveBlock(reference);
+          var definition =
+            safeReference &&
+            typeof blocks !== 'undefined' &&
+            blocks[safeReference]
+              ? blocks[safeReference]
+              : reference && typeof reference === 'object'
+                ? reference
+                : resolved
+                  ? resolved.definition
+                  : safeReference
+                    ? { type: safeReference }
+                    : null;
+          if (!definition) {
+            error = 'Conversie gestopt: een block kon niet worden herkend.';
+            return;
+          }
+          if (safeReference && usedReferences[safeReference]) {
+            error =
+              'Conversie gestopt: block "' +
+              safeReference +
+              '" staat meerdere keren op hetzelfde scherm.';
+            return;
+          }
+          if (safeReference) usedReferences[safeReference] = true;
+
+          var rect = _wrapperContentRect(wrapper);
+          if (!rect) {
+            error =
+              'Conversie gestopt: wacht tot alle blocks geladen zijn en probeer opnieuw.';
+            return;
+          }
+          var width12 = _configuredWidth(definition, rect.element);
+          var width = Math.max(
+            1,
+            Math.min(
+              gridColumns,
+              Math.round(
+                (rect.width / Math.max(1, screenRect.width)) * gridColumns
+              )
+            )
+          );
+          var x = Math.round(
+            ((rect.left - screenRect.left) / Math.max(1, screenRect.width)) *
+              gridColumns
+          );
+          x = Math.max(1, Math.min(gridColumns - width + 1, x + 1));
+          var height = Math.max(
+            1,
+            Math.ceil((rect.height + gap) / (rowHeight + gap))
+          );
+          var position = _firstFreeGridPosition(
+            converted,
+            x,
+            width,
+            height,
+            gridColumns
+          );
+          var create = _gridCreateDefinition(
+            reference,
+            safeReference,
+            definition,
+            resolved,
+            width12,
+            rect.height
+          );
+          if (
+            !create &&
+            (!safeReference || screenNumber === 'standby')
+          ) {
+            error =
+              'Conversie gestopt: block "' +
+              (safeReference || index + 1) +
+              '" bevat functies of andere instellingen die niet veilig automatisch kunnen worden omgezet.';
+            return;
+          }
+          var entry = {
+            grid: position,
+          };
+          if (screenNumber === 'standby') entry.clone = true;
+          if (create) entry.create = create;
+          if (safeReference) entry.ref = safeReference;
+          converted.push(entry);
+        });
+      });
+
+    if (error) return { error: error };
+    if (!converted.length) {
+      return { error: 'Er zijn geen blocks gevonden om naar grid om te zetten.' };
+    }
+    return {
+      payload: {
+        screen: screenNumber,
+        gridColumns: gridColumns,
+        rowHeight: rowHeight,
+        gap: gap,
+        mobileLayout: 'stack',
+        items: converted,
+      },
+    };
+  }
+
+  function _wrapperContentRect(wrapper) {
+    var elements = $(wrapper).children('.mh, .dt_block').toArray();
+    if (!elements.length) elements = $(wrapper).children().toArray();
+    if (!elements.length) return null;
+    var rects = elements.map(function (element) {
+      return element.getBoundingClientRect();
+    });
+    var left = Math.min.apply(
+      null,
+      rects.map(function (rect) {
+        return rect.left;
+      })
+    );
+    var right = Math.max.apply(
+      null,
+      rects.map(function (rect) {
+        return rect.right;
+      })
+    );
+    var top = Math.min.apply(
+      null,
+      rects.map(function (rect) {
+        return rect.top;
+      })
+    );
+    var bottom = Math.max.apply(
+      null,
+      rects.map(function (rect) {
+        return rect.bottom;
+      })
+    );
+    return {
+      element: elements[0],
+      left: left,
+      top: top,
+      width: right - left,
+      height: bottom - top,
+    };
+  }
+
+  function _gridCreateDefinition(
+    reference,
+    safeReference,
+    definition,
+    resolved,
+    width,
+    measuredHeight
+  ) {
+    var rawDeviceReference =
+      typeof reference === 'number' ||
+      (typeof reference === 'string' &&
+        /^\d+(?:_\d+)?$/.test(reference));
+    if (resolved && resolved.kind === 'device' && rawDeviceReference) {
+      return {
+        kind: 'device',
+        idx: resolved.idx,
+        subidx: resolved.subidx || 0,
+        name: resolved.name,
+        width: width,
+        height: Math.round(measuredHeight),
+      };
+    }
+    if (!_isGridSerializable(definition)) return null;
+    var props = JSON.parse(JSON.stringify(definition));
+    return {
+      kind: 'inline',
+      name:
+        definition.title ||
+        safeReference ||
+        definition.type ||
+        'Grid block',
+      propsJson: JSON.stringify(props),
+    };
+  }
+
+  function _isGridSerializable(value) {
+    if (
+      typeof value === 'string' ||
+      typeof value === 'boolean'
+    ) {
+      return true;
+    }
+    if (typeof value === 'number') return isFinite(value);
+    if (typeof value === 'undefined' || typeof value === 'function') {
+      return false;
+    }
+    if (Array.isArray(value)) {
+      return value.every(_isGridSerializable);
+    }
+    if (Object.prototype.toString.call(value) !== '[object Object]') {
+      return false;
+    }
+    return Object.keys(value).every(function (key) {
+      return _isGridSerializable(value[key]);
+    });
+  }
+
+  function _firstFreeGridPosition(items, preferredX, width, height, columns) {
+    var x = Math.max(1, Math.min(columns - width + 1, preferredX));
+    var y = 1;
+    while (y < 10000) {
+      var candidate = { x: x, y: y, w: width, h: height };
+      var overlaps = items.some(function (item) {
+        return _gridPositionsOverlap(candidate, item.grid);
+      });
+      if (!overlaps) return candidate;
+      y++;
+    }
+    return { x: x, y: 10000, w: width, h: height };
+  }
+
   function _collectItems($managedColumns) {
     items = [];
     itemById = {};
     originalColumns = [];
+    var isStandby = _activeScreenTarget() === 'standby';
 
     $managedColumns.each(function () {
       var $column = $(this);
-      var columnKey = String($column.data('colindex'));
+      var columnKey = String($column.attr('data-colindex'));
+      var sourceColumns = isStandby ? columns_standby : columns;
+      var lookupKey = columnKey;
+      if (
+        isStandby &&
+        (!sourceColumns || !sourceColumns[lookupKey]) &&
+        /^standby/.test(columnKey)
+      ) {
+        lookupKey = columnKey.replace(/^standby/, '');
+      }
       var refs =
-        typeof columns !== 'undefined' &&
-        columns[columnKey] &&
-        Array.isArray(columns[columnKey].blocks)
-          ? columns[columnKey].blocks
+        typeof sourceColumns !== 'undefined' &&
+        sourceColumns &&
+        sourceColumns[lookupKey] &&
+        Array.isArray(sourceColumns[lookupKey].blocks)
+          ? sourceColumns[lookupKey].blocks
           : [];
       var wrappers = $column.children('div[id^="block_"]').toArray();
 
@@ -113,6 +547,85 @@ var DashticzLayoutEditor = (function () {
         itemById[item.id] = item;
       });
     });
+  }
+
+  function _collectGridItems($grid) {
+    items = [];
+    itemById = {};
+    originalColumns = [];
+    originalGridWrappers = $grid.children('.dt-grid-item').toArray();
+    gridCollectionError = false;
+
+    originalGridWrappers.forEach(function (wrapper) {
+      var reference = String(wrapper.getAttribute('data-grid-block') || '');
+      if (
+        !/^[A-Za-z_][A-Za-z0-9_]*$/.test(reference) ||
+        typeof blocks === 'undefined' ||
+        !blocks[reference]
+      ) {
+        gridCollectionError = true;
+        return;
+      }
+      var resolved = _resolveBlock(reference) || {
+        definition: blocks[reference],
+        kind: 'grid',
+        reference: reference,
+        widgetId: null,
+        idx: null,
+        subidx: 0,
+        name: blocks[reference].title || reference,
+      };
+
+      var $wrapperChildren = $(wrapper).children();
+      var visibleBlocks = $wrapperChildren.filter('.mh, .dt_block').toArray();
+      if (!visibleBlocks.length) {
+        visibleBlocks = $wrapperChildren.toArray();
+      }
+      if (!visibleBlocks.length) {
+        gridCollectionError = true;
+        return;
+      }
+
+      var position = {
+        x: _gridInteger(wrapper, '--dt-grid-x', 1),
+        y: _gridInteger(wrapper, '--dt-grid-y', items.length + 1),
+        w: _gridInteger(wrapper, '--dt-grid-w', 1),
+        h: _gridInteger(wrapper, '--dt-grid-h', 1),
+      };
+      var item = {
+        id: 'dle-' + items.length,
+        wrapper: wrapper,
+        visibleBlocks: visibleBlocks,
+        idx: resolved.idx,
+        subidx: resolved.subidx,
+        kind: resolved.kind,
+        reference: reference,
+        widgetId: resolved.widgetId,
+        definition: resolved.definition,
+        name: resolved.name,
+        width: position.w,
+        height: null,
+        grid: position,
+        originalGrid: $.extend({}, position),
+        originalBlocks: visibleBlocks.map(function (block) {
+          return {
+            block: block,
+            widthClass: _widthClass(block),
+            height: block.style.getPropertyValue('height'),
+            heightPriority: block.style.getPropertyPriority('height'),
+            fixedHeight: block.classList.contains('fixedheight'),
+          };
+        }),
+      };
+
+      items.push(item);
+      itemById[item.id] = item;
+    });
+  }
+
+  function _gridInteger(element, property, fallback) {
+    var value = parseInt(element.style.getPropertyValue(property), 10);
+    return value > 0 ? value : fallback;
   }
 
   function _resolveBlock(ref) {
@@ -180,8 +693,120 @@ var DashticzLayoutEditor = (function () {
       widget_sonarr: 'sonarr',
       widget_clock: 'clock',
       widget_calendar: 'calendar',
+      widget_secpanel: 'secpanel',
+      widget_publictransport: 'publictransport',
+      widget_trafficinfo: 'trafficinfo',
+      widget_alarmmeldingen: 'alarmmeldingen',
+      widget_cameras: 'camera',
+      widget_map: 'map',
+      widget_longfonds: 'longfonds',
+      widget_moon: 'moon',
+      widget_news: 'news',
+      widget_xmltvguide: 'xmltvguide',
     };
     return widgetReferences[String(reference)] || null;
+  }
+
+  function _copyDefinedWidgetProperties(entry, definition, properties) {
+    properties.forEach(function (property) {
+      if (typeof definition[property] !== 'undefined') {
+        entry[property] = definition[property];
+      }
+    });
+  }
+
+  function _widgetPayload(item) {
+    var definition = item.definition || {};
+    var entry = {
+      id: item.widgetId,
+      width: item.width,
+    };
+    if (item.height !== null) entry.height = item.height;
+    if (item.widgetId === 'garbage') {
+      entry.displayTitle =
+        (
+          typeof language !== 'undefined' &&
+          language &&
+          language.settings &&
+          language.settings.widgeteditor &&
+          language.settings.widgeteditor.garbage_title
+        ) ||
+        'Garbage';
+    }
+
+    if (item.widgetId === 'weather') {
+      entry.provider =
+        definition.widget_provider ||
+        (definition.type === 'wunderground'
+          ? 'wunderground'
+          : 'openweather');
+      _copyDefinedWidgetProperties(entry, definition, [
+        'showRain',
+        'showDescription',
+        'showWind',
+        'showGust',
+        'icons',
+      ]);
+    } else if (item.widgetId === 'calendar') {
+      entry.icalurl = definition.icalurl || '';
+    } else if (item.widgetId === 'clock') {
+      entry.clockType = definition.type || 'basicclock';
+      _copyDefinedWidgetProperties(entry, definition, [
+        'size',
+        'scale',
+        'showSeconds',
+        'clockFace',
+        'body',
+        'dial',
+        'hourhand',
+        'minutehand',
+        'secondhand',
+        'boss',
+        'minutehandbehavior',
+        'secondhandbehavior',
+      ]);
+    } else if (item.widgetId === 'publictransport') {
+      entry.station = definition.station || 'UT';
+      entry.provider = definition.provider || 'treinen';
+    } else if (item.widgetId === 'camera') {
+      entry.imageUrl = definition.imageUrl || '';
+      if (definition.videoUrl) entry.videoUrl = definition.videoUrl;
+    } else if (item.widgetId === 'alarmmeldingen') {
+      entry.rss =
+        definition.rss || 'https://www.alarmeringen.nl/feeds/all.rss';
+      if (definition.filter) entry.filter = definition.filter;
+    } else if (item.widgetId === 'xmltvguide') {
+      entry.xmltvurl = definition.xmltvurl || settings['xmltv_url'] || '';
+      if (Array.isArray(definition.channels)) {
+        entry.channels = definition.channels;
+      } else if (typeof definition.channels === 'string') {
+        entry.channels = definition.channels;
+      } else if (typeof settings['xmltv_channels'] === 'string') {
+        entry.channels = settings['xmltv_channels'];
+      }
+      if (definition.maxitems) {
+        entry.maxitems = definition.maxitems;
+      } else if (typeof settings['xmltv_maxitems'] !== 'undefined') {
+        entry.maxitems = settings['xmltv_maxitems'];
+      }
+      if (typeof definition.layout !== 'undefined') {
+        entry.layout = definition.layout;
+      } else if (typeof settings['xmltv_layout'] !== 'undefined') {
+        entry.layout = settings['xmltv_layout'];
+      }
+      if (typeof definition.separator === 'string') {
+        entry.separator = definition.separator;
+      } else if (typeof settings['xmltv_separator'] === 'string') {
+        entry.separator = settings['xmltv_separator'];
+      }
+      if (typeof definition.refresh !== 'undefined') {
+        entry.refresh = definition.refresh;
+      } else if (typeof settings['xmltv_refresh'] !== 'undefined') {
+        entry.refresh = settings['xmltv_refresh'];
+      }
+    }
+
+    return entry;
   }
 
   function _configuredWidth(definition, block) {
@@ -223,9 +848,77 @@ var DashticzLayoutEditor = (function () {
     });
   }
 
+  function _prepareGridCanvas($grid) {
+    $canvas = $grid.addClass('dle-grid-canvas');
+    $editingScreen.addClass('dle-grid-screen-editing');
+    gridConfig = {
+      gridColumns: _gridCssNumber($grid[0], '--dt-grid-columns', 24),
+      rowHeight: _gridCssNumber($grid[0], '--dt-grid-row-height', 20),
+      gap: _gridCssNumber($grid[0], '--dt-grid-gap', 0, true),
+      mobileLayout: $grid.hasClass('dt-grid-mobile-stack') ? 'stack' : 'stack',
+    };
+    $grid[0].style.setProperty(
+      '--dle-grid-column-stride',
+      ($grid.innerWidth() + gridConfig.gap) / gridConfig.gridColumns + 'px'
+    );
+    items.forEach(function (item) {
+      item.wrapper.classList.add('dle-item-wrapper');
+      // Normalize legacy one-cell blocks when editing. Cancel still restores
+      // originalGrid, while Save persists the safe minimum dimensions.
+      if (item.grid.w < MIN_GRID_WIDTH || item.grid.h < MIN_GRID_HEIGHT) {
+        item.grid = {
+          x: Math.min(
+            item.grid.x,
+            Math.max(1, gridConfig.gridColumns - MIN_GRID_WIDTH + 1)
+          ),
+          y: item.grid.y,
+          w: Math.min(
+            gridConfig.gridColumns,
+            Math.max(MIN_GRID_WIDTH, item.grid.w)
+          ),
+          h: Math.max(MIN_GRID_HEIGHT, item.grid.h),
+        };
+        item.width = item.grid.w;
+        DashticzGridLayout.applyGridPosition(item.wrapper, item.grid);
+      }
+    });
+    var occupiedRows = items.reduce(function (highest, item) {
+      return Math.max(highest, item.grid.y + item.grid.h - 1);
+    }, 1);
+    var viewportRows = Math.ceil(
+      Math.max(0, window.innerHeight - $grid[0].getBoundingClientRect().top) /
+        (gridConfig.rowHeight + gridConfig.gap)
+    );
+    _ensureGridCanvasRows(Math.max(occupiedRows + 10, viewportRows + 6));
+    _refreshGridOverlaps();
+  }
+
+  function _gridCssNumber(element, property, fallback, allowZero) {
+    var value = parseFloat(
+      getComputedStyle(element).getPropertyValue(property)
+    );
+    if (!isFinite(value) || (allowZero ? value < 0 : value <= 0)) {
+      return fallback;
+    }
+    return value;
+  }
+
+  function _ensureGridCanvasRows(rows) {
+    var requested = Math.max(1, Math.min(10000, Math.ceil(rows)));
+    if (requested <= gridEditorRows) return;
+    gridEditorRows = requested;
+    var height =
+      gridEditorRows * gridConfig.rowHeight +
+      Math.max(0, gridEditorRows - 1) * gridConfig.gap;
+    $canvas[0].style.setProperty(
+      '--dle-grid-editor-min-height',
+      height + 'px'
+    );
+  }
+
   function _decorateItems() {
     items.forEach(function (item) {
-      if (item.height !== null) _applyHeight(item, item.height);
+      if (!gridMode && item.height !== null) _applyHeight(item, item.height);
 
       item.visibleBlocks.forEach(function (block, index) {
         var $block = $(block).addClass('dle-block');
@@ -256,10 +949,15 @@ var DashticzLayoutEditor = (function () {
   }
 
   function _buildToolbar() {
+    var help = gridMode
+      ? 'Sleep tegels naar een gridcel. Schaal breedte en rijhoogte vanuit de rechteronderhoek.'
+      : 'Sleep tegels. Schaal vanuit de rechteronderhoek. Hoogte springt per 10 px.';
     $toolbar = $(
       '<div class="dle-toolbar" role="toolbar" aria-label="Visual layout editor">' +
         '<span class="dle-toolbar-title"><i class="fas fa-arrows-alt" aria-hidden="true"></i> Layout Editor</span>' +
-        '<span class="dle-toolbar-help">Sleep tegels. Schaal vanuit de rechteronderhoek. Hoogte springt per 10 px.</span>' +
+        '<span class="dle-toolbar-help">' +
+        help +
+        '</span>' +
         '<button type="button" class="btn btn-secondary btn-sm dle-cancel">Cancel</button>' +
         '<button type="button" class="btn btn-primary btn-sm dle-save">Save</button>' +
         '</div>'
@@ -311,6 +1009,7 @@ var DashticzLayoutEditor = (function () {
     if (item.wrapper.parentNode) {
       item.wrapper.parentNode.removeChild(item.wrapper);
     }
+    if (gridMode) _refreshGridOverlaps();
 
     var remaining = _orderedItems().length;
     $toolbar
@@ -323,18 +1022,25 @@ var DashticzLayoutEditor = (function () {
   }
 
   function _startDrag(event, item, captureElement) {
+    var itemRect = item.wrapper.getBoundingClientRect();
     pointerState = {
       mode: 'drag',
       pointerId: event.originalEvent.pointerId,
       item: item,
       startX: event.originalEvent.clientX,
       startY: event.originalEvent.clientY,
+      offsetX: event.originalEvent.clientX - itemRect.left,
+      offsetY: event.originalEvent.clientY - itemRect.top,
       moved: false,
       captureElement: captureElement,
     };
 
     if (captureElement.setPointerCapture) {
-      captureElement.setPointerCapture(pointerState.pointerId);
+      try {
+        captureElement.setPointerCapture(pointerState.pointerId);
+      } catch (error) {
+        // Pointer capture is optional; document-level handlers remain active.
+      }
     }
 
     item.visibleBlocks.forEach(function (block) {
@@ -357,11 +1063,16 @@ var DashticzLayoutEditor = (function () {
       startY: event.originalEvent.clientY,
       startWidth: item.width,
       startHeight: item.height !== null ? item.height : rect.height,
+      startGrid: gridMode ? $.extend({}, item.grid) : null,
       captureElement: captureElement,
     };
 
     if (captureElement.setPointerCapture) {
-      captureElement.setPointerCapture(pointerState.pointerId);
+      try {
+        captureElement.setPointerCapture(pointerState.pointerId);
+      } catch (error) {
+        // Pointer capture is optional; document-level handlers remain active.
+      }
     }
   }
 
@@ -376,8 +1087,15 @@ var DashticzLayoutEditor = (function () {
     event.preventDefault();
     var clientX = event.originalEvent.clientX;
     var clientY = event.originalEvent.clientY;
+    lastPointerPosition = { x: clientX, y: clientY };
+    if (gridMode) _updateEdgeScroll(clientY);
 
     if (pointerState.mode === 'resize') {
+      if (gridMode) {
+        _resizeGridItem(pointerState.item, clientX, clientY);
+        _updateSizeLabel(pointerState.item);
+        return;
+      }
       var unitWidth = Math.max(1, $canvas.innerWidth() / 12);
       var deltaWidth = Math.round((clientX - pointerState.startX) / unitWidth);
       var width = Math.max(
@@ -405,7 +1123,11 @@ var DashticzLayoutEditor = (function () {
     }
 
     pointerState.moved = true;
-    _moveDraggedItem(pointerState.item, clientX, clientY);
+    if (gridMode) {
+      _moveGridItem(pointerState.item, clientX, clientY);
+    } else {
+      _moveDraggedItem(pointerState.item, clientX, clientY);
+    }
   }
 
   function _pointerEnd(event) {
@@ -473,8 +1195,165 @@ var DashticzLayoutEditor = (function () {
     }
   }
 
+  function _gridMetrics() {
+    var rect = $canvas[0].getBoundingClientRect();
+    var columns = Math.max(1, parseInt(gridConfig.gridColumns, 10) || 24);
+    var gap = Math.max(0, parseFloat(gridConfig.gap) || 0);
+    var cellWidth = Math.max(
+      1,
+      (rect.width - gap * (columns - 1)) / columns
+    );
+    var rowHeight = Math.max(1, parseFloat(gridConfig.rowHeight) || 20);
+    return {
+      rect: rect,
+      columns: columns,
+      columnStride: cellWidth + gap,
+      rowStride: rowHeight + gap,
+    };
+  }
+
+  function _moveGridItem(item, clientX, clientY) {
+    var metrics = _gridMetrics();
+    var x =
+      Math.round(
+        (clientX - metrics.rect.left - pointerState.offsetX) /
+          metrics.columnStride
+      ) + 1;
+    var y =
+      Math.round(
+        (clientY - metrics.rect.top - pointerState.offsetY) /
+          metrics.rowStride
+      ) + 1;
+    x = Math.max(1, Math.min(metrics.columns - item.grid.w + 1, x));
+    y = Math.max(1, y);
+    _ensureGridCanvasRows(y + item.grid.h + 8);
+    _applyGridPosition(item, {
+      x: x,
+      y: y,
+      w: item.grid.w,
+      h: item.grid.h,
+    });
+    _updateSizeLabel(item);
+  }
+
+  function _resizeGridItem(item, clientX, clientY) {
+    var metrics = _gridMetrics();
+    var start = pointerState.startGrid;
+    var x = Math.min(
+      start.x,
+      Math.max(1, metrics.columns - MIN_GRID_WIDTH + 1)
+    );
+    var width =
+      start.w +
+      Math.round((clientX - pointerState.startX) / metrics.columnStride);
+    var height =
+      start.h +
+      Math.round((clientY - pointerState.startY) / metrics.rowStride);
+    // Grid blocks must remain large enough to expose their editor controls.
+    width = Math.max(
+      MIN_GRID_WIDTH,
+      Math.min(metrics.columns - x + 1, width)
+    );
+    height = Math.max(MIN_GRID_HEIGHT, Math.min(1000, height));
+    _ensureGridCanvasRows(start.y + height + 8);
+    _applyGridPosition(item, {
+      x: x,
+      y: start.y,
+      w: width,
+      h: height,
+    });
+  }
+
+  function _applyGridPosition(item, position) {
+    item.grid = position;
+    item.width = position.w;
+    DashticzGridLayout.applyGridPosition(item.wrapper, position);
+    _refreshGridOverlaps();
+  }
+
+  function _refreshGridOverlaps() {
+    items.forEach(function (item) {
+      item.wrapper.classList.remove('dt-grid-overlap');
+    });
+    var activeItems = _orderedItems();
+    for (var i = 0; i < activeItems.length; i++) {
+      for (var j = i + 1; j < activeItems.length; j++) {
+        if (_gridPositionsOverlap(activeItems[i].grid, activeItems[j].grid)) {
+          activeItems[i].wrapper.classList.add('dt-grid-overlap');
+          activeItems[j].wrapper.classList.add('dt-grid-overlap');
+        }
+      }
+    }
+  }
+
+  function _gridPositionsOverlap(left, right) {
+    return (
+      left.x < right.x + right.w &&
+      left.x + left.w > right.x &&
+      left.y < right.y + right.h &&
+      left.y + left.h > right.y
+    );
+  }
+
+  function _updateEdgeScroll(clientY) {
+    var threshold = 70;
+    if (clientY < threshold) {
+      edgeScrollDirection = -1;
+    } else if (clientY > window.innerHeight - threshold) {
+      edgeScrollDirection = 1;
+    } else {
+      edgeScrollDirection = 0;
+    }
+    if (edgeScrollDirection && edgeScrollFrame === null) {
+      edgeScrollFrame = requestAnimationFrame(_edgeScrollTick);
+    }
+  }
+
+  function _edgeScrollTick() {
+    edgeScrollFrame = null;
+    if (
+      !gridMode ||
+      !pointerState ||
+      !edgeScrollDirection ||
+      !$editingScreen ||
+      !$editingScreen.length
+    ) {
+      return;
+    }
+
+    var element = $editingScreen[0];
+    var previous = element.scrollTop;
+    element.scrollTop += edgeScrollDirection * 18;
+    if (element.scrollTop !== previous && lastPointerPosition) {
+      if (pointerState.mode === 'resize') {
+        _resizeGridItem(
+          pointerState.item,
+          lastPointerPosition.x,
+          lastPointerPosition.y
+        );
+      } else {
+        _moveGridItem(
+          pointerState.item,
+          lastPointerPosition.x,
+          lastPointerPosition.y
+        );
+      }
+      edgeScrollFrame = requestAnimationFrame(_edgeScrollTick);
+    }
+  }
+
+  function _stopEdgeScroll() {
+    edgeScrollDirection = 0;
+    lastPointerPosition = null;
+    if (edgeScrollFrame !== null) {
+      cancelAnimationFrame(edgeScrollFrame);
+      edgeScrollFrame = null;
+    }
+  }
+
   function _finishPointerAction() {
     if (!pointerState) return;
+    _stopEdgeScroll();
     if (
       pointerState.captureElement &&
       pointerState.captureElement.releasePointerCapture
@@ -531,6 +1410,24 @@ var DashticzLayoutEditor = (function () {
   }
 
   function _updateSizeLabel(item) {
+    if (gridMode) {
+      item.visibleBlocks.forEach(function (block) {
+        $(block)
+          .children('.dle-overlay')
+          .find('.dle-size-label')
+          .text(
+            'x' +
+              item.grid.x +
+              ' y' +
+              item.grid.y +
+              ' · ' +
+              item.grid.w +
+              '×' +
+              item.grid.h
+          );
+      });
+      return;
+    }
     var measuredHeight = Math.round(
       item.visibleBlocks[0].getBoundingClientRect().height
     );
@@ -563,7 +1460,15 @@ var DashticzLayoutEditor = (function () {
       });
   }
 
+  function _activeScreenNumber() {
+    return _activeScreenPayload();
+  }
+
   function _save() {
+    if (gridMode) {
+      _saveGrid();
+      return;
+    }
     var $save = $toolbar.find('.dle-save').prop('disabled', true);
     $toolbar.find('.dle-cancel').prop('disabled', true);
     $toolbar.find('.dle-toolbar-help').text('Saving layout…');
@@ -573,20 +1478,7 @@ var DashticzLayoutEditor = (function () {
     var widgets = [];
     ordered.forEach(function (item) {
       if (item.kind === 'widget') {
-        var widgetEntry = {
-          id: item.widgetId,
-          width: item.width,
-        };
-        if (item.height !== null) widgetEntry.height = item.height;
-        if (item.widgetId === 'weather') {
-          widgetEntry.provider =
-            item.definition.widget_provider || 'openweather';
-        } else if (item.widgetId === 'calendar') {
-          widgetEntry.icalurl = item.definition.icalurl || '';
-        } else if (item.widgetId === 'clock') {
-          widgetEntry.clockType = item.definition.type || 'basicclock';
-        }
-        widgets.push(widgetEntry);
+        widgets.push(_widgetPayload(item));
         return;
       }
 
@@ -600,17 +1492,19 @@ var DashticzLayoutEditor = (function () {
       devices.push(deviceEntry);
     });
 
+    var screenNumber = _activeScreenPayload();
+
     $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
       .then(function (data) {
         var token = data.token;
         return _postLayoutData(
           'js/saveblocks.php',
-          { devices: devices },
+          { devices: devices, screen: screenNumber },
           token
         ).then(function (deviceResult) {
           return _postLayoutData(
             'js/savewidgets.php',
-            { widgets: widgets },
+            { widgets: widgets, screen: screenNumber },
             token
           ).then(function (widgetResult) {
             var deviceIndex = 0;
@@ -620,11 +1514,13 @@ var DashticzLayoutEditor = (function () {
                 item.kind === 'widget'
                   ? widgetResult.blockKeys[widgetIndex++]
                   : deviceResult.blockKeys[deviceIndex++];
-              return { ref: ref, width: item.width };
+              var entry = { ref: ref, width: item.width };
+              if (item.height !== null) entry.height = item.height;
+              return entry;
             });
             return _postLayoutData(
               'js/savelayout.php',
-              { items: layoutItems },
+              { items: layoutItems, screen: screenNumber },
               token
             );
           });
@@ -648,9 +1544,50 @@ var DashticzLayoutEditor = (function () {
       });
   }
 
+  function _saveGrid() {
+    var $save = $toolbar.find('.dle-save').prop('disabled', true);
+    $toolbar.find('.dle-cancel').prop('disabled', true);
+    $toolbar.find('.dle-toolbar-help').text('Saving grid layout…');
+
+    var payload = {
+      screen: editingScreen,
+      gridColumns: gridConfig.gridColumns,
+      rowHeight: gridConfig.rowHeight,
+      gap: gridConfig.gap,
+      mobileLayout: gridConfig.mobileLayout,
+      items: _orderedItems().map(function (item) {
+        return {
+          ref: item.reference,
+          grid: $.extend({}, item.grid),
+        };
+      }),
+    };
+
+    $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
+      .then(function (data) {
+        return _postLayoutData('js/savegridlayout.php', payload, data.token);
+      })
+      .done(function () {
+        $toolbar.find('.dle-toolbar-help').text('Saved. Reloading dashboard…');
+        $save.removeClass('btn-primary').addClass('btn-success').text('Saved');
+        setTimeout(function () {
+          window.location.reload();
+        }, 700);
+      })
+      .fail(function (xhr) {
+        var message =
+          xhr.responseJSON && xhr.responseJSON.error
+            ? xhr.responseJSON.error
+            : 'The grid layout could not be saved.';
+        $toolbar.find('.dle-toolbar-help').text(message);
+        $save.prop('disabled', false);
+        $toolbar.find('.dle-cancel').prop('disabled', false);
+      });
+  }
+
   function _postLayoutData(url, payload, token) {
     return $.ajax({
-      url: url,
+      url: configEditorUrl(url),
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(payload),
@@ -664,6 +1601,11 @@ var DashticzLayoutEditor = (function () {
     _finishPointerAction();
 
     $(document).off('.layouteditor');
+    if (gridMode && $canvas) {
+      originalGridWrappers.forEach(function (wrapper) {
+        $canvas[0].appendChild(wrapper);
+      });
+    }
 
     items.forEach(function (item) {
       $(item.visibleBlocks)
@@ -672,6 +1614,13 @@ var DashticzLayoutEditor = (function () {
         .remove();
       item.wrapper.classList.remove('dle-item-wrapper');
       item.wrapper.style.removeProperty('--dle-column-span');
+      if (gridMode) {
+        item.grid = $.extend({}, item.originalGrid);
+        DashticzGridLayout.applyGridPosition(
+          item.wrapper,
+          item.grid
+        );
+      }
       item.originalBlocks.forEach(function (original) {
         var block = original.block;
         block.classList.remove(
@@ -708,7 +1657,12 @@ var DashticzLayoutEditor = (function () {
       column.element.style.display = column.display;
     });
 
+    if (gridMode) _refreshGridOverlaps();
     if ($canvas) $canvas.removeClass('dle-canvas');
+    if ($canvas) $canvas.removeClass('dle-grid-canvas');
+    if ($canvas) $canvas[0].style.removeProperty('--dle-grid-column-stride');
+    if ($canvas) $canvas[0].style.removeProperty('--dle-grid-editor-min-height');
+    if ($editingScreen) $editingScreen.removeClass('dle-grid-screen-editing');
     if ($toolbar) $toolbar.remove();
     $('.dle-drag-ghost').remove();
     $('body').removeClass('dle-active');
@@ -729,6 +1683,14 @@ var DashticzLayoutEditor = (function () {
     $toolbar = null;
     pointerState = null;
     swiperTouchMove = null;
+    gridMode = false;
+    gridConfig = null;
+    originalGridWrappers = [];
+    gridCollectionError = false;
+    editingScreen = null;
+    $editingScreen = null;
+    gridEditorRows = 0;
+    _stopEdgeScroll();
   }
 
   function _escapeHtml(value) {
@@ -741,6 +1703,7 @@ var DashticzLayoutEditor = (function () {
 
   return {
     open: open,
+    convertCurrentScreenToGrid: convertCurrentScreenToGrid,
   };
 })();
 

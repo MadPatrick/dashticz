@@ -30,6 +30,75 @@
   overflow-y: auto;
 }
 
+/* Optional screen-level grid. Legacy column screens never receive these classes. */
+.dt-grid-screen > .dt-grid-layout {
+  display: grid;
+  grid-template-columns: repeat(var(--dt-grid-columns, 24), minmax(0, 1fr));
+  grid-auto-rows: var(--dt-grid-row-height, 20px);
+  gap: var(--dt-grid-gap, 0);
+  align-items: stretch;
+  width: 100%;
+}
+
+.dt-grid-screen > .dt-grid-topbar:empty {
+  display: none;
+}
+
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item {
+  grid-column-start: var(--dt-grid-x);
+  grid-column-end: span var(--dt-grid-w);
+  grid-row-start: var(--dt-grid-y);
+  grid-row-end: span var(--dt-grid-h);
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* A grid item owns the width; Bootstrap block widths remain local to columns. */
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > [class*='col-'] {
+  float: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .dt_block,
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .mh {
+  box-sizing: border-box;
+  min-height: 100%;
+}
+
+.dt-grid-screen > .dt-grid-layout > .dt-grid-overlap {
+  outline: 1px dashed rgba(255, 165, 0, 0.8);
+  outline-offset: -1px;
+}
+
+@media (max-width: 767.98px) {
+  .dt-grid-screen > .dt-grid-layout.dt-grid-mobile-stack {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .dt-grid-screen > .dt-grid-layout.dt-grid-mobile-stack > .dt-grid-item {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .dt-grid-screen
+    > .dt-grid-layout.dt-grid-mobile-stack
+    > .dt-grid-item
+    > .dt_block,
+  .dt-grid-screen > .dt-grid-layout.dt-grid-mobile-stack > .dt-grid-item > .mh {
+    min-height: 0;
+  }
+
+  .dt-grid-screen.swiper-slide {
+    overflow-y: auto;
+  }
+}
+
 #loadingMessage {
   width: 100%;
   height: 100%;
@@ -54,6 +123,7 @@
 
 .dt_block {
   display: flex;
+  align-items: flex-start;
   background: rgba(0, 0, 0, 0.2);
   background-clip: padding-box;
   border: 7px solid rgba(255, 255, 255, 0);
@@ -343,40 +413,6 @@ next css sets the default height of the frame popup
   background: #eef1f4;
 }
 
-.settings-tabs {
-  display: flex;
-  flex: 1 1 auto;
-  flex-wrap: nowrap;
-  gap: 3px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.settings-tabs .nav-link {
-  padding: 7px;
-  border: 0;
-  border-radius: 6px;
-  color: #343a40;
-  background: rgba(255, 255, 255, .7);
-  font-size: 15px;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.settings-tabs .nav-link:hover,
-.settings-tabs .nav-link:focus-visible {
-  color: #000;
-  background: #e2e6ea;
-}
-
-.settings-tabs .nav-link.active {
-  color: #fff;
-  background: #495057;
-}
-
 .settings-brand {
   display: flex;
   flex: 0 0 auto;
@@ -396,6 +432,201 @@ next css sets the default height of the frame popup
 
 .settings-tab-content {
   padding-top: 14px;
+}
+
+.settings-tiles,
+.settings-widget-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.settings-tile,
+.settings-widget-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 110px;
+  padding: 16px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 10px;
+  background: #f8f9fa;
+  color: #212529;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+
+.settings-tile:hover,
+.settings-tile:focus-visible,
+.settings-widget-tile:hover,
+.settings-widget-tile:focus-visible {
+  background: #fff;
+  border-color: #495057;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.settings-tile i,
+.settings-widget-tile i {
+  font-size: 28px;
+  color: #495057;
+}
+
+.settings-tile span,
+.settings-widget-tile span {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.settings-panel-title,
+.settings-widget-panel-title {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+
+.settings-intro,
+.settings-widgets-intro {
+  margin: 0 0 14px;
+  color: #495057;
+  font-size: 14px;
+}
+
+.config-mode-switch {
+  display: inline-flex;
+  align-items: stretch;
+  margin-right: 8px;
+  vertical-align: middle;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.config-mode-btn {
+  border: 0;
+  margin: 0;
+  padding: 4px 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.config-mode-btn.active {
+  background: rgba(255, 255, 255, 0.92);
+  color: #212529;
+}
+
+.config-mode-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+.settings-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.settings-update {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+}
+
+.settings-update-btn {
+  padding: 0.7rem 1.4rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  min-height: 2.75rem;
+}
+
+.settings-update-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-update-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-update-panel .form-select {
+  width: auto;
+  min-width: 8rem;
+}
+
+.settings-update-run {
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+}
+
+.settings-update-log {
+  flex: 1 0 100%;
+  width: 100%;
+  max-height: 160px;
+  margin: 4px 0 0;
+  padding: 8px;
+  overflow: auto;
+  border-radius: 6px;
+  background: #212529;
+  color: #f8f9fa;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.settings-standby-bg-preview {
+  display: none;
+  width: 100%;
+  max-width: 40ch;
+  height: 72px;
+  margin-top: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.settings-standby-bg-preview.is-visible,
+.settings-bg-preview.is-visible {
+  display: block;
+}
+
+.settings-bg-path-row.is-custom .settings-bg-path {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
+}
+
+.settings-weather-heading {
+  margin: 16px 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #495057;
+}
+
+.topbar-settings-wrap .settings {
+  vertical-align: middle;
 }
 
 .settings-row {
@@ -691,14 +922,68 @@ next css sets the default height of the frame popup
   white-space: normal;
 }
 
-/* Keep the settings/fullscreen icons pinned to the right edge,
-   independent of the (now absolutely positioned) miniclock block.
-   The margin-left:auto must sit on the actual flex item (the wrapper
-   div Dashticz mounts each block in), not on the nested .text-right
-   element itself, or it has no effect on the flex layout. */
-.colbar > div:has(.text-right) {
+/* Keep every topbar block on one row.
+   IMPORTANT: Dashticz mounts each block in a wrapper div (#block_0, #block_1,
+   ...) that has `display: contents` (confirmed via devtools). An element
+   with display:contents generates no box of its own, so ANY box-level CSS
+   put on ".colbar > div" (margin, flex-shrink, order, width, ...) is silently
+   ignored - the browser only lays out the wrapper's *children* as the real
+   flex items of .colbar. Every rule below therefore targets those inner
+   elements (.logo, .miniclock, .dt-screen-switcher-host,
+   .topbar-settings-wrap) directly instead of their wrapper. */
+.colbar {
+  /* Do not use !important here: topbar auto-hide needs inline display:none. */
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: 100%;
+}
+
+/* Match the compact Modern Dark dimensions without resizing other blocks. */
+.colbar.transbg {
+  padding-top: 8px;
+  padding-bottom: 6px;
+  border: 3px solid transparent;
+}
+
+.colbar .logo {
+  order: 1;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The date/clock may shrink (and ellipsis) before anything else - this
+   guarantees the screen-switcher and settings icons never get pushed off
+   the right edge of the bar when space is tight. */
+.colbar .miniclock {
+  order: 2;
+  flex: 1 1 auto;
+  box-sizing: border-box;
+  height: 40px !important;
+  margin: 0;
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+  border: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Screen selection and configuration controls form one right-aligned
+   cluster: margin-left:auto on the first of the two pushes both all the
+   way to the right edge, and neither is allowed to shrink or wrap. */
+.colbar .dt-screen-switcher-host {
+  order: 3;
+  flex: 0 0 auto;
   margin-left: auto;
-  margin-right: -5px;
+  margin-right: 12px;
+}
+
+.colbar .topbar-settings-wrap {
+  order: 4;
+  flex: 0 0 auto;
+  margin-left: 0;
 }
 
 .colbar .text-right {
@@ -708,20 +993,28 @@ next css sets the default height of the frame popup
 }
 
 .colbar.transbg .logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 20px;
   font-weight: bold;
   margin-top: -4px;
   margin-bottom: -4px;
-  display: flex;
-  align-items: center;
+  min-height: 28px;
 }
 
-.logo-icon {
+.colbar.transbg .logo .logo-image {
+  display: block;
   height: 28px;
-  width: 28px;
-  object-fit: contain;
-  vertical-align: middle;
-  margin-right: 8px;
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.colbar.transbg .logo .logo-title {
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .colbar.transbg .fab,
@@ -749,6 +1042,136 @@ next css sets the default height of the frame popup
   margin-right: 4px;
 }
 
+.dt-screen-switcher-host {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 28px;
+}
+
+.dt-screen-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.dt-screen-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dt-screen-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dt-screen-btn.active {
+  background: rgba(255, 255, 255, 0.92);
+  color: #212529;
+  border-color: #fff;
+}
+
+.dt-screen-btn.dt-screen-add {
+  font-size: 16px;
+  font-weight: 700;
+  border-style: dashed;
+  opacity: 0.9;
+}
+
+.dt-screen-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Custom icon image inside a screen-switcher button (e.g. from img/icons/) */
+.dt-screen-btn .dt-screen-icon-img {
+  display: block;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.dt-screen-btn .dt-screen-main-icon-img {
+  width: 30px;
+  height: 30px;
+}
+
+/* PNG icon images used in topbar action buttons (settings, editor, fullscreen) */
+.dt-topbar-icon-img {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  pointer-events: none;
+  vertical-align: middle;
+}
+
+/* Font Awesome icons inside screen-switcher buttons */
+.dt-screen-btn i[aria-hidden] {
+  pointer-events: none;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Standby chrome: S/1/2/+ next to editor icons; auto-hide unless hovered */
+.dt-screen-switcher-bar {
+  position: relative;
+  z-index: 20;
+  display: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 8px 12px 0;
+  pointer-events: auto;
+}
+
+body.standby-edit .dt-screen-switcher-bar.is-visible {
+  display: flex;
+}
+
+.dt-standby-editor-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dt-standby-editor-icons .settings {
+  cursor: pointer;
+  color: #fff;
+  font-size: 18px;
+}
+
+.screenstandby .dt-screen-switcher-bar .dt-screen-btn {
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+body.standby-edit {
+  cursor: default;
+}
+
+body.standby {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 /* Visual Layout Editor */
 body.dle-active {
   user-select: none;
@@ -772,6 +1195,36 @@ body.dle-active {
   float: none !important;
   min-width: 0;
   width: 100% !important;
+}
+
+.dt-grid-layout.dle-grid-canvas {
+  position: relative;
+  min-height: var(--dle-grid-editor-min-height, 100vh);
+  background-color: rgba(13, 110, 253, 0.04);
+  background-image:
+    linear-gradient(rgba(90, 162, 255, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90, 162, 255, 0.2) 1px, transparent 1px);
+  background-size:
+    var(--dle-grid-column-stride, 40px)
+      calc(var(--dt-grid-row-height, 20px) + var(--dt-grid-gap, 0px));
+}
+
+.dt-grid-screen.dle-grid-screen-editing {
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+.dt-grid-layout.dle-grid-canvas > .dt-grid-item {
+  /* Allow overflow so the delete and resize editor controls remain visible
+     even when a grid item is resized very small or its content overflows. */
+  overflow: visible;
+}
+
+@media (max-width: 767.98px) {
+  .dt-grid-screen
+    > .dt-grid-layout.dt-grid-mobile-stack.dle-grid-canvas {
+    display: grid;
+  }
 }
 
 .dle-block {
@@ -1154,6 +1607,49 @@ body.dle-active {
 
 .we-widget-card.we-selected .we-widget-status {
   color: #146c43;
+}
+
+.we-config-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #6c757d;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  z-index: 3;
+}
+
+.we-config-btn:hover,
+.we-config-btn:focus {
+  color: #0d6efd;
+  background: rgba(13, 110, 253, 0.08);
+  border-color: rgba(13, 110, 253, 0.25);
+  outline: none;
+}
+
+.we-widget-card.we-selected .we-config-btn {
+  color: #198754;
+}
+
+.we-widget-card.we-selected .we-config-btn:hover,
+.we-widget-card.we-selected .we-config-btn:focus {
+  color: #146c43;
+  background: rgba(25, 135, 84, 0.1);
+  border-color: rgba(25, 135, 84, 0.3);
 }
 
 .we-field-label {
@@ -1596,17 +2092,40 @@ hr {
   margin-bottom: 20px;
 }
 
-.standby .swiper-slide {
+.standby .swiper-slide:not(.screenstandby) {
   background-image: none !important;
   background-color: #313131;
 }
 
-.standby .far,
-.standby .far.fa-small,
-.standby .fas,
-.standby .fas.fa-small,
-.standby .fab,
-.standby .fab.fa-small {
+.standby .screenstandby {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 0;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background-color: #313131;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+body.standby-edit .screenstandby.dle-grid-screen-editing {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.standby .screenstandby .far,
+.standby .screenstandby .far.fa-small,
+.standby .screenstandby .fas,
+.standby .screenstandby .fas.fa-small,
+.standby .screenstandby .fab,
+.standby .screenstandby .fab.fa-small {
   color: #fff !important;
 }
 
@@ -1825,6 +2344,27 @@ p {
 .row>div {
   padding-right: 0px !important;
   padding-left: 0px !important;
+}
+
+/*
+ * Block mount wrappers (#block_N) are only organizational for Dashticz's
+ * mount/unsubscribe bookkeeping. As normal block boxes they each span the
+ * full column width, so a tall floated tile (e.g. APC UPS) pushes the next
+ * wrapper down and leaves a gap under the shorter neighbour (e.g. Afval → BMW).
+ *
+ * display: contents makes the floated .mh.col-xs-* tiles participate in the
+ * column's own float context, so the next short tile can rise beside the tall
+ * one. The layout editor overrides this while .dle-item-wrapper is active.
+ */
+.screen .row > [data-colindex] > [id^="block_"]:not(.dle-item-wrapper) {
+  display: contents;
+}
+
+/* Ensure the column grows to enclose its floated tiles. */
+.screen .row > [data-colindex]::after {
+  content: '';
+  display: table;
+  clear: both;
 }
 
 .clear {
@@ -5007,6 +5547,40 @@ canvas {
 }
 
 /*end tvguide*/
+
+/*xmltvguide*/
+
+.xmltvguide tr {
+  vertical-align: top
+}
+.xmltv-time {
+  white-space: nowrap
+}
+.xmltv-channel {
+  font-style: italic;
+  white-space: nowrap
+}
+.xmltv-title {
+  font-weight: bold;
+}
+.xmltv-subtitle {
+  font-weight: normal;
+  font-style: italic;
+}
+.xmltv-sep {
+  width: 1em;
+  text-align: center;
+}
+.xmltv-loading,
+.xmltv-error {
+  display: block;
+  padding: 4px 8px;
+}
+.xmltv-error {
+  color: #e74c3c;
+}
+
+/*end xmltvguide*/
 
 /*debug*/
 .debug ::selection {

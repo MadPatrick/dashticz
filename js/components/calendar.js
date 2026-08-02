@@ -12,10 +12,15 @@ var DT_calendar = {
     containerExtra: function (block) {
       if (block && block.layout === 2) block.icon = '';
     },
-    emptytext: 'Geen afspraken.',
+    emptytext: language.misc.no_appointments || 'No appointments.',
     method: 1,
     eventClasses: {},
-    refresh:600
+    refresh:600,
+    width: 4,
+    // No default fixed height for agenda layouts (layout 0/1) — the block
+    // auto-expands to show all items.  Users who need a fixed height can set
+    // it explicitly in their block config.  Layout 2 (monthly view) always
+    // calculates its own height in generateCalendar() via setHeight().
   },
   run: function (me) {
     if (me.block.type === 'calendar') {
@@ -33,7 +38,7 @@ var DT_calendar = {
       } else {
         infoMessage(
           '<font color="red">Domoticz error!',
-          'Calendar "icalurl" missing on the calendar block.</font>',
+          (language.misc.calendar_missing || 'Calendar URL is missing.') + '</font>',
           0
         );
       }

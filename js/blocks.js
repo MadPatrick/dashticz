@@ -39,23 +39,20 @@ function getBlock(cols, c, screendiv, standby) {
     var colclass = '';
     if (c === 'bar') colclass = 'transbg dark';
     var colwidth = 'col-sm-' + (cols.width ? cols.width + ' ' : '12 ');
-    if (standby) {
-      $(screendiv + ' .row').append(
-        '<div class="' + colwidth + ' col-xs-12 col' + c + '"></div>'
-      );
-    } else {
-      $(screendiv + ' .row').append(
-        '<div data-colindex="' +
+    // data-colindex is required for layout/device/widget editors (incl. standby).
+    $(screendiv + ' .row').append(
+      '<div data-colindex="' +
         c +
         '" class="' +
         colwidth +
-        ' col-xs-12 sortable col' +
+        ' col-xs-12 ' +
+        (standby ? '' : 'sortable ') +
+        'col' +
         c +
         ' ' +
         colclass +
         '"></div>'
-      );
-    }
+    );
     cols.blocks && cols['blocks'].forEach(function (b, i) {
       if (b)
         addBlock2Column(columndiv, c, b);
@@ -69,34 +66,48 @@ function getBlock(cols, c, screendiv, standby) {
  * @param {string} columndiv - div to add block to
  * @param {string} c - Column id
  * @param {object | string | number} b - string, as key for block object, object or number
+ * @param {function} prepareContainer - optional hook before the component mounts
  *
  * If b is a number then it represents a device id.
  */
 var previousblock = 0;
 
-function addBlock2Column(columndiv, c, b) {
+function addBlock2Column(columndiv, c, b, prepareContainer) {
   if (typeof b === 'undefined') {
     console.log('Block undefined after block ', previousblock);
-    return;
+    return null;
   }
   previousblock = b;
   var myblockselector = Dashticz.mountNewContainer(columndiv);
+  if (prepareContainer) prepareContainer(myblockselector);
   var newBlock = b;
   try {
     if (typeof b !== 'object') newBlock = convertBlock(b, c);
     if (c === 'popup') newBlock.isPopup = true;
+    if (
+      c === 'bar' &&
+      newBlock &&
+      typeof newBlock.type === 'string' &&
+      /^[a-z0-9_-]+$/i.test(newBlock.type)
+    ) {
+      // Stable wrapper classes keep topbar layout independent of :has()
+      // support and nested Bootstrap percentage widths.
+      $(myblockselector).addClass(
+        'dt-topbar-item dt-topbar-' + newBlock.type.toLowerCase()
+      );
+    }
     if (newBlock.blocks) {
       newBlock.blocks.forEach(function (aBlock) {
         addBlock2Column(myblockselector, '', aBlock);
       });
       $(myblockselector).attr('data-id', newBlock.key);
-      return;
+      return myblockselector;
     }
     if (Array.isArray(newBlock)) {
       newBlock.forEach(function (aBlock) {
         addBlock2Column(myblockselector, '', aBlock);
       });
-      return;
+      return myblockselector;
     }
 
     if (!Dashticz.mount(myblockselector, newBlock))
@@ -104,6 +115,7 @@ function addBlock2Column(columndiv, c, b) {
   } catch (error) {
     renderUnavailableBlock(myblockselector, newBlock, b, error);
   }
+  return myblockselector;
 }
 
 function renderUnavailableBlock(mountPoint, block, key, error) {

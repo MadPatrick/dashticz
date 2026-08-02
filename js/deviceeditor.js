@@ -1,4 +1,4 @@
-/* global Domoticz settings columns blocks blocktypes screens */
+/* global Domoticz settings columns columns_standby blocks blocktypes screens standby_screen DashticzScreenSwitcher standbyActive */
 // eslint-disable-next-line no-unused-vars
 var DashticzDeviceEditor = (function () {
   'use strict';
@@ -13,9 +13,15 @@ var DashticzDeviceEditor = (function () {
   var deviceHeights  = {};   // composite key -> optional block height
   var widgetWidths   = {};   // widget order key -> block width (1..12)
   var widgetHeights  = {};   // widget order key -> optional block height
+  var gridMode       = false;
+  var gridConfig     = null;
+  var gridPositions  = {};   // order key -> {x,y,w,h}
+  var gridRefs       = {};   // order key -> block reference
+  var gridExtras     = [];   // non-device/widget blocks
 
   /* ── public API ─────────────────────────────────────────────── */
   function open() {
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
     _init();
     _buildAndShowModal();
   }
@@ -30,9 +36,17 @@ var DashticzDeviceEditor = (function () {
     deviceHeights  = {};
     widgetWidths   = {};
     widgetHeights  = {};
+    gridPositions  = {};
+    gridRefs       = {};
+    gridExtras     = [];
+    gridConfig     = gridMode ? _readGridConfig() : null;
 
-    _getAllManagedItems().forEach(function (item) {
+    (gridMode ? _getAllManagedGridItems() : _getAllManagedItems()).forEach(function (item) {
       managedOrder.push(item.orderKey);
+      if (gridMode) {
+        gridPositions[item.orderKey] = item.grid;
+        gridRefs[item.orderKey] = item.reference;
+      }
       if (item.kind === 'widget') {
         managedWidgets[item.orderKey] = item;
         widgetWidths[item.orderKey] = _parseWidth(item.definition.width);
@@ -51,11 +65,36 @@ var DashticzDeviceEditor = (function () {
 
   /* Parse a composite key back into {idx, subidx} */
   function _parseCk(ck) {
+    /* group/scene key e.g. 's1' */
+    if (/^s\d+$/.test(String(ck))) {
+      return { idx: String(ck), subidx: 0 };
+    }
     var parts = String(ck).split('_');
     return {
       idx:    parseInt(parts[0], 10),
       subidx: parts.length === 2 ? parseInt(parts[1], 10) : 0,
     };
+  }
+
+  /* Return true when ck is a group/scene composite key (e.g. 's1') */
+  function _isGroupCk(ck) {
+    return /^s\d+$/.test(String(ck));
+  }
+
+  /* Sort rank for available-device list: Groups first, Scenes second, Devices last */
+  function _typeOrder(type) {
+    if (type === 'Group') return 0;
+    if (type === 'Scene') return 1;
+    return 2;
+  }
+
+  /* Sort available[] by category (Group < Scene < Device) then alphabetically */
+  function _sortAvailable(list) {
+    list.sort(function (a, b) {
+      var diff = _typeOrder(a.type) - _typeOrder(b.type);
+      if (diff !== 0) return diff;
+      return a.name.localeCompare(b.name);
+    });
   }
 
   /* Convert a block reference (number / string / object) to a composite key */
@@ -65,6 +104,8 @@ var DashticzDeviceEditor = (function () {
       var n = parseInt(b, 10);
       /* pure numeric string e.g. '493' */
       if (n > 0 && String(n) === b) return b;
+      /* group/scene key e.g. 's1' */
+      if (/^s\d+$/.test(b)) return b;
       /* compound string e.g. '1298_1' */
       var parts = b.split('_');
       if (parts.length === 2) {
@@ -99,95 +140,371 @@ var DashticzDeviceEditor = (function () {
   }
 
   function _widgetFromReference(reference) {
-    var catalog = {
-      widget_weather: { id: 'weather', title: 'Weer' },
-      widget_garbage: { id: 'garbage', title: 'Afval' },
-      widget_spotify: { id: 'spotify', title: 'Spotify' },
-      widget_sonarr: { id: 'sonarr', title: 'Sonarr' },
-      widget_clock: { id: 'clock', title: 'Klok' },
-      widget_calendar: { id: 'calendar', title: 'Kalender' },
+    // Use translations from the active language file (widgetEditorTranslations is defined
+    // in settings.js and populated from /lang/<locale>.json settings.widgeteditor section).
+    // Fall back to English when the key is missing or the variable is not yet available.
+    var t =
+      typeof widgetEditorTranslations !== 'undefined' ? widgetEditorTranslations : {};
+
+    // Translated display titles keyed by widget type id.
+    // This map is used both for named catalog entries (widget_xxx) and for
+    // type-mapped blocks so that language changes always take effect immediately,
+    // regardless of any hardcoded title stored in CONFIG.js.
+    var translatedTitles = {
+      weather:        t.weather_title        || 'Weather',
+      garbage:        t.garbage_title        || 'Garbage',
+      spotify:        t.spotify_title        || 'Spotify',
+      sonarr:         t.sonarr_title         || 'Sonarr',
+      clock:          t.clock_title          || 'Clock',
+      calendar:       t.calendar_title       || 'Calendar (ICS)',
+      secpanel:       t.secpanel_title       || 'Security panel',
+      publictransport: t.publictransport_title || 'Public transport',
+      trafficinfo:    t.trafficinfo_title    || 'Traffic information',
+      alarmmeldingen: t.alarmmeldingen_title || '112',
+      camera:         t.camera_title         || 'Cameras',
+      map:            t.map_title            || 'Google Maps',
+      longfonds:      t.longfonds_title      || 'Air quality',
+      moon:           t.moon_title           || 'Moon',
+      news:           t.news_title           || 'News',
     };
-    var catalogItem = catalog[String(reference)];
-    if (
-      !catalogItem ||
-      typeof blocks === 'undefined' ||
-      !blocks[reference]
-    ) {
+
+    var catalog = {
+      widget_weather:         { id: 'weather',         title: translatedTitles.weather },
+      widget_garbage:         { id: 'garbage',         title: translatedTitles.garbage },
+      widget_spotify:         { id: 'spotify',         title: translatedTitles.spotify },
+      widget_sonarr:          { id: 'sonarr',          title: translatedTitles.sonarr },
+      widget_clock:           { id: 'clock',           title: translatedTitles.clock },
+      widget_calendar:        { id: 'calendar',        title: translatedTitles.calendar },
+      widget_secpanel:        { id: 'secpanel',        title: translatedTitles.secpanel },
+      widget_publictransport: { id: 'publictransport', title: translatedTitles.publictransport },
+      widget_trafficinfo:     { id: 'trafficinfo',     title: translatedTitles.trafficinfo },
+      widget_alarmmeldingen:  { id: 'alarmmeldingen',  title: translatedTitles.alarmmeldingen },
+      widget_cameras:         { id: 'camera',          title: translatedTitles.camera },
+      widget_map:             { id: 'map',             title: translatedTitles.map },
+      widget_longfonds:       { id: 'longfonds',       title: translatedTitles.longfonds },
+      widget_moon:            { id: 'moon',            title: translatedTitles.moon },
+      widget_news:            { id: 'news',            title: translatedTitles.news },
+    };
+    if (typeof blocks === 'undefined' || !blocks[reference]) {
       return null;
     }
     var definition = blocks[reference];
+    var catalogItem = catalog[String(reference)];
+    if (!catalogItem) {
+      var type = String(definition.type || '').toLowerCase();
+      var typeMap = {
+        weather: 'weather',
+        wunderground: 'weather',
+        garbage: 'garbage',
+        spotify: 'spotify',
+        sonarr: 'sonarr',
+        calendar: 'calendar',
+        secpanel: 'secpanel',
+        publictransport: 'publictransport',
+        trafficinfo: 'trafficinfo',
+        alarmmeldingen: 'alarmmeldingen',
+        camera: 'camera',
+        map: 'map',
+        longfonds: 'longfonds',
+        moon: 'moon',
+        news: 'news',
+        basicclock: 'clock',
+        stationclock: 'clock',
+        flipclock: 'clock',
+        haymanclock: 'clock',
+        miniclock: 'clock',
+      };
+      var id = typeMap[type];
+      if (!id) return null;
+      // Use the translated title for the widget type; fall back to the CONFIG.js
+      // title only if the type is not in the translations map.
+      catalogItem = { id: id, title: translatedTitles[id] || definition.title || id };
+    }
     return {
       kind: 'widget',
       id: catalogItem.id,
       orderKey: _widgetOrderKey(catalogItem.id),
       reference: String(reference),
-      title: definition.title || catalogItem.title,
+      // Always prefer the translated catalog title so that language changes in
+      // Settings are immediately reflected, regardless of any title hardcoded
+      // in CONFIG.js (e.g. title:'Afval' written in a previous language).
+      title: catalogItem.title,
       definition: definition,
     };
+  }
+
+  function _copyDefinedWidgetProperties(entry, definition, properties) {
+    properties.forEach(function (property) {
+      if (typeof definition[property] !== 'undefined') {
+        entry[property] = definition[property];
+      }
+    });
+  }
+
+  function _widgetPayload(orderKey) {
+    var widget = managedWidgets[orderKey];
+    var definition = widget.definition || {};
+    var entry = {
+      id: widget.id,
+      width: _parseWidth(widgetWidths[orderKey]),
+    };
+    if (widgetHeights[orderKey]) entry.height = widgetHeights[orderKey];
+    if (widget.id === 'garbage') entry.displayTitle = widget.title;
+
+    if (widget.id === 'weather') {
+      entry.provider =
+        definition.widget_provider ||
+        (definition.type === 'wunderground'
+          ? 'wunderground'
+          : 'openweather');
+      _copyDefinedWidgetProperties(entry, definition, [
+        'showRain',
+        'showDescription',
+        'showWind',
+        'showGust',
+        'icons',
+      ]);
+    } else if (widget.id === 'calendar') {
+      entry.icalurl = definition.icalurl || '';
+    } else if (widget.id === 'clock') {
+      entry.clockType = definition.type || 'basicclock';
+      _copyDefinedWidgetProperties(entry, definition, [
+        'size',
+        'scale',
+        'showSeconds',
+        'clockFace',
+        'body',
+        'dial',
+        'hourhand',
+        'minutehand',
+        'secondhand',
+        'boss',
+        'minutehandbehavior',
+        'secondhandbehavior',
+      ]);
+    } else if (widget.id === 'publictransport') {
+      entry.station = definition.station || 'UT';
+      entry.provider = definition.provider || 'treinen';
+    } else if (widget.id === 'camera') {
+      entry.imageUrl = definition.imageUrl || '';
+      if (definition.videoUrl) entry.videoUrl = definition.videoUrl;
+    } else if (widget.id === 'alarmmeldingen') {
+      entry.rss =
+        definition.rss || 'https://www.alarmeringen.nl/feeds/all.rss';
+      if (definition.filter) entry.filter = definition.filter;
+    }
+
+    return entry;
+  }
+
+  function _activeScreenTarget() {
+    if (
+      typeof DashticzScreenSwitcher !== 'undefined' &&
+      DashticzScreenSwitcher.getActiveScreenNumber
+    ) {
+      return DashticzScreenSwitcher.getActiveScreenNumber();
+    }
+    if (typeof standbyActive !== 'undefined' && standbyActive) {
+      return 'standby';
+    }
+    var $active = $('.dt-container .screen.swiper-slide-active[data-screenindex]');
+    if (!$active.length) {
+      $active = $('.dt-container .screen[data-screenindex]:visible').first();
+    }
+    if ($('.screenstandby:visible').length) return 'standby';
+    var fromDom = parseInt($active.attr('data-screenindex'), 10);
+    return fromDom > 0 ? fromDom : 1;
+  }
+
+  /** Numeric screen for PHP endpoints; standby is sent as the string "standby". */
+  function _activeScreenPayload() {
+    var target = _activeScreenTarget();
+    return target === 'standby' ? 'standby' : parseInt(target, 10) || 1;
+  }
+
+  function _activeScreenDom() {
+    if (_activeScreenTarget() === 'standby') {
+      var $standby = $('.screenstandby:visible');
+      if ($standby.length) return $standby;
+      return $('.screenstandby').first();
+    }
+    var num = _activeScreenPayload();
+    var $byIndex = $(
+      '.dt-container .screen[data-screenindex="' + num + '"]'
+    );
+    if ($byIndex.length) return $byIndex.first();
+    var $active = $('.dt-container .screen.swiper-slide-active');
+    if ($active.length) return $active;
+    return $('.dt-container .screen:visible').first();
+  }
+
+  function _readGridConfig() {
+    var $grid = _activeScreenDom().children('.dt-grid-layout').first();
+    function number(property, fallback) {
+      var value = parseFloat(
+        $grid[0] ? getComputedStyle($grid[0]).getPropertyValue(property) : ''
+      );
+      return isFinite(value) ? value : fallback;
+    }
+    return {
+      gridColumns: number('--dt-grid-columns', 24),
+      rowHeight: number('--dt-grid-row-height', 20),
+      gap: number('--dt-grid-gap', 0),
+      mobileLayout: $grid.hasClass('dt-grid-mobile-stack') ? 'stack' : 'stack',
+    };
+  }
+
+  function _getAllManagedGridItems() {
+    var ordered = [];
+    var seen = {};
+    _activeScreenDom()
+      .children('.dt-grid-layout')
+      .children('.dt-grid-item')
+      .each(function (index) {
+        var reference = String($(this).attr('data-grid-block') || '');
+        var definition =
+          typeof blocks !== 'undefined' && blocks[reference]
+            ? blocks[reference]
+            : null;
+        if (!definition) return;
+        var grid = {
+          x: _gridValue(this, '--dt-grid-x', 1),
+          y: _gridValue(this, '--dt-grid-y', index + 1),
+          w: _gridValue(this, '--dt-grid-w', 1),
+          h: _gridValue(this, '--dt-grid-h', 1),
+        };
+        var ck = _toCompositeKey(definition);
+        if (ck) {
+          var deviceKey = _deviceOrderKey(ck);
+          if (!seen[deviceKey]) {
+            seen[deviceKey] = true;
+            ordered.push({
+              kind: 'device',
+              ck: ck,
+              orderKey: deviceKey,
+              reference: reference,
+              grid: grid,
+            });
+          }
+          return;
+        }
+        var widget = _widgetFromReference(reference);
+        if (widget && !seen[widget.orderKey]) {
+          seen[widget.orderKey] = true;
+          widget.reference = reference;
+          widget.grid = grid;
+          ordered.push(widget);
+          return;
+        }
+        gridExtras.push({ ref: reference, grid: grid });
+      });
+    return ordered;
+  }
+
+  function _gridValue(element, property, fallback) {
+    var value = parseInt(element.style.getPropertyValue(property), 10);
+    return value > 0 ? value : fallback;
+  }
+
+  function _gridOverlap(left, right) {
+    return (
+      left.x < right.x + right.w &&
+      left.x + left.w > right.x &&
+      left.y < right.y + right.h &&
+      left.y + left.h > right.y
+    );
+  }
+
+  function _firstFreeGridPosition(occupied, width, height) {
+    for (var y = 1; y < 10000; y++) {
+      for (var x = 1; x <= gridConfig.gridColumns - width + 1; x++) {
+        var candidate = { x: x, y: y, w: width, h: height };
+        if (
+          !occupied.some(function (position) {
+            return _gridOverlap(candidate, position);
+          })
+        ) {
+          return candidate;
+        }
+      }
+    }
+    return { x: 1, y: 10000, w: width, h: height };
   }
 
   function _getAllManagedItems() {
     var seen = {};
     var ordered = [];
-    if (typeof columns !== 'undefined') {
-      var columnKeys = [];
-      var $activeScreen = $('.screen.swiper-slide-active');
-      if (!$activeScreen.length) $activeScreen = $('.screen:visible').first();
-      $activeScreen.find('[data-colindex]').each(function () {
-        var columnKey = String($(this).attr('data-colindex'));
-        if (columnKeys.indexOf(columnKey) < 0) {
-          columnKeys.push(columnKey);
-        }
-      });
-      if (
-        typeof screens !== 'undefined' &&
-        screens[1] &&
-        Array.isArray(screens[1].columns)
-      ) {
-        screens[1].columns.forEach(function (columnKey) {
-          columnKey = String(columnKey);
-          if (columnKeys.indexOf(columnKey) < 0) {
-            columnKeys.push(columnKey);
+    if (typeof columns === 'undefined') return ordered;
+
+    var columnKeys = [];
+    var $activeScreen = _activeScreenDom();
+    $activeScreen.find('[data-colindex]').each(function () {
+      var columnKey = String($(this).attr('data-colindex'));
+      if (columnKeys.indexOf(columnKey) < 0) {
+        columnKeys.push(columnKey);
+      }
+    });
+
+    // Standby uses columns_standby, not screens[].
+    if (_activeScreenTarget() === 'standby') {
+      if (typeof columns_standby !== 'undefined' && columns_standby) {
+        Object.keys(columns_standby).forEach(function (colKey) {
+          if (columnKeys.indexOf(String(colKey)) < 0) {
+            columnKeys.push(String(colKey));
           }
         });
       }
-      Object.keys(columns).forEach(function (colKey) {
-        if (columnKeys.indexOf(String(colKey)) < 0) {
-          columnKeys.push(String(colKey));
-        }
-      });
-      columnKeys.forEach(function (colKey) {
-        var col = columns[colKey];
-        if (col && Array.isArray(col.blocks)) {
-          col.blocks.forEach(function (b) {
-            var ck = _toCompositeKey(b);
-            /* non-numeric string block keys → look up in global blocks object */
-            if (!ck && typeof b === 'string' &&
-                typeof blocks !== 'undefined' && blocks[b]) {
-              ck = _toCompositeKey(blocks[b]);
-            }
-            if (ck) {
-              var deviceKey = _deviceOrderKey(ck);
-              if (!seen[deviceKey]) {
-                seen[deviceKey] = true;
-                ordered.push({
-                  kind: 'device',
-                  ck: ck,
-                  orderKey: deviceKey,
-                });
-              }
-              return;
-            }
-
-            var widget = _widgetFromReference(b);
-            if (widget && !seen[widget.orderKey]) {
-              seen[widget.orderKey] = true;
-              ordered.push(widget);
-            }
-          });
-        }
-      });
     }
+
+    columnKeys.forEach(function (colKey) {
+      var lookupKey = String(colKey);
+      if (
+        _activeScreenTarget() === 'standby' &&
+        /^standby/.test(lookupKey)
+      ) {
+        lookupKey = lookupKey.replace(/^standby/, '');
+      }
+      var col =
+        _activeScreenTarget() === 'standby' &&
+        typeof columns_standby !== 'undefined' &&
+        columns_standby[lookupKey]
+          ? columns_standby[lookupKey]
+          : columns[colKey];
+      if (!col && typeof columns !== 'undefined') {
+        col = columns[lookupKey];
+      }
+      if (col && Array.isArray(col.blocks)) {
+        col.blocks.forEach(function (b) {
+          var ck = _toCompositeKey(b);
+          if (
+            !ck &&
+            typeof b === 'string' &&
+            typeof blocks !== 'undefined' &&
+            blocks[b]
+          ) {
+            ck = _toCompositeKey(blocks[b]);
+          }
+          if (ck) {
+            var deviceKey = _deviceOrderKey(ck);
+            if (!seen[deviceKey]) {
+              seen[deviceKey] = true;
+              ordered.push({
+                kind: 'device',
+                ck: ck,
+                orderKey: deviceKey,
+              });
+            }
+            return;
+          }
+
+          var widget = _widgetFromReference(b);
+          if (widget && !seen[widget.orderKey]) {
+            seen[widget.orderKey] = true;
+            ordered.push(widget);
+          }
+        });
+      }
+    });
     return ordered;
   }
 
@@ -222,6 +539,23 @@ var DashticzDeviceEditor = (function () {
     var available = [];
     Object.keys(all).forEach(function (key) {
       if (!key || key[0] === '_') return;   /* internal entries */
+
+      /* group/scene key e.g. 's1' */
+      if (_isGroupCk(key)) {
+        if (managedSet[key]) return;
+        var d    = all[key];
+        var type = d.Type || 'Group';
+        var prefix = type === 'Scene' ? 'Scene_' : 'Group_';
+        var plainName = d.Name || key;
+        available.push({
+          key: key, idx: key, subidx: 0,
+          name: prefix + plainName,
+          plainName: plainName,
+          type: type,
+        });
+        return;
+      }
+
       var idx = parseInt(key, 10);
       if (!(idx > 0 && String(idx) === String(key))) return;
       if (managedFullIdx[idx]) return;      /* whole base device is already managed */
@@ -237,18 +571,18 @@ var DashticzDeviceEditor = (function () {
           var ck = _ck(idx, s);
           if (!managedSet[ck]) {
             available.push({ key: ck, idx: idx, subidx: s,
-                             name: name + '\u00a0(' + s + ')', type: type });
+                             name: name + '\u00a0(' + s + ')', plainName: null, type: type });
           }
         }
       } else {
         var ck = _ck(idx, 0);
         if (!managedSet[ck]) {
-          available.push({ key: ck, idx: idx, subidx: 0, name: name, type: type });
+          available.push({ key: ck, idx: idx, subidx: 0, name: name, plainName: null, type: type });
         }
       }
     });
 
-    available.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    _sortAvailable(available);
     return available;
   }
 
@@ -344,17 +678,20 @@ var DashticzDeviceEditor = (function () {
   /* ── HTML for a single device-list row ─────────────────────── */
   function _deviceItemHtml(ck, allDomoticz, isNew) {
     var p      = _parseCk(ck);
-    var device = allDomoticz[String(p.idx)] || allDomoticz[p.idx];
-    var name   = device ? _esc(device.Name)  : 'Unknown device';
-    var type   = device ? _esc(device.Type)  : '';
-    var dispIdx = p.subidx ? (p.idx + '_' + p.subidx) : String(p.idx);
+    var isGroup = _isGroupCk(ck);
+    var device = isGroup ? allDomoticz[ck] : (allDomoticz[String(p.idx)] || allDomoticz[p.idx]);
+    var rawName = device ? device.Name : (isGroup ? ck : ('Device ' + p.idx));
+    var type   = device ? _esc(device.Type)  : (isGroup ? 'Group' : '');
+    var prefix = isGroup ? (type === 'Scene' ? 'Scene_' : 'Group_') : '';
+    var name   = _esc(prefix + rawName);
+    var dispIdx = isGroup ? ck : (p.subidx ? (p.idx + '_' + p.subidx) : String(p.idx));
     var cls    = 'de-device-item' + (isNew ? ' de-device-item-new' : '');
     var orderKey = _deviceOrderKey(ck);
     var html   = '<div class="' + cls + '" data-ck="' + _esc(ck) +
       '" data-order-key="' + _esc(orderKey) + '" draggable="true">';
     html += '<span class="de-drag-handle" title="Drag to reorder"><i class="fas fa-grip-vertical" aria-hidden="true"></i></span>';
-    html += '<span class="de-device-idx">IDX\u00a0' + dispIdx + '</span>';
-    html += '<span class="de-device-name">' + name + (p.subidx ? '\u00a0(' + p.subidx + ')' : '') + '</span>';
+    html += '<span class="de-device-idx">IDX\u00a0' + _esc(dispIdx) + '</span>';
+    html += '<span class="de-device-name">' + name + (!isGroup && p.subidx ? '\u00a0(' + p.subidx + ')' : '') + '</span>';
     if (type) html += '<span class="de-device-type">' + type + '</span>';
     html += '<span class="de-device-width-wrap">';
     html += '<label class="de-device-width-label" for="de-width-' + _esc(ck) + '">Width</label>';
@@ -402,7 +739,7 @@ var DashticzDeviceEditor = (function () {
     html += '<option value="">— Select a device —</option>';
     deviceList.forEach(function (d) {
       var dispIdx = d.subidx ? (d.idx + '_' + d.subidx) : String(d.idx);
-      html += '<option value="' + _esc(d.key) + '">' + _esc(d.name) + ' (IDX\u00a0' + dispIdx + ')</option>';
+      html += '<option value="' + _esc(d.key) + '" data-type-order="' + _typeOrder(d.type) + '">' + _esc(d.name) + ' (IDX\u00a0' + dispIdx + ')</option>';
     });
     html += '</select>';
     html += '<input type="number" class="form-control form-control-sm de-width-input" min="1" max="12" value="3" title="Column width (1-12)" aria-label="Column width">';
@@ -425,6 +762,8 @@ var DashticzDeviceEditor = (function () {
       delete deviceNames[ck];
       delete deviceWidths[ck];
       delete deviceHeights[ck];
+      delete gridPositions[_deviceOrderKey(ck)];
+      delete gridRefs[_deviceOrderKey(ck)];
 
       /* remove item from device-list */
       $(this).closest('.de-device-item').remove();
@@ -434,28 +773,37 @@ var DashticzDeviceEditor = (function () {
 
       /* restore device in add-row dropdown and in available[] */
       var p      = _parseCk(ck);
-      var device = allDomoticz[String(p.idx)] || allDomoticz[p.idx];
-      var name   = device ? device.Name : ('Device ' + p.idx);
-      var type   = device ? (device.Type || '') : '';
-      var displayName = name + (p.subidx ? '\u00a0(' + p.subidx + ')' : '');
-      var dispIdx     = p.subidx ? (p.idx + '_' + p.subidx) : String(p.idx);
+      var isGroup = _isGroupCk(ck);
+      var device = isGroup ? allDomoticz[ck] : (allDomoticz[String(p.idx)] || allDomoticz[p.idx]);
+      var rawName = device ? device.Name : (isGroup ? ck : ('Device ' + p.idx));
+      var type   = device ? (device.Type || '') : (isGroup ? 'Group' : '');
+      var groupPrefix = isGroup ? (type === 'Scene' ? 'Scene_' : 'Group_') : '';
+      var displayName = groupPrefix + rawName + (!isGroup && p.subidx ? '\u00a0(' + p.subidx + ')' : '');
+      var dispIdx     = isGroup ? ck : (p.subidx ? (p.idx + '_' + p.subidx) : String(p.idx));
 
       /* keep available[] in sync so subsequent + rows include this device */
       if (!available.some(function (d) { return d.key === ck; })) {
         available.push({ key: ck, idx: p.idx, subidx: p.subidx,
-                         name: displayName, type: type });
-        available.sort(function (a, b) { return a.name.localeCompare(b.name); });
+                         name: displayName, plainName: isGroup ? rawName : null, type: type });
+        _sortAvailable(available);
       }
 
-      var optHtml = '<option value="' + _esc(ck) + '">' + _esc(displayName) +
-                    ' (IDX\u00a0' + dispIdx + ')</option>';
+      var newTypeOrder = _typeOrder(type);
+      var newText = displayName + ' (IDX\u00a0' + dispIdx + ')';
+      var optHtml = '<option value="' + _esc(ck) + '" data-type-order="' + newTypeOrder + '">' +
+                    _esc(displayName) + ' (IDX\u00a0' + dispIdx + ')</option>';
 
       var $select = $('#de-add-rows .de-device-select');
       if ($select.length) {
-        /* insert in alphabetical order */
+        /* insert in category + alphabetical order */
         var inserted = false;
         $select.find('option').each(function () {
-          if ($(this).val() && $(this).text().localeCompare(displayName + ' (IDX\u00a0' + dispIdx + ')') > 0) {
+          if (!$(this).val()) return;
+          var optTypeOrder = parseInt($(this).attr('data-type-order') || '2', 10);
+          var cmp = newTypeOrder !== optTypeOrder
+            ? newTypeOrder - optTypeOrder
+            : newText.localeCompare($(this).text());
+          if (cmp < 0) {
             $(this).before(optHtml);
             inserted = true;
             return false;
@@ -467,7 +815,7 @@ var DashticzDeviceEditor = (function () {
       } else {
         /* no add-row exists yet — create one with this single device */
         $('#de-add-rows').html(_addRowHtml([{ key: ck, idx: p.idx, subidx: p.subidx,
-                                              name: displayName, type: type }]));
+                                              name: displayName, plainName: isGroup ? rawName : null, type: type }]));
       }
     });
 
@@ -497,10 +845,11 @@ var DashticzDeviceEditor = (function () {
       deviceWidths[ck] = _parseWidth($row.find('.de-width-input').val());
 
       /* record the device name for this composite key */
-      var addedName = 'Device ' + _parseCk(ck).idx;
+      /* for groups, use plainName (without Group_/Scene_ prefix) so the block title is clean */
+      var addedName = _isGroupCk(ck) ? ck : ('Device ' + _parseCk(ck).idx);
       for (var di = 0; di < available.length; di++) {
         if (available[di].key === ck) {
-          addedName = available[di].name;
+          addedName = available[di].plainName || available[di].name;
           break;
         }
       }
@@ -617,6 +966,9 @@ var DashticzDeviceEditor = (function () {
       };
       if (p.subidx) entry.subidx = p.subidx;
       if (deviceHeights[ck]) entry.height = deviceHeights[ck];
+      if (gridMode && gridRefs[_deviceOrderKey(ck)]) {
+        entry.key = gridRefs[_deviceOrderKey(ck)];
+      }
       return entry;
     });
 
@@ -624,23 +976,8 @@ var DashticzDeviceEditor = (function () {
       return orderKey.indexOf('widget:') === 0;
     });
     var widgetPayload = orderedWidgetKeys.map(function (orderKey) {
-      var widget = managedWidgets[orderKey];
-      var entry = {
-        id: widget.id,
-        width: _parseWidth(widgetWidths[orderKey]),
-      };
-      if (widgetHeights[orderKey]) entry.height = widgetHeights[orderKey];
-      if (widget.id === 'weather') {
-        entry.provider =
-          widget.definition.widget_provider ||
-          (widget.definition.type === 'wunderground'
-            ? 'wunderground'
-            : 'openweather');
-      } else if (widget.id === 'calendar') {
-        entry.icalurl = widget.definition.icalurl || '';
-      } else if (widget.id === 'clock') {
-        entry.clockType = widget.definition.type || 'basicclock';
-      }
+      var entry = _widgetPayload(orderKey);
+      if (gridMode && gridRefs[orderKey]) entry.key = gridRefs[orderKey];
       return entry;
     });
 
@@ -649,14 +986,31 @@ var DashticzDeviceEditor = (function () {
         var token = data.token;
         return _postEditorData(
           'js/saveblocks.php',
-          { devices: devicePayload },
+          {
+            devices: devicePayload,
+            screen: _activeScreenPayload(),
+            blocksOnly: gridMode,
+          },
           token
         ).then(function (deviceResult) {
-          return _postEditorData(
-            'js/savewidgets.php',
-            { widgets: widgetPayload },
-            token
-          ).then(function (widgetResult) {
+          var widgetSave = gridMode
+            ? $.Deferred()
+                .resolve({
+                  blockKeys: orderedWidgetKeys.map(function (orderKey) {
+                    return gridRefs[orderKey];
+                  }),
+                })
+                .promise()
+            : _postEditorData(
+                'js/savewidgets.php',
+                {
+                  widgets: widgetPayload,
+                  screen: _activeScreenPayload(),
+                  blocksOnly: false,
+                },
+                token
+              );
+          return widgetSave.then(function (widgetResult) {
             var deviceRefs = {};
             var widgetRefs = {};
             orderedDeviceKeys.forEach(function (ck, index) {
@@ -665,21 +1019,88 @@ var DashticzDeviceEditor = (function () {
             orderedWidgetKeys.forEach(function (orderKey, index) {
               widgetRefs[orderKey] = widgetResult.blockKeys[index];
             });
-            var layoutItems = managedOrder.map(function (orderKey) {
-              return {
-                ref:
-                  orderKey.indexOf('widget:') === 0
-                    ? widgetRefs[orderKey]
-                    : deviceRefs[orderKey],
-                width:
-                  orderKey.indexOf('widget:') === 0
+            if (gridMode) {
+              var occupied = gridExtras
+                .map(function (item) {
+                  return item.grid;
+                })
+                .concat(
+                  Object.keys(gridPositions).map(function (orderKey) {
+                    return gridPositions[orderKey];
+                  })
+                );
+              var gridItems = managedOrder.map(function (orderKey) {
+                var isWidget = orderKey.indexOf('widget:') === 0;
+                var ref = isWidget
+                  ? widgetRefs[orderKey]
+                  : deviceRefs[orderKey];
+                var position = gridPositions[orderKey];
+                if (!position) {
+                  var width12 = isWidget
                     ? _parseWidth(widgetWidths[orderKey])
-                    : _parseWidth(deviceWidths[orderKey.slice(7)]),
+                    : _parseWidth(deviceWidths[orderKey.slice(7)]);
+                  var pixelHeight = isWidget
+                    ? widgetHeights[orderKey]
+                    : deviceHeights[orderKey.slice(7)];
+                  var width = Math.max(
+                    1,
+                    Math.min(
+                      gridConfig.gridColumns,
+                      Math.round(
+                        (width12 * gridConfig.gridColumns) / 12
+                      )
+                    )
+                  );
+                  var height = Math.max(
+                    1,
+                    Math.ceil(
+                      ((pixelHeight || 120) + gridConfig.gap) /
+                        (gridConfig.rowHeight + gridConfig.gap)
+                    )
+                  );
+                  position = _firstFreeGridPosition(
+                    occupied,
+                    width,
+                    height
+                  );
+                  occupied.push(position);
+                }
+                return { ref: ref, grid: $.extend({}, position) };
+              });
+              gridItems = gridItems.concat(gridExtras);
+              return _postEditorData(
+                'js/savegridlayout.php',
+                {
+                  items: gridItems,
+                  screen: _activeScreenPayload(),
+                  gridColumns: gridConfig.gridColumns,
+                  rowHeight: gridConfig.rowHeight,
+                  gap: gridConfig.gap,
+                  mobileLayout: gridConfig.mobileLayout,
+                },
+                token
+              );
+            }
+            var layoutItems = managedOrder.map(function (orderKey) {
+              var isWidget = orderKey.indexOf('widget:') === 0;
+              var entry = {
+                ref: isWidget ? widgetRefs[orderKey] : deviceRefs[orderKey],
+                width: isWidget
+                  ? _parseWidth(widgetWidths[orderKey])
+                  : _parseWidth(deviceWidths[orderKey.slice(7)]),
               };
+              var height = isWidget
+                ? widgetHeights[orderKey]
+                : deviceHeights[orderKey.slice(7)];
+              if (height) entry.height = height;
+              return entry;
             });
+            if (_activeScreenTarget() === 'standby') {
+              layoutItems = _preserveStandbyExtraBlocks(layoutItems);
+            }
             return _postEditorData(
               'js/savelayout.php',
-              { items: layoutItems },
+              { items: layoutItems, screen: _activeScreenPayload() },
               token
             );
           });
@@ -705,9 +1126,32 @@ var DashticzDeviceEditor = (function () {
       });
   }
 
+  function _preserveStandbyExtraBlocks(layoutItems) {
+    var known = {};
+    layoutItems.forEach(function (item) {
+      if (item && item.ref) known[item.ref] = true;
+    });
+    var preserved = [];
+    if (
+      typeof columns_standby !== 'undefined' &&
+      columns_standby &&
+      columns_standby[1] &&
+      Array.isArray(columns_standby[1].blocks)
+    ) {
+      columns_standby[1].blocks.forEach(function (ref) {
+        if (typeof ref !== 'string' || known[ref]) return;
+        // Keep simple/hand-written standby blocks (clock, weather, …).
+        if (_toCompositeKey(ref) || _widgetFromReference(ref)) return;
+        preserved.push({ ref: ref, width: 12 });
+        known[ref] = true;
+      });
+    }
+    return preserved.concat(layoutItems);
+  }
+
   function _postEditorData(url, payload, token) {
     return $.ajax({
-      url: url,
+      url: configEditorUrl(url),
       method: 'POST',
       contentType: 'application/json',
       data: JSON.stringify(payload),
@@ -741,10 +1185,9 @@ var DashticzDeviceEditor = (function () {
           var ref   = col.blocks[j];
           var block = null;
           var refCk = _toCompositeKey(ref);
-          if (!refCk && typeof ref === 'string' &&
-              typeof blocks !== 'undefined' && blocks[ref]) {
+          if (typeof ref === 'string' && typeof blocks !== 'undefined' && blocks[ref]) {
             block = blocks[ref];
-            refCk = _toCompositeKey(block);
+            if (!refCk) refCk = _toCompositeKey(block);
           } else if (typeof ref === 'object' && ref !== null) {
             block = ref;
           }
@@ -777,10 +1220,9 @@ var DashticzDeviceEditor = (function () {
           var ref = col.blocks[j];
           var block = null;
           var refCk = _toCompositeKey(ref);
-          if (!refCk && typeof ref === 'string' &&
-              typeof blocks !== 'undefined' && blocks[ref]) {
+          if (typeof ref === 'string' && typeof blocks !== 'undefined' && blocks[ref]) {
             block = blocks[ref];
-            refCk = _toCompositeKey(block);
+            if (!refCk) refCk = _toCompositeKey(block);
           } else if (typeof ref === 'object' && ref !== null) {
             block = ref;
           }

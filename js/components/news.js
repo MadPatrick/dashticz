@@ -4,7 +4,7 @@
 var DT_news = {
   name: 'news',
   canHandle: function (block) {
-    return block && block.feed;
+    return block && (block.type === 'news' || block.feed);
   },
   init: function () {
     return DT_function.loadScript('vendor/jquery.newsTicker.min.js');
@@ -13,6 +13,8 @@ var DT_news = {
     containerClass: 'hover',
     feed: settings['default_news_url'],
     refresh: 300,
+    width: 4,
+    height: 240,
   },
   run: function (me) {
     me.height =
