@@ -102,6 +102,13 @@ Select **Save** to write the generated blocks and columns to
 reloads after saving. Back up an existing `CONFIG.js` before first using the
 editor.
 
+Editor-generated Domoticz devices use stable IDX-based block keys, for example
+`blocks['device_1498']` or `blocks['device_1498_2']` for a subdevice. Their
+generated definitions omit `title`, allowing the displayed name to follow a
+later rename in Domoticz automatically. Existing hand-written name-based keys
+and explicit custom titles remain supported. Saving an existing editor-managed
+layout once migrates those device blocks to the stable key format.
+
 Dummy and Title appear above Groups, Scenes and Devices in the add selector,
 separated by divider rows. Their labels and input validation use the selected
 Dashticz language; English is used when a locale has no Device Editor strings.

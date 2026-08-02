@@ -141,6 +141,10 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   assert.match(source, /configwriter_editor_markers\('widget'/);
   assert.match(writer, /function configwriter_editor_markers/);
   assert.match(source, /blockKeys/);
+  assert.match(source, /configwriter_make_device_block_key/);
+  assert.match(writer, /function configwriter_make_device_block_key/);
+  assert.match(writer, /'device_'\s*\.\s*\(int\)\$idx/);
+  assert.match(writer, /if \(\$isGroup\) \{\s*\$props\['title'\] = \$title;/);
   assert.match(source, /\$blocksOnly/);
   /* accepts both legacy bare integers and {idx,name} objects */
   assert.match(source, /is_int\(\$entry\)/);

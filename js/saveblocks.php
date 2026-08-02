@@ -207,7 +207,14 @@ if (!empty($devices)) {
         } elseif ($device['key'] !== null && !isset($requestKeys[$device['key']])) {
             $requestKeys[$device['key']] = true;
         } else {
-            $device['key'] = configwriter_make_block_key($device['name'], $usedKeys);
+            /* Domoticz names are mutable (for example event devices). Use the
+             * immutable IDX for editor-generated keys so references stay clear
+             * and predictable when a device is renamed. */
+            $device['key'] = configwriter_make_device_block_key(
+                $device['idx'],
+                $device['subidx'],
+                $usedKeys
+            );
             $requestKeys[$device['key']] = true;
         }
         $blockKeys[] = $device['key'];
