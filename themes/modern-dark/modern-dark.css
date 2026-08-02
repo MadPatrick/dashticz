@@ -52,6 +52,10 @@
     var(--panel-shadow) !important;
 }
 
+.transbg.titlegroups,
+.titlegroups,
+.transbg.blocktitle,
+.blocktitle,
 .miniclock {
   margin: 0 !important;
   border: 0 !important;

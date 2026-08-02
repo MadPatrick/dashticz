@@ -845,11 +845,10 @@ test('modern dark theme is portable and documented', () => {
     theme,
     /\.blocktitle \{[\s\S]*height: var\(--height-block-default\) !important/
   );
-  assert.doesNotMatch(
-    theme,
-    /\.transbg\.titlegroups,[\s\S]{0,120}background: var\(--blocktitle\) !important/
-  );
+  assert.match(theme, /\.transbg\.titlegroups/);
+  assert.match(theme, /\.titlegroups[\s\S]*background: var\(--blocktitle\) !important/);
   assert.match(theme, /\.colbar \.miniclock[\s\S]*background: transparent !important/);
+  assert.match(theme, /\.titlegroups[\s\S]*box-shadow: none !important/);
   assert.match(theme, /\.titlegroups \.col-icon img\.icon/);
   assert.match(theme, /@media \(max-width: 767\.98px\)/);
   assert.match(theme, /\.standby \.transbg[\s\S]*background: #000 !important/);

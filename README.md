@@ -105,8 +105,8 @@ editor.
 Dummy and Title appear above Groups, Scenes and Devices in the add selector,
 separated by divider rows. Their labels and input validation use the selected
 Dashticz language; English is used when a locale has no Device Editor strings.
-In the Modern Dark theme, title blocks use the same panel background, border,
-rounded corners and shadow as other blocks.
+In the Modern Dark theme, title blocks retain the theme-specific title
+background and flat title styling while using the new 120px default height.
 
 ### Widget Editor
 
