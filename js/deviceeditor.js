@@ -16,6 +16,7 @@ var DashticzDeviceEditor = (function () {
   var deviceOptions  = {};   // composite key -> icon/hide_data/last_update/switch
   var widgetWidths   = {};   // widget order key -> block width (1..12)
   var widgetHeights  = {};   // widget order key -> optional block height
+  var widgetTitles   = {};   // widget order key -> optional title override
   var gridMode       = false;
   var gridConfig     = null;
   var gridPositions  = {};   // order key -> {x,y,w,h}
@@ -87,6 +88,7 @@ var DashticzDeviceEditor = (function () {
     deviceOptions  = {};
     widgetWidths   = {};
     widgetHeights  = {};
+    widgetTitles   = {};
     gridPositions  = {};
     gridRefs       = {};
     gridExtras     = [];
@@ -102,6 +104,7 @@ var DashticzDeviceEditor = (function () {
         managedWidgets[item.orderKey] = item;
         widgetWidths[item.orderKey] = _parseWidth(item.definition.width);
         widgetHeights[item.orderKey] = _parseHeight(item.definition.height);
+        widgetTitles[item.orderKey] = String(item.definition.title || item.title || '');
       } else if (item.kind === 'special') {
         managedSpecials[item.orderKey] = item;
       } else {
@@ -349,6 +352,8 @@ var DashticzDeviceEditor = (function () {
       id: widget.id,
       width: _parseWidth(widgetWidths[orderKey]),
     };
+    var title = String(widgetTitles[orderKey] || '').trim();
+    if (title) entry.title = title;
     if (widgetHeights[orderKey]) entry.height = widgetHeights[orderKey];
     if (widget.id === 'garbage') {
       entry.displayTitle = widget.title;
@@ -746,7 +751,7 @@ var DashticzDeviceEditor = (function () {
     var html = '';
     html += '<div class="modal fade" id="deviceeditorpopup" tabindex="-1"';
     html += ' aria-labelledby="de-title" aria-hidden="true">';
-    html += '<div class="modal-dialog modal-lg modal-dialog-scrollable">';
+    html += '<div class="modal-dialog modal-xl modal-dialog-scrollable">';
     html += '<div class="modal-content">';
 
     /* header */
@@ -826,25 +831,28 @@ var DashticzDeviceEditor = (function () {
       '" data-order-key="' + _esc(orderKey) + '" draggable="true">';
     html += '<span class="de-drag-handle" title="' + _esc(t.drag_to_reorder) + '"><i class="fas fa-grip-vertical" aria-hidden="true"></i></span>';
     html += '<span class="de-device-idx">IDX\u00a0' + _esc(dispIdx) + '</span>';
-    html += '<span class="de-device-name">' + name + (!isGroup && p.subidx ? '\u00a0(' + p.subidx + ')' : '') + '</span>';
+    html += '<span class="de-device-identity"><span class="de-device-name">' + name + (!isGroup && p.subidx ? '\u00a0(' + p.subidx + ')' : '') + '</span>';
     if (type) html += '<span class="de-device-type">' + type + '</span>';
+    html += '</span>';
     html += '<span class="de-device-field de-width-wrap">';
     html += '<label for="de-width-' + _esc(ck) + '">' + _esc(t.width) + '</label>';
     html += '<input type="number" id="de-width-' + _esc(ck) + '" class="form-control form-control-sm de-device-width" ';
     html += 'data-ck="' + _esc(ck) + '" data-order-key="' + _esc(orderKey) +
-      '" min="1" max="12" value="' + _parseWidth(deviceWidths[ck]) + '">';
+      '" min="1" max="12" size="2" value="' + _parseWidth(deviceWidths[ck]) + '">';
     html += '</span>';
     html += '<span class="de-device-field de-title-field">';
     html += '<label for="de-title-' + _esc(ck) + '">' + _esc(t.title) + '</label>';
     html += '<input type="text" id="de-title-' + _esc(ck) + '" class="form-control form-control-sm de-device-title" ';
     html += 'data-ck="' + _esc(ck) + '" value="' + _esc(deviceTitles[ck] || '') + '">';
     html += '</span>';
+    html += '<span class="de-device-options">';
     ['icon', 'hide_data', 'last_update', 'switch'].forEach(function (option) {
       html += '<label class="de-option-field"><input type="checkbox" class="de-device-option" ';
       html += 'data-ck="' + _esc(ck) + '" data-option="' + option + '"';
       if (options[option]) html += ' checked';
       html += '> <span>' + _esc(t[option]) + '</span></label>';
     });
+    html += '</span>';
     html += '<button type="button" class="btn btn-danger btn-sm de-remove-btn ms-auto" data-ck="' + _esc(ck) + '" title="' + _esc(t.remove) + '">';
     html += '<i class="fas fa-minus" aria-hidden="true"></i>';
     html += '</button>';
@@ -860,16 +868,23 @@ var DashticzDeviceEditor = (function () {
       _esc(orderKey) + '" draggable="true">';
     html += '<span class="de-drag-handle" title="' + _esc(t.drag_to_reorder) + '"><i class="fas fa-grip-vertical" aria-hidden="true"></i></span>';
     html += '<span class="de-device-idx"><i class="fas fa-puzzle-piece me-1" aria-hidden="true"></i>' + _esc(t.widget) + '</span>';
-    html += '<span class="de-device-name">' + _esc(t.widget_prefix) + ' ' + _esc(widget.title) + '</span>';
+    html += '<span class="de-device-identity"><span class="de-device-name">' + _esc(t.widget_prefix) + ' ' + _esc(widget.title) + '</span>';
     html += '<span class="de-device-type">' +
       _esc(widget.definition.type || widget.id) + '</span>';
-    html += '<span class="de-device-width-wrap">';
-    html += '<label class="de-device-width-label" for="de-width-' +
+    html += '</span>';
+    html += '<span class="de-device-field de-width-wrap">';
+    html += '<label for="de-width-' +
       _esc(widget.id) + '">' + _esc(t.width) + '</label>';
     html += '<input type="number" id="de-width-' + _esc(widget.id) +
       '" class="form-control form-control-sm de-device-width" data-order-key="' +
-      _esc(orderKey) + '" min="1" max="12" value="' +
+      _esc(orderKey) + '" min="1" max="12" size="2" value="' +
       _parseWidth(widgetWidths[orderKey]) + '">';
+    html += '</span>';
+    html += '<span class="de-device-field de-title-field">';
+    html += '<label for="de-title-' + _esc(widget.id) + '">' + _esc(t.title) + '</label>';
+    html += '<input type="text" id="de-title-' + _esc(widget.id) +
+      '" class="form-control form-control-sm de-device-title" data-order-key="' +
+      _esc(orderKey) + '" value="' + _esc(widgetTitles[orderKey] || '') + '">';
     html += '</span>';
     html += '<span class="de-widget-managed" title="' + _esc(t.managed_widget) + '"><i class="fas fa-lock" aria-hidden="true"></i></span>';
     html += '</div>';
@@ -896,7 +911,7 @@ var DashticzDeviceEditor = (function () {
       _esc(special.reference) + '">' + _esc(t.width) + '</label>';
     html += '<input type="number" id="de-width-' + _esc(special.reference) +
       '" class="form-control form-control-sm de-device-width" data-order-key="' +
-      _esc(orderKey) + '" min="1" max="12" value="' + special.width + '">';
+      _esc(orderKey) + '" min="1" max="12" size="2" value="' + special.width + '">';
     html += '</span>';
     html += '<button type="button" class="btn btn-danger btn-sm de-remove-btn ms-auto" data-special-key="' +
       _esc(special.reference) + '" title="' + _esc(t.remove) + '">';
@@ -920,7 +935,7 @@ var DashticzDeviceEditor = (function () {
     });
     html += '</select>';
     html += '<input type="text" class="form-control form-control-sm de-special-value d-none" aria-label="">';
-    html += '<input type="number" class="form-control form-control-sm de-width-input" min="1" max="12" value="3" title="' + _esc(t.column_width) + '" aria-label="' + _esc(t.width) + '">';
+    html += '<input type="number" class="form-control form-control-sm de-width-input" min="1" max="12" size="2" value="3" title="' + _esc(t.column_width) + '" aria-label="' + _esc(t.width) + '">';
     html += '<button type="button" class="btn btn-success btn-sm de-add-btn ms-2" title="' + _esc(t.add_device) + '">';
     html += '<i class="fas fa-plus" aria-hidden="true"></i>';
     html += '</button>';
@@ -1047,7 +1062,12 @@ var DashticzDeviceEditor = (function () {
 
     /* Keep the editable title and display options in state for saving. */
     $('#de-device-list').on('input change', '.de-device-title', function () {
-      deviceTitles[String($(this).attr('data-ck') || '')] = String($(this).val() || '').trim();
+      var orderKey = String($(this).attr('data-order-key') || '');
+      if (orderKey.indexOf('widget:') === 0) {
+        widgetTitles[orderKey] = String($(this).val() || '').trim();
+      } else {
+        deviceTitles[String($(this).attr('data-ck') || '')] = String($(this).val() || '').trim();
+      }
     });
     $('#de-device-list').on('change', '.de-device-option', function () {
       var ck = String($(this).attr('data-ck') || '');
