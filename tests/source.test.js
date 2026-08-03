@@ -981,6 +981,7 @@ test('modern dark theme is portable and documented', () => {
   assert.match(theme, /\.titlegroups[\s\S]*border: var\(--block-gap\) solid transparent !important/);
   assert.match(theme, /\.titlegroups[\s\S]*border-radius: var\(--radius-border\) !important/);
   assert.match(theme, /\.colbar \.miniclock[\s\S]*background: transparent !important/);
+  assert.doesNotMatch(theme, /^\.miniclock\s*\{[^}]*background:/m);
   assert.match(theme, /\.titlegroups[\s\S]*var\(--panel-shadow\) !important/);
   assert.match(theme, /\.titlegroups \.col-icon img\.icon/);
   assert.match(theme, /@media \(max-width: 767\.98px\)/);
