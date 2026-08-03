@@ -12,6 +12,8 @@ var DashticzDeviceEditor = (function () {
   var deviceNames    = {};   // composite key -> device name
   var deviceWidths   = {};   // composite key -> block width (1..12)
   var deviceHeights  = {};   // composite key -> optional block height
+  var deviceTitles   = {};   // composite key -> optional title override
+  var deviceOptions  = {};   // composite key -> icon/hide_data/last_update/switch
   var widgetWidths   = {};   // widget order key -> block width (1..12)
   var widgetHeights  = {};   // widget order key -> optional block height
   var gridMode       = false;
@@ -41,6 +43,11 @@ var DashticzDeviceEditor = (function () {
         invalid_idx: 'Enter a valid positive IDX.',
         invalid_title: 'Enter a title.',
         width: 'Width',
+        title: 'Title',
+        icon: 'Icon',
+        hide_data: 'Hide data',
+        last_update: 'Last update',
+        switch: 'Switch',
         remove: 'Remove block',
         close: 'Close',
         save: 'Save',
@@ -76,6 +83,8 @@ var DashticzDeviceEditor = (function () {
     deviceNames    = {};
     deviceWidths   = {};
     deviceHeights  = {};
+    deviceTitles   = {};
+    deviceOptions  = {};
     widgetWidths   = {};
     widgetHeights  = {};
     gridPositions  = {};
@@ -710,6 +719,16 @@ var DashticzDeviceEditor = (function () {
       deviceNames[ck]  = d ? (d.Name || ('Device ' + p.idx)) : ('Device ' + p.idx);
       deviceWidths[ck] = _getConfiguredWidthForCk(ck);
       deviceHeights[ck] = _getConfiguredHeightForCk(ck);
+      var configured = _getConfiguredBlockForCk(ck) || {};
+      deviceTitles[ck] = configured._dashticzAutoTitle
+        ? ''
+        : (typeof configured.title === 'string' ? configured.title : '');
+      deviceOptions[ck] = {
+        icon: typeof configured.icon === 'undefined',
+        hide_data: configured.hide_data !== false,
+        last_update: configured.last_update === true,
+        switch: configured.switch === true,
+      };
     });
 
     $('body').append(_buildModalHtml(available, allDomoticz));
@@ -800,18 +819,32 @@ var DashticzDeviceEditor = (function () {
     var dispIdx = isGroup ? ck : (p.subidx ? (p.idx + '_' + p.subidx) : String(p.idx));
     var cls    = 'de-device-item' + (isNew ? ' de-device-item-new' : '');
     var orderKey = _deviceOrderKey(ck);
+    var options = deviceOptions[ck] || {
+      icon: true, hide_data: true, last_update: false, switch: false,
+    };
     var html   = '<div class="' + cls + '" data-ck="' + _esc(ck) +
       '" data-order-key="' + _esc(orderKey) + '" draggable="true">';
     html += '<span class="de-drag-handle" title="' + _esc(t.drag_to_reorder) + '"><i class="fas fa-grip-vertical" aria-hidden="true"></i></span>';
     html += '<span class="de-device-idx">IDX\u00a0' + _esc(dispIdx) + '</span>';
     html += '<span class="de-device-name">' + name + (!isGroup && p.subidx ? '\u00a0(' + p.subidx + ')' : '') + '</span>';
     if (type) html += '<span class="de-device-type">' + type + '</span>';
-    html += '<span class="de-device-width-wrap">';
-    html += '<label class="de-device-width-label" for="de-width-' + _esc(ck) + '">' + _esc(t.width) + '</label>';
+    html += '<span class="de-device-field de-title-field">';
+    html += '<label for="de-title-' + _esc(ck) + '">' + _esc(t.title) + '</label>';
+    html += '<input type="text" id="de-title-' + _esc(ck) + '" class="form-control form-control-sm de-device-title" ';
+    html += 'data-ck="' + _esc(ck) + '" value="' + _esc(deviceTitles[ck] || '') + '">';
+    html += '</span>';
+    html += '<span class="de-device-field de-width-wrap">';
+    html += '<label for="de-width-' + _esc(ck) + '">' + _esc(t.width) + '</label>';
     html += '<input type="number" id="de-width-' + _esc(ck) + '" class="form-control form-control-sm de-device-width" ';
     html += 'data-ck="' + _esc(ck) + '" data-order-key="' + _esc(orderKey) +
       '" min="1" max="12" value="' + _parseWidth(deviceWidths[ck]) + '">';
     html += '</span>';
+    ['icon', 'hide_data', 'last_update', 'switch'].forEach(function (option) {
+      html += '<label class="de-option-field"><input type="checkbox" class="de-device-option" ';
+      html += 'data-ck="' + _esc(ck) + '" data-option="' + option + '"';
+      if (options[option]) html += ' checked';
+      html += '> <span>' + _esc(t[option]) + '</span></label>';
+    });
     html += '<button type="button" class="btn btn-danger btn-sm de-remove-btn ms-auto" data-ck="' + _esc(ck) + '" title="' + _esc(t.remove) + '">';
     html += '<i class="fas fa-minus" aria-hidden="true"></i>';
     html += '</button>';
@@ -939,6 +972,8 @@ var DashticzDeviceEditor = (function () {
       delete deviceNames[ck];
       delete deviceWidths[ck];
       delete deviceHeights[ck];
+      delete deviceTitles[ck];
+      delete deviceOptions[ck];
       delete gridPositions[_deviceOrderKey(ck)];
       delete gridRefs[_deviceOrderKey(ck)];
 
@@ -1010,6 +1045,17 @@ var DashticzDeviceEditor = (function () {
       $(this).val(width);
     });
 
+    /* Keep the editable title and display options in state for saving. */
+    $('#de-device-list').on('input change', '.de-device-title', function () {
+      deviceTitles[String($(this).attr('data-ck') || '')] = String($(this).val() || '').trim();
+    });
+    $('#de-device-list').on('change', '.de-device-option', function () {
+      var ck = String($(this).attr('data-ck') || '');
+      var option = String($(this).attr('data-option') || '');
+      if (!deviceOptions[ck]) deviceOptions[ck] = {};
+      deviceOptions[ck][option] = $(this).prop('checked');
+    });
+
     $('#de-add-rows').on('change', '.de-device-select', function () {
       var $row = $(this).closest('.de-add-row');
       var $value = $row.find('.de-special-value');
@@ -1078,6 +1124,10 @@ var DashticzDeviceEditor = (function () {
         managedOrder.push(_deviceOrderKey(ck));
       }
       deviceWidths[ck] = _parseWidth($row.find('.de-width-input').val());
+      deviceTitles[ck] = '';
+      deviceOptions[ck] = {
+        icon: true, hide_data: true, last_update: false, switch: false,
+      };
 
       /* record the device name for this composite key */
       /* for groups, use plainName (without Group_/Scene_ prefix) so the block title is clean */
@@ -1226,6 +1276,13 @@ var DashticzDeviceEditor = (function () {
         width: _parseWidth(deviceWidths[ck]),
         key:   _stableDeviceReference(ck),
       };
+      var title = String(deviceTitles[ck] || '').trim();
+      var options = deviceOptions[ck] || {};
+      if (title) entry.title = title;
+      if (options.icon === false) entry.icon = '';
+      entry.hide_data = options.hide_data !== false;
+      entry.last_update = options.last_update === true;
+      entry.switch = options.switch === true;
       if (p.subidx) entry.subidx = p.subidx;
       if (deviceHeights[ck]) entry.height = deviceHeights[ck];
       // Never retain a legacy name-based reference: Domoticz names may change.
@@ -1430,6 +1487,16 @@ var DashticzDeviceEditor = (function () {
     var width = parseInt(value, 10);
     if (!width) width = 3;
     return Math.max(1, Math.min(12, width));
+  }
+
+  /* Find the CONFIG.js block definition associated with a composite IDX. */
+  function _getConfiguredBlockForCk(ck) {
+    if (typeof blocks === 'undefined') return null;
+    var keys = Object.keys(blocks);
+    for (var i = 0; i < keys.length; i++) {
+      if (_toCompositeKey(blocks[keys[i]]) === ck) return blocks[keys[i]];
+    }
+    return null;
   }
 
   function _getConfiguredWidthForCk(ck) {

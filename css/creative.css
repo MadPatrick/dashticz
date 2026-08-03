@@ -1483,19 +1483,46 @@ body.dle-active {
 }
 
 .de-device-width-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  flex: 0 0 72px;
 }
 
-.de-device-width-label {
+.de-device-field {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.de-device-field label {
   margin: 0;
   font-size: 11px;
   color: #6c757d;
 }
 
 .de-device-width {
-  width: 66px;
+  width: 60px;
+}
+
+.de-title-field {
+  flex: 0 1 150px;
+}
+
+.de-device-title {
+  min-width: 70px;
+}
+
+.de-option-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0;
+  font-size: 11px;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.de-option-field input {
+  margin: 0;
 }
 
 .de-add-row {
