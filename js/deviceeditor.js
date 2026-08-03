@@ -883,7 +883,7 @@ var DashticzDeviceEditor = (function () {
     html += '<span class="de-device-field de-title-field">';
     html += '<label for="de-title-' + _esc(widget.id) + '">' + _esc(t.title) + '</label>';
     html += '<input type="text" id="de-title-' + _esc(widget.id) +
-      '" class="form-control form-control-sm de-device-title" data-order-key="' +
+      '" class="form-control form-control-sm de-device-title" maxlength="100" data-order-key="' +
       _esc(orderKey) + '" value="' + _esc(widgetTitles[orderKey] || '') + '">';
     html += '</span>';
     html += '<span class="de-widget-managed" title="' + _esc(t.managed_widget) + '"><i class="fas fa-lock" aria-hidden="true"></i></span>';
@@ -906,7 +906,7 @@ var DashticzDeviceEditor = (function () {
       (isTitle ? 'fa-heading' : 'fa-cube') + ' me-1" aria-hidden="true"></i>' +
       _esc(label) + '</span>';
     html += '<span class="de-device-name">' + _esc(detail) + '</span>';
-    html += '<span class="de-device-width-wrap">';
+    html += '<span class="de-device-field de-width-wrap">';
     html += '<label class="de-device-width-label" for="de-width-' +
       _esc(special.reference) + '">' + _esc(t.width) + '</label>';
     html += '<input type="number" id="de-width-' + _esc(special.reference) +
