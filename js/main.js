@@ -745,17 +745,62 @@ function prepareStart() {
 }
 
 function loadCustomCss() {
-  var customcss = _PARAMS['css'] || 'custom.css';
-  var filename = _CFG.customfolder + '/' + customcss;
-  $.ajax({
-    url: filename + '?v=' + cache,
-    success: function (data) {
-      $('<style></style>').appendTo('head').html(data);
-    },
-    error: function () {
-      console.log('No valid custom css file: ' + filename + '. Skipping.');
-    },
-  });
+  // Hulpfunctie: laad een CSS-bestand als inline <style>-blok.
+  // Als het bestand niet gevonden wordt en er een terugvalbestand (fallbackFilename)
+  // opgegeven is, wordt dat bestand alsnog geprobeerd.
+  function injectCss(filename, fallbackFilename) {
+    $.ajax({
+      url: filename + '?v=' + cache,
+      success: function (data) {
+        $('<style></style>').appendTo('head').html(data);
+      },
+      error: function () {
+        if (fallbackFilename) {
+          console.log(
+            'Geen custom css gevonden: ' +
+              filename +
+              '. Terugvallen op: ' +
+              fallbackFilename
+          );
+          // Probeer het standaard terugvalbestand (custom.css)
+          $.ajax({
+            url: fallbackFilename + '?v=' + cache,
+            success: function (data) {
+              $('<style></style>').appendTo('head').html(data);
+            },
+            error: function () {
+              console.log(
+                'No valid custom css file: ' + fallbackFilename + '. Skipping.'
+              );
+            },
+          });
+        } else {
+          console.log('No valid custom css file: ' + filename + '. Skipping.');
+        }
+      },
+    });
+  }
+
+  var folder = _CFG.customfolder;
+
+  if (_PARAMS['css']) {
+    // Expliciete ?css=-parameter overschrijft altijd alles.
+    injectCss(folder + '/' + _PARAMS['css']);
+  } else if (_PARAMS['cfg']) {
+    // Wanneer ?cfg=CONFIGx.js gebruikt wordt, probeer dan automatisch customx.css
+    // te laden. Als customx.css niet bestaat, wordt teruggevallen op custom.css.
+    // Voorbeeld: ?cfg=CONFIG2.js -> probeert eerst custom2.css, dan custom.css.
+    // custom.css / customx.css overschrijft altijd het actieve thema.
+    var suffix = _PARAMS['cfg']
+      .replace(/^CONFIG/i, '')
+      .replace(/\.js$/i, '');
+    var derivedCss = folder + '/custom' + suffix + '.css';
+    var fallbackCss = folder + '/custom.css';
+    injectCss(derivedCss, fallbackCss);
+  } else {
+    // Standaard: laad custom.css. Als dat niet bestaat, blijft het thema actief.
+    injectCss(folder + '/custom.css');
+  }
 }
 
 function enableLogRocket(enable_logrocket) {
