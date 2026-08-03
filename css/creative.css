@@ -1250,6 +1250,7 @@ body.dle-active {
 
 .dle-block {
   position: relative;
+  overflow: visible !important;
   outline: 2px dashed rgba(13, 110, 253, 0.9);
   outline-offset: -2px;
 }
@@ -1322,6 +1323,8 @@ body.dle-active {
 }
 
 .dle-remove-button .fas {
+  display: inline-block;
+  width: 1em;
   margin: 0 !important;
   font-size: 16px !important;
 }
