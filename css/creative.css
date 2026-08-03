@@ -1527,9 +1527,13 @@ body.dle-active {
 
 .de-device-options {
   display: flex;
-  flex: 0 0 auto;
+  flex: 0 0 260px;
   align-items: center;
   gap: 8px;
+}
+
+.de-widget-options {
+  visibility: hidden;
 }
 
 @media (max-width: 1100px) {
