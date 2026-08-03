@@ -1422,7 +1422,7 @@ body.dle-active {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 240px;
+  max-height: 288px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -1463,6 +1463,14 @@ body.dle-active {
   justify-content: center;
   width: 31px;
   color: #6c757d;
+}
+
+.de-remove-btn {
+  box-sizing: border-box;
+  flex: 0 0 31px;
+  width: 31px;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .de-device-idx {
