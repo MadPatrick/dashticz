@@ -1366,7 +1366,7 @@ function configwriter_device_block_props($device, $defaultWidth = 3)
     }
     /* For groups/scenes the block key is the scene reference (e.g. 's1'),
      * so no idx property is needed in the block definition itself. */
-    if ($isGroup && !isset($props['title'])) {
+    if ($isGroup) {
         $props['title'] = $title;
     }
 
