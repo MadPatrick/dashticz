@@ -745,9 +745,8 @@ function prepareStart() {
 }
 
 function loadCustomCss() {
-  // Hulpfunctie: laad een CSS-bestand als inline <style>-blok.
-  // Als het bestand niet gevonden wordt en er een terugvalbestand (fallbackFilename)
-  // opgegeven is, wordt dat bestand alsnog geprobeerd.
+  // Helper: inject a CSS file as an inline <style> block.
+  // If the file is not found and a fallbackFilename is provided, that file is tried instead.
   function injectCss(filename, fallbackFilename) {
     $.ajax({
       url: filename + '?v=' + cache,
@@ -757,12 +756,12 @@ function loadCustomCss() {
       error: function () {
         if (fallbackFilename) {
           console.log(
-            'Geen custom css gevonden: ' +
+            'No custom css found: ' +
               filename +
-              '. Terugvallen op: ' +
+              '. Falling back to: ' +
               fallbackFilename
           );
-          // Probeer het standaard terugvalbestand (custom.css)
+          // Try the default fallback file (custom.css)
           $.ajax({
             url: fallbackFilename + '?v=' + cache,
             success: function (data) {
@@ -784,13 +783,13 @@ function loadCustomCss() {
   var folder = _CFG.customfolder;
 
   if (_PARAMS['css']) {
-    // Expliciete ?css=-parameter overschrijft altijd alles.
+    // Explicit ?css= parameter always takes precedence over everything.
     injectCss(folder + '/' + _PARAMS['css']);
   } else if (_PARAMS['cfg']) {
-    // Wanneer ?cfg=CONFIGx.js gebruikt wordt, probeer dan automatisch customx.css
-    // te laden. Als customx.css niet bestaat, wordt teruggevallen op custom.css.
-    // Voorbeeld: ?cfg=CONFIG2.js -> probeert eerst custom2.css, dan custom.css.
-    // custom.css / customx.css overschrijft altijd het actieve thema.
+    // When ?cfg=CONFIGx.js is used, automatically try to load customx.css.
+    // If customx.css does not exist, fall back to custom.css.
+    // Example: ?cfg=CONFIG2.js -> tries custom2.css first, then custom.css.
+    // custom.css / customx.css always overrides the active theme.
     var suffix = _PARAMS['cfg']
       .replace(/^CONFIG/i, '')
       .replace(/\.js$/i, '');
@@ -798,7 +797,7 @@ function loadCustomCss() {
     var fallbackCss = folder + '/custom.css';
     injectCss(derivedCss, fallbackCss);
   } else {
-    // Standaard: laad custom.css. Als dat niet bestaat, blijft het thema actief.
+    // Default: load custom.css. If it does not exist, the active theme remains in effect.
     injectCss(folder + '/custom.css');
   }
 }
