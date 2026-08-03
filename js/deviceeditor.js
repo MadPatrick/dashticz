@@ -828,16 +828,16 @@ var DashticzDeviceEditor = (function () {
     html += '<span class="de-device-idx">IDX\u00a0' + _esc(dispIdx) + '</span>';
     html += '<span class="de-device-name">' + name + (!isGroup && p.subidx ? '\u00a0(' + p.subidx + ')' : '') + '</span>';
     if (type) html += '<span class="de-device-type">' + type + '</span>';
-    html += '<span class="de-device-field de-title-field">';
-    html += '<label for="de-title-' + _esc(ck) + '">' + _esc(t.title) + '</label>';
-    html += '<input type="text" id="de-title-' + _esc(ck) + '" class="form-control form-control-sm de-device-title" ';
-    html += 'data-ck="' + _esc(ck) + '" value="' + _esc(deviceTitles[ck] || '') + '">';
-    html += '</span>';
     html += '<span class="de-device-field de-width-wrap">';
     html += '<label for="de-width-' + _esc(ck) + '">' + _esc(t.width) + '</label>';
     html += '<input type="number" id="de-width-' + _esc(ck) + '" class="form-control form-control-sm de-device-width" ';
     html += 'data-ck="' + _esc(ck) + '" data-order-key="' + _esc(orderKey) +
       '" min="1" max="12" value="' + _parseWidth(deviceWidths[ck]) + '">';
+    html += '</span>';
+    html += '<span class="de-device-field de-title-field">';
+    html += '<label for="de-title-' + _esc(ck) + '">' + _esc(t.title) + '</label>';
+    html += '<input type="text" id="de-title-' + _esc(ck) + '" class="form-control form-control-sm de-device-title" ';
+    html += 'data-ck="' + _esc(ck) + '" value="' + _esc(deviceTitles[ck] || '') + '">';
     html += '</span>';
     ['icon', 'hide_data', 'last_update', 'switch'].forEach(function (option) {
       html += '<label class="de-option-field"><input type="checkbox" class="de-device-option" ';
