@@ -2129,19 +2129,18 @@ function bindThemePicker() {
     _updateThemeCustomLabel();
   });
 
-  // When the user selects the plain (non-custom) version of the current theme,
-  // clear all CSS variable overrides so colors reset to theme defaults.
+  // When the user selects a different theme (or the default theme), clear all
+  // CSS variable overrides so colors reset to the chosen theme's defaults.
   $select.off('change.themepicker').on('change.themepicker', function () {
     var chosen = String($select.val() || '');
-    if (chosen === currentTheme) {
-      // User picked the original theme — clear all overrides.
+    if (chosen !== currentTheme) {
+      // User picked a different theme — clear all overrides.
       $('#settingspopup .settings-cssvar-input').each(function () {
         var varName = String($(this).data('cssvar') || '');
         if (!varName) return;
-        var themeDefault = _getComputedCssVar(varName);
-        $(this).val(themeDefault);
+        $(this).val('');
         var $swatch = $('#settingspopup #' + $.escapeSelector($(this).attr('id') + '-swatch'));
-        if ($swatch.length) _syncSwatchFromText($swatch, themeDefault);
+        if ($swatch.length) _syncSwatchFromText($swatch, '');
       });
       _updateThemeCustomLabel();
     }
