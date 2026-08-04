@@ -503,6 +503,13 @@ next css sets the default height of the frame popup
   font-size: 14px;
 }
 
+.settings-category-back,
+.settings-widget-back {
+  background: #d9f2d9;
+  border-color: #b7dfb7;
+  color: #2f5f2f;
+}
+
 .config-mode-switch {
   display: inline-flex;
   align-items: stretch;

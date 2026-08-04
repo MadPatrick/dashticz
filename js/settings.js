@@ -53,21 +53,6 @@ settingList.general = {
     type: 'text',
     help: language.settings.general.domoticz_timeout_help
   },
-  auto_positioning: {
-    title: language.settings.general.auto_positioning,
-    type: 'checkbox',
-    help: language.settings.general.auto_positioning_help
-  },
-  use_favorites: {
-    title: language.settings.general.use_favorites,
-    type: 'checkbox',
-    help: language.settings.general.use_favorites_help
-  },
-  use_hidden: {
-    title: language.settings.general.use_hidden,
-    type: 'checkbox',
-    help: language.settings.general.use_hidden_help
-  },
   room_plan: {
     title: language.settings.general.room_plan,
     type: 'text',
