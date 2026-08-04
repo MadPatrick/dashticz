@@ -1906,10 +1906,17 @@ function _getStoredCssVarOverrides() {
         var vars = _THEME_COLOR_VARS.concat(_THEME_FONT_VARS);
         for (var vi = 0; vi < vars.length; vi++) {
           var v = vars[vi];
-          var pattern = new RegExp(v.replace(/-/g, '\\-') + ':\\s*([^;]+)');
-          var match = cssText.match(pattern);
-          if (match) {
-            overrides[v] = match[1].trim();
+          // Use a literal indexOf search to find the var declaration, avoiding
+          // dynamic RegExp construction with variable input.
+          var declPrefix = v + ':';
+          var declPos = cssText.indexOf(declPrefix);
+          if (declPos !== -1) {
+            var valueStart = declPos + declPrefix.length;
+            var semicolonPos = cssText.indexOf(';', valueStart);
+            var rawValue = semicolonPos !== -1
+              ? cssText.substring(valueStart, semicolonPos)
+              : cssText.substring(valueStart);
+            overrides[v] = rawValue.trim();
           }
         }
       }
