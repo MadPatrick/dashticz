@@ -767,6 +767,7 @@ settingList['theme'] = {
   theme: {
     title: language.settings.screen.dashticz_themes,
     type: 'select',
+    noEmptyOption: true,
     options: {
       default: language.settings.screen.default_theme,
     },
@@ -1183,7 +1184,9 @@ function renderSettingsRow(settingName, definition) {
       '" name="' +
       escapeSettingsHtml(settingName) +
       '" class="form-select">';
-    html += '<option value=""></option>';
+    if (!definition.noEmptyOption) {
+      html += '<option value=""></option>';
+    }
     for (var optionValue in definition.options) {
       html +=
         '<option value="' +
@@ -2025,6 +2028,9 @@ function bindThemeCssVarControls() {
       _syncSwatchFromText($swatch, $input.val());
     }
   });
+
+  // Reflect "(custom)" state in the theme dropdown when panel first opens.
+  _updateThemeCustomLabel();
 }
 
 function _syncSwatchFromText($swatch, value) {
@@ -2120,7 +2126,50 @@ function bindThemePicker() {
       addThemeOption(themeName, '');
     });
     $select.val(currentTheme);
+    _updateThemeCustomLabel();
   });
+
+  // When the user selects the plain (non-custom) version of the current theme,
+  // clear all CSS variable overrides so colors reset to theme defaults.
+  $select.off('change.themepicker').on('change.themepicker', function () {
+    var chosen = String($select.val() || '');
+    if (chosen === currentTheme) {
+      // User picked the original theme — clear all overrides.
+      $('#settingspopup .settings-cssvar-input').each(function () {
+        var varName = String($(this).data('cssvar') || '');
+        if (!varName) return;
+        var themeDefault = _getComputedCssVar(varName);
+        $(this).val(themeDefault);
+        var $swatch = $('#settingspopup #' + $.escapeSelector($(this).attr('id') + '-swatch'));
+        if ($swatch.length) _syncSwatchFromText($swatch, themeDefault);
+      });
+      _updateThemeCustomLabel();
+    }
+  });
+}
+
+// Returns true when custom.css currently contains any dashticz-theme-vars overrides.
+function _hasThemeCssVarCustomizations() {
+  var overrides = _getStoredCssVarOverrides();
+  return Object.keys(overrides).length > 0;
+}
+
+// Add or remove the "(custom)" marker on the currently-selected theme option.
+function _updateThemeCustomLabel() {
+  var $select = $('#settingspopup #setting-theme');
+  if (!$select.length) return;
+  var currentTheme = String(settings['theme'] || 'default');
+  var isCustom = _hasThemeCssVarCustomizations();
+  var $currentOpt = $select.find('option[value="' + currentTheme + '"]');
+  if ($currentOpt.length) {
+    $currentOpt.text(
+      themeOptionLabel(currentTheme) + (isCustom ? ' (custom)' : '')
+    );
+  }
+  // Ensure the select shows the right entry.
+  if ($select.val() === currentTheme || !$select.val()) {
+    $select.val(currentTheme);
+  }
 }
 
 function bindBackgroundPickers() {
