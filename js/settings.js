@@ -2129,12 +2129,15 @@ function bindThemePicker() {
     _updateThemeCustomLabel();
   });
 
-  // When the user selects a different theme (or the default theme), clear all
-  // CSS variable overrides so colors reset to the chosen theme's defaults.
+  // When the user selects a different theme or the reset-to-original sentinel,
+  // clear all CSS variable overrides so colors reset to the chosen theme's defaults.
   $select.off('change.themepicker').on('change.themepicker', function () {
     var chosen = String($select.val() || '');
-    if (chosen !== currentTheme) {
-      // User picked a different theme — clear all overrides.
+    var isReset = chosen.slice(-9) === '__reset__';
+    var chosenTheme = isReset ? chosen.slice(0, -9) : chosen;
+
+    if (isReset || chosenTheme !== currentTheme) {
+      // Clear all override inputs.
       $('#settingspopup .settings-cssvar-input').each(function () {
         var varName = String($(this).data('cssvar') || '');
         if (!varName) return;
@@ -2142,7 +2145,14 @@ function bindThemePicker() {
         var $swatch = $('#settingspopup #' + $.escapeSelector($(this).attr('id') + '-swatch'));
         if ($swatch.length) _syncSwatchFromText($swatch, '');
       });
-      _updateThemeCustomLabel();
+
+      if (isReset) {
+        // Stay on the same theme — set the select back to the plain theme value.
+        $select.val(chosenTheme);
+        _updateThemeCustomLabel();
+      } else {
+        _updateThemeCustomLabel();
+      }
     }
   });
 }
@@ -2153,20 +2163,36 @@ function _hasThemeCssVarCustomizations() {
   return Object.keys(overrides).length > 0;
 }
 
-// Add or remove the "(custom)" marker on the currently-selected theme option.
+// Add or remove the "(custom)" marker on the currently-selected theme option,
+// and insert/remove a "… (original)" sibling option that lets the user revert.
 function _updateThemeCustomLabel() {
   var $select = $('#settingspopup #setting-theme');
   if (!$select.length) return;
   var currentTheme = String(settings['theme'] || 'default');
   var isCustom = _hasThemeCssVarCustomizations();
+  var resetVal = currentTheme + '__reset__';
+
   var $currentOpt = $select.find('option[value="' + currentTheme + '"]');
   if ($currentOpt.length) {
     $currentOpt.text(
       themeOptionLabel(currentTheme) + (isCustom ? ' (custom)' : '')
     );
   }
+
+  // Remove any stale reset option (e.g. after the user already reverted).
+  $select.find('option[value="' + resetVal + '"]').remove();
+
+  // When there are customisations, insert a plain-label sibling right after
+  // the "(custom)" option so the user can pick it to revert to the original.
+  if (isCustom && $currentOpt.length) {
+    $('<option></option>')
+      .attr('value', resetVal)
+      .text(themeOptionLabel(currentTheme))
+      .insertAfter($currentOpt);
+  }
+
   // Ensure the select shows the right entry.
-  if ($select.val() === currentTheme || !$select.val()) {
+  if ($select.val() === currentTheme || $select.val() === resetVal || !$select.val()) {
     $select.val(currentTheme);
   }
 }
@@ -2560,6 +2586,10 @@ function saveSettings() {
           return;
         }
       var val = $(this).val();
+      // Strip the __reset__ sentinel in case it is somehow still selected at save time.
+      if (typeof val === 'string' && val.slice(-9) === '__reset__') {
+        val = val.slice(0, -9);
+      }
       if (isNumeric(val))
         val = parseFloat(val);
       var settingName = $(this).attr('name');
