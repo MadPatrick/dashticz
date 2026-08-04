@@ -5,6 +5,16 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
+v3.30.1 beta (4-8-2026)
+
+* **Enhancements
+
+- Added a new **Theme** category to the settings menu.
+- Moved Dashticz theme selector, background image picker, and Pad/URL from the Screen settings to the Theme settings.
+- Added color pickers for CSS custom properties (``--main-bg``, ``--home-bg``, ``--border-color-*``, ``--button-*``, ``--text-*``, ``--selector-bg``, ``--blocktitle``) in the Theme panel.
+- Added font-size inputs for ``--font-small`` and ``--font-large``.
+- Color and font overrides are written to ``custom/custom.css`` (inside a ``/* dashticz-theme-vars */`` block) so they take effect on top of the active theme without touching ``CONFIG.js``.
+
 v3.30.0 beta (4-8-2026)
 
 * **Changes

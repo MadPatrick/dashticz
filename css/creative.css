@@ -651,6 +651,39 @@ next css sets the default height of the frame popup
   color: #495057;
 }
 
+.settings-section-heading {
+  margin: 18px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, .1);
+  font-size: 13px;
+  font-weight: 700;
+  color: #495057;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.settings-cssvar-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-cssvar-swatch {
+  flex-shrink: 0;
+  width: 36px;
+  height: 34px;
+  padding: 2px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+.settings-cssvar-control .settings-cssvar-input {
+  flex: 1;
+  min-width: 0;
+}
+
 .topbar-settings-wrap .settings {
   vertical-align: middle;
 }

@@ -1,7 +1,7 @@
 {
-    "version": "3.30.0",
+    "version": "3.30.1",
     "branch": "beta",
-    "last_changes": "Fix topbar block order so custom bars render blocks in config order",
+    "last_changes": "Add Theme settings panel with CSS variable color overrides written to custom.css",
     "changelog": {
         "3.30.0": "Dashticz cumulative cleanup and fixes",
         "3.23.7": "Fix topbar block order so custom bars render blocks in config order",
@@ -40,6 +40,7 @@
         "3.22.4": "Widget titles always reflect the active language, ignoring any hardcoded title in CONFIG.js",
         "3.22.5": "Device Editor: add Domoticz groups and scenes to the device list",
         "3.22.6": "Device Editor: sort available devices as Groups, Scenes, then Devices",
-        "3.23.2": "Fix topbar custom icon selector: rename to Custom iconen, invert logic so ON=custom PNG and OFF=Font Awesome"
+        "3.23.2": "Fix topbar custom icon selector: rename to Custom iconen, invert logic so ON=custom PNG and OFF=Font Awesome",
+        "3.30.1": "Add Theme settings panel with CSS variable color overrides written to custom.css"
     }
 }
