@@ -1392,17 +1392,19 @@ function renderSettingsCategoryHome() {
       '" data-settings-panel="' +
       escapeSettingsHtml(id) +
       '">';
-    html +=
-      '<button type="button" class="btn btn-sm btn-outline-secondary settings-category-back mb-3">' +
-      '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' +
-      escapeSettingsHtml(backLabel) +
-      '</button>';
+    html += '<div class="settings-panel-header">';
     html +=
       '<h5 class="settings-panel-title"><i class="' +
       escapeSettingsHtml(icon) +
       ' me-2" aria-hidden="true"></i>' +
       escapeSettingsHtml(title) +
       '</h5>';
+    html +=
+      '<button type="button" class="btn btn-sm btn-outline-secondary settings-category-back">' +
+      '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' +
+      escapeSettingsHtml(backLabel) +
+      '</button>';
+    html += '</div>';
     if (id === 'widgets') {
       html += renderWidgetSettingsTab();
     } else {
@@ -1568,17 +1570,19 @@ function renderWidgetSettingsTab() {
       '" data-widget-panel="' +
       escapeSettingsHtml(tile.id) +
       '">';
-    html +=
-      '<button type="button" class="btn btn-sm btn-outline-secondary settings-widget-back mb-3">' +
-      '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' +
-      escapeSettingsHtml(backLabel) +
-      '</button>';
+    html += '<div class="settings-panel-header">';
     html +=
       '<h5 class="settings-panel-title settings-widget-panel-title"><i class="' +
       escapeSettingsHtml(tile.icon) +
       ' me-2" aria-hidden="true"></i>' +
       escapeSettingsHtml(tile.title) +
       '</h5>';
+    html +=
+      '<button type="button" class="btn btn-sm btn-outline-secondary settings-widget-back">' +
+      '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' +
+      escapeSettingsHtml(backLabel) +
+      '</button>';
+    html += '</div>';
     if (tile.id === 'weather') {
       html += renderWeatherWidgetSettings(tile);
     } else if (tile.id === 'clock') {
