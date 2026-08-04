@@ -5,6 +5,12 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
+v3.30.2 beta (4-8-2026)
+
+* **Fixes**
+
+- Theme settings: after selecting the "original" (reset) option, the reset entry no longer reappears in the dropdown while the panel is still open.
+
 v3.30.1 beta (4-8-2026)
 
 * **Enhancements

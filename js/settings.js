@@ -2149,7 +2149,9 @@ function bindThemePicker() {
       if (isReset) {
         // Stay on the same theme — set the select back to the plain theme value.
         $select.val(chosenTheme);
-        _updateThemeCustomLabel();
+        // Pass forceNoCustom=true so the reset option is not re-added before the
+        // overrides have been saved; the inputs were just cleared above.
+        _updateThemeCustomLabel(true);
       } else {
         _updateThemeCustomLabel();
       }
@@ -2165,11 +2167,13 @@ function _hasThemeCssVarCustomizations() {
 
 // Add or remove the "(custom)" marker on the currently-selected theme option,
 // and insert/remove a "… (original)" sibling option that lets the user revert.
-function _updateThemeCustomLabel() {
+// Pass forceNoCustom=true to treat the state as having no customisations (e.g.
+// immediately after the user picked the reset option, before saving).
+function _updateThemeCustomLabel(forceNoCustom) {
   var $select = $('#settingspopup #setting-theme');
   if (!$select.length) return;
   var currentTheme = String(settings['theme'] || 'default');
-  var isCustom = _hasThemeCssVarCustomizations();
+  var isCustom = forceNoCustom ? false : _hasThemeCssVarCustomizations();
   var resetVal = currentTheme + '__reset__';
 
   var $currentOpt = $select.find('option[value="' + currentTheme + '"]');
