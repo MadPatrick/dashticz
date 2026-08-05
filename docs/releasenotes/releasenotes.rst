@@ -11,15 +11,28 @@ v3.30.2 beta (4-8-2026)
 
 - Theme settings: after selecting the "original" (reset) option, the reset entry no longer reappears in the dropdown while the panel is still open.
 
-v3.30.1 beta (4-8-2026)
+v3.30.1 beta (5-8-2026)
 
 * **Enhancements
 
+- Switching from Custom mode to Wizard mode now shows a clear warning that the
+  current dashboard configuration will be removed and a clean page will be
+  created.
 - Added a new **Theme** category to the settings menu.
 - Moved Dashticz theme selector, background image picker, and Pad/URL from the Screen settings to the Theme settings.
 - Added color pickers for CSS custom properties (``--main-bg``, ``--home-bg``, ``--border-color-*``, ``--button-*``, ``--text-*``, ``--selector-bg``, ``--blocktitle``) in the Theme panel.
 - Added font-size inputs for ``--font-small`` and ``--font-large``.
 - Color and font overrides are written to ``custom/custom.css`` (inside a ``/* dashticz-theme-vars */`` block) so they take effect on top of the active theme without touching ``CONFIG.js``.
+
+* **Fixes
+
+- When switching from Custom mode to Wizard mode, `CONFIG.js` now removes all
+  Blocks, Columns and Screens while keeping the existing config settings.
+
+* **Code
+
+- Limited the mode-switch change to the Wizard confirmation text and the
+  configuration cleanup written by `saveconfigmode.php`.
 
 v3.30.0 beta (4-8-2026)
 

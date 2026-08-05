@@ -903,6 +903,15 @@ test('config_mode auto-detects as custom when absent from CONFIG.js', () => {
   assert.equal(customMode.autoDetected, false);
 });
 
+test('wizard cleanup also removes standby screen definitions from CONFIG.js', () => {
+  const source = fs.readFileSync(path.join(root, 'js/configwriter.php'), 'utf8');
+
+  assert.match(source, /\/\/ \[standby-editor-start\]/);
+  assert.match(source, /\/\/ \[standby-editor-end\]/);
+  assert.match(source, /configwriter_strip_legacy_columns_standby\(\\?\$config\)/);
+  assert.match(source, /(?:blocks\|columns\|screens\|columns_standby)/);
+});
+
 test('UI dependencies use the maintained compatibility versions', () => {
   const packageJson = JSON.parse(
     fs.readFileSync(path.join(root, 'package.json'), 'utf8')
@@ -1252,6 +1261,23 @@ test('garbage dates use the selected interface language', () => {
 
   assert.match(garbage, /garbage\.date\.locale\(settings\['language'\]\)/);
   assert.match(garbage, /localizedDate\.format\('dddd'\)/);
+});
+
+
+test('timegraph uses Chart.js 4 x/y time points', () => {
+  const source = fs.readFileSync(
+    path.join(root, 'js/components/timegraph.js'),
+    'utf8'
+  );
+
+  assert.match(source, /\.data\[length - 1\]\.x = timestamp\.valueOf\(\)/);
+  assert.match(source, /x: timestamp\.valueOf\(\)/);
+  assert.match(source, /data\.x = timestamp\.valueOf\(\) \+ 10000/);
+  assert.match(source, /var d = \{ y: data\.y, x: timestamp\.valueOf\(\) \+ 10000 \}/);
+  assert.match(source, /dataset\.data\[1\]\.x < minTime/);
+  assert.doesNotMatch(source, /\.data\[length - 1\]\.t\s*=/);
+  assert.doesNotMatch(source, /\bt:\s*timestamp/);
+  assert.doesNotMatch(source, /dataset\.data\[1\]\.t/);
 });
 
 test('migration sources use LF line endings', () => {
