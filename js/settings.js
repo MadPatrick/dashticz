@@ -2016,7 +2016,7 @@ function bindThemeCssVarControls() {
     }
     var $alpha = $popup.find('#' + $.escapeSelector($input.attr('id') + '-alpha'));
     if ($alpha.length) {
-      $alpha.val(Math.round(_cssValueToAlpha(value) * 100));
+      $alpha.val(Math.round(_extractCssAlpha(value) * 100));
     }
   });
 
@@ -2052,7 +2052,7 @@ function bindThemeCssVarControls() {
     }
     var $alpha = $popup.find('#' + $.escapeSelector($input.attr('id') + '-alpha'));
     if ($alpha.length) {
-      $alpha.val(Math.round(_cssValueToAlpha($input.val()) * 100));
+      $alpha.val(Math.round(_extractCssAlpha($input.val()) * 100));
     }
   });
 
@@ -2069,30 +2069,31 @@ function _syncSwatchFromText($swatch, value) {
   }
 }
 
-function _cssValueToAlpha(value) {
-    var normalized = String(value || '').trim();
-    if (!normalized) return 1;
-    try {
-      var el = document.createElement('div');
-      el.style.color = normalized;
-      document.body.appendChild(el);
-      var computed = getComputedStyle(el).color;
-      document.body.removeChild(el);
-      var match = computed.match(/^rgba?\([^,]+,\s*[^,]+,\s*[^,]+(?:,\s*([0-9.]+))?\)$/);
-      return match && match[1] ? Math.max(0, Math.min(1, parseFloat(match[1]))) : 1;
-    } catch (e) {
-      return 1;
-    }
+function _extractCssAlpha(value) {
+  var normalized = String(value || '').trim();
+  if (!normalized) return 1;
+  try {
+    var el = document.createElement('div');
+    el.style.color = normalized;
+    if (!el.style.color) return 1;
+    document.body.appendChild(el);
+    var computed = getComputedStyle(el).color;
+    document.body.removeChild(el);
+    var match = computed.match(/^rgba?\([^,]+,\s*[^,]+,\s*[^,]+(?:,\s*([0-9.]+))?\)$/);
+    return match && match[1] ? Math.max(0, Math.min(1, parseFloat(match[1]))) : 1;
+  } catch (e) {
+    return 1;
   }
+}
 
 function _getCssVarAlpha($popup, textId) {
-    var $alpha = $popup.find('#' + $.escapeSelector(textId + '-alpha'));
-    return $alpha.length ? parseInt($alpha.val(), 10) / 100 : 1;
-  }
+  var $alpha = $popup.find('#' + $.escapeSelector(textId + '-alpha'));
+  return $alpha.length ? parseInt($alpha.val(), 10) / 100 : 1;
+}
 
 function _hexToRgba(hex, alpha) {
   var normalized = String(hex || '').replace('#', '');
-  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return '';
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return String(hex || '');
   return 'rgba(' +
     parseInt(normalized.substring(0, 2), 16) + ', ' +
     parseInt(normalized.substring(2, 4), 16) + ', ' +
