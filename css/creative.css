@@ -176,6 +176,49 @@
   margin: 5px 5px;
 }
 
+.dt-text-align-left .dt_block,
+.dt-text-align-left .dt_title,
+.dt-text-align-left .title,
+.dt-text-align-left .dt_state,
+.dt-text-align-left .state,
+.dt-text-align-left .value,
+.dt-text-align-left .lastupdate,
+.dt-text-align-left .titlegroups h3,
+.dt-text-align-left .SonarrBigTitle {
+  text-align: left;
+}
+
+.dt-text-align-center .dt_block,
+.dt-text-align-center .dt_title,
+.dt-text-align-center .title,
+.dt-text-align-center .dt_state,
+.dt-text-align-center .state,
+.dt-text-align-center .value,
+.dt-text-align-center .lastupdate,
+.dt-text-align-center .titlegroups h3,
+.dt-text-align-center .SonarrBigTitle {
+  text-align: center;
+}
+
+.dt-text-align-right .dt_block,
+.dt-text-align-right .dt_title,
+.dt-text-align-right .title,
+.dt-text-align-right .dt_state,
+.dt-text-align-right .state,
+.dt-text-align-right .value,
+.dt-text-align-right .lastupdate,
+.dt-text-align-right .titlegroups h3,
+.dt-text-align-right .SonarrBigTitle {
+  text-align: right;
+}
+
+.dt-hide-title .dt_title,
+.dt-hide-title .title,
+.dt-hide-title .titlegroups h3,
+.dt-hide-title .SonarrBigTitle {
+  display: none !important;
+}
+
 .dt_state {
   margin: 5px 5px;
   min-height: 1px;
@@ -1613,6 +1656,7 @@ body.dle-active {
   margin: 0;
   font-size: 11px;
   color: #6c757d;
+  text-align: center;
 }
 
 .de-device-width {
@@ -1627,6 +1671,10 @@ body.dle-active {
   width: 180px;
 }
 
+.de-align-field {
+  width: 92px;
+}
+
 .de-device-title {
   width: 100%;
   min-width: 0;
@@ -1634,13 +1682,9 @@ body.dle-active {
 
 .de-device-options {
   display: flex;
-  flex: 0 0 260px;
-  align-items: center;
+  flex: 0 0 310px;
+  align-items: flex-start;
   gap: 8px;
-}
-
-.de-widget-options {
-  visibility: hidden;
 }
 
 @media (max-width: 1100px) {
@@ -1675,12 +1719,15 @@ body.dle-active {
 
 .de-option-field {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  gap: 3px;
+  justify-content: flex-start;
+  gap: 2px;
   margin: 0;
   font-size: 11px;
   color: #6c757d;
   white-space: nowrap;
+  text-align: center;
 }
 
 .de-option-field input {
@@ -1715,16 +1762,7 @@ body.dle-active {
 
 /* Title blocks have no display options, so keep an invisible option column
  * to align Width, Title and Remove with the other Device Editor rows. */
-.de-special-options-spacer {
-  visibility: hidden;
-  pointer-events: none;
-}
-
 @media (max-width: 767.98px) {
-  .de-special-options-spacer {
-    display: none;
-  }
-
   .de-special-item .de-width-wrap {
     margin-left: auto;
   }
