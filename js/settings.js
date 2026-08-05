@@ -1961,7 +1961,8 @@ function renderThemeSettingsPanel() {
       escapeSettingsHtml(inputId) + '-swatch" aria-hidden="true" tabindex="-1">';
     html += '<input type="range" class="settings-cssvar-alpha" id="' +
       escapeSettingsHtml(inputId) + '-alpha" min="0" max="100" step="1" ' +
-      'aria-label="Transparency" title="Transparency">';
+      'aria-label="' + escapeSettingsHtml('Transparency for ' + _themeCssVarLabel(varName)) +
+      '" title="' + escapeSettingsHtml('Transparency for ' + _themeCssVarLabel(varName)) + '">';
     html += '<input type="text" class="form-control settings-cssvar-input" ' +
       'id="' + escapeSettingsHtml(inputId) + '" ' +
       'data-cssvar="' + escapeSettingsHtml(varName) + '" ' +
@@ -2066,8 +2067,9 @@ function _syncSwatchFromText($swatch, value) {
   if (hex) {
     $swatch.val(hex);
   }
+}
 
-  function _cssValueToAlpha(value) {
+function _cssValueToAlpha(value) {
     var normalized = String(value || '').trim();
     if (!normalized) return 1;
     try {
@@ -2083,19 +2085,19 @@ function _syncSwatchFromText($swatch, value) {
     }
   }
 
-  function _getCssVarAlpha($popup, textId) {
+function _getCssVarAlpha($popup, textId) {
     var $alpha = $popup.find('#' + $.escapeSelector(textId + '-alpha'));
     return $alpha.length ? parseInt($alpha.val(), 10) / 100 : 1;
   }
 
-  function _hexToRgba(hex, alpha) {
-    var normalized = String(hex || '').replace('#', '');
-    return 'rgba(' +
-      parseInt(normalized.substring(0, 2), 16) + ', ' +
-      parseInt(normalized.substring(2, 4), 16) + ', ' +
-      parseInt(normalized.substring(4, 6), 16) + ', ' +
-      alpha.toFixed(2) + ')';
-  }
+function _hexToRgba(hex, alpha) {
+  var normalized = String(hex || '').replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return '';
+  return 'rgba(' +
+    parseInt(normalized.substring(0, 2), 16) + ', ' +
+    parseInt(normalized.substring(2, 4), 16) + ', ' +
+    parseInt(normalized.substring(4, 6), 16) + ', ' +
+    alpha.toFixed(2) + ')';
 }
 
 function _cssValueToHex(value) {
