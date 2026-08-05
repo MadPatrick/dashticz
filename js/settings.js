@@ -1882,7 +1882,7 @@ var _THEME_FONT_VARS = [
 // Labels for CSS variables (fall back to the var name itself).
 function _themeCssVarLabel(varName) {
   var themeLabels = (language.settings.theme && language.settings.theme.vars) || {};
-  return themeLabels[varName] || varName;
+  return String(themeLabels[varName] || varName).replace(/\s*\(--[^)]*\)\s*$/, '');
 }
 
 // Read the current value of a CSS custom property from the document root.
@@ -1950,6 +1950,7 @@ function renderThemeSettingsPanel() {
     escapeSettingsHtml(colorSectionLabel) + '</div>';
 
   // Color variable rows.
+  html += '<div class="settings-theme-color-grid">';
   _THEME_COLOR_VARS.forEach(function (varName) {
     var inputId = 'setting-cssvar-' + varName.replace(/^--/, '').replace(/-/g, '_');
     html += '<div class="settings-row settings-cssvar-row">';
@@ -1958,6 +1959,10 @@ function renderThemeSettingsPanel() {
     html += '<div class="settings-control settings-cssvar-control">';
     html += '<input type="color" class="settings-cssvar-swatch" id="' +
       escapeSettingsHtml(inputId) + '-swatch" aria-hidden="true" tabindex="-1">';
+    html += '<input type="range" class="settings-cssvar-alpha" id="' +
+      escapeSettingsHtml(inputId) + '-alpha" min="0" max="100" step="1" ' +
+      'aria-label="' + escapeSettingsHtml('Transparency for ' + _themeCssVarLabel(varName)) +
+      '" title="' + escapeSettingsHtml('Transparency for ' + _themeCssVarLabel(varName)) + '">';
     html += '<input type="text" class="form-control settings-cssvar-input" ' +
       'id="' + escapeSettingsHtml(inputId) + '" ' +
       'data-cssvar="' + escapeSettingsHtml(varName) + '" ' +
@@ -1966,6 +1971,7 @@ function renderThemeSettingsPanel() {
     html += '</div>';
     html += '<div class="settings-help-slot"></div></div>';
   });
+  html += '</div>';
 
   // Font size section heading.
   html += '<div class="settings-section-heading">' +
@@ -2008,6 +2014,10 @@ function bindThemeCssVarControls() {
     if ($swatch.length) {
       _syncSwatchFromText($swatch, value);
     }
+    var $alpha = $popup.find('#' + $.escapeSelector($input.attr('id') + '-alpha'));
+    if ($alpha.length) {
+      $alpha.val(Math.round(_extractCssAlpha(value) * 100));
+    }
   });
 
   // Swatch → text input sync.
@@ -2016,7 +2026,20 @@ function bindThemeCssVarControls() {
     var textId  = $swatch.attr('id').replace(/-swatch$/, '');
     var $text   = $popup.find('#' + $.escapeSelector(textId));
     if ($text.length) {
-      $text.val($swatch.val());
+      var alpha = _getCssVarAlpha($popup, textId);
+      $text.val(alpha < 1 ? _hexToRgba($swatch.val(), alpha) : $swatch.val());
+    }
+  });
+
+  // Transparency slider → text input sync.
+  $popup.off('input.cssvar-alpha').on('input.cssvar-alpha', '.settings-cssvar-alpha', function () {
+    var $alpha = $(this);
+    var textId = $alpha.attr('id').replace(/-alpha$/, '');
+    var $text = $popup.find('#' + $.escapeSelector(textId));
+    var $swatch = $popup.find('#' + $.escapeSelector(textId + '-swatch'));
+    if ($text.length && $swatch.length) {
+      var alpha = parseInt($alpha.val(), 10) / 100;
+      $text.val(alpha < 1 ? _hexToRgba($swatch.val(), alpha) : $swatch.val());
     }
   });
 
@@ -2026,6 +2049,10 @@ function bindThemeCssVarControls() {
     var $swatch = $popup.find('#' + $.escapeSelector($input.attr('id') + '-swatch'));
     if ($swatch.length) {
       _syncSwatchFromText($swatch, $input.val());
+    }
+    var $alpha = $popup.find('#' + $.escapeSelector($input.attr('id') + '-alpha'));
+    if ($alpha.length) {
+      $alpha.val(Math.round(_extractCssAlpha($input.val()) * 100));
     }
   });
 
@@ -2040,6 +2067,43 @@ function _syncSwatchFromText($swatch, value) {
   if (hex) {
     $swatch.val(hex);
   }
+}
+
+function _extractCssAlpha(value) {
+  var normalized = String(value || '').trim();
+  if (!normalized) return 1;
+  var el;
+  try {
+    el = document.createElement('div');
+    el.style.color = normalized;
+    if (!el.style.color) return 1;
+    document.body.appendChild(el);
+    var computed = getComputedStyle(el).color;
+    var match = computed.match(
+      /^rgba?\([^,]+,\s*[^,]+,\s*[^,]+(?:,\s*([0-9.]+)|\s*\/\s*([0-9.]+))?\)$/
+    );
+    var alpha = match && (match[1] || match[2]);
+    return alpha ? Math.max(0, Math.min(1, parseFloat(alpha))) : 1;
+  } catch (e) {
+    return 1;
+  } finally {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
+}
+
+function _getCssVarAlpha($popup, textId) {
+  var $alpha = $popup.find('#' + $.escapeSelector(textId + '-alpha'));
+  return $alpha.length ? parseInt($alpha.val(), 10) / 100 : 1;
+}
+
+function _hexToRgba(hex, alpha) {
+  var normalized = String(hex || '').replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return String(hex || '');
+  return 'rgba(' +
+    parseInt(normalized.substring(0, 2), 16) + ', ' +
+    parseInt(normalized.substring(2, 4), 16) + ', ' +
+    parseInt(normalized.substring(4, 6), 16) + ', ' +
+    alpha.toFixed(2) + ')';
 }
 
 function _cssValueToHex(value) {
@@ -2059,7 +2123,7 @@ function _cssValueToHex(value) {
       document.body.appendChild(el);
       var computed = getComputedStyle(el).color;
       document.body.removeChild(el);
-      var m = computed.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      var m = computed.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[0-9.]+)?\)$/);
       if (m) {
         return '#' +
           ('0' + parseInt(m[1], 10).toString(16)).slice(-2) +
@@ -2076,7 +2140,7 @@ function _cssValueToHex(value) {
       document.body.appendChild(el2);
       var computed2 = getComputedStyle(el2).color;
       document.body.removeChild(el2);
-      var m2 = computed2.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+      var m2 = computed2.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[0-9.]+)?\)$/);
       if (m2) {
         return '#' +
           ('0' + parseInt(m2[1], 10).toString(16)).slice(-2) +
