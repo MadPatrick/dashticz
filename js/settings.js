@@ -2072,17 +2072,22 @@ function _syncSwatchFromText($swatch, value) {
 function _extractCssAlpha(value) {
   var normalized = String(value || '').trim();
   if (!normalized) return 1;
+  var el;
   try {
-    var el = document.createElement('div');
+    el = document.createElement('div');
     el.style.color = normalized;
     if (!el.style.color) return 1;
     document.body.appendChild(el);
     var computed = getComputedStyle(el).color;
-    document.body.removeChild(el);
-    var match = computed.match(/^rgba?\([^,]+,\s*[^,]+,\s*[^,]+(?:,\s*([0-9.]+))?\)$/);
-    return match && match[1] ? Math.max(0, Math.min(1, parseFloat(match[1]))) : 1;
+    var match = computed.match(
+      /^rgba?\([^,]+,\s*[^,]+,\s*[^,]+(?:,\s*([0-9.]+)|\s*\/\s*([0-9.]+))?\)$/
+    );
+    var alpha = match && (match[1] || match[2]);
+    return alpha ? Math.max(0, Math.min(1, parseFloat(alpha))) : 1;
   } catch (e) {
     return 1;
+  } finally {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
   }
 }
 
