@@ -216,7 +216,7 @@
 .miniclock {
   max-width: 100% !important;
   height: 40px !important;
-  padding-top: 2px !important;
+  justify-content: center;
   color: var(--text-light) !important;
   font-size: var(--font-large) !important;
   font-weight: 700 !important;
@@ -333,6 +333,13 @@
   border: var(--box-border) !important;
   border-radius: 14px !important;
   background-color: #00aaff !important;
+}
+
+.col-icon img.icon,
+div[class*=" "] .col-icon img {
+    max-width: 30px !important;
+    width: 30px !important;
+    height: auto !important;
 }
 
 .standby .screenstandby {
