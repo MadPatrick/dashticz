@@ -335,13 +335,13 @@
   background-color: #00aaff !important;
 }
 
-.col-icon img.icon,
-div[class*=" "] .col-icon img {
+/* Verklein ALLEEN de afbeeldingen binnen dimmer-/blinds-blokken */
+.mh:has(.slider) .col-icon img,
+.mh:has(.blinds) .col-icon img {
     max-width: 30px !important;
     width: 30px !important;
     height: auto !important;
 }
-
 .standby .screenstandby {
   color: var(--text-light) !important;
   border: 0 !important;
