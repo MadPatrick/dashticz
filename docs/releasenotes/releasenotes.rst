@@ -9,16 +9,26 @@ v3.30.3 beta (5-8-2026)
 
 * **Enhancements**
 
-- Device Editor rows for devices, widgets and helper blocks now include a title
-  on/off checkbox and a left/center/right text-alignment selector.
+- Device Editor rows now use a cog button that opens **Device Config**. The
+  existing Icon, Data, Updated, Switch and Title controls and visual
+  left/center/right alignment buttons are grouped in that popup. The Device
+  Editor is hidden while the popup is open so the configuration always remains
+  in front; it returns after OK or Cancel.
+- Device Config now also contains repeatable Field/Setting rows for typed custom
+  device parameters. Checkboxes are larger and the smaller alignment controls
+  have a visible localized label loaded from ``lang/*.json``.
+- Widget Config now includes Icon, Data, Updated and Title options plus
+  repeatable Field/Setting rows for typed custom block parameters.
 - The generated ``blocks[...]`` definitions now save and reload those settings
   through the existing Device Editor flow, including helper title blocks.
+- Per-device alignment is also maintained in an isolated generated section of
+  ``custom/custom.css`` without replacing hand-written CSS.
 
 * **Code**
 
-- Updated English, Dutch and French Device Editor translations, refreshed the
-  related source/playwright tests, and applied the shared title/alignment
-  classes used when blocks render.
+- Updated English, Dutch and French editor translations, validation and
+  source/playwright tests. Existing ``CONFIG.js`` variables and alignment
+  options remain supported and the version number is unchanged.
 
 v3.30.2 beta (4-8-2026)
 

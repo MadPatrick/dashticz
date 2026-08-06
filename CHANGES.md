@@ -1,5 +1,24 @@
 # Dashticz — Change log for recent update work
 
+## Current beta — Device and Widget Config (version unchanged)
+
+- Moved Device Editor display checkboxes and text alignment into a dedicated
+  cog-driven **Device Config** popup with visual left, center and right buttons.
+- The Device Editor now hides before Device Config opens and returns after the
+  configuration popup closes, preventing the popup from appearing behind it.
+- Enlarged Device Config checkboxes, reduced the alignment icon size and added
+  a visible localized alignment label from `lang/*.json`.
+- Added repeatable typed Field/Setting rows to Device Config, with the same
+  validation and CONFIG.js type conversion used by Widget Config.
+- Added Icon, Data, Updated and Title options to every Widget Config popup.
+- Added repeatable Field/Setting rows for typed custom widget block parameters,
+  including validation for invalid, duplicate and editor-reserved properties.
+- Device alignment now updates an isolated per-block rule in
+  `custom/custom.css`; existing generated rules are replaced, default alignment
+  removes the rule, and unrelated hand-written CSS remains untouched.
+- Preserved backwards compatibility for existing `CONFIG.js` blocks and the
+  legacy `text_alignment`/`text_align` options. The package version is unchanged.
+
 ## 3.23.7 — Editor add regression
 
 - **Consistent settings and widget localization**: Settings, Device Editor,

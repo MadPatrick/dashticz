@@ -98,6 +98,14 @@ the topbar to open the **Device Editor**. The editor can:
 - remove devices from the generated dashboard configuration;
 - change the mixed device and widget order by dragging rows;
 - set each block width from 1 through 12 (new devices default to 3);
+- open the cog button for **Device Config**, containing the Icon, Data,
+  Updated, Switch and Title checkboxes plus visual Left, Center and Right
+  alignment buttons. The Device Editor closes while this popup is open and
+  returns after OK or Cancel, so the configuration dialog always stays in
+  front;
+- add repeatable **Field** and **Setting** rows in Device Config. The plus
+  button adds another row and the minus button removes one. Values are stored
+  as numbers, booleans, JSON arrays/objects or strings in `CONFIG.js`;
 - show existing widgets as locked `Widget - name` rows, so they keep their
   correct position. Remove widgets through the Widget Editor.
 
@@ -105,6 +113,18 @@ Select **Save** to write the generated blocks and columns to
 `custom/CONFIG.js`. Generated columns are added to screen 1 and the dashboard
 reloads after saving. Back up an existing `CONFIG.js` before first using the
 editor.
+
+Device alignment remains available through the backwards-compatible
+`text_alignment` block option and is additionally written to
+`custom/custom.css` for the exact generated block key. The editor owns only
+rules between `dashticz-device-align` comment markers. Re-saving updates the
+same rule, selecting Left removes the override, and deleting a device removes
+only that device's generated rule. Other hand-written CSS is preserved.
+
+Field names are trimmed, spaces and hyphens are converted to underscores and
+the first character is made lowercase. Empty rows are ignored. Duplicate,
+invalid and editor-reserved keys such as `idx`, `type`, `width`, `title` and
+`text_alignment` are rejected before saving.
 
 Editor-generated Domoticz devices use stable IDX-based block keys, for example
 `blocks['device_1498']` or `blocks['device_1498_2']` for a subdevice. Their
@@ -136,6 +156,25 @@ catalog. Select a tile to add it to screen 1, or select an active tile to remove
 it. A selected tile with configurable options has a cog button. Choose
 **Settings** on that tile, configure it, and then select **Save** in the main
 Widget Editor.
+
+Every widget settings popup also contains common Icon, Data, Updated and Title
+checkboxes. The **Custom fields** section accepts repeatable `Field` and
+`Setting` pairs. Use the plus button to add a row and the minus button to
+remove one. Field names are trimmed, spaces and hyphens become underscores,
+and the first character is normalised to lowercase (`Layout` becomes
+`layout`). Names must be valid JavaScript property names, may not duplicate
+another row, and may not replace editor-managed identity properties such as
+`type`, `key`, `width` or `height`.
+
+Settings are written with a matching JavaScript type: `true` and `false`
+become booleans, numeric input becomes a number, valid JSON beginning with
+`[` or `{` becomes an array or object, and all other input becomes a string.
+For example, `Field: Layout` and `Setting: 1` writes `layout: 1` into the
+widget's `blocks[...]` definition. Empty rows are ignored. Invalid JSON and
+duplicate or reserved fields are rejected before saving. A widget block accepts
+up to 50 custom fields; the combined custom value payload is limited to 32 KiB,
+and nested arrays or objects are validated to a depth of four. Existing custom
+icon strings remain intact until the Icon checkbox is explicitly switched off.
 
 | Widget | Available options |
 | --- | --- |

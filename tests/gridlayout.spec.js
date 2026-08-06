@@ -33,6 +33,13 @@ test.describe('optional screen grid layout', () => {
         body: JSON.stringify({ success: true }),
       });
     });
+    await page.route('**/js/savecustomcss.php', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
 
     await page.goto(dashboardUrl);
     await waitForDashboard(page);
@@ -298,6 +305,7 @@ var standby_screen = {
   }) => {
     let gridRequest = null;
     let blocksRequest = null;
+    let cssRequest = null;
     let columnSaves = 0;
     await page.route('**/tests/CONFIG.pw.js*', async (route) => {
       const response = await route.fetch();
@@ -340,6 +348,24 @@ screens[1] = {
         body: JSON.stringify({ success: true, blockKeys: ['s5', 'grid_text'] }),
       });
     });
+    await page.route('**/js/savewidgets.php', async (route) => {
+      const payload = route.request().postDataJSON();
+      expect(payload.blocksOnly).toBe(true);
+      expect(payload.widgets).toEqual([]);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, blockKeys: [] }),
+      });
+    });
+    await page.route('**/js/savecustomcss.php', async (route) => {
+      cssRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
     await page.route('**/js/savelayout.php', async (route) => {
       columnSaves++;
       await route.fulfill({ status: 500, body: '{}' });
@@ -358,11 +384,21 @@ screens[1] = {
     await page.locator('.screen1 .deviceeditoricon').click();
     await expect(page.locator('#deviceeditorpopup')).toBeVisible();
     await page
-      .locator('[data-order-key="special:grid_text"] .de-title-toggle')
-      .uncheck();
-    await page
-      .locator('[data-order-key="special:grid_text"] .de-text-alignment')
-      .selectOption('right');
+      .locator('[data-order-key="special:grid_text"] .de-config-btn')
+      .click();
+    await expect(page.locator('#de-config-popup')).toBeVisible();
+    await expect(page.locator('#deviceeditorpopup')).toBeHidden();
+    await expect(page.locator('.de-alignment-label')).toHaveText('Alignment');
+    await page.locator('.de-custom-field-name').fill('Layout');
+    await page.locator('.de-custom-field-setting').fill('1');
+    await page.locator('.de-custom-field-add').click();
+    await expect(page.locator('.de-custom-field-row')).toHaveCount(2);
+    await page.locator('.de-custom-field-name').nth(1).fill('Classes');
+    await page.locator('.de-custom-field-setting').nth(1).fill('["wide"]');
+    await page.locator('#de-config-title').uncheck();
+    await page.locator('#de-config-align-right').check();
+    await page.locator('#de-config-ok').click();
+    await expect(page.locator('#deviceeditorpopup')).toBeVisible();
     await page.locator('#de-save-btn').evaluate((button) => {
       button.disabled = false;
     });
@@ -386,9 +422,14 @@ screens[1] = {
         width: 12,
         hide_title: true,
         text_alignment: 'right',
+        custom_fields: { layout: 1, classes: ['wide'] },
       },
     ]);
     expect(columnSaves).toBe(0);
+    expect(cssRequest).toEqual({
+      deviceAlignments: { s5: 'left', grid_text: 'right' },
+      removeDeviceAlignments: [],
+    });
     expect(gridRequest.items).toEqual([
       { ref: 's5', grid: { x: 2, y: 2, w: 6, h: 3 } },
       { ref: 'grid_text', grid: { x: 10, y: 5, w: 8, h: 2 } },

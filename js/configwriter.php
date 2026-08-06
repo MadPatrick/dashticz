@@ -1439,6 +1439,14 @@ function configwriter_device_block_props($device, $defaultWidth = 3)
         $props['height'] = $device['height'];
     }
 
+    if (!empty($device['custom_fields']) && is_array($device['custom_fields'])) {
+        // Custom fields are validated by saveblocks.php and merged last so they
+        // remain typed CONFIG.js properties without replacing editor-owned keys.
+        foreach ($device['custom_fields'] as $field => $value) {
+            $props[$field] = $value;
+        }
+    }
+
     return $props;
 }
 
@@ -1484,6 +1492,11 @@ function configwriter_special_block_props($block)
 
     if ($kind !== 'title' && isset($block['height']) && is_int($block['height'])) {
         $props['height'] = $block['height'];
+    }
+    if (!empty($block['custom_fields']) && is_array($block['custom_fields'])) {
+        foreach ($block['custom_fields'] as $field => $value) {
+            $props[$field] = $value;
+        }
     }
     return $props;
 }

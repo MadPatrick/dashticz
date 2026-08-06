@@ -260,10 +260,122 @@ var DashticzWidgetEditor = (function () {
   var widgetDimensions = {};
   var layoutOrder = [];
   var widgetConfigs = {};
+  var widgetBlockOptions = {};
   var gridMode = false;
   var gridConfig = null;
   var gridPositions = {};
   var widgetBlockRefs = {};
+
+  var commonManagedWidgetProperties = {
+    type: true, width: true, height: true, grid: true, idx: true, subidx: true,
+    icon: true, hide_data: true, last_update: true, hide_title: true,
+    text_alignment: true, text_align: true,
+  };
+  var managedWidgetPropertiesById = {
+    weather: {
+      widget_provider: true, showRain: true, showDescription: true,
+      showWind: true, showGust: true, icons: true,
+    },
+    calendar: { icalurl: true, maxitems: true },
+    garbage: { maxitems: true, maxdays: true },
+    clock: {
+      size: true, scale: true, showSeconds: true, clockFace: true, body: true,
+      dial: true, hourhand: true, minutehand: true, secondhand: true, boss: true,
+      minutehandbehavior: true, secondhandbehavior: true,
+    },
+    publictransport: { station: true, provider: true },
+    camera: { imageUrl: true, videoUrl: true, cameras: true },
+    alarmmeldingen: { rss: true, filter: true },
+    iframe: {
+      frameurl: true, scrollbars: true, scaletofit: true, aspectratio: true,
+      forcerefresh: true, refresh: true,
+    },
+    xmltvguide: {
+      xmltvurl: true, channels: true, maxitems: true, layout: true,
+      separator: true, refresh: true,
+    },
+  };
+
+  function _isManagedWidgetProperty(item, property) {
+    if (commonManagedWidgetProperties[property]) return true;
+    var widgetProperties = managedWidgetPropertiesById[item.id] || {};
+    return widgetProperties[property] === true;
+  }
+  var protectedCustomWidgetProperties = {
+    type: true, id: true, key: true, width: true, height: true, grid: true,
+    idx: true, subidx: true, icon: true, hide_data: true, last_update: true,
+    hide_title: true, text_alignment: true, text_align: true, custom_fields: true,
+    __proto__: true, prototype: true, constructor: true,
+  };
+
+  function _defaultWidgetBlockOptions() {
+    return {
+      icon: true,
+      iconValue: null,
+      hide_data: false,
+      last_update: false,
+      show_title: true,
+      customFields: [{ field: '', setting: '' }],
+    };
+  }
+
+  function _settingToText(value) {
+    if (value !== null && typeof value === 'object') {
+      try { return JSON.stringify(value); } catch (ignore) { return ''; }
+    }
+    return String(value);
+  }
+
+  function _hydrateWidgetBlockOptions(item, definition) {
+    var options = _defaultWidgetBlockOptions();
+    options.icon = typeof definition.icon === 'undefined' || definition.icon !== '';
+    options.iconValue = typeof definition.icon === 'string' && definition.icon !== ''
+      ? definition.icon
+      : null;
+    options.hide_data = definition.hide_data === true;
+    options.last_update = definition.last_update === true;
+    options.show_title = definition.hide_title !== true;
+    options.customFields = [];
+    Object.keys(definition || {}).forEach(function (property) {
+      if (_isManagedWidgetProperty(item, property) || /^_dashticz/.test(property)) return;
+      // Generated widget titles do not need a redundant custom-field row, but
+      // a genuinely customised title is retained and can be edited.
+      if (property === 'title' && String(definition[property]) === _widgetTitle(item)) return;
+      options.customFields.push({
+        field: property,
+        setting: _settingToText(definition[property]),
+      });
+    });
+    if (!options.customFields.length) {
+      options.customFields.push({ field: '', setting: '' });
+    }
+    widgetBlockOptions[item.id] = options;
+  }
+
+  function _normaliseCustomFieldName(value) {
+    value = $.trim(String(value || '')).replace(/[\s-]+/g, '_');
+    if (value) value = value.charAt(0).toLowerCase() + value.slice(1);
+    return value;
+  }
+
+  function _parseCustomSetting(value) {
+    var text = $.trim(String(value || ''));
+    if (text === 'true') return { valid: true, value: true };
+    if (text === 'false') return { valid: true, value: false };
+    if (/^-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(text)) {
+      return { valid: true, value: Number(text) };
+    }
+    if (/^[\[{]/.test(text)) {
+      try {
+        var parsed = JSON.parse(text);
+        if (parsed && typeof parsed === 'object') {
+          return { valid: true, value: parsed };
+        }
+      } catch (ignore) { /* validation message is shown below */ }
+      return { valid: false };
+    }
+    return { valid: true, value: text };
+  }
 
   function _defaultCameraConfig(index) {
     return {
@@ -299,6 +411,7 @@ var DashticzWidgetEditor = (function () {
     selectedWidgets = {};
     widgetDimensions = {};
     layoutOrder = [];
+    widgetBlockOptions = {};
     gridPositions = {};
     widgetBlockRefs = {};
     gridConfig = gridMode ? _readGridConfig() : null;
@@ -474,6 +587,7 @@ var DashticzWidgetEditor = (function () {
           width: parseInt(definition.width, 10) || null,
           height: parseInt(definition.height, 10) || null,
         };
+        _hydrateWidgetBlockOptions(item, definition);
         if (
           item.id === 'weather' &&
           definition.widget_provider === 'wunderground'
@@ -857,6 +971,7 @@ var DashticzWidgetEditor = (function () {
           height: parseInt(definition.height, 10) || item.height || null,
         };
         _hydrateGridWidget(item, definition);
+        _hydrateWidgetBlockOptions(item, definition);
       });
   }
 
@@ -1232,6 +1347,49 @@ var DashticzWidgetEditor = (function () {
       _esc(camera.videoUrl || '') +
       '"></div></div>'
     );
+  }
+
+  function _customFieldRowHtml(row) {
+    row = row || { field: '', setting: '' };
+    return (
+      '<div class="we-custom-field-row input-group input-group-sm mb-2">' +
+      '<input type="text" class="form-control we-custom-field-name" placeholder="' +
+      _esc(_t('field', 'Field')) + '" value="' + _esc(row.field || '') + '">' +
+      '<input type="text" class="form-control we-custom-field-setting" placeholder="' +
+      _esc(_t('setting', 'Setting')) + '" value="' + _esc(row.setting || '') + '">' +
+      '<button type="button" class="btn btn-outline-success we-custom-field-add" title="' +
+      _esc(_t('add_field', 'Add field')) + '"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
+      '<button type="button" class="btn btn-outline-danger we-custom-field-remove" title="' +
+      _esc(_t('remove_field', 'Remove field')) + '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
+      '</div>'
+    );
+  }
+
+  function _widgetBlockOptionsHtml(item) {
+    var options = widgetBlockOptions[item.id] || _defaultWidgetBlockOptions();
+    var rows = options.customFields && options.customFields.length
+      ? options.customFields
+      : [{ field: '', setting: '' }];
+    var html = _cfgHeading(_t('display_options', 'Display options'));
+    [
+      ['icon', _t('icon', 'Icon'), options.icon],
+      ['hide_data', _t('data', 'Data'), options.hide_data],
+      ['last_update', _t('updated', 'Updated'), options.last_update],
+      ['show_title', _t('show_title', 'Title'), options.show_title],
+    ].forEach(function (option) {
+      html += '<label class="form-check form-check-inline mb-2">' +
+        '<input class="form-check-input we-block-option" type="checkbox" data-block-option="' +
+        option[0] + '"' + (option[2] ? ' checked' : '') + '>' +
+        '<span class="form-check-label">' + _esc(option[1]) + '</span></label>';
+    });
+    html += _cfgHeading(_t('custom_fields', 'Custom fields'));
+    html += '<p class="form-text">' + _esc(_t(
+      'custom_fields_help',
+      'Field and Setting are written as typed block parameters in CONFIG.js.'
+    )) + '</p><div class="we-custom-fields">';
+    rows.forEach(function (row) { html += _customFieldRowHtml(row); });
+    html += '</div>';
+    return html;
   }
 
   function _buildConfigModalHtml(item) {
@@ -1670,6 +1828,8 @@ var DashticzWidgetEditor = (function () {
       );
     }
 
+    fields = _widgetBlockOptionsHtml(item) + fields;
+
     return (
       '<div class="modal fade" id="we-config-popup" tabindex="-1" aria-labelledby="we-cfg-title" aria-hidden="true" data-bs-backdrop="static">' +
       '<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">' +
@@ -1713,6 +1873,23 @@ var DashticzWidgetEditor = (function () {
     $('body').append(_buildConfigModalHtml(item));
 
     var $cfgModal = $('#we-config-popup');
+
+    function refreshCustomFieldButtons() {
+      var count = $cfgModal.find('.we-custom-field-row').length;
+      $cfgModal.find('.we-custom-field-remove').prop('disabled', count <= 1);
+    }
+
+    $cfgModal.on('click', '.we-custom-field-add', function () {
+      $(this).closest('.we-custom-field-row').after(_customFieldRowHtml());
+      refreshCustomFieldButtons();
+    });
+
+    $cfgModal.on('click', '.we-custom-field-remove', function () {
+      if ($cfgModal.find('.we-custom-field-row').length <= 1) return;
+      $(this).closest('.we-custom-field-row').remove();
+      refreshCustomFieldButtons();
+    });
+    refreshCustomFieldButtons();
 
     $cfgModal.on('change', '#we-cfg-weather-provider', function () {
       var provider = $(this).val() === 'wunderground' ? 'wunderground' : 'openweather';
@@ -1765,6 +1942,58 @@ var DashticzWidgetEditor = (function () {
 
     $cfgModal.on('click', '#we-cfg-ok-btn', function () {
       var valid = true;
+      var existingBlockOptions = widgetBlockOptions[widgetId] || _defaultWidgetBlockOptions();
+      var pendingBlockOptions = {
+        icon: $cfgModal.find('[data-block-option="icon"]').is(':checked'),
+        iconValue: existingBlockOptions.iconValue || null,
+        hide_data: $cfgModal.find('[data-block-option="hide_data"]').is(':checked'),
+        last_update: $cfgModal.find('[data-block-option="last_update"]').is(':checked'),
+        show_title: $cfgModal.find('[data-block-option="show_title"]').is(':checked'),
+        customFields: [],
+      };
+      var customKeys = {};
+      $cfgModal.find('.we-custom-field-row').each(function () {
+        if (!valid) return;
+        var rawField = $.trim($(this).find('.we-custom-field-name').val() || '');
+        var rawSetting = $.trim($(this).find('.we-custom-field-setting').val() || '');
+        if (!rawField && !rawSetting) return;
+        var field = _normaliseCustomFieldName(rawField);
+        if (!field || !rawSetting || !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(field)) {
+          valid = false;
+          $('.we-cfg-message').addClass('text-danger').text(
+            _t('invalid_field', 'Enter a valid Field and Setting.')
+          );
+          $(this).find('.we-custom-field-name').trigger('focus');
+          return;
+        }
+        var lowerField = field.toLowerCase();
+        if (customKeys[lowerField] || protectedCustomWidgetProperties[lowerField]) {
+          valid = false;
+          $('.we-cfg-message').addClass('text-danger').text(
+            _t('duplicate_field', 'This field is duplicated or reserved.')
+          );
+          $(this).find('.we-custom-field-name').trigger('focus');
+          return;
+        }
+        var parsedSetting = _parseCustomSetting(rawSetting);
+        if (!parsedSetting.valid) {
+          valid = false;
+          $('.we-cfg-message').addClass('text-danger').text(
+            _t('invalid_setting', 'Setting contains invalid JSON.')
+          );
+          $(this).find('.we-custom-field-setting').trigger('focus');
+          return;
+        }
+        customKeys[lowerField] = true;
+        pendingBlockOptions.customFields.push({
+          field: field,
+          setting: rawSetting,
+          value: parsedSetting.value,
+        });
+      });
+      if (!pendingBlockOptions.customFields.length) {
+        pendingBlockOptions.customFields.push({ field: '', setting: '' });
+      }
 
       // Collect all generic config fields
       var collected = {};
@@ -1906,6 +2135,7 @@ var DashticzWidgetEditor = (function () {
       }
 
       if (valid) {
+        widgetBlockOptions[widgetId] = pendingBlockOptions;
         selectedWidgets[widgetId] = true;
         _refreshCard(widgetId);
         window.bootstrap.Modal.getInstance(document.getElementById('we-config-popup')).hide();
@@ -2134,6 +2364,25 @@ var DashticzWidgetEditor = (function () {
       if (dimensions.height || item.height) {
         entry.height = dimensions.height || item.height;
       }
+      var blockOptions = widgetBlockOptions[item.id] || _defaultWidgetBlockOptions();
+      if (blockOptions.icon === false) {
+        entry.icon = '';
+      } else if (blockOptions.iconValue) {
+        // Keep custom icon strings that pre-date the checkbox-only UI.
+        entry.icon = blockOptions.iconValue;
+      }
+      entry.hide_data = blockOptions.hide_data === true;
+      entry.last_update = blockOptions.last_update === true;
+      if (blockOptions.show_title === false) entry.hide_title = true;
+      entry.custom_fields = {};
+      (blockOptions.customFields || []).forEach(function (row) {
+        var field = _normaliseCustomFieldName(row.field);
+        if (!field) return;
+        var parsed = typeof row.value !== 'undefined'
+          ? { valid: true, value: row.value }
+          : _parseCustomSetting(row.setting);
+        if (parsed.valid) entry.custom_fields[field] = parsed.value;
+      });
       if (item.id === 'garbage') {
         entry.displayTitle = _widgetTitle(item);
         entry.maxitems = parseInt(widgetConfigs.garbage.garbage_maxitems, 10) || 4;

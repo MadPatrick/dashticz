@@ -529,14 +529,21 @@ test('device editor supports translated dummy and title blocks', () => {
   assert.match(editor, /managedSpecials\[orderKey\]\.title = value/);
   assert.match(editor, /show_title/);
   assert.match(editor, /text_alignment/);
-  assert.match(editor, /de-title-toggle/);
-  assert.match(editor, /de-text-alignment/);
+  assert.match(editor, /de-config-btn/);
+  assert.match(editor, /id="de-config-popup"/);
+  assert.match(editor, /de-config-transition/);
+  assert.match(editor, /editorModal\.hide\(\)/);
+  assert.match(editor, /Modal\.getOrCreateInstance\(editor\)\.show\(\)/);
+  assert.match(editor, /name="de-config-alignment"/);
+  assert.match(editor, /de-alignment-label/);
+  assert.match(styles, /\.de-config-options \.form-check-input[\s\S]*width: 2em;[\s\S]*height: 2em;/);
+  assert.match(styles, /\.de-alignment-picker \.btn i[\s\S]*font-size: 0\.5rem;/);
   assert.match(editor, /align_left/);
   assert.match(editor, /widgetTitleVisible\[orderKey\]/);
   assert.match(editor, /deviceTitleVisible\[ck\]/);
   assert.match(editor, /textAlignment: 'left'/);
   assert.match(editor, /special\.options \|\|[\s\S]*icon: true, hide_data: true, last_update: false, switch: false/);
-  assert.match(editor, /managedSpecials\[orderKey\]\.options\[option\]/);
+  assert.match(editor, /special\.options = \$\.extend/);
   assert.match(editor, /specialEntry\.hide_data = specialOptions\.hide_data === true/);
   assert.match(editor, /specialEntry\.last_update = specialOptions\.last_update === true/);
   assert.match(editor, /specialEntry\.switch = specialOptions\.switch === true/);
@@ -572,7 +579,39 @@ test('device editor supports translated dummy and title blocks', () => {
     assert.ok(translations.enter_title, `${locale} title-field translation`);
     assert.ok(translations.show_title, `${locale} title toggle translation`);
     assert.ok(translations.text_alignment, `${locale} alignment translation`);
+    assert.ok(translations.device_config, `${locale} device-config translation`);
   }
+});
+
+test('device and widget config editors support typed custom block settings', () => {
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
+  const customCssWriter = fs.readFileSync(path.join(root, 'js/savecustomcss.php'), 'utf8');
+  const saveBlocks = fs.readFileSync(path.join(root, 'js/saveblocks.php'), 'utf8');
+  const configWriter = fs.readFileSync(path.join(root, 'js/configwriter.php'), 'utf8');
+
+  assert.match(deviceEditor, /deviceAlignments/);
+  assert.match(deviceEditor, /removeDeviceAlignments/);
+  assert.match(deviceEditor, /js\/savecustomcss\.php/);
+  assert.match(customCssWriter, /dashticz-device-align:start:/);
+  assert.match(customCssWriter, /\.dt_block\[data-id=/);
+  assert.match(widgetEditor, /we-custom-field-name/);
+  assert.match(widgetEditor, /we-custom-field-setting/);
+  assert.match(widgetEditor, /function _parseCustomSetting/);
+  assert.match(widgetEditor, /entry\.custom_fields/);
+  assert.match(widgetEditor, /managedWidgetPropertiesById/);
+  assert.match(widgetEditor, /calendar: \{ icalurl: true, maxitems: true \}/);
+  assert.match(widgetEditor, /xmltvguide: \{[\s\S]*layout: true/);
+  assert.match(widgetEditor, /_isManagedWidgetProperty\(item, property\)/);
+  assert.match(widgetEditor, /iconValue/);
+  assert.match(deviceEditor, /Preserve a hand-written custom icon/);
+  assert.match(deviceEditor, /de-custom-field-name/);
+  assert.match(deviceEditor, /de-custom-field-setting/);
+  assert.match(deviceEditor, /function _parseCustomSetting/);
+  assert.match(deviceEditor, /entry\.custom_fields = customFields/);
+  assert.match(saveBlocks, /Invalid or reserved custom device field/);
+  assert.match(saveBlocks, /_validate_custom_device_value/);
+  assert.match(configWriter, /\$device\['custom_fields'\]/);
 });
 
 test('widget editor exposes the supported catalog and keeps legacy options out of settings UI', () => {
@@ -1166,10 +1205,10 @@ test('standby background image is not overwritten by standby CSS', () => {
 test('standby icon colors stay scoped to the standby screen', () => {
   const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
 
-  assert.match(styles, /\.standby \.screenstandby \.fas[\s\S]*color: #fff !important;/);
+  assert.match(styles, /\.standby \.screenstandby \.fas[\s\S]*color: var\(--text-light\) !important;/);
   assert.doesNotMatch(styles, /\.standby \.fas(?:,|\s*\{)/);
   assert.match(styles, /\.we-widget-icon\s*\{[^}]*color: #0d6efd;/);
-  assert.match(styles, /\.we-config-btn\s*\{[^}]*color: #6c757d;/);
+  assert.match(styles, /\.we-config-btn\s*\{[^}]*color: var\(--text-muted\);/);
 });
 
 test('topbar screen switcher supports standby and extra screens', () => {

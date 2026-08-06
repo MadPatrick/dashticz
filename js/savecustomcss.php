@@ -1,6 +1,8 @@
 <?php
 require_once(__DIR__ . '/../vendor/dashticz/security.php');
 
+// This endpoint manages isolated editor-owned sections in custom.css. Any CSS
+// outside these markers remains untouched, including hand-written rules.
 dashticz_require_same_origin();
 dashticz_require_csrf();
 
@@ -14,12 +16,22 @@ if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
     dashticz_json_error(400, 'Invalid JSON body.');
 }
 
-$vars = isset($data['vars']) ? $data['vars'] : [];
-if (!is_array($vars)) {
+$updateVars = array_key_exists('vars', $data);
+$vars = $updateVars ? $data['vars'] : [];
+if ($updateVars && !is_array($vars)) {
     dashticz_json_error(400, 'vars must be an object.');
 }
+$deviceAlignments = isset($data['deviceAlignments']) ? $data['deviceAlignments'] : [];
+if (!is_array($deviceAlignments)) {
+    dashticz_json_error(400, 'deviceAlignments must be an object.');
+}
+$removeDeviceAlignments = isset($data['removeDeviceAlignments'])
+    ? $data['removeDeviceAlignments']
+    : [];
+if (!is_array($removeDeviceAlignments)) {
+    dashticz_json_error(400, 'removeDeviceAlignments must be an array.');
+}
 
-// Validate CSS variable names and values.
 $allowed = [
     '--main-bg', '--home-bg',
     '--border-color-inactive', '--border-color-active', '--border-color-block',
@@ -35,7 +47,6 @@ foreach ($vars as $name => $value) {
     if (!in_array($name, $allowed, true)) {
         dashticz_json_error(400, 'Unknown CSS variable: ' . $name);
     }
-    // Accept empty string (meaning "remove override"), or a safe CSS value.
     $value = trim((string)$value);
     if ($value !== '' && !preg_match('/^[a-zA-Z0-9#(). ,%\/_\-]+$/', $value)) {
         dashticz_json_error(400, 'Invalid CSS value for ' . $name);
@@ -45,10 +56,56 @@ foreach ($vars as $name => $value) {
     }
 }
 
-$customDir = __DIR__ . '/../custom';
-$cssPath   = $customDir . '/custom.css';
+function _validate_block_key($key)
+{
+    $key = trim((string)$key);
+    // Block references are JavaScript string keys and may contain spaces or
+    // punctuation. Reject only empty, oversized or control-character values;
+    // the selector and marker use independent escaping/encoding below.
+    if ($key === '' || strlen($key) > 240 || preg_match('/[\x00-\x1F\x7F]/', $key)) {
+        dashticz_json_error(400, 'Invalid device block key.');
+    }
+    return $key;
+}
 
-// Read existing custom.css (create empty if absent).
+function _alignment_token($key)
+{
+    return rtrim(strtr(base64_encode($key), '+/', '-_'), '=');
+}
+
+function _remove_alignment_block($css, $key)
+{
+    $token = _alignment_token($key);
+    $start = '/* dashticz-device-align:start:' . $token . ' */';
+    $end = '/* dashticz-device-align:end:' . $token . ' */';
+    $pattern = '/' . preg_quote($start, '/') . '.*?' . preg_quote($end, '/') . '\s*/s';
+    return preg_replace($pattern, '', $css);
+}
+
+function _css_attribute_value($value)
+{
+    // Escape the two characters that can terminate or alter a quoted CSS
+    // attribute selector. Control characters have already been rejected.
+    return str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
+}
+
+$validatedAlignments = [];
+foreach ($deviceAlignments as $key => $alignment) {
+    $key = _validate_block_key($key);
+    $alignment = strtolower(trim((string)$alignment));
+    if (!in_array($alignment, ['left', 'center', 'right'], true)) {
+        dashticz_json_error(400, 'Invalid text alignment for ' . $key);
+    }
+    $validatedAlignments[$key] = $alignment;
+}
+
+$validatedRemovals = [];
+foreach ($removeDeviceAlignments as $key) {
+    $validatedRemovals[] = _validate_block_key($key);
+}
+
+$customDir = __DIR__ . '/../custom';
+$cssPath = $customDir . '/custom.css';
 $existing = '';
 if (file_exists($cssPath)) {
     $existing = file_get_contents($cssPath);
@@ -57,30 +114,60 @@ if (file_exists($cssPath)) {
     }
 }
 
-// Remove any previously injected :root{} block written by this tool.
+// Replace the theme section only when the caller explicitly posted `vars`.
+// Device Editor alignment saves therefore cannot clear Theme settings.
 $marker = '/* dashticz-theme-vars */';
 $markerEnd = '/* /dashticz-theme-vars */';
-$startPos = strpos($existing, $marker);
-$endPos   = strpos($existing, $markerEnd);
-if ($startPos !== false && $endPos !== false && $endPos > $startPos) {
-    $existing = substr($existing, 0, $startPos)
-               . substr($existing, $endPos + strlen($markerEnd));
-    $existing = ltrim($existing, "\n");
+$themePattern = '/' . preg_quote($marker, '/') . '.*?' . preg_quote($markerEnd, '/') . '\s*/s';
+$themeBlock = '';
+if ($updateVars) {
+    $existing = preg_replace($themePattern, '', $existing);
 }
 
-// Build new :root block if there are overrides.
-$newBlock = '';
-if (!empty($sanitized)) {
+if ($updateVars && !empty($sanitized)) {
     $lines = [];
     foreach ($sanitized as $name => $value) {
         $lines[] = '  ' . $name . ': ' . $value . ';';
     }
-    $newBlock = $marker . "\n:root {\n" . implode("\n", $lines) . "\n}\n" . $markerEnd . "\n";
+    $themeBlock = $marker . "\n:root {\n" . implode("\n", $lines) . "\n}\n" . $markerEnd . "\n\n";
 }
 
-$output = $newBlock . $existing;
+foreach (array_unique($validatedRemovals) as $key) {
+    $existing = _remove_alignment_block($existing, $key);
+}
 
-if (file_put_contents($cssPath, $output) === false) {
+foreach ($validatedAlignments as $key => $alignment) {
+    $existing = _remove_alignment_block($existing, $key);
+    // Left is the Dashticz default, so no generated override is needed.
+    if ($alignment === 'left') {
+        continue;
+    }
+    $token = _alignment_token($key);
+    $existing = rtrim($existing) . "\n\n";
+    $existing .= '/* dashticz-device-align:start:' . $token . " */\n";
+    $rootSelector = '.dt_block[data-id="' . _css_attribute_value($key) . '"]';
+    $selectors = [
+        $rootSelector,
+        $rootSelector . ' .dt_title',
+        $rootSelector . ' .title',
+        $rootSelector . ' .dt_state',
+        $rootSelector . ' .state',
+        $rootSelector . ' .value',
+        $rootSelector . ' .lastupdate',
+        $rootSelector . ' .titlegroups h3',
+        $rootSelector . ' .SonarrBigTitle',
+    ];
+    $existing .= implode(",\n", $selectors) . " {\n";
+    $existing .= '  text-align: ' . $alignment . ";\n";
+    $existing .= "}\n";
+    $existing .= '/* dashticz-device-align:end:' . $token . " */\n";
+}
+
+$output = $themeBlock . ltrim($existing, "\r\n");
+if (!is_dir($customDir) && !mkdir($customDir, 0775, true)) {
+    dashticz_json_error(500, 'Could not create custom directory.');
+}
+if (file_put_contents($cssPath, $output, LOCK_EX) === false) {
     dashticz_json_error(500, 'Could not write custom.css.');
 }
 

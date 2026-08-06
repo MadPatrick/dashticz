@@ -162,6 +162,10 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   assert.match(source, /\^Title_/);
   assert.match(source, /positive integer idx/);
   assert.match(source, /configwriter_special_block_props/);
+  assert.match(source, /custom_fields/);
+  assert.match(source, /Invalid or reserved custom device field/);
+  assert.match(source, /_validate_custom_device_value/);
+  assert.match(writer, /\$device\['custom_fields'\]/);
   assert.match(source, /\$height = \$kind === 'title' \? 120 : null/);
   assert.match(source, /Special block key already exists/);
   assert.match(source, /\$device\['preserveExisting'\] = in_array/);
@@ -178,6 +182,10 @@ test('widget writer whitelists widgets and protects CONFIG.js writes', () => {
   assert.match(source, /dashticz_require_csrf\(\)/);
   assert.match(source, /REQUEST_METHOD.*POST/);
   assert.match(source, /\$catalog = \[/);
+  assert.match(source, /custom_fields/);
+  assert.match(source, /Invalid or reserved custom widget field/);
+  assert.match(source, /legacy custom icons/);
+  assert.match(source, /_validate_custom_widget_value/);
   for (const id of [
     'weather',
     'garbage',
@@ -218,6 +226,19 @@ test('widget writer whitelists widgets and protects CONFIG.js writes', () => {
   assert.match(source, /blockKeys/);
   assert.match(source, /\$blocksOnly/);
   assert.match(source, /configwriter_write_config/);
+});
+
+test('custom CSS writer isolates generated device alignment rules', () => {
+  const source = read('js/savecustomcss.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  assert.match(source, /dashticz_require_csrf\(\)/);
+  assert.match(source, /deviceAlignments/);
+  assert.match(source, /removeDeviceAlignments/);
+  assert.match(source, /array_key_exists\('vars', \$data\)/);
+  assert.match(source, /if \(\$updateVars\)/);
+  assert.match(source, /dashticz-device-align:start:/);
+  assert.match(source, /preg_quote\(\$start/);
+  assert.match(source, /LOCK_EX/);
 });
 
 test('layout writer stores safe references in one grouped dashboard section', () => {

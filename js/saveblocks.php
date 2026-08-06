@@ -2,6 +2,73 @@
 require_once(__DIR__ . '/../vendor/dashticz/security.php');
 require_once(__DIR__ . '/configwriter.php');
 
+function _validate_custom_device_value($value, $depth = 0)
+{
+    if ($depth > 4) {
+        return false;
+    }
+    if (is_string($value)) {
+        return strlen($value) <= 4096;
+    }
+    if (is_int($value) || is_float($value) || is_bool($value) || $value === null) {
+        return true;
+    }
+    if (!is_array($value) || count($value) > 100) {
+        return false;
+    }
+    foreach ($value as $nestedKey => $nestedValue) {
+        if (is_string($nestedKey)
+            && (strlen($nestedKey) > 100 || preg_match('/[\x00-\x1F]/', $nestedKey))
+        ) {
+            return false;
+        }
+        if (!_validate_custom_device_value($nestedValue, $depth + 1)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function _normalise_custom_device_fields($entry)
+{
+    if (!is_array($entry) || !isset($entry['custom_fields'])) {
+        return [];
+    }
+    if (!is_array($entry['custom_fields']) || count($entry['custom_fields']) > 50) {
+        dashticz_json_error(400, 'custom_fields must contain at most 50 fields.');
+    }
+    $protectedFields = [
+        'type', 'id', 'key', 'kind', 'width', 'height', 'grid', 'idx', 'subidx',
+        'title', 'icon', 'hide_data', 'last_update', 'switch', 'hide_title',
+        'text_alignment', 'text_align', 'custom_fields',
+        '__proto__', 'prototype', 'constructor',
+    ];
+    $customFields = [];
+    $seen = [];
+    foreach ($entry['custom_fields'] as $field => $value) {
+        $fieldKey = is_string($field) ? strtolower($field) : '';
+        if (!is_string($field)
+            || !preg_match('/^[A-Za-z_$][A-Za-z0-9_$]*$/', $field)
+            || in_array($fieldKey, $protectedFields, true)
+            || stripos($field, '_dashticz') === 0
+        ) {
+            dashticz_json_error(400, 'Invalid or reserved custom device field.');
+        }
+        if (isset($seen[$fieldKey])) {
+            dashticz_json_error(400, 'Duplicate custom device field.');
+        }
+        if (!_validate_custom_device_value($value)) {
+            dashticz_json_error(400, 'Invalid custom device field value.');
+        }
+        $seen[$fieldKey] = true;
+        $customFields[$field] = $value;
+    }
+    if (strlen(json_encode($customFields)) > 32768) {
+        dashticz_json_error(400, 'Custom device fields are too large.');
+    }
+    return $customFields;
+}
+
 dashticz_require_same_origin();
 dashticz_require_csrf();
 
@@ -25,6 +92,7 @@ if (!is_array($data['devices'])) {
 
 $devices = [];
 foreach ($data['devices'] as $entry) {
+    $customFields = _normalise_custom_device_fields($entry);
     if (is_array($entry)
         && isset($entry['kind'])
         && in_array($entry['kind'], ['dummy', 'title'], true)
@@ -86,6 +154,7 @@ foreach ($data['devices'] as $entry) {
             'text_alignment' => configwriter_normalise_text_alignment(
                 isset($entry['text_alignment']) ? $entry['text_alignment'] : null
             ),
+            'custom_fields' => $customFields,
             'key' => $entry['key'],
         ];
     } elseif (is_int($entry) && $entry > 0) {
@@ -96,6 +165,7 @@ foreach ($data['devices'] as $entry) {
             'name' => 'Device ' . $entry,
             'width' => 3,
             'height' => null,
+            'custom_fields' => [],
             'key' => null,
         ];
     } elseif (is_array($entry)
@@ -153,6 +223,7 @@ foreach ($data['devices'] as $entry) {
             'text_alignment' => configwriter_normalise_text_alignment(
                 isset($entry['text_alignment']) ? $entry['text_alignment'] : null
             ),
+            'custom_fields' => $customFields,
             'key' => isset($entry['key'])
                 && is_string($entry['key'])
                 && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $entry['key'])
@@ -211,6 +282,7 @@ foreach ($data['devices'] as $entry) {
             'text_alignment' => configwriter_normalise_text_alignment(
                 isset($entry['text_alignment']) ? $entry['text_alignment'] : null
             ),
+            'custom_fields' => $customFields,
             'key' => $groupKey,  /* block key IS the group reference */
         ];
     } else {
