@@ -1894,11 +1894,21 @@ function _getComputedCssVar(varName) {
 
 // Parse the dashticz-theme-vars block written by savecustomcss.php to get
 // any already-saved overrides so the panel shows the stored values.
+// Only reads from inline <style> elements that contain the dashticz-theme-vars
+// marker, so that theme stylesheet defaults are never mistaken for user overrides.
 function _getStoredCssVarOverrides() {
   var overrides = {};
   var styleSheets = document.styleSheets;
   for (var si = 0; si < styleSheets.length; si++) {
     var sheet = styleSheets[si];
+    // Skip <link> stylesheets and any <style> element that does not contain the
+    // dashticz-theme-vars marker written by savecustomcss.php.
+    var ownerNode = sheet.ownerNode;
+    if (!ownerNode ||
+        String(ownerNode.tagName || '').toUpperCase() !== 'STYLE' ||
+        String(ownerNode.textContent || '').indexOf('dashticz-theme-vars') === -1) {
+      continue;
+    }
     var rules;
     try { rules = sheet.cssRules || sheet.rules; } catch (e) { continue; }
     if (!rules) continue;

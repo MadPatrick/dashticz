@@ -6,6 +6,20 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.40.1 beta (7-8-2026)
+--------------------------
+
+* **Fixes**
+
+- Theme settings panel: ``_getStoredCssVarOverrides`` now only reads CSS variable
+  overrides from the ``dashticz-theme-vars`` block written by ``savecustomcss.php``
+  (an inline ``<style>`` element), not from theme stylesheet ``<link>`` rules.
+  Previously the function scanned all ``<link>`` stylesheets including
+  ``creative.css``, which caused ``_hasThemeCssVarCustomizations`` to always
+  return ``true`` even when no user overrides were saved.  The ``(custom)`` marker
+  in the theme dropdown therefore never cleared after a reset, making saved changes
+  appear not to take effect.
+
 v3.40.0 beta (7-8-2026)
 --------------------------
 
