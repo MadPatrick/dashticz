@@ -6,6 +6,22 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.40.2 beta (7-8-2026)
+--------------------------
+
+* **Fixes**
+
+- Grid screens: placing the same device or widget on both a normal screen and the
+  standby screen now keeps independent positions for each screen.  Previously the
+  grid position was stored in the shared ``blocks['ref']['grid']`` global, so the
+  second screen's save silently overwrote the first screen's position and both
+  screens rendered at the same location.  The config writer now stores each block's
+  grid position as a per-screen ``{key, grid}`` inline descriptor inside
+  ``screens[N]['blocks']`` / ``standby_screen['blocks']``, and ``renderGridScreen``
+  reads the per-screen grid from that descriptor instead of from the shared
+  ``blocks`` object.  Old-format configs (string refs with ``blocks[ref].grid``)
+  remain fully backward-compatible.
+
 v3.40.1 beta (7-8-2026)
 --------------------------
 
