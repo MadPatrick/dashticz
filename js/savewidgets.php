@@ -242,9 +242,6 @@ foreach ($data['widgets'] as $entry) {
         'icon' => null,
         'hide_data' => !empty($entry['hide_data']),
         'last_update' => !empty($entry['last_update']),
-        'text_alignment' => configwriter_normalise_text_alignment(
-            isset($entry['text_alignment']) ? $entry['text_alignment'] : null
-        ),
     ];
     if (isset($entry['icon']) && is_string($entry['icon'])) {
         $icon = trim($entry['icon']);
@@ -263,21 +260,30 @@ foreach ($data['widgets'] as $entry) {
         if (!is_array($entry['custom_fields']) || count($entry['custom_fields']) > 50) {
             dashticz_json_error(400, 'custom_fields must contain at most 50 fields.');
         }
-        $protectedCustomFields = [
+        // These properties are controlled by the normal widget payload. Older
+        // editor state can still contain duplicate copies in custom_fields
+        // (especially the Icon/Data/Update/Title checkbox properties). Ignore
+        // those stale copies instead of rejecting the complete widget save.
+        $managedCustomFields = [
             'type', 'id', 'key', 'width', 'height', 'grid', 'idx', 'subidx',
             'icon', 'hide_data', 'last_update', 'hide_title',
             'text_alignment', 'text_align', 'custom_fields',
-            '__proto__', 'prototype', 'constructor',
         ];
+        $dangerousCustomFields = ['__proto__', 'prototype', 'constructor'];
         $widget['custom_fields'] = [];
         $seenCustomFields = [];
         foreach ($entry['custom_fields'] as $field => $value) {
             if (!is_string($field) ||
-                !preg_match('/^[A-Za-z_$][A-Za-z0-9_$]*$/', $field) ||
-                in_array(strtolower($field), $protectedCustomFields, true)) {
-                dashticz_json_error(400, 'Invalid or reserved custom widget field.');
+                !preg_match('/^[A-Za-z_$][A-Za-z0-9_$]*$/', $field)) {
+                dashticz_json_error(400, 'Invalid custom widget field.');
             }
             $fieldKey = strtolower($field);
+            if (in_array($fieldKey, $dangerousCustomFields, true)) {
+                dashticz_json_error(400, 'Invalid or reserved custom widget field.');
+            }
+            if (in_array($fieldKey, $managedCustomFields, true)) {
+                continue;
+            }
             if (isset($seenCustomFields[$fieldKey])) {
                 dashticz_json_error(400, 'Duplicate custom widget field.');
             }
@@ -887,9 +893,6 @@ function _widgetBlockProps($widget)
     }
     if (!empty($widget['last_update'])) {
         $props['last_update'] = true;
-    }
-    if (!empty($widget['text_alignment']) && $widget['text_alignment'] !== 'left') {
-        $props['text_alignment'] = $widget['text_alignment'];
     }
     if (!empty($widget['custom_fields'])) {
         // Custom fields are merged last so users can intentionally override a

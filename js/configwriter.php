@@ -475,18 +475,6 @@ function configwriter_js_string_escape($value)
     );
 }
 
-function configwriter_normalise_text_alignment($value, $default = 'left')
-{
-    if (!is_string($value)) {
-        return $default;
-    }
-
-    $value = strtolower(trim($value));
-    return in_array($value, ['left', 'center', 'right'], true)
-        ? $value
-        : $default;
-}
-
 function configwriter_managed_column_pattern()
 {
     // Include legacy de_col1 and multi-screen de_s2_col1 style keys.
@@ -1414,13 +1402,6 @@ function configwriter_device_block_props($device, $defaultWidth = 3)
     if (!empty($device['hide_title'])) {
         $props['hide_title'] = true;
     }
-    $textAlignment = configwriter_normalise_text_alignment(
-        isset($device['text_alignment']) ? $device['text_alignment'] : null
-    );
-    if ($textAlignment !== 'left') {
-        $props['text_alignment'] = $textAlignment;
-    }
-
     if (!$isGroup) {
         $idx = (int)$rawIdx;
         if (!empty($device['subidx']) && (int)$device['subidx'] > 0) {
@@ -1430,8 +1411,10 @@ function configwriter_device_block_props($device, $defaultWidth = 3)
         }
     }
     /* For groups/scenes the block key is the scene reference (e.g. 's1'),
-     * so no idx property is needed in the block definition itself. */
-    if ($isGroup) {
+     * so no idx property is needed in the block definition itself. Keep an
+     * explicit editor title when one was supplied; otherwise use the Domoticz
+     * group/scene name as before. */
+    if ($isGroup && (!isset($device['title']) || trim((string)$device['title']) === '')) {
         $props['title'] = $title;
     }
 
@@ -1467,6 +1450,26 @@ function configwriter_special_block_props($block)
                 ? $block['height']
                 : 120,
         ];
+    } elseif ($kind === 'custom') {
+        $props = [
+            'idx' => (int)$block['idx'],
+            'width' => $width,
+        ];
+        if (trim($title) !== '') {
+            $props['title'] = $title;
+        }
+        if (array_key_exists('icon', $block) && $block['icon'] !== null && $block['icon'] !== '') {
+            $props['icon'] = (string)$block['icon'];
+        }
+        if (!empty($block['hide_data'])) {
+            $props['hide_data'] = true;
+        }
+        if (!empty($block['last_update'])) {
+            $props['last_update'] = true;
+        }
+        if (!empty($block['switch'])) {
+            $props['switch'] = true;
+        }
     } else {
         $props = [
             'idx' => (int)$block['idx'],
@@ -1483,13 +1486,6 @@ function configwriter_special_block_props($block)
     if (!empty($block['hide_title'])) {
         $props['hide_title'] = true;
     }
-    $textAlignment = configwriter_normalise_text_alignment(
-        isset($block['text_alignment']) ? $block['text_alignment'] : null
-    );
-    if ($textAlignment !== 'left') {
-        $props['text_alignment'] = $textAlignment;
-    }
-
     if ($kind !== 'title' && isset($block['height']) && is_int($block['height'])) {
         $props['height'] = $block['height'];
     }

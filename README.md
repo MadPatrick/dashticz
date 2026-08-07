@@ -40,34 +40,49 @@ create the configuration and open the dashboard.
 
 The mode switch in the topbar selects how the dashboard is managed:
 
-- **Wizard** shows the Device, Widget and Visual Layout editors. These editors
-  write only their marked sections in `custom/CONFIG.js`.
-- **Custom** hides the three visual editor buttons and exposes the complete
-  settings catalog, including the widget settings. Use this mode for a
-  hand-written configuration.
+- **Wizard** shows the Screen Editor magic wand. While the Screen Editor is
+  active its plus button opens the Device, Widget, Custom-device and Separator
+  workflows. These editors write only their managed sections in `custom/CONFIG.js`.
+- **Custom** hides the Screen Editor workflow and exposes the complete settings
+  catalog, including the widget settings. Use this mode for a hand-written
+  configuration.
 
 A valid but otherwise empty `CONFIG.js` can also be switched from Custom to
 Wizard. Dashticz creates an empty grid for screen 1, after which devices and
-widgets can be added with the topbar editors.
+widgets can be added from the Screen Editor plus menu.
 
 Changing mode is saved in `custom/CONFIG.js` and reloads the dashboard. The
 regular settings menu remains available in both modes.
 
 ### Topbar controls
 
-The settings block can show the following controls. Hover an icon to see its
-function:
+In **Wizard** mode the normal topbar keeps the editor controls compact:
 
 | Control | Function |
 | --- | --- |
 | **Custom / Wizard** | Switch configuration mode |
-| Plus | Open the Device Editor |
-| Puzzle piece | Open the Widget Editor |
-| Arrows | Open the Visual Layout Editor |
+| Magic wand | Start or stop the Screen Editor |
 | Cog | Open Settings |
 | Fullscreen | Enter or leave fullscreen mode |
 
-The editor icons are available in Wizard mode. They are part of the `settings`
+The old always-visible Device (+) and Widget (puzzle) buttons are no longer
+shown in the normal topbar. While the **Screen Editor** is active, a plus button
+appears immediately to the left of the magic wand. Closing the Screen Editor
+hides that plus button again.
+
+Select the Screen Editor plus button to open one central add menu with four
+equal tiles:
+
+- **Add devices** opens the existing Domoticz Device Editor and keeps its
+  device selection/filtering behavior unchanged;
+- **Widgets** opens the existing Widget Editor;
+- **Custom devices** opens a dedicated popup for creating a named custom
+  block with a primary IDX and repeatable Field/Setting options;
+- **Separator** immediately adds a full-width (12-column) Title/block-title
+  separator to the active screen without opening another popup.
+
+All labels in this workflow are read from the active `/lang` JSON file, with
+the normal English fallback. The editor controls are part of the `settings`
 topbar block, so a custom topbar must include that block:
 
 ```javascript
@@ -78,84 +93,129 @@ columns['bar'] = {
 ```
 
 Enabling the optional topbar clock keeps the original layout: the logo stays
-in its left-hand lane and the clock starts directly after that lane. The screen selector,
-Custom/Wizard switch and configuration icons form a single right-aligned
-cluster.
+in its left-hand lane and the clock starts directly after that lane. The screen
+selector, Custom/Wizard switch and configuration icons form a single
+right-aligned cluster.
 
 The default topbar uses the same compact height as the Modern Dark theme,
 including when no explicit theme is selected.
 
-### Device Editor
+### Device Editor and Device Config
 
-After Dashticz has started, select the plus icon next to the settings icon in
-the topbar to open the **Device Editor**. The editor can:
+Start the **Screen Editor**, select its plus button and choose **Devices**.
+The Device Editor continues to use the existing Domoticz device list and can:
 
 - add devices and sub-devices detected in Domoticz;
-- add a **Dummy device** by entering a positive IDX; it is saved as
-  `blocks['dummyblock_N'] = {idx: ..., width: 3, hide_data: true, title: 'Dummy_N'}`;
-- add a **Title** by entering its text; it is saved without an IDX as
-  `blocks['Title_N'] = {width: 12, type: 'blocktitle', title: '...', height: 120}`;
 - remove devices from the generated dashboard configuration;
 - change the mixed device and widget order by dragging rows;
 - set each block width from 1 through 12 (new devices default to 3);
-- open the cog button for **Device Config**, containing the Icon, Data,
-  Updated, Switch and Title checkboxes plus visual Left, Center and Right
-  alignment buttons. The Device Editor closes while this popup is open and
-  returns after OK or Cancel, so the configuration dialog always stays in
-  front;
-- add repeatable **Field** and **Setting** rows in Device Config. The plus
-  button adds another row and the minus button removes one. Values are stored
-  as numbers, booleans, JSON arrays/objects or strings in `CONFIG.js`;
-- show existing widgets as locked `Widget - name` rows, so they keep their
-  correct position. Remove widgets through the Widget Editor.
+- open a device cog for **Device Config**;
+- show existing widgets as `Widget - name` rows. Selecting a widget cog here
+  now opens the same complete Widget Config popup used by the Widget Editor,
+  including all widget-specific settings and the same save model.
 
-Select **Save** to write the generated blocks and columns to
-`custom/CONFIG.js`. Generated columns are added to screen 1 and the dashboard
-reloads after saving. Back up an existing `CONFIG.js` before first using the
-editor.
+The old Dummy/custom-device and Title/separator entries are no longer in the
+normal Domoticz device dropdown. Use **Custom devices** and **Separator** from
+the Screen Editor add menu instead. Separator is written immediately at width
+12. Custom devices use their own popup and keep the user-entered block key, for
+example `BTC_Price`, instead of converting it to an editor-generated device key.
 
-Device alignment remains available through the backwards-compatible
-`text_alignment` block option and is additionally written to
-`custom/custom.css` for the exact generated block key. The editor owns only
-rules between `dashticz-device-align` comment markers. Re-saving updates the
-same rule, selecting Left removes the override, and deleting a device removes
-only that device's generated rule. Other hand-written CSS is preserved.
+### Custom devices
+
+The **Custom devices** tile opens a dedicated popup with:
+
+- **Device name**: the `blocks['...']` key. It must be a unique JavaScript-safe
+  identifier such as `BTC_Price`;
+- **IDX**: the primary positive Domoticz IDX;
+- repeatable **Field / Setting** rows. `title`, `icon` and `values` are shown as
+  common starting rows; unused rows may be left empty. The plus button is shown
+  on the last row and adds another option.
+
+Field/Setting values use the same typed conversion as Device Config: numbers
+become numbers, `true`/`false` become booleans, valid JSON arrays or objects stay
+typed, and other input is stored as text. This makes multi-value blocks possible,
+for example enter `values` with:
+
+```json
+[{"idx":1380,"value":"EUR: <Data>"},{"idx":3118,"value":"USD: <Data>"}]
+```
+
+which produces a block equivalent to:
+
+```javascript
+blocks['BTC_Price'] = {
+  idx: 1380,
+  width: 3,
+  title: 'Cours du Bitcoin',
+  icon: 'fab fa-bitcoin',
+  values: [
+    {idx: 1380, value: 'EUR: <Data>'},
+    {idx: 3118, value: 'USD: <Data>'}
+  ]
+};
+```
+
+The layout writer still controls where the block appears on the active screen.
+Existing custom blocks with a hand-picked key are recognized as Custom devices
+so later Device Editor saves preserve that key.
+
+Device Config contains exactly three centered display checkboxes on one row:
+**Icon**, **Data** and **Updated**. The old text-alignment editor support has
+been removed completely: rendered blocks no longer receive editor alignment
+classes and the block writers no longer emit alignment properties. Existing
+hand-written CSS remains untouched.
+
+While Layout Editor is active, both device and widget tiles show a configuration
+cog in the top-left corner. Device cogs open Device Config and widget cogs open
+the matching full Widget Config without changing the pending layout. Config
+popup titles include the current device/widget name so the edited tile remains
+clear.
+
+The **Custom fields** section contains repeatable **Field** and **Setting**
+rows. The plus button adds another row and the minus button removes an editable
+row. Values are written as numbers, booleans, JSON arrays/objects or strings in
+`CONFIG.js`.
+
+`title` is always present as a non-removable Field row. Its Setting shows the
+current explicit block title and changing it updates that block's `title`
+property. The internal property `c` is intentionally not shown in Device Config;
+when an existing editor-managed block contains `c`, its value is preserved
+unchanged when the block is saved.
+
+A custom `icon` Field is active only while the **Icon** checkbox is enabled. If
+Icon is enabled and a non-empty `icon` Setting is supplied, that value takes
+precedence and is written as the block's explicit `icon` property. If Icon is
+disabled, the custom icon Field is inactive and Dashticz uses the existing
+checkbox behavior. Enabling Icon without an explicit icon Field keeps the
+normal default icon behavior.
 
 Field names are trimmed, spaces and hyphens are converted to underscores and
 the first character is made lowercase. Empty rows are ignored. Duplicate,
-invalid and editor-reserved keys such as `idx`, `type`, `width`, `title` and
-`text_alignment` are rejected before saving.
+invalid and editor-reserved keys such as `idx`, `type`, `width` and internal
+identity fields are rejected before saving. Hidden compatibility fields are
+preserved separately rather than exposed for editing.
+
+Select **Save** to write the generated blocks and layout to the active
+`custom/CONFIG*.js` file. Existing editor-managed block properties that are not
+being changed remain preserved where supported, and saving one block does not
+intentionally alter another block. Back up a hand-written configuration before
+first using Wizard mode.
 
 Editor-generated Domoticz devices use stable IDX-based block keys, for example
-`blocks['device_1498']` or `blocks['device_1498_2']` for a subdevice. Their
-generated definitions omit `title`, allowing the displayed name to follow a
-later rename in Domoticz automatically. Existing hand-written name-based keys
-and explicit custom titles remain supported. Saving an existing editor-managed
-layout once migrates those device blocks to the stable key format.
-The stable reference is assigned before the editor starts its save sequence,
-so newly selected devices remain available while the blocks and layout are
-written. The Widget Editor applies the same rule to new catalog widgets while
-preserving an existing custom widget reference.
-When that screen uses a grid layout, the save also removes its superseded
-generated column section so the old name-based and new IDX-based definitions
-cannot coexist as duplicate blocks. Repeated saves reuse the same IDX key and
-do not create suffixed copies such as `device_1498_2`.
-
-Dummy and Title appear above Groups, Scenes and Devices in the add selector,
-separated by divider rows. Their labels and input validation use the selected
-Dashticz language; English is used when a locale has no Device Editor strings.
-In the Modern Dark theme, title blocks use the theme panel background, border,
-rounded corners and shadow. Their title text is aligned at the top left.
-In grid layouts a new title block is three rows high by default. Title blocks
-may be resized down to three rows and never show an internal scrollbar.
+`blocks['device_1498']` or `blocks['device_1498_2']` for a subdevice. Existing
+hand-written name-based keys and explicit custom titles remain supported. The
+stable reference is assigned before the editor starts its save sequence, so
+newly selected devices remain available while the blocks and layout are
+written. In grid layouts repeated saves reuse the same stable block reference.
 
 ### Widget Editor
 
-Select the puzzle-piece icon to open the **Widget Editor**. It provides a tile
-catalog. Select a tile to add it to screen 1, or select an active tile to remove
-it. A selected tile with configurable options has a cog button. Choose
-**Settings** on that tile, configure it, and then select **Save** in the main
-Widget Editor.
+Start the **Screen Editor**, select its plus button and choose **Widgets** to
+open the existing Widget Editor. It provides the same tile catalog as before.
+Select a tile to add it to the active screen, or select an active tile to remove
+it. A selected tile with configurable options has a cog button. The same full
+Widget Config popup is also opened when that widget's cog is selected from the
+Device Editor.
 
 Every widget settings popup also contains common Icon, Data, Updated and Title
 checkboxes. The **Custom fields** section accepts repeatable `Field` and
@@ -337,7 +397,9 @@ when their filename starts with `BG_`.
 
 Settings are grouped into General, Screen, Standby, Localization, Media,
 Widgets (Custom mode), Other and About tiles. Background fields support a
-built-in image selector and a custom path/URL. The update control is available
+built-in image selector and a custom path/URL. The default normal-screen
+background is `/img/custom/BG_Dashticz_bw.png`; place that file in `img/custom`
+or choose another background in Settings. The update control is available
 only inside the **Info** tile and can update directly to either the **Beta** or
 **Main** branch when the web-server account has write access to the Git
 checkout. When a newer version is detected, a persistent notification is shown

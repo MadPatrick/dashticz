@@ -5,6 +5,29 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
+
+v3.40.0 beta (7-8-2026)
+--------------------------
+
+* **Enhancements**
+
+- Data checkboxes in Device Config and Widget Config now use positive semantics:
+  checked shows the data text, while unchecked writes ``hide_data: true``.
+- The Screen Editor add tile is now labeled **Devices**.
+- Device tiles in Layout Editor show a top-left configuration cog that opens the
+  existing Device Config flow.
+- The Wizard icon now uses ``fa-wand-magic-sparkles`` in all editor topbars.
+- Layout Editor widget tiles now use the same top-left configuration cog as
+  devices and open the matching full Widget Config. Device/Widget config headers
+  include the name of the tile being edited.
+- Removed the obsolete editor text-alignment classes/writer support and changed
+  the default normal-screen background to ``/img/custom/BG_Dashticz_bw.png``.
+
+* **Code**
+
+- Bumped the beta package and runtime version to 3.40.0 and updated regression
+  coverage for the editor controls.
+
 v3.30.3 beta (5-8-2026)
 
 * **Enhancements**

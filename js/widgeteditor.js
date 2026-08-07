@@ -174,6 +174,17 @@ var DashticzWidgetEditor = (function () {
     return _t(item.id + '_title', item.title);
   }
 
+  function _widgetConfigDisplayName(item) {
+    var options = widgetBlockOptions[item.id] || {};
+    var rows = options.customFields || [];
+    for (var i = 0; i < rows.length; i++) {
+      if (_normaliseCustomFieldName(rows[i].field) !== 'title') continue;
+      var configuredTitle = $.trim(String(rows[i].setting || ''));
+      if (configuredTitle) return configuredTitle;
+    }
+    return _widgetTitle(item);
+  }
+
   function _widgetDescription(item) {
     return _t(item.id + '_description', item.description);
   }
@@ -308,6 +319,16 @@ var DashticzWidgetEditor = (function () {
     __proto__: true, prototype: true, constructor: true,
   };
 
+  function _isProtectedCustomWidgetProperty(property) {
+    var key = String(property || '').toLowerCase();
+    return (
+      key === '__proto__' ||
+      key === 'prototype' ||
+      key === 'constructor' ||
+      Object.prototype.hasOwnProperty.call(protectedCustomWidgetProperties, key)
+    );
+  }
+
   function _defaultWidgetBlockOptions() {
     return {
       icon: true,
@@ -337,7 +358,14 @@ var DashticzWidgetEditor = (function () {
     options.show_title = definition.hide_title !== true;
     options.customFields = [];
     Object.keys(definition || {}).forEach(function (property) {
-      if (_isManagedWidgetProperty(item, property) || /^_dashticz/.test(property)) return;
+      // Editor-managed properties belong to the regular widget payload, never
+      // to custom_fields. This also filters stale/legacy copies of checkbox
+      // properties such as icon, hide_data, last_update and hide_title.
+      if (
+        _isManagedWidgetProperty(item, property) ||
+        _isProtectedCustomWidgetProperty(property) ||
+        /^_dashticz/.test(property)
+      ) return;
       // Generated widget titles do not need a redundant custom-field row, but
       // a genuinely customised title is retained and can be edited.
       if (property === 'title' && String(definition[property]) === _widgetTitle(item)) return;
@@ -405,6 +433,35 @@ var DashticzWidgetEditor = (function () {
     gridMode = _activeScreenDom().hasClass('dt-grid-screen');
     _readConfiguredWidgets();
     _buildAndShowModal();
+  }
+
+  function openConfig(widgetId, options) {
+    options = options || {};
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _readConfiguredWidgets();
+    if (options.draft) {
+      if (options.draft.widgetConfig) {
+        widgetConfigs[widgetId] = $.extend(true, {}, options.draft.widgetConfig);
+      }
+      if (options.draft.blockOptions) {
+        widgetBlockOptions[widgetId] = $.extend(true, {}, options.draft.blockOptions);
+      }
+      selectedWidgets[widgetId] = true;
+    }
+    _openConfigModal(widgetId, options);
+  }
+
+  /** Open a widget config directly from Layout Editor and persist only widget
+   * blocks/settings. Layout data is intentionally untouched until Layout Editor
+   * itself is saved. */
+  function openLayoutConfig(widgetId) {
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _readConfiguredWidgets();
+    _openConfigModal(widgetId, {
+      onApply: function () {
+        return _saveConfigOnly();
+      },
+    });
   }
 
   function _readConfiguredWidgets() {
@@ -1373,7 +1430,8 @@ var DashticzWidgetEditor = (function () {
     var html = _cfgHeading(_t('display_options', 'Display options'));
     [
       ['icon', _t('icon', 'Icon'), options.icon],
-      ['hide_data', _t('data', 'Data'), options.hide_data],
+      // Data is a positive user-facing option: checked means visible.
+      ['hide_data', _t('data', 'Data'), options.hide_data !== true],
       ['last_update', _t('updated', 'Updated'), options.last_update],
       ['show_title', _t('show_title', 'Title'), options.show_title],
     ].forEach(function (option) {
@@ -1836,9 +1894,9 @@ var DashticzWidgetEditor = (function () {
       '<div class="modal-content">' +
       '<div class="modal-header">' +
       '<h5 class="modal-title" id="we-cfg-title"><i class="fas fa-cog me-2" aria-hidden="true"></i>' +
-      _t('settings', 'Settings') +
+      _t('widget_config', 'Widget Config') +
       ' — ' +
-      _widgetTitle(item) +
+      _esc(_widgetConfigDisplayName(item)) +
       '</h5>' +
       '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
       _t('close', 'Close') +
@@ -1859,7 +1917,7 @@ var DashticzWidgetEditor = (function () {
     );
   }
 
-  function _openConfigModal(widgetId) {
+  function _openConfigModal(widgetId, callbacks) {
     var item = null;
     for (var i = 0; i < catalog.length; i++) {
       if (catalog[i].id === widgetId) {
@@ -1868,6 +1926,7 @@ var DashticzWidgetEditor = (function () {
       }
     }
     if (!item) return;
+    callbacks = callbacks || {};
 
     $('#we-config-popup').remove();
     $('body').append(_buildConfigModalHtml(item));
@@ -1946,7 +2005,7 @@ var DashticzWidgetEditor = (function () {
       var pendingBlockOptions = {
         icon: $cfgModal.find('[data-block-option="icon"]').is(':checked'),
         iconValue: existingBlockOptions.iconValue || null,
-        hide_data: $cfgModal.find('[data-block-option="hide_data"]').is(':checked'),
+        hide_data: !$cfgModal.find('[data-block-option="hide_data"]').is(':checked'),
         last_update: $cfgModal.find('[data-block-option="last_update"]').is(':checked'),
         show_title: $cfgModal.find('[data-block-option="show_title"]').is(':checked'),
         customFields: [],
@@ -1967,7 +2026,7 @@ var DashticzWidgetEditor = (function () {
           return;
         }
         var lowerField = field.toLowerCase();
-        if (customKeys[lowerField] || protectedCustomWidgetProperties[lowerField]) {
+        if (customKeys[lowerField] || _isProtectedCustomWidgetProperty(lowerField)) {
           valid = false;
           $('.we-cfg-message').addClass('text-danger').text(
             _t('duplicate_field', 'This field is duplicated or reserved.')
@@ -2138,12 +2197,38 @@ var DashticzWidgetEditor = (function () {
         widgetBlockOptions[widgetId] = pendingBlockOptions;
         selectedWidgets[widgetId] = true;
         _refreshCard(widgetId);
+        var applyResult = null;
+        if (typeof callbacks.onApply === 'function') {
+          applyResult = callbacks.onApply({
+            entry: _buildWidgetPayloadEntry(item),
+            configSettings: _collectConfigSettings(),
+            draft: _widgetEditorDraft(widgetId),
+          });
+        }
+        if (applyResult && typeof applyResult.then === 'function') {
+          var $ok = $cfgModal.find('#we-cfg-ok-btn').prop('disabled', true);
+          $('.we-cfg-message').removeClass('text-danger').text(_t('saving', 'Saving…'));
+          $.when(applyResult)
+            .done(function () {
+              window.bootstrap.Modal.getInstance(document.getElementById('we-config-popup')).hide();
+            })
+            .fail(function (xhr) {
+              var message =
+                xhr && xhr.responseJSON && xhr.responseJSON.error
+                  ? xhr.responseJSON.error
+                  : _t('save_failed', 'The widgets could not be saved.');
+              $('.we-cfg-message').addClass('text-danger').text(message);
+              $ok.prop('disabled', false);
+            });
+          return;
+        }
         window.bootstrap.Modal.getInstance(document.getElementById('we-config-popup')).hide();
       }
     });
 
     $cfgModal.one('hidden.bs.modal', function () {
       $cfgModal.remove();
+      if (typeof callbacks.onClose === 'function') callbacks.onClose();
     });
 
     window.bootstrap.Modal.getOrCreateInstance(
@@ -2227,6 +2312,194 @@ var DashticzWidgetEditor = (function () {
       );
   }
 
+  function _collectConfigSettings() {
+    var configSettings = {};
+    var configWidgets = {
+      weather: [
+        'owm_api', 'owm_city', 'owm_name', 'owm_country', 'owm_lang', 'owm_days',
+        'owm_cnt', 'owm_min', 'weather_show_rain', 'weather_show_description',
+        'weather_show_wind', 'weather_show_gust', 'weather_icons', 'wu_api',
+        'wu_city', 'wu_name', 'wu_country', 'use_fahrenheit', 'use_beaufort',
+        'translate_windspeed',
+      ],
+      clock: ['boss_stationclock', 'hide_seconds', 'hide_seconds_stationclock'],
+      garbage: [
+        'garbage_company', 'garbage_icalurl', 'google_api_key', 'garbage_calendar_id',
+        'garbage_zipcode', 'garbage_street', 'garbage_housenumber',
+        'garbage_housenumberadd', 'garbage_maxitems', 'garbage_maxdays',
+        'garbage_width', 'garbage_hideicon', 'garbage_icon_use_colors',
+        'garbage_use_colors', 'garbage_use_names', 'garbage_use_cors_prefix',
+      ],
+      sonarr: ['sonarr_url', 'sonarr_apikey', 'sonarr_maxitems'],
+      spotify: ['spot_clientid'],
+      calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],
+      secpanel: ['security_button_icons', 'security_panel_lock'],
+      trafficinfo: ['anwb_apikey'],
+      map: ['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude'],
+      longfonds: ['longfonds_zipcode', 'longfonds_housenumber'],
+      moon: ['idx_moonpicture'],
+      news: ['default_news_url', 'news_scroll_after'],
+    };
+    Object.keys(configWidgets).forEach(function (id) {
+      var cfg = widgetConfigs[id];
+      if (!cfg) return;
+      configWidgets[id].forEach(function (key) {
+        if (typeof cfg[key] !== 'undefined') configSettings[key] = cfg[key];
+      });
+    });
+    if (widgetConfigs.xmltvguide) {
+      configSettings.xmltv_url = widgetConfigs.xmltvguide.xmltvurl || '';
+      configSettings.xmltv_channels = widgetConfigs.xmltvguide.channels || '';
+      configSettings.xmltv_maxitems = widgetConfigs.xmltvguide.maxitems || '10';
+      configSettings.xmltv_layout = widgetConfigs.xmltvguide.layout || '0';
+      configSettings.xmltv_separator = widgetConfigs.xmltvguide.separator || '-';
+      configSettings.xmltv_refresh = widgetConfigs.xmltvguide.refresh || '3600';
+    }
+    return configSettings;
+  }
+
+  function _buildWidgetPayloadEntry(item) {
+    var entry = {
+      id: item.id,
+      key: widgetBlockRefs[item.id] || item.blockKey,
+    };
+    var dimensions = widgetDimensions[item.id] || {};
+    entry.width = dimensions.width || item.width;
+    if (dimensions.height || item.height) entry.height = dimensions.height || item.height;
+
+    var blockOptions = widgetBlockOptions[item.id] || _defaultWidgetBlockOptions();
+    if (blockOptions.icon === false) {
+      entry.icon = '';
+    } else if (blockOptions.iconValue) {
+      entry.icon = blockOptions.iconValue;
+    }
+    entry.hide_data = blockOptions.hide_data === true;
+    entry.last_update = blockOptions.last_update === true;
+    if (blockOptions.show_title === false) entry.hide_title = true;
+    entry.custom_fields = {};
+    (blockOptions.customFields || []).forEach(function (row) {
+      var field = _normaliseCustomFieldName(row.field);
+      if (!field || _isProtectedCustomWidgetProperty(field)) return;
+      var parsed = typeof row.value !== 'undefined'
+        ? { valid: true, value: row.value }
+        : _parseCustomSetting(row.setting);
+      if (parsed.valid) entry.custom_fields[field] = parsed.value;
+    });
+
+    if (item.id === 'garbage') {
+      entry.displayTitle = _widgetTitle(item);
+      entry.maxitems = parseInt(widgetConfigs.garbage.garbage_maxitems, 10) || 4;
+      entry.maxdays = parseInt(widgetConfigs.garbage.garbage_maxdays, 10) || 32;
+    }
+    if (item.id === 'weather') entry.provider = widgetConfigs.weather.provider;
+    if (item.id === 'weather' && widgetConfigs.weather) {
+      var wcfg = widgetConfigs.weather;
+      entry.showRain = Number(wcfg.weather_show_rain) ? 1 : 0;
+      entry.showDescription = Number(wcfg.weather_show_description) ? 1 : 0;
+      entry.showWind = Number(wcfg.weather_show_wind) ? 1 : 0;
+      entry.showGust = Number(wcfg.weather_show_gust) ? 1 : 0;
+      entry.icons = wcfg.weather_icons || 'line';
+    }
+    if (item.id === 'calendar') {
+      entry.icalurl = widgetConfigs.calendar.icalurl;
+      entry.maxitems = parseInt(widgetConfigs.calendar.calendar_maxitems, 10) || 15;
+    }
+    if (item.id === 'clock') {
+      var clockType = widgetConfigs.clock.clockType || 'basicclock';
+      entry.clockType = clockType;
+      var ccfg = widgetConfigs.clock || {};
+      if (clockType !== 'miniclock') {
+        if (ccfg.size !== '' && ccfg.size !== null && typeof ccfg.size !== 'undefined') entry.size = ccfg.size;
+        if (ccfg.scale !== '' && ccfg.scale !== null && typeof ccfg.scale !== 'undefined') entry.scale = ccfg.scale;
+      }
+      if (clockType === 'flipclock') {
+        entry.showSeconds = Number(ccfg.showSeconds) ? 1 : 0;
+        entry.clockFace = ccfg.clockFace || '24';
+      }
+      if (clockType === 'stationclock') {
+        entry.body = ccfg.body || 'RoundBody';
+        entry.dial = ccfg.dial || 'GermanStrokeDial';
+        entry.hourhand = ccfg.hourhand || 'PointedHourHand';
+        entry.minutehand = ccfg.minutehand || 'PointedMinuteHand';
+        entry.secondhand = ccfg.secondhand || 'HoleShapedSecondHand';
+        entry.boss = ccfg.boss || 'RedBoss';
+        entry.minutehandbehavior = ccfg.minutehandbehavior || 'BouncingMinuteHand';
+        entry.secondhandbehavior = ccfg.secondhandbehavior || 'OverhastySecondHand';
+      }
+    }
+    if (item.id === 'publictransport') {
+      entry.station = widgetConfigs.publictransport.station;
+      entry.provider = widgetConfigs.publictransport.provider;
+    }
+    if (item.id === 'camera') {
+      var cameras = _cameraWidgetConfig().cameras;
+      if (cameras.length === 1) {
+        entry.title = cameras[0].title;
+        entry.imageUrl = cameras[0].imageUrl;
+        if (cameras[0].videoUrl) entry.videoUrl = cameras[0].videoUrl;
+      } else {
+        entry.cameras = cameras;
+      }
+    }
+    if (item.id === 'alarmmeldingen') {
+      entry.rss = widgetConfigs.alarmmeldingen.rss;
+      if (widgetConfigs.alarmmeldingen.filter) entry.filter = widgetConfigs.alarmmeldingen.filter;
+    }
+    if (item.id === 'iframe') {
+      var icfg = widgetConfigs.iframe || {};
+      entry.frameurl = icfg.frameurl || '';
+      entry.scrollbars = Number(icfg.scrollbars) === 1;
+      if (icfg.height && icfg.height !== '') entry.iframeHeight = parseInt(icfg.height, 10) || 400;
+      if (icfg.scaletofit && icfg.scaletofit !== '') entry.scaletofit = parseInt(icfg.scaletofit, 10) || 0;
+      if (icfg.aspectratio && icfg.aspectratio !== '') {
+        entry.aspectratio = parseFloat(icfg.aspectratio) || 0;
+        delete entry.iframeHeight;
+      }
+      if (Number(icfg.forcerefresh)) entry.forcerefresh = true;
+      if (icfg.refresh && icfg.refresh !== '') entry.refresh = parseInt(icfg.refresh, 10) || 300;
+    }
+    if (item.id === 'xmltvguide') {
+      var xcfg = widgetConfigs.xmltvguide || {};
+      entry.xmltvurl = xcfg.xmltvurl || '';
+      entry.channels = xcfg.channels && xcfg.channels !== ''
+        ? xcfg.channels.split(',').map(function (value) { return value.trim(); }).filter(Boolean)
+        : [];
+      entry.maxitems = parseInt(xcfg.maxitems, 10) || 10;
+      entry.layout = parseInt(xcfg.layout, 10) === 1 ? 1 : 0;
+      entry.separator = xcfg.separator || '-';
+      entry.refresh = parseInt(xcfg.refresh, 10) || 3600;
+    }
+    return entry;
+  }
+
+  function _widgetEditorDraft(widgetId) {
+    return {
+      widgetConfig: $.extend(true, {}, widgetConfigs[widgetId] || {}),
+      blockOptions: $.extend(true, {}, widgetBlockOptions[widgetId] || _defaultWidgetBlockOptions()),
+    };
+  }
+
+  function _saveConfigOnly() {
+    var payload = [];
+    catalog.forEach(function (item) {
+      if (!selectedWidgets[item.id]) return;
+      payload.push(_buildWidgetPayloadEntry(item));
+    });
+    return $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
+      .then(function (data) {
+        return _postWidgetData(
+          'js/savewidgets.php',
+          {
+            widgets: payload,
+            settings: _collectConfigSettings(),
+            screen: _activeScreenPayload(),
+            blocksOnly: true,
+          },
+          data.token
+        );
+      });
+  }
+
   function _save() {
     if (
       selectedWidgets.calendar &&
@@ -2280,213 +2553,12 @@ var DashticzWidgetEditor = (function () {
       return;
     }
 
-    // Collect flattened config settings from all widget configs
-    var configSettings = {};
-    var configWidgets = {
-      weather: [
-        'owm_api',
-        'owm_city',
-        'owm_name',
-        'owm_country',
-        'owm_lang',
-        'owm_days',
-        'owm_cnt',
-        'owm_min',
-        'weather_show_rain',
-        'weather_show_description',
-        'weather_show_wind',
-        'weather_show_gust',
-        'weather_icons',
-        'wu_api',
-        'wu_city',
-        'wu_name',
-        'wu_country',
-        'use_fahrenheit',
-        'use_beaufort',
-        'translate_windspeed',
-      ],
-      clock: ['boss_stationclock', 'hide_seconds', 'hide_seconds_stationclock'],
-      garbage: [
-        'garbage_company',
-        'garbage_icalurl',
-        'google_api_key',
-        'garbage_calendar_id',
-        'garbage_zipcode',
-        'garbage_street',
-        'garbage_housenumber',
-        'garbage_housenumberadd',
-        'garbage_maxitems',
-        'garbage_maxdays',
-        'garbage_width',
-        'garbage_hideicon',
-        'garbage_icon_use_colors',
-        'garbage_use_colors',
-        'garbage_use_names',
-        'garbage_use_cors_prefix',
-      ],
-      sonarr: ['sonarr_url', 'sonarr_apikey', 'sonarr_maxitems'],
-      spotify: ['spot_clientid'],
-      calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],
-      secpanel: ['security_button_icons', 'security_panel_lock'],
-      trafficinfo: ['anwb_apikey'],
-      map: ['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude'],
-      longfonds: ['longfonds_zipcode', 'longfonds_housenumber'],
-      moon: ['idx_moonpicture'],
-      news: ['default_news_url', 'news_scroll_after'],
-    };
-    Object.keys(configWidgets).forEach(function (id) {
-      var cfg = widgetConfigs[id];
-      if (!cfg) return;
-      configWidgets[id].forEach(function (key) {
-        if (typeof cfg[key] !== 'undefined') {
-          configSettings[key] = cfg[key];
-        }
-      });
-    });
-    if (widgetConfigs.xmltvguide) {
-      configSettings.xmltv_url = widgetConfigs.xmltvguide.xmltvurl || '';
-      configSettings.xmltv_channels = widgetConfigs.xmltvguide.channels || '';
-      configSettings.xmltv_maxitems = widgetConfigs.xmltvguide.maxitems || '10';
-      configSettings.xmltv_layout = widgetConfigs.xmltvguide.layout || '0';
-      configSettings.xmltv_separator = widgetConfigs.xmltvguide.separator || '-';
-      configSettings.xmltv_refresh = widgetConfigs.xmltvguide.refresh || '3600';
-    }
+    var configSettings = _collectConfigSettings();
 
     var payload = [];
     catalog.forEach(function (item) {
       if (!selectedWidgets[item.id]) return;
-      var entry = {
-        id: item.id,
-        key: widgetBlockRefs[item.id] || item.blockKey,
-      };
-      var dimensions = widgetDimensions[item.id] || {};
-      entry.width = dimensions.width || item.width;
-      if (dimensions.height || item.height) {
-        entry.height = dimensions.height || item.height;
-      }
-      var blockOptions = widgetBlockOptions[item.id] || _defaultWidgetBlockOptions();
-      if (blockOptions.icon === false) {
-        entry.icon = '';
-      } else if (blockOptions.iconValue) {
-        // Keep custom icon strings that pre-date the checkbox-only UI.
-        entry.icon = blockOptions.iconValue;
-      }
-      entry.hide_data = blockOptions.hide_data === true;
-      entry.last_update = blockOptions.last_update === true;
-      if (blockOptions.show_title === false) entry.hide_title = true;
-      entry.custom_fields = {};
-      (blockOptions.customFields || []).forEach(function (row) {
-        var field = _normaliseCustomFieldName(row.field);
-        if (!field) return;
-        var parsed = typeof row.value !== 'undefined'
-          ? { valid: true, value: row.value }
-          : _parseCustomSetting(row.setting);
-        if (parsed.valid) entry.custom_fields[field] = parsed.value;
-      });
-      if (item.id === 'garbage') {
-        entry.displayTitle = _widgetTitle(item);
-        entry.maxitems = parseInt(widgetConfigs.garbage.garbage_maxitems, 10) || 4;
-        entry.maxdays = parseInt(widgetConfigs.garbage.garbage_maxdays, 10) || 32;
-      }
-      if (item.id === 'weather') entry.provider = widgetConfigs.weather.provider;
-      if (item.id === 'weather' && widgetConfigs.weather) {
-        var wcfg = widgetConfigs.weather;
-        entry.showRain = Number(wcfg.weather_show_rain) ? 1 : 0;
-        entry.showDescription = Number(wcfg.weather_show_description) ? 1 : 0;
-        entry.showWind = Number(wcfg.weather_show_wind) ? 1 : 0;
-        entry.showGust = Number(wcfg.weather_show_gust) ? 1 : 0;
-        entry.icons = wcfg.weather_icons || 'line';
-      }
-      if (item.id === 'calendar') {
-        entry.icalurl = widgetConfigs.calendar.icalurl;
-        entry.maxitems = parseInt(widgetConfigs.calendar.calendar_maxitems, 10) || 15;
-      }
-      if (item.id === 'clock') {
-        var clockType = widgetConfigs.clock.clockType || 'basicclock';
-        entry.clockType = clockType;
-        var ccfg = widgetConfigs.clock || {};
-        if (clockType !== 'miniclock') {
-          if (ccfg.size !== '' && ccfg.size !== null && typeof ccfg.size !== 'undefined') {
-            entry.size = ccfg.size;
-          }
-          if (ccfg.scale !== '' && ccfg.scale !== null && typeof ccfg.scale !== 'undefined') {
-            entry.scale = ccfg.scale;
-          }
-        }
-        if (clockType === 'flipclock') {
-          entry.showSeconds = Number(ccfg.showSeconds) ? 1 : 0;
-          entry.clockFace = ccfg.clockFace || '24';
-        }
-        if (clockType === 'stationclock') {
-          entry.body = ccfg.body || 'RoundBody';
-          entry.dial = ccfg.dial || 'GermanStrokeDial';
-          entry.hourhand = ccfg.hourhand || 'PointedHourHand';
-          entry.minutehand = ccfg.minutehand || 'PointedMinuteHand';
-          entry.secondhand = ccfg.secondhand || 'HoleShapedSecondHand';
-          entry.boss = ccfg.boss || 'RedBoss';
-          entry.minutehandbehavior = ccfg.minutehandbehavior || 'BouncingMinuteHand';
-          entry.secondhandbehavior = ccfg.secondhandbehavior || 'OverhastySecondHand';
-        }
-      }
-      if (item.id === 'publictransport') {
-        entry.station = widgetConfigs.publictransport.station;
-        entry.provider = widgetConfigs.publictransport.provider;
-      }
-      if (item.id === 'camera') {
-        var cameras = _cameraWidgetConfig().cameras;
-        if (cameras.length === 1) {
-          entry.title = cameras[0].title;
-          entry.imageUrl = cameras[0].imageUrl;
-          if (cameras[0].videoUrl) {
-            entry.videoUrl = cameras[0].videoUrl;
-          }
-        } else {
-          entry.cameras = cameras;
-        }
-      }
-      if (item.id === 'alarmmeldingen') {
-        entry.rss = widgetConfigs.alarmmeldingen.rss;
-        if (widgetConfigs.alarmmeldingen.filter) {
-          entry.filter = widgetConfigs.alarmmeldingen.filter;
-        }
-      }
-      // Add iframe-specific block properties to the widget payload entry
-      if (item.id === 'iframe') {
-        var icfg = widgetConfigs.iframe || {};
-        entry.frameurl = icfg.frameurl || '';
-        entry.scrollbars = Number(icfg.scrollbars) === 1;
-        if (icfg.height && icfg.height !== '') {
-          entry.iframeHeight = parseInt(icfg.height, 10) || 400;
-        }
-        if (icfg.scaletofit && icfg.scaletofit !== '') {
-          entry.scaletofit = parseInt(icfg.scaletofit, 10) || 0;
-        }
-        if (icfg.aspectratio && icfg.aspectratio !== '') {
-          entry.aspectratio = parseFloat(icfg.aspectratio) || 0;
-          delete entry.iframeHeight;
-        }
-        if (Number(icfg.forcerefresh)) {
-          entry.forcerefresh = true;
-        }
-        if (icfg.refresh && icfg.refresh !== '') {
-          entry.refresh = parseInt(icfg.refresh, 10) || 300;
-        }
-      }
-      // Add xmltvguide-specific block properties to the widget payload entry
-      if (item.id === 'xmltvguide') {
-        var xcfg = widgetConfigs.xmltvguide || {};
-        entry.xmltvurl = xcfg.xmltvurl || '';
-        if (xcfg.channels && xcfg.channels !== '') {
-          entry.channels = xcfg.channels.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
-        } else {
-          entry.channels = [];
-        }
-        entry.maxitems = parseInt(xcfg.maxitems, 10) || 10;
-        entry.layout = parseInt(xcfg.layout, 10) === 1 ? 1 : 0;
-        entry.separator = xcfg.separator || '-';
-        entry.refresh = parseInt(xcfg.refresh, 10) || 3600;
-      }
-      payload.push(entry);
+      payload.push(_buildWidgetPayloadEntry(item));
     });
 
     var $save = $('#we-save-btn')
@@ -2654,6 +2726,8 @@ var DashticzWidgetEditor = (function () {
 
   return {
     open: open,
+    openConfig: openConfig,
+    openLayoutConfig: openLayoutConfig,
   };
 })();
 

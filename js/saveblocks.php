@@ -95,14 +95,18 @@ foreach ($data['devices'] as $entry) {
     $customFields = _normalise_custom_device_fields($entry);
     if (is_array($entry)
         && isset($entry['kind'])
-        && in_array($entry['kind'], ['dummy', 'title'], true)
+        && in_array($entry['kind'], ['dummy', 'title', 'custom'], true)
     ) {
-        /* Dummy/title entries are managed by the Device Editor but are not
-         Domoticz devices. Keep their explicit block type and safe key. */
+        /* Helper/custom entries are managed by the Device Editor but are not
+         selected from the normal Domoticz device list. Keep their explicit key. */
         $kind = $entry['kind'];
-        $keyPattern = $kind === 'dummy'
-            ? '/^dummyblock_\d+$/'
-            : '/^Title_\d+$/';
+        if ($kind === 'dummy') {
+            $keyPattern = '/^dummyblock_\d+$/';
+        } elseif ($kind === 'title') {
+            $keyPattern = '/^Title_\d+$/';
+        } else {
+            $keyPattern = '/^[A-Za-z_$][A-Za-z0-9_$]*$/';
+        }
         if (!isset($entry['key'])
             || !is_string($entry['key'])
             || !preg_match($keyPattern, $entry['key'])
@@ -112,7 +116,7 @@ foreach ($data['devices'] as $entry) {
         $title = isset($entry['title']) && is_string($entry['title'])
             ? substr(trim($entry['title']), 0, 100)
             : '';
-        if ($title === '') {
+        if ($title === '' && $kind !== 'custom') {
             dashticz_json_error(400, 'A special block title is required.');
         }
         $width = isset($entry['width']) ? (int)$entry['width'] : ($kind === 'title' ? 12 : 3);
@@ -126,9 +130,14 @@ foreach ($data['devices'] as $entry) {
         $hideData = false;
         $lastUpdate = false;
         $switch = false;
-        if ($kind === 'dummy') {
+        if ($kind === 'dummy' || $kind === 'custom') {
             if (!isset($entry['idx']) || !is_int($entry['idx']) || $entry['idx'] < 1) {
-                dashticz_json_error(400, 'A dummy block requires a positive integer idx.');
+                dashticz_json_error(
+                    400,
+                    $kind === 'dummy'
+                        ? 'A dummy block requires a positive integer idx.'
+                        : 'A custom device requires a positive integer idx.'
+                );
             }
             $idx = $entry['idx'];
             $icon = array_key_exists('icon', $entry) && is_string($entry['icon'])
@@ -151,9 +160,6 @@ foreach ($data['devices'] as $entry) {
             'last_update' => $lastUpdate,
             'switch' => $switch,
             'hide_title' => !empty($entry['hide_title']),
-            'text_alignment' => configwriter_normalise_text_alignment(
-                isset($entry['text_alignment']) ? $entry['text_alignment'] : null
-            ),
             'custom_fields' => $customFields,
             'key' => $entry['key'],
         ];
@@ -220,9 +226,6 @@ foreach ($data['devices'] as $entry) {
             'last_update' => !empty($entry['last_update']),
             'switch' => !empty($entry['switch']),
             'hide_title' => !empty($entry['hide_title']),
-            'text_alignment' => configwriter_normalise_text_alignment(
-                isset($entry['text_alignment']) ? $entry['text_alignment'] : null
-            ),
             'custom_fields' => $customFields,
             'key' => isset($entry['key'])
                 && is_string($entry['key'])
@@ -279,9 +282,6 @@ foreach ($data['devices'] as $entry) {
             'last_update' => !empty($entry['last_update']),
             'switch' => !empty($entry['switch']),
             'hide_title' => !empty($entry['hide_title']),
-            'text_alignment' => configwriter_normalise_text_alignment(
-                isset($entry['text_alignment']) ? $entry['text_alignment'] : null
-            ),
             'custom_fields' => $customFields,
             'key' => $groupKey,  /* block key IS the group reference */
         ];
@@ -337,7 +337,7 @@ if (!empty($devices)) {
     );
     $requestKeys = [];
     foreach ($devices as &$device) {
-        if (isset($device['kind']) && in_array($device['kind'], ['dummy', 'title'], true)) {
+        if (isset($device['kind']) && in_array($device['kind'], ['dummy', 'title', 'custom'], true)) {
             /* The browser generates stable numbered keys for special blocks. */
             if (isset($requestKeys[$device['key']])) {
                 dashticz_json_error(409, 'Special block key already exists.');

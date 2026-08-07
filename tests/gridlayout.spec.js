@@ -305,7 +305,7 @@ var standby_screen = {
   }) => {
     let gridRequest = null;
     let blocksRequest = null;
-    let cssRequest = null;
+    let customCssWrites = 0;
     let columnSaves = 0;
     await page.route('**/tests/CONFIG.pw.js*', async (route) => {
       const response = await route.fetch();
@@ -359,7 +359,7 @@ screens[1] = {
       });
     });
     await page.route('**/js/savecustomcss.php', async (route) => {
-      cssRequest = route.request().postDataJSON();
+      customCssWrites++;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -381,22 +381,22 @@ screens[1] = {
 
     await page.goto(dashboardUrl);
     await waitForDashboard(page);
-    await page.locator('.screen1 .deviceeditoricon').click();
-    await expect(page.locator('#deviceeditorpopup')).toBeVisible();
+    await openDeviceEditorFromScreenEditor(page);
     await page
       .locator('[data-order-key="special:grid_text"] .de-config-btn')
       .click();
     await expect(page.locator('#de-config-popup')).toBeVisible();
     await expect(page.locator('#deviceeditorpopup')).toBeHidden();
-    await expect(page.locator('.de-alignment-label')).toHaveText('Alignment');
-    await page.locator('.de-custom-field-name').fill('Layout');
-    await page.locator('.de-custom-field-setting').fill('1');
-    await page.locator('.de-custom-field-add').click();
-    await expect(page.locator('.de-custom-field-row')).toHaveCount(2);
-    await page.locator('.de-custom-field-name').nth(1).fill('Classes');
-    await page.locator('.de-custom-field-setting').nth(1).fill('["wide"]');
-    await page.locator('#de-config-title').uncheck();
-    await page.locator('#de-config-align-right').check();
+    await expect(page.locator('.de-config-option')).toHaveCount(0);
+    await expect(page.locator('.de-custom-field-name').first()).toHaveValue('title');
+    await expect(page.locator('.de-custom-field-setting').first()).toHaveValue('Keep me');
+    await page.locator('.de-custom-field-add').first().click();
+    await page.locator('.de-custom-field-name').nth(1).fill('Layout');
+    await page.locator('.de-custom-field-setting').nth(1).fill('1');
+    await page.locator('.de-custom-field-add').nth(1).click();
+    await expect(page.locator('.de-custom-field-row')).toHaveCount(3);
+    await page.locator('.de-custom-field-name').nth(2).fill('Classes');
+    await page.locator('.de-custom-field-setting').nth(2).fill('["wide"]');
     await page.locator('#de-config-ok').click();
     await expect(page.locator('#deviceeditorpopup')).toBeVisible();
     await page.locator('#de-save-btn').evaluate((button) => {
@@ -420,16 +420,11 @@ screens[1] = {
         key: 'grid_text',
         title: 'Keep me',
         width: 12,
-        hide_title: true,
-        text_alignment: 'right',
         custom_fields: { layout: 1, classes: ['wide'] },
       },
     ]);
     expect(columnSaves).toBe(0);
-    expect(cssRequest).toEqual({
-      deviceAlignments: { s5: 'left', grid_text: 'right' },
-      removeDeviceAlignments: [],
-    });
+    expect(customCssWrites).toBe(0);
     expect(gridRequest.items).toEqual([
       { ref: 's5', grid: { x: 2, y: 2, w: 6, h: 3 } },
       { ref: 'grid_text', grid: { x: 10, y: 5, w: 8, h: 2 } },
@@ -504,8 +499,18 @@ screens[1] = {
 
     await page.goto(dashboardUrl);
     await waitForDashboard(page);
-    await page.locator('.screen1 .widgeteditoricon').click();
-    await expect(page.locator('#widgeteditorpopup')).toBeVisible();
+    await openWidgetEditorFromScreenEditor(page);
+
+    // The Layout Editor toolbar must remain behind the Widget Editor. Besides
+    // being visually wrong, a higher toolbar intercepts clicks on Save.
+    const toolbarZ = await page.locator('.dle-toolbar').evaluate((element) =>
+      parseInt(getComputedStyle(element).zIndex, 10)
+    );
+    const widgetModalZ = await page.locator('#widgeteditorpopup').evaluate((element) =>
+      parseInt(getComputedStyle(element).zIndex, 10)
+    );
+    expect(toolbarZ).toBeLessThan(widgetModalZ);
+
     await page.locator('#we-save-btn').click();
 
     await expect.poll(() => gridRequest).not.toBeNull();
@@ -514,6 +519,63 @@ screens[1] = {
       { ref: 'grid_weather', grid: { x: 3, y: 2, w: 8, h: 4 } },
       { ref: 'grid_text', grid: { x: 12, y: 8, w: 6, h: 2 } },
     ]);
+  });
+
+  test('Widget Editor saves configurable widgets while Layout Editor is active', async ({
+    page,
+  }) => {
+    let widgetRequest = null;
+
+    await page.route('**/info.php?get=csrf', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'widget-config-save-token' }),
+      })
+    );
+    await page.route('**/js/savewidgets.php', async (route) => {
+      widgetRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          blockKeys: ['widget_weather', 'widget_spotify', 'widget_clock'],
+        }),
+      });
+    });
+    await page.route('**/js/savelayout.php', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      })
+    );
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+    await openWidgetEditorFromScreenEditor(page);
+
+    for (const widgetId of ['weather', 'spotify', 'clock']) {
+      await page.locator(`.we-widget-card[data-widget-id="${widgetId}"]`).click();
+    }
+
+    // A real click is important here: it fails when the fixed Layout Editor
+    // toolbar sits above the modal footer and intercepts pointer events.
+    await page.locator('#we-save-btn').click();
+
+    await expect.poll(() => widgetRequest).not.toBeNull();
+    expect(widgetRequest.widgets.map((widget) => widget.id)).toEqual([
+      'weather',
+      'spotify',
+      'clock',
+    ]);
+    expect(widgetRequest.widgets.find((widget) => widget.id === 'weather').provider).toBe(
+      'openweather'
+    );
+    expect(widgetRequest.widgets.find((widget) => widget.id === 'clock').clockType).toBe(
+      'basicclock'
+    );
   });
 
   test('places blocks at explicit coordinates and stacks on mobile', async ({
@@ -636,13 +698,14 @@ screens[1] = {
       await expect(item).toHaveCSS('overflow', 'auto');
     }
 
-    await page.locator('.screen1 .deviceeditoricon').click();
-    await expect(page.locator('#deviceeditorpopup')).toBeVisible();
+    await openDeviceEditorFromScreenEditor(page);
     await page
       .locator('#deviceeditorpopup [data-bs-dismiss="modal"]')
       .last()
       .click();
     await expect(page.locator('#deviceeditorpopup')).toHaveCount(0);
+    await page.locator('.dle-cancel').click();
+    await expect(page.locator('body')).not.toHaveClass(/dle-active/);
 
     await page.setViewportSize({ width: 500, height: 900 });
     await expect(grid).toHaveCSS('display', 'flex');
@@ -745,6 +808,30 @@ screens[1] = {
     expect(savedGridRequest.payload.gridColumns).toBe(24);
   });
 });
+
+async function openScreenEditorAddMenu(page) {
+  if (!(await page.locator('body').evaluate((body) => body.classList.contains('dle-active')))) {
+    await page.locator('.screen1 .layouteditoricon').click();
+    await expect(page.locator('body')).toHaveClass(/dle-active/);
+  }
+  const addButton = page.locator('.screen1 .screeneditoraddicon');
+  await expect(addButton).toBeVisible();
+  await addButton.click();
+  await expect(page.locator('#screeneditoraddpopup')).toBeVisible();
+  await expect(page.locator('.dt-screeneditor-add-tile')).toHaveCount(4);
+}
+
+async function openDeviceEditorFromScreenEditor(page) {
+  await openScreenEditorAddMenu(page);
+  await page.locator('.dt-screeneditor-add-tile[data-add-action="device"]').click();
+  await expect(page.locator('#deviceeditorpopup')).toBeVisible();
+}
+
+async function openWidgetEditorFromScreenEditor(page) {
+  await openScreenEditorAddMenu(page);
+  await page.locator('.dt-screeneditor-add-tile[data-add-action="widgets"]').click();
+  await expect(page.locator('#widgeteditorpopup')).toBeVisible();
+}
 
 async function waitForDashboard(page) {
   await page.locator('#loaderHolder').waitFor({

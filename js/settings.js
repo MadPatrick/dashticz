@@ -1055,7 +1055,7 @@ var defaultSettings = {
   pointSize: 3,
   room_plan: 0,
   theme: 'default',
-  background_image: 'img/bg11.jpg',
+  background_image: '/img/custom/BG_Dashticz_bw.png',
   loginEnabled: 0,
   security_button_icons: 0,
   security_panel_lock: 0,
