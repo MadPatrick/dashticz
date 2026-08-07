@@ -1215,7 +1215,7 @@ function configwriter_build_grid_layout_section(
     $row = max(1, min(2000, (int)$rowHeight));
     $gridGap = max(0, min(200, (float)$gap));
     $mobile = $mobileLayout === 'stack' ? 'stack' : 'stack';
-    $refs = [];
+    $blockEntries = [];
 
     $section = configwriter_section_header('GRID LAYOUT') . "\n";
     $section .= "if (typeof blocks === 'undefined') var blocks = {}\n";
@@ -1226,25 +1226,25 @@ function configwriter_build_grid_layout_section(
             $columns,
             $index + 1
         );
-        $refs[] = $ref;
+        $inlineGrid = configwriter_format_props($position);
         if (isset($item['propsLiteral']) && is_string($item['propsLiteral'])) {
             $section .= "blocks['" . $ref . "'] = "
                 . $item['propsLiteral'] . ";\n";
             $section .= "blocks['" . $ref . "']['grid'] = "
-                . configwriter_format_props($position) . ";\n";
+                . $inlineGrid . ";\n";
         } elseif (isset($item['props']) && is_array($item['props'])) {
             $props = $item['props'];
             $props['grid'] = $position;
             $section .= configwriter_emit_block_line($ref, $props);
-        } else {
-            $section .= "blocks['" . $ref . "']['grid'] = "
-                . configwriter_format_props($position) . ";\n";
         }
+        /* Every item stores its per-screen grid position as an inline
+         * {key, grid} descriptor so that the same block key can appear
+         * on multiple screens each with its own independent position.
+         * renderGridScreen prefers this inline grid over blocks['ref']['grid']. */
+        $blockEntries[] = "{key:'" . configwriter_js_string_escape($ref)
+            . "', grid:" . $inlineGrid . "}";
     }
 
-    $quotedRefs = array_map(function ($ref) {
-        return "'" . configwriter_js_string_escape($ref) . "'";
-    }, $refs);
     if ($n === 0) {
         $section .= "\nif (typeof standby_screen === 'undefined') var standby_screen = {}\n";
         $target = 'standby_screen';
@@ -1259,7 +1259,7 @@ function configwriter_build_grid_layout_section(
     $section .= $target . "['gap'] = " . $gridGap . ";\n";
     $section .= $target . "['mobileLayout'] = '" . $mobile . "';\n";
     $section .= $target . "['blocks'] = ["
-        . implode(', ', $quotedRefs) . "];\n";
+        . implode(', ', $blockEntries) . "];\n";
 
     return $section;
 }
