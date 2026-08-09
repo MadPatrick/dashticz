@@ -16,6 +16,8 @@
   suffixes (`_standby`, `_s<n>`) before the lookup, matching the same logic
   already present in `_catalogItemByBlockKey` in `widgeteditor.js`.
 
+## 3.40.3 — Layout editor: config cog for all block types
+
 - Fixed a bug where custom blocks (camera, photo, and any other block whose type
   is not a numeric device index, slide button, Domoticz group, or known widget)
   showed a drag-arrow icon instead of the config cog in the Layout Editor.  Root
