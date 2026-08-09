@@ -454,6 +454,12 @@ screens[1] = {
     await page.locator('.de-custom-field-setting').nth(2).fill('["wide"]');
     await page.locator('#de-config-ok').click();
     await expect(page.locator('#deviceeditorpopup')).toBeVisible();
+    await page
+      .locator('[data-order-key="special:grid_text"] .de-title-toggle')
+      .uncheck();
+    await page
+      .locator('[data-order-key="special:grid_text"] .de-text-alignment')
+      .selectOption('right');
     await page.locator('#de-save-btn').evaluate((button) => {
       button.disabled = false;
     });
