@@ -99,7 +99,10 @@ foreach ($data['devices'] as $entry) {
     $customFields = _normalise_custom_device_fields($entry);
     if (is_array($entry)
         && isset($entry['kind'])
-        && in_array($entry['kind'], ['dummy', 'title', 'custom', 'slidebutton'], true)
+        && (
+            in_array($entry['kind'], ['dummy', 'title', 'custom'], true)
+            || $entry['kind'] === 'slidebutton'
+        )
     ) {
         /* Helper/custom entries are managed by the Device Editor but are not
          selected from the normal Domoticz device list. Keep their explicit key. */
@@ -125,7 +128,11 @@ foreach ($data['devices'] as $entry) {
         if ($title === '' && $kind !== 'custom' && $kind !== 'slidebutton') {
             dashticz_json_error(400, 'A special block title is required.');
         }
-        $width = isset($entry['width']) ? (int)$entry['width'] : ($kind === 'title' ? 12 : ($kind === 'slidebutton' ? 12 : 3));
+        $defaultWidth = 3;
+        if ($kind === 'title' || $kind === 'slidebutton') {
+            $defaultWidth = 12;
+        }
+        $width = isset($entry['width']) ? (int)$entry['width'] : $defaultWidth;
         $width = max(1, min(12, $width));
         $height = $kind === 'title' ? 120 : null;
         if (array_key_exists('height', $entry) && $entry['height'] !== null && $entry['height'] !== '') {
@@ -362,7 +369,7 @@ if (!empty($devices)) {
     );
     $requestKeys = [];
     foreach ($devices as &$device) {
-        if (isset($device['kind']) && in_array($device['kind'], ['dummy', 'title', 'custom', 'slidebutton'], true)) {
+        if (isset($device['kind']) && (in_array($device['kind'], ['dummy', 'title', 'custom'], true) || $device['kind'] === 'slidebutton')) {
             /* The browser generates stable numbered keys for special blocks. */
             if (isset($requestKeys[$device['key']])) {
                 dashticz_json_error(409, 'Special block key already exists.');

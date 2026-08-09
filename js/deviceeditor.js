@@ -1443,7 +1443,7 @@ var DashticzDeviceEditor = (function () {
         $('#sb-button-screen').trigger('focus');
         return;
       }
-      if (!buttonKey) buttonKey = 'Home';
+      if (!buttonKey) buttonKey = reference;
       if (!buttonTitle) buttonTitle = buttonKey;
 
       var orderKey = _specialOrderKey(reference);
