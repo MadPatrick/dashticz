@@ -1,8 +1,9 @@
 {
-    "version": "3.40.3",
+    "version": "3.40.4",
     "branch": "beta",
-    "last_changes": "Fix layout editor: show config cog for all block types including camera, photo and other custom blocks",
+    "last_changes": "Fix layout editor: widget config cog now opens Widget Config for screen-specific widget block keys (widget_clock_s2 etc.)",
     "changelog": {
+        "3.40.4": "Fix layout editor: clicking the config cog on a widget tile on a non-primary screen now correctly opens Widget Config instead of silently routing to Device Config; screen-specific widget block keys (widget_clock_s2, widget_clock_standby, etc.) are now resolved to their widget id in _widgetIdFromReference",
         "3.40.3": "Fix layout editor: all block types (including camera, photo and other custom blocks) now show the config cog icon instead of a drag-arrow; clicking it opens Device Config just like a regular device block",
         "3.40.2": "Fix widget editor: saving a widget on one screen no longer changes the same widget on every other screen; screen-specific block keys prevent CONFIG.js overwrites across screens",
         "3.40.1": "Fix theme panel: only read CSS overrides from saved custom.css block, not from theme stylesheets",

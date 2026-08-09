@@ -6,6 +6,22 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.40.4 beta (9-8-2026)
+--------------------------
+
+* **Fixes**
+
+- Layout Editor: clicking the config cog on a widget tile (clock, weather,
+  calendar, …) on a non-primary screen (screen 2, standby, …) now correctly
+  opens Widget Config.  Previously, blocks with screen-specific keys such as
+  ``widget_clock_s2`` or ``widget_clock_standby`` were not recognised as widgets
+  by ``_widgetIdFromReference``; on grid screens they fell through to the
+  ``'grid'`` fallback kind, which caused the cog to open Device Config instead,
+  and on column screens the block was skipped entirely and no cog was shown at
+  all.  ``_widgetIdFromReference`` now strips the ``_s<n>`` / ``_standby``
+  suffix before the lookup, matching the same logic already used in
+  ``_catalogItemByBlockKey`` in ``widgeteditor.js``.
+
 v3.40.3 beta (9-8-2026)
 --------------------------
 
