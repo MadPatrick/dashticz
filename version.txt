@@ -1,8 +1,9 @@
 {
-    "version": "3.40.2",
+    "version": "3.40.3",
     "branch": "beta",
-    "last_changes": "Fix grid screen: same block on multiple screens now keeps independent per-screen positions",
+    "last_changes": "Fix layout editor: show config cog for all block types including camera, photo and other custom blocks",
     "changelog": {
+        "3.40.3": "Fix layout editor: all block types (including camera, photo and other custom blocks) now show the config cog icon instead of a drag-arrow; clicking it opens Device Config just like a regular device block",
         "3.40.2": "Fix widget editor: saving a widget on one screen no longer changes the same widget on every other screen; screen-specific block keys prevent CONFIG.js overwrites across screens",
         "3.40.1": "Fix theme panel: only read CSS overrides from saved custom.css block, not from theme stylesheets",
         "3.40.0": "Wizard editor: device/widget config cogs, named config headers, new default background and alignment cleanup",

@@ -1043,7 +1043,8 @@ var DashticzLayoutEditor = (function () {
         var isConfigurable =
           item.kind === 'device' ||
           item.kind === 'widget' ||
-          item.kind === 'separator';
+          item.kind === 'separator' ||
+          item.kind === 'grid';
         var configureLabel = item.kind === 'widget'
           ? _t('configure_widget')
           : _t('configure_device');
@@ -1141,7 +1142,7 @@ var DashticzLayoutEditor = (function () {
   function _openItemConfig(item) {
     if (!item) return;
     if (
-      (item.kind === 'device' || item.kind === 'separator') &&
+      (item.kind === 'device' || item.kind === 'separator' || item.kind === 'grid') &&
       item.reference
     ) {
       DT_function.loadDTScript('js/deviceeditor.js').then(function () {

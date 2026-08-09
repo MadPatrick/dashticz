@@ -6,6 +6,18 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.40.3 beta (9-8-2026)
+--------------------------
+
+* **Fixes**
+
+- Layout Editor: camera, photo, and other custom blocks (those whose type is not
+  a numeric device index, slide button, Domoticz group, or a known widget) now
+  show the config cog icon instead of a drag-arrow icon.  Previously these blocks
+  fell through to a ``'grid'`` fallback kind and were treated as non-configurable.
+  Clicking the cog now opens Device Config for the block, the same flow used by
+  regular device blocks.
+
 v3.40.2 beta (7-8-2026)
 --------------------------
 

@@ -1,5 +1,17 @@
 # Dashticz — Change log for recent update work
 
+## 3.40.3 — Layout editor: config cog for all block types
+
+- Fixed a bug where custom blocks (camera, photo, and any other block whose type
+  is not a numeric device index, slide button, Domoticz group, or known widget)
+  showed a drag-arrow icon instead of the config cog in the Layout Editor.  Root
+  cause: `_decorateItems` only marked blocks with `kind === 'device'`,
+  `'widget'`, or `'separator'` as configurable; blocks that fell through to the
+  `'grid'` fallback in `_collectGridItems` were treated as non-configurable.
+  Fix: `'grid'` is now included in `isConfigurable`, and `_openItemConfig` routes
+  `'grid'`-kind blocks through `DashticzDeviceEditor.openConfig` (the same Device
+  Config flow used by regular device blocks).
+
 ## 3.40.2 — Widget editor screen isolation
 
 - Fixed a bug where saving a widget block (for example a clock) via the Widget
