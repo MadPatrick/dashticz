@@ -228,13 +228,31 @@ foreach ($data['widgets'] as $entry) {
     }
     $seen[$id] = true;
 
+    // Determine the block key.
+    // For non-primary screens (screen != 1) we always use a screen-specific key
+    // (e.g. widget_clock_s2, widget_clock_standby) so that saving a widget on one
+    // screen never overwrites the block definition used by another screen in CONFIG.js.
+    $catalogKey = $catalog[$id]['key'];
+    $incomingKey = isset($entry['key']) && is_string($entry['key'])
+        && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $entry['key'])
+            ? $entry['key']
+            : $catalogKey;
+    // Cast to int so that === comparisons work regardless of how $screenNumber arrives.
+    $screenInt = (int)$screenNumber;
+    if ($screenInt === 1) {
+        // Primary screen: keep the key as-is for full backwards compatibility.
+        $blockKey = $incomingKey;
+    } else {
+        // Non-primary screen: always emit a screen-specific key so blocks from
+        // different screens do not override each other when CONFIG.js is evaluated.
+        // Screen 0 (standby) gets the _standby suffix; other screens get _sN.
+        $screenSuffix = ($screenInt === 0) ? '_standby' : '_s' . $screenInt;
+        $blockKey = $catalogKey . $screenSuffix;
+    }
+
     $widget = [
         'id' => $id,
-        'key' => isset($entry['key'])
-            && is_string($entry['key'])
-            && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $entry['key'])
-                ? $entry['key']
-                : $catalog[$id]['key'],
+        'key' => $blockKey,
         'width' => isset($entry['width'])
             ? max(1, min(12, (int)$entry['width']))
             : $catalog[$id]['width'],

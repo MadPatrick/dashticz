@@ -11,6 +11,20 @@ v3.40.2 beta (7-8-2026)
 
 * **Fixes**
 
+- Widget Editor: saving a widget block (e.g. a clock) on one screen no longer
+  changes the same widget on every other screen.  Previously all screens shared
+  the same ``blocks['widget_clock']`` key in ``CONFIG.js``, so the last saved
+  screen silently overwrote the block used by all other screens.  The PHP writer
+  now generates a screen-specific key for every non-primary screen
+  (``widget_clock_s2``, ``widget_clock_standby``, etc.) so each screen keeps its
+  own independent block definition.  The JavaScript editor is updated to
+  recognise these screen-specific key variants so existing blocks can be reopened
+  and re-edited after the first post-fix save.  Screen 1 keys are unchanged for
+  full backward compatibility.
+- Widget Editor: the **Icon** checkbox now defaults to checked (icon visible) and
+  the **Last update** checkbox now defaults to unchecked for every widget type,
+  consistent with the documented defaults.  These defaults were already correct in
+  code; this entry documents that they are verified and unchanged.
 - Grid screens: placing the same device or widget on both a normal screen and the
   standby screen now keeps independent positions for each screen.  Previously the
   grid position was stored in the shared ``blocks['ref']['grid']`` global, so the

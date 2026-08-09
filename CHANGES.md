@@ -1,6 +1,20 @@
 # Dashticz — Change log for recent update work
 
-## 3.40.0 — Wizard editor polish
+## 3.40.2 — Widget editor screen isolation
+
+- Fixed a bug where saving a widget block (for example a clock) via the Widget
+  Editor on any non-primary screen would also change the same widget on every other
+  screen.  Root cause: all screens shared the same `blocks['widget_clock']` key in
+  `CONFIG.js`, so the last-saved screen silently overwrote the block definition read
+  by all other screens.  Fix: `savewidgets.php` now generates a screen-specific
+  block key for every non-primary screen (`widget_clock_s2`,
+  `widget_clock_standby`, etc.).  `widgeteditor.js` recognises these variant keys
+  so previously-saved blocks can be reopened and re-edited after the first
+  post-fix save.  Screen 1 keys are unchanged for full backward compatibility.
+
+- Confirmed that the **Icon** checkbox defaults to checked (icon visible) and the
+  **Last update** checkbox defaults to unchecked for every widget type.
+
 
 - Extended Calendar Widget Config with repeatable named calendar sources. Each
   source has its own HTTP(S) ICS URL and colour and can be added, edited or

@@ -1040,7 +1040,17 @@ var DashticzWidgetEditor = (function () {
 
   function _catalogItemByBlockKey(blockKey) {
     for (var i = 0; i < catalog.length; i++) {
-      if (catalog[i].blockKey === blockKey) return catalog[i];
+      var itemKey = catalog[i].blockKey;
+      if (itemKey === blockKey) return catalog[i];
+      // Also recognise screen-specific variants that savewidgets.php generates for
+      // non-primary screens (e.g. widget_clock_s2, widget_clock_standby) so that the
+      // editor can identify those blocks without an exact catalog key match.
+      var prefix = itemKey + '_s';
+      if (blockKey === itemKey + '_standby') return catalog[i];
+      if (blockKey.slice(0, prefix.length) === prefix &&
+          /^[0-9]+$/.test(blockKey.slice(prefix.length))) {
+        return catalog[i];
+      }
     }
     return null;
   }
