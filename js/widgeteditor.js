@@ -288,7 +288,10 @@ var DashticzWidgetEditor = (function () {
       showWind: true, showGust: true, icons: true,
     },
     calendar: { icalurl: true, calendars: true, maxitems: true },
-    garbage: { maxitems: true, maxdays: true },
+    garbage: { maxitems: true, maxdays: true, company: true, zipcode: true, street: true,
+      housenumber: true, housenumberSuffix: true, icalurl: true, calendar_id: true,
+      hideicon: true, use_cors_prefix: true, use_colors: true, icon_use_colors: true,
+      use_names: true },
     clock: {
       size: true, scale: true, showSeconds: true, clockFace: true, body: true,
       dial: true, hourhand: true, minutehand: true, secondhand: true, boss: true,
@@ -821,6 +824,32 @@ var DashticzWidgetEditor = (function () {
           if (typeof definition.maxdays !== 'undefined') {
             widgetConfigs.garbage.garbage_maxdays = String(definition.maxdays);
           }
+          // Read per-screen settings from the block definition so that each
+          // screen's garbage widget can have its own independently-configured settings.
+          [
+            ['company', 'garbage_company'],
+            ['zipcode', 'garbage_zipcode'],
+            ['street', 'garbage_street'],
+            ['housenumber', 'garbage_housenumber'],
+            ['housenumberSuffix', 'garbage_housenumberadd'],
+            ['icalurl', 'garbage_icalurl'],
+            ['calendar_id', 'garbage_calendar_id'],
+          ].forEach(function (mapping) {
+            if (typeof definition[mapping[0]] !== 'undefined') {
+              widgetConfigs.garbage[mapping[1]] = String(definition[mapping[0]]);
+            }
+          });
+          [
+            ['hideicon', 'garbage_hideicon'],
+            ['use_cors_prefix', 'garbage_use_cors_prefix'],
+            ['use_colors', 'garbage_use_colors'],
+            ['icon_use_colors', 'garbage_icon_use_colors'],
+            ['use_names', 'garbage_use_names'],
+          ].forEach(function (mapping) {
+            if (typeof definition[mapping[0]] !== 'undefined') {
+              widgetConfigs.garbage[mapping[1]] = Number(definition[mapping[0]]) ? 1 : 0;
+            }
+          });
         }
         if (
           item.id === 'clock' &&
@@ -1219,6 +1248,30 @@ var DashticzWidgetEditor = (function () {
       if (typeof definition.maxdays !== 'undefined') {
         widgetConfigs.garbage.garbage_maxdays = String(definition.maxdays);
       }
+      [
+        ['company', 'garbage_company'],
+        ['zipcode', 'garbage_zipcode'],
+        ['street', 'garbage_street'],
+        ['housenumber', 'garbage_housenumber'],
+        ['housenumberSuffix', 'garbage_housenumberadd'],
+        ['icalurl', 'garbage_icalurl'],
+        ['calendar_id', 'garbage_calendar_id'],
+      ].forEach(function (mapping) {
+        if (typeof definition[mapping[0]] !== 'undefined') {
+          widgetConfigs.garbage[mapping[1]] = String(definition[mapping[0]]);
+        }
+      });
+      [
+        ['hideicon', 'garbage_hideicon'],
+        ['use_cors_prefix', 'garbage_use_cors_prefix'],
+        ['use_colors', 'garbage_use_colors'],
+        ['icon_use_colors', 'garbage_icon_use_colors'],
+        ['use_names', 'garbage_use_names'],
+      ].forEach(function (mapping) {
+        if (typeof definition[mapping[0]] !== 'undefined') {
+          widgetConfigs.garbage[mapping[1]] = Number(definition[mapping[0]]) ? 1 : 0;
+        }
+      });
     } else if (item.id === 'clock') {
       widgetConfigs.clock.clockType = definition.type || 'basicclock';
       [
@@ -2735,9 +2788,23 @@ var DashticzWidgetEditor = (function () {
     });
 
     if (item.id === 'garbage') {
+      var gcfg = widgetConfigs.garbage || {};
       entry.displayTitle = _widgetTitle(item);
-      entry.maxitems = parseInt(widgetConfigs.garbage.garbage_maxitems, 10) || 4;
-      entry.maxdays = parseInt(widgetConfigs.garbage.garbage_maxdays, 10) || 32;
+      entry.maxitems = parseInt(gcfg.garbage_maxitems, 10) || 4;
+      entry.maxdays = parseInt(gcfg.garbage_maxdays, 10) || 32;
+      // Per-screen settings: include in the block entry so each screen stores its own config.
+      if (gcfg.garbage_company) entry.company = gcfg.garbage_company;
+      if (gcfg.garbage_zipcode) entry.zipcode = gcfg.garbage_zipcode;
+      if (gcfg.garbage_street) entry.street = gcfg.garbage_street;
+      if (gcfg.garbage_housenumber) entry.housenumber = gcfg.garbage_housenumber;
+      if (gcfg.garbage_housenumberadd) entry.housenumberSuffix = gcfg.garbage_housenumberadd;
+      if (gcfg.garbage_icalurl) entry.icalurl = gcfg.garbage_icalurl;
+      if (gcfg.garbage_calendar_id) entry.calendar_id = gcfg.garbage_calendar_id;
+      entry.hideicon = !!Number(gcfg.garbage_hideicon);
+      entry.use_cors_prefix = !!Number(gcfg.garbage_use_cors_prefix);
+      entry.use_colors = !!Number(gcfg.garbage_use_colors);
+      entry.icon_use_colors = !!Number(gcfg.garbage_icon_use_colors);
+      entry.use_names = !!Number(gcfg.garbage_use_names);
     }
     if (item.id === 'weather') entry.provider = widgetConfigs.weather.provider;
     if (item.id === 'weather' && widgetConfigs.weather) {

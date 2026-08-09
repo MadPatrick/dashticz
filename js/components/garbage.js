@@ -1,4 +1,4 @@
-/* global Dashticz _CORS_PATH settings infoMessage moment ICAL _PHP_INSTALLED language templateEngine*/
+/* global Dashticz _CORS_PATH settings infoMessage moment ICAL _PHP_INSTALLED language templateEngine showUpdateInformation*/
 
 var DT_garbage = (function () {
   function garbageText(key, fallback) {
@@ -674,7 +674,7 @@ SENSOR_LOCATIONS_TO_URL = {
     return result;
   }
 
-  function addToContainer(me, returnDates) {
+  function addToContainer(me, returnDates, fetchedAt) {
     var $div = me.$mountPoint;
     var $divState = $div.find('.state');
     var $divImg = $div.find('img.trashcan');
@@ -704,6 +704,17 @@ SENSOR_LOCATIONS_TO_URL = {
       });
 
       $divState.html(template(data));
+      if (showUpdateInformation(me.block)) {
+        var lastUpdateLabel = language.misc && language.misc.last_update
+          ? language.misc.last_update
+          : 'Last update';
+        $divState.append(
+          '<br /><span class="lastupdate">' +
+          lastUpdateLabel + ': ' +
+          (fetchedAt || moment()).format(settings['timeformat']) +
+          '</span>'
+        );
+      }
     });
   }
 
@@ -1022,7 +1033,8 @@ SENSOR_LOCATIONS_TO_URL = {
     return serviceProperties[me.block.company]
       .handler(me, serviceProperties[me.block.company].param)
       .then(function (data) {
-        return addToContainer(me, data);
+        var fetchedAt = moment();
+        return addToContainer(me, data, fetchedAt);
       })
       .catch(function () {
         console.error('Error loading garbage: ', me.block);

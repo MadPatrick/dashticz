@@ -334,6 +334,25 @@ foreach ($data['widgets'] as $entry) {
             : 32;
         $widget['maxitems'] = max(1, min(500, $maxitems));
         $widget['maxdays'] = max(1, min(3660, $maxdays));
+        // Per-screen garbage settings stored in the block definition so each
+        // screen's garbage widget is independent of the other screens.
+        if (isset($entry['company']) && is_string($entry['company'])
+            && in_array($entry['company'], $allowedGarbageCompanies, true)) {
+            $widget['company'] = $entry['company'];
+        }
+        foreach (['zipcode', 'street', 'housenumber', 'housenumberSuffix', 'icalurl', 'calendar_id'] as $strProp) {
+            if (isset($entry[$strProp]) && is_string($entry[$strProp])) {
+                $v = trim($entry[$strProp]);
+                if (strlen($v) <= 2048) {
+                    $widget[$strProp] = $v;
+                }
+            }
+        }
+        foreach (['hideicon', 'use_cors_prefix', 'use_colors', 'icon_use_colors', 'use_names'] as $boolProp) {
+            if (array_key_exists($boolProp, $entry)) {
+                $widget[$boolProp] = (bool)$entry[$boolProp];
+            }
+        }
     }
     if (array_key_exists('height', $entry) && $entry['height'] !== null && $entry['height'] !== '') {
         $height = (int)(round(((int)$entry['height']) / 10) * 10);
@@ -792,6 +811,21 @@ function _widgetBlockProps($widget)
             $props['title'] = isset($widget['displayTitle']) ? $widget['displayTitle'] : 'Afval';
             $props['maxitems'] = $widget['maxitems'];
             $props['maxdays'] = $widget['maxdays'];
+            // Per-screen settings: write block-level config so each screen's
+            // garbage widget can have its own address/provider settings.
+            if (isset($widget['company'])) {
+                $props['company'] = $widget['company'];
+            }
+            foreach (['zipcode', 'street', 'housenumber', 'housenumberSuffix', 'icalurl', 'calendar_id'] as $strProp) {
+                if (isset($widget[$strProp])) {
+                    $props[$strProp] = $widget[$strProp];
+                }
+            }
+            foreach (['hideicon', 'use_cors_prefix', 'use_colors', 'icon_use_colors', 'use_names'] as $boolProp) {
+                if (isset($widget[$boolProp])) {
+                    $props[$boolProp] = $widget[$boolProp];
+                }
+            }
             break;
         case 'spotify':
             $props['type'] = 'spotify';
@@ -947,6 +981,8 @@ function _widgetBlockProps($widget)
     }
     if (!empty($widget['last_update'])) {
         $props['last_update'] = true;
+    } elseif (array_key_exists('last_update', $widget) && $widget['last_update'] === false) {
+        $props['last_update'] = false;
     }
     if (!empty($widget['custom_fields'])) {
         // Custom fields are merged last so users can intentionally override a

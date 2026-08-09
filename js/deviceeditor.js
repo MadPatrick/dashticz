@@ -696,7 +696,11 @@ var DashticzDeviceEditor = (function () {
     if (widgetTitleVisible[orderKey] === false) entry.hide_title = true;
     if (widget.id === 'garbage') {
       entry.displayTitle = widget.title;
-      _copyDefinedWidgetProperties(entry, definition, ['maxitems', 'maxdays']);
+      _copyDefinedWidgetProperties(entry, definition, [
+        'maxitems', 'maxdays', 'company', 'zipcode', 'street',
+        'housenumber', 'housenumberSuffix', 'icalurl', 'calendar_id',
+        'hideicon', 'use_cors_prefix', 'use_colors', 'icon_use_colors', 'use_names',
+      ]);
     }
 
     if (widget.id === 'weather') {
