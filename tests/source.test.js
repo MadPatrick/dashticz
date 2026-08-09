@@ -214,7 +214,9 @@ test('settings and widget UI use JSON translations with an English base', () => 
   }
   assert.match(layoutEditor, /language\.settings\.layouteditor/);
   assert.match(deviceEditor, /language\.settings\.deviceeditor/);
-  assert.match(simpleBlock, /language\.settings\.config_mode\.confirm_wizard/);
+  assert.match(simpleBlock, /function _showConfigModeWarning\(mode, onContinue\)/);
+  assert.match(simpleBlock, /labels\.confirm_wizard/);
+  assert.match(simpleBlock, /labels\.confirm_custom/);
 });
 
 test('built-in widget titles use the active language', () => {
@@ -444,7 +446,7 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(editor, /function _saveGrid/);
   assert.match(editor, /--dt-grid-x/);
   assert.match(editor, /--dt-grid-h/);
-  assert.match(simpleBlock, /language\.settings\.config_mode\.confirm_wizard/);
+  assert.match(simpleBlock, /_showConfigModeWarning\(mode, function \(\)/);
   assert.match(
     simpleBlock,
     /convertCurrentScreenToGrid\(\s*true,\s*'wizard'/
@@ -512,7 +514,7 @@ test('screen editor add menu exposes device, widget, custom-device and separator
   assert.match(simpleBlock, /screeneditoraddicon d-none/);
   assert.match(simpleBlock, /fas fa-wand-magic-sparkles/);
   assert.match(simpleBlock, /action: 'device'/);
-  assert.match(simpleBlock, /label: t\.devices \|\| 'Devices'/);
+  assert.match(simpleBlock, /label: t\.add_device/);
   assert.doesNotMatch(simpleBlock, /fas fa-magic/);
   assert.match(simpleBlock, /action: 'widgets'/);
   assert.match(simpleBlock, /action: 'custom'/);
@@ -520,6 +522,8 @@ test('screen editor add menu exposes device, widget, custom-device and separator
   assert.match(simpleBlock, /DashticzWidgetEditor\.open\(\)/);
   assert.match(simpleBlock, /DashticzDeviceEditor\.openCustom\(\)/);
   assert.match(simpleBlock, /DashticzDeviceEditor\.addSeparator\(\)/);
+  assert.match(simpleBlock, /var selectedAction = ''/);
+  assert.match(simpleBlock, /\$popup\.find\('\.dt-screeneditor-add-tile'\)\.prop\('disabled', true\)/);
   assert.match(simpleBlock, /hasClass\('dle-active'\)/);
   assert.match(screenSwitcher, /screeneditoraddicon d-none/);
   assert.match(screenSwitcher, /fas fa-wand-magic-sparkles/);
@@ -562,11 +566,26 @@ test('screen editor add menu exposes device, widget, custom-device and separator
     assert.ok(translations.settings.deviceeditor.custom_device_options, `${locale} custom device options translation`);
     assert.ok(translations.settings.deviceeditor.separator, `${locale} separator translation`);
     assert.ok(translations.settings.widgeteditor.add_menu_title, `${locale} add-menu translation`);
+    assert.ok(translations.settings.widgeteditor.add_device, `${locale} add-device translation`);
     assert.ok(translations.settings.widgeteditor.devices, `${locale} devices tile translation`);
+    assert.ok(translations.settings.config_mode.warning_title, `${locale} mode-warning title translation`);
+    assert.ok(translations.settings.config_mode.confirm_wizard, `${locale} Wizard warning translation`);
+    assert.ok(translations.settings.config_mode.confirm_custom, `${locale} Custom warning translation`);
+    assert.ok(translations.settings.config_mode.cancel, `${locale} warning cancel translation`);
+    assert.ok(translations.settings.config_mode.continue, `${locale} warning continue translation`);
+    assert.ok(translations.settings.theme.custom_css_active, `${locale} custom-css status translation`);
     assert.ok(translations.settings.layouteditor.configure_device, `${locale} configure-device translation`);
     assert.ok(translations.settings.layouteditor.configure_widget, `${locale} configure-widget translation`);
     assert.ok(translations.settings.widgeteditor.custom_devices, `${locale} custom-device tile translation`);
     assert.ok(translations.settings.widgeteditor.separator, `${locale} separator tile translation`);
+    for (const key of [
+      'calendar_source', 'calendar_default_name', 'calendar_name',
+      'calendar_color', 'calendar_add', 'calendar_remove',
+      'calendar_name_required', 'calendar_duplicate_name',
+      'calendar_needs_source', 'invalid_calendar_url',
+    ]) {
+      assert.ok(translations.settings.widgeteditor[key], `${locale} ${key} translation`);
+    }
   }
 });
 
@@ -575,6 +594,11 @@ test('device and widget config editors share full widget config and preserve hid
   const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
   const saveBlocks = fs.readFileSync(path.join(root, 'js/saveblocks.php'), 'utf8');
   const configWriter = fs.readFileSync(path.join(root, 'js/configwriter.php'), 'utf8');
+  const layoutEditor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+  const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+  const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
+  const blocksSource = fs.readFileSync(path.join(root, 'js/blocks.js'), 'utf8');
+  const simpleBlock = fs.readFileSync(path.join(root, 'js/components/simpleblock.js'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
 
   // Alignment editor support is removed completely. Legacy property names remain
@@ -596,14 +620,22 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(widgetEditor, /hide_data: !\$cfgModal\.find\('\[data-block-option="hide_data"\]'\)\.is\(':checked'\)/);
   assert.match(deviceEditor, /de-config-options-three/);
   assert.match(styles, /\.de-config-options-three[\s\S]*grid-template-columns: repeat\(3/);
-  assert.match(styles, /\.de-config-options \.form-check-input[\s\S]*width: 2em;[\s\S]*height: 2em;/);
+  assert.match(styles, /\.de-config-options \.form-check-input[\s\S]*width: 32px;[\s\S]*height: 32px;/);
+  assert.match(deviceEditor, /icon: true, iconValue: null, hide_data: false, last_update: false/);
+  assert.match(styles, /\.we-block-option\.form-check-input[\s\S]*width: 32px;[\s\S]*height: 32px;/);
 
   // Title is a system Field/Setting row and c is hidden while being preserved in the payload.
   assert.match(deviceEditor, /field: 'title'[\s\S]*system: true/);
   assert.match(deviceEditor, /Object\.prototype\.hasOwnProperty\.call\(definition, 'c'\)/);
+  assert.doesNotMatch(blocksSource, /block\.c = c/);
+  assert.match(blocksSource, /block\._dashticzColumn = c/);
+  assert.match(simpleBlock, /me\.block\._dashticzColumn === 'bar'/);
   assert.match(deviceEditor, /preserved\.c = definition\.c/);
   assert.match(deviceEditor, /field === 'title' \|\| field === 'icon' \|\| field === 'c'/);
   assert.match(deviceEditor, /custom_fields = customFields/);
+  assert.match(widgetEditor, /preservedFields\.c = definition\.c/);
+  assert.match(widgetEditor, /entry\.custom_fields\[field\] = _encodeCustomSettingValue/);
+  assert.match(widgetEditor, /field: 'title'[\s\S]*system: true/);
 
   // A custom icon is only applied through the top-level icon property while Icon is enabled.
   assert.match(deviceEditor, /updated\.icon !== true/);
@@ -631,13 +663,36 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(widgetEditor, /entry\.custom_fields/);
   // Stale editor-managed properties must never be posted as custom widget fields.
   assert.match(widgetEditor, /_isProtectedCustomWidgetProperty\(property\)/);
-  assert.match(widgetEditor, /!field \|\| _isProtectedCustomWidgetProperty\(field\)/);
+  assert.match(widgetEditor, /!rawSetting \|\| _isProtectedCustomWidgetProperty\(lowerField\)/);
   assert.match(deviceEditor, /de-custom-field-name/);
   assert.match(deviceEditor, /de-custom-field-setting/);
   assert.match(deviceEditor, /function _parseCustomSetting/);
   assert.match(saveBlocks, /Invalid or reserved custom device field/);
   assert.match(saveBlocks, /_validate_custom_device_value/);
   assert.match(configWriter, /\$device\['custom_fields'\]/);
+
+  // Empty objects and arrays remain distinct across the JSON/PHP save boundary.
+  assert.match(deviceEditor, /__dashticz_empty_object__/);
+  assert.match(widgetEditor, /__dashticz_empty_object__/);
+  assert.match(configWriter, /function configwriter_restore_editor_value/);
+  assert.match(configWriter, /return new stdClass\(\)/);
+  assert.match(configWriter, /is_array\(\$value\) \|\| is_object\(\$value\)/);
+
+  // Existing and newly added separators use the same configuration control.
+  assert.match(layoutEditor, /kind: 'separator'/);
+  assert.match(layoutEditor, /item\.kind === 'separator'/);
+  assert.match(layoutEditor, /DashticzDeviceEditor\.openConfig\(item\.reference\)/);
+
+  // Any successfully loaded custom stylesheet is identified in the Theme panel.
+  assert.match(main, /data-dashticz-custom-css/);
+  assert.match(settings, /function bindThemeCustomCssNotice\(\)/);
+  assert.match(settings, /themeLabels\.custom_css_active/);
+  assert.match(styles, /\.settings-custom-css-notice[\s\S]*border: 2px solid #198754/);
+
+  // Screen Editor controls share one explicit button and icon size.
+  assert.match(styles, /\.dle-drag-icon,[\s\S]*\.dle-config-button[\s\S]*width: 32px;[\s\S]*height: 32px;/);
+  assert.match(styles, /\.dle-remove-button[\s\S]*width: 32px;[\s\S]*height: 32px;/);
+  assert.match(styles, /\.dle-remove-button \.fas[\s\S]*font-size: 16px !important/);
 });
 
 test('widget editor exposes the supported catalog and keeps legacy options out of settings UI', () => {
@@ -734,13 +789,17 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.match(widgetEditor, /Flipclock/);
   assert.match(widgetEditor, /Hayman clock/);
   assert.match(widgetEditor, /Miniclock/);
-  assert.match(widgetEditor, /we-cfg-calendar-url/);
+  assert.match(widgetEditor, /id="we-cfg-calendar-list"/);
+  assert.match(widgetEditor, /id="we-calendar-add"/);
+  assert.match(widgetEditor, /class="we-calendar-row/);
   assert.match(widgetEditor, /we-cfg-clock-type/);
   assert.match(widgetEditor, /id="we-camera-add"/);
   assert.match(widgetEditor, /class="we-camera-row/);
   assert.match(widgetEditor, /weather:\s*\{[\s\S]*provider:/);
   assert.match(widgetEditor, /clock:\s*\{[\s\S]*clockType:\s*'basicclock'/);
-  assert.match(widgetEditor, /calendar:\s*\{[\s\S]*icalurl:\s*''/);
+  assert.match(widgetEditor, /calendar:\s*\{[\s\S]*sources:\s*\[_defaultCalendarSource\(0\)\]/);
+  assert.match(widgetEditor, /function _normaliseCalendarSources/);
+  assert.match(widgetEditor, /function _calendarSourcesObject/);
   assert.match(widgetEditor, /publictransport:\s*\{[\s\S]*provider:\s*'treinen'[\s\S]*station:\s*'UT'/);
   assert.match(widgetEditor, /alarmmeldingen:\s*\{[\s\S]*rss:\s*'https:\/\/www\.alarmeringen\.nl\/feeds\/all\.rss'[\s\S]*filter:\s*''/);
   assert.match(widgetEditor, /camera:\s*\{[\s\S]*cameras:\s*_defaultCameraConfigs\(\)/);
@@ -751,8 +810,10 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.doesNotMatch(widgetEditor, /var alarmRss =/);
   assert.equal(english.settings.widgeteditor.weather_title, 'Weather');
   assert.equal(english.settings.widgeteditor.camera_title, 'Cameras');
+  assert.equal(english.settings.widgeteditor.calendar_add, 'Add calendar');
   assert.equal(dutch.settings.widgeteditor.weather_title, 'Weer');
   assert.equal(dutch.settings.widgeteditor.camera_title, "Camera's");
+  assert.equal(dutch.settings.widgeteditor.calendar_add, 'Kalender toevoegen');
   for (const [id, width, height] of [
     ['weather', 3, 120],
     ['garbage', 3, 120],
@@ -790,6 +851,8 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.match(garbage, /maxitems: settings\['garbage_maxitems'\] \|\| 4/);
   assert.match(garbage, /maxdays: settings\['garbage_maxdays'\] \|\| 32/);
   assert.match(calendar, /isDefined\(settings\['calendar_maxitems'\]\)/);
+  assert.match(calendar, /if \(isObject\(cal\[key\]\.icalurl\)\)/);
+  assert.doesNotMatch(calendar, /if \(cal\[key\]\.icalurls > 1\)/);
   assert.match(dashticz, /function getWidgetTitle\(block, special\)/);
   assert.match(dashticz, /garbage: 'garbage_title'/);
   assert.match(dashticz, /cfg\.title = widgetTitle/);
@@ -1065,6 +1128,20 @@ test('hide_data is respected consistently by themes, switches and the device edi
   assert.doesNotMatch(switchSource, /blocks\['hide_data'\]/);
   assert.match(editorSource, /hide_data: configured\.hide_data === true/);
   assert.match(editorSource, /entry\.hide_data = options\.hide_data === true/);
+});
+
+test('calendar editor behavior is documented without a version bump', () => {
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+  const changes = fs.readFileSync(path.join(root, 'CHANGES.md'), 'utf8');
+
+  assert.match(readme, /Calendar Widget Config shows every source/);
+  assert.match(readme, /Personal: \{ ics:/);
+  assert.match(readme, /holidayurl/);
+  assert.match(readme, /property `c`/);
+  assert.match(readme, /framed active-stylesheet notice/);
+  assert.match(changes, /repeatable named calendar sources/);
+  assert.match(changes, /single-string and legacy `calendars` formats remain readable/);
+  assert.match(changes, /Hidden compatibility property `c`/);
 });
 
 test('modern dark theme is portable and documented', () => {

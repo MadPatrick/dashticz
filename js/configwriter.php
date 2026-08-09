@@ -503,7 +503,7 @@ function configwriter_format_props($props)
             $parts[] = $key . ':' . $value;
             continue;
         }
-        if (is_array($value)) {
+        if (is_array($value) || is_object($value)) {
             $parts[] = $key . ':' . json_encode(
                 $value,
                 JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -514,6 +514,25 @@ function configwriter_format_props($props)
     }
 
     return '{' . implode(', ', $parts) . '}';
+}
+
+/** Restore empty JavaScript objects protected during JSON transport.
+ * json_decode(..., true) otherwise turns both {} and [] into the same PHP []. */
+function configwriter_restore_editor_value($value, $depth = 0)
+{
+    if ($depth > 8 || !is_array($value)) {
+        return $value;
+    }
+    if (count($value) === 1
+        && isset($value['__dashticz_empty_object__'])
+        && $value['__dashticz_empty_object__'] === true
+    ) {
+        return new stdClass();
+    }
+    foreach ($value as $key => $nestedValue) {
+        $value[$key] = configwriter_restore_editor_value($nestedValue, $depth + 1);
+    }
+    return $value;
 }
 
 function configwriter_emit_block_line($key, $props)

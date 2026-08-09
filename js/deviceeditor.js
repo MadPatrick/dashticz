@@ -345,7 +345,7 @@ var DashticzDeviceEditor = (function () {
     var definition = blocks[reference];
     var kind = null;
     if (
-      /^Title_\d+$/.test(reference) &&
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       String(definition.type || '').toLowerCase() === 'blocktitle'
     ) {
       kind = 'title';
@@ -550,6 +550,22 @@ var DashticzDeviceEditor = (function () {
     return { valid: true, value: text };
   }
 
+  function _encodeCustomSettingValue(value) {
+    if (Array.isArray(value)) {
+      return value.map(_encodeCustomSettingValue);
+    }
+    if (value && Object.prototype.toString.call(value) === '[object Object]') {
+      var keys = Object.keys(value);
+      if (!keys.length) return { __dashticz_empty_object__: true };
+      var encoded = {};
+      keys.forEach(function (key) {
+        encoded[key] = _encodeCustomSettingValue(value[key]);
+      });
+      return encoded;
+    }
+    return value;
+  }
+
   function _deviceCustomFieldRows(definition, titleValue) {
     var rows = [{
       field: 'title',
@@ -596,7 +612,10 @@ var DashticzDeviceEditor = (function () {
       if (!row || !row.field) return;
       var field = _normaliseCustomFieldName(row.field);
       if (!field || field === 'title' || field === 'icon' || field === 'c') return;
-      customFields[field] = row.value;
+      customFields[field] = _encodeCustomSettingValue(row.value);
+    });
+    Object.keys(customFields).forEach(function (field) {
+      customFields[field] = _encodeCustomSettingValue(customFields[field]);
     });
     return customFields;
   }
@@ -1386,6 +1405,18 @@ var DashticzDeviceEditor = (function () {
             if (!result || !result.entry) return;
             widget.pendingPayload = result.entry;
             widget.editorDraft = result.draft || null;
+            var draftRows =
+              widget.editorDraft &&
+              widget.editorDraft.blockOptions &&
+              widget.editorDraft.blockOptions.customFields
+                ? widget.editorDraft.blockOptions.customFields
+                : [];
+            draftRows.some(function (row) {
+              if (_normaliseCustomFieldName(row && row.field) !== 'title') return false;
+              widgetTitles[orderKey] = String(row.setting || '');
+              widget.pendingTitleEdited = true;
+              return true;
+            });
             pendingWidgetSettings = $.extend(
               {}, pendingWidgetSettings, result.configSettings || {}
             );
@@ -1997,7 +2028,7 @@ var DashticzDeviceEditor = (function () {
       deviceWidths[ck] = _parseWidth($row.find('.de-width-input').val());
       deviceTitles[ck] = '';
       deviceOptions[ck] = {
-        icon: true, iconValue: null, hide_data: true, last_update: false, switch: false,
+        icon: true, iconValue: null, hide_data: false, last_update: false, switch: false,
       };
       deviceTitleVisible[ck] = true;
       deviceCustomFields[ck] = [

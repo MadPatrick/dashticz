@@ -160,7 +160,7 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   /* Device Editor helper blocks are explicitly validated and whitelisted. */
   assert.match(source, /in_array\(\$entry\['kind'\], \['dummy', 'title', 'custom'\], true\)/);
   assert.match(source, /\^dummyblock_/);
-  assert.match(source, /\^Title_/);
+  assert.match(source, /Existing hand-written blocktitle keys remain editable/);
   assert.match(source, /\^\[A-Za-z_\$\]/);
   assert.match(source, /positive integer idx/);
   assert.match(source, /configwriter_special_block_props/);
@@ -225,6 +225,8 @@ test('widget writer whitelists widgets and protects CONFIG.js writes', () => {
   assert.match(source, /Unknown weather provider/);
   assert.match(source, /Unknown clock type/);
   assert.match(source, /Calendar requires a valid http\(s\) ICS URL/);
+  assert.match(source, /Calendar requires one to twenty calendar sources/);
+  assert.match(source, /foreach \(\$icalurl as \$name => \$source\)/);
   assert.match(source, /Camera requires a valid http\(s\) image URL/);
   assert.match(source, /A camera widget supports up to 12 cameras/);
   assert.match(source, /\$props\['cameras'\] = \$widget\['cameras'\]/);

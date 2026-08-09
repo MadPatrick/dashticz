@@ -2,6 +2,19 @@
 
 ## 3.40.0 — Wizard editor polish
 
+- Extended Calendar Widget Config with repeatable named calendar sources. Each
+  source has its own HTTP(S) ICS URL and colour and can be added, edited or
+  removed independently. Editor saves use the supported `icalurl` object while
+  the existing single-string and legacy `calendars` formats remain readable.
+  Unrelated calendar options such as `holidayurl`, `layout`, `weeks`,
+  `lastweek`, `isoweek`, `maxitems` and `width` are preserved.
+- Added a localized framed Theme notice when `/custom/custom.css` is actively
+  loaded. The editor never rewrites the existing custom stylesheet.
+- Standardized Device, Widget, block and Separator editor controls and restored
+  the Separator configuration cog for existing and newly added separators.
+  Hidden compatibility property `c`, unknown typed fields and existing custom
+  icons remain preserved across editor saves.
+
 - Fixed the empty-screen Wizard bootstrap: an empty grid is now a valid Screen
   Editor state, so switching from Custom to Wizard no longer blocks the magic
   wand/add menu when there are no existing blocks. Wizard mode can initialise

@@ -700,6 +700,21 @@ var DashticzLayoutEditor = (function () {
       definition = { idx: ref };
     }
 
+    if (
+      key &&
+      String(definition.type || '').toLowerCase() === 'blocktitle'
+    ) {
+      return {
+        definition: definition,
+        kind: 'separator',
+        reference: key,
+        widgetId: null,
+        idx: null,
+        subidx: 0,
+        name: definition.title || key,
+      };
+    }
+
     var rawIdx = typeof definition.idx !== 'undefined' ? definition.idx : ref;
     var match = String(rawIdx).match(/^(\d+)(?:_(\d+))?$/);
     if (!match || parseInt(match[1], 10) < 1) {
@@ -996,7 +1011,10 @@ var DashticzLayoutEditor = (function () {
               _escapeHtml(_t('resize_title')) +
               '" aria-hidden="true"></span>'
             : '';
-        var isConfigurable = item.kind === 'device' || item.kind === 'widget';
+        var isConfigurable =
+          item.kind === 'device' ||
+          item.kind === 'widget' ||
+          item.kind === 'separator';
         var configureLabel = item.kind === 'widget'
           ? _t('configure_widget')
           : _t('configure_device');
@@ -1093,7 +1111,10 @@ var DashticzLayoutEditor = (function () {
 
   function _openItemConfig(item) {
     if (!item) return;
-    if (item.kind === 'device' && item.reference) {
+    if (
+      (item.kind === 'device' || item.kind === 'separator') &&
+      item.reference
+    ) {
       DT_function.loadDTScript('js/deviceeditor.js').then(function () {
         if (
           typeof DashticzDeviceEditor !== 'undefined' &&

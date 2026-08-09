@@ -287,7 +287,7 @@ var DashticzWidgetEditor = (function () {
       widget_provider: true, showRain: true, showDescription: true,
       showWind: true, showGust: true, icons: true,
     },
-    calendar: { icalurl: true, maxitems: true },
+    calendar: { icalurl: true, calendars: true, maxitems: true },
     garbage: { maxitems: true, maxdays: true },
     clock: {
       size: true, scale: true, showSeconds: true, clockFace: true, body: true,
@@ -316,6 +316,7 @@ var DashticzWidgetEditor = (function () {
     type: true, id: true, key: true, width: true, height: true, grid: true,
     idx: true, subidx: true, icon: true, hide_data: true, last_update: true,
     hide_title: true, text_alignment: true, text_align: true, custom_fields: true,
+    c: true,
     __proto__: true, prototype: true, constructor: true,
   };
 
@@ -336,7 +337,8 @@ var DashticzWidgetEditor = (function () {
       hide_data: false,
       last_update: false,
       show_title: true,
-      customFields: [{ field: '', setting: '' }],
+      customFields: [{ field: 'title', setting: '', system: true }],
+      preservedFields: {},
     };
   }
 
@@ -356,28 +358,78 @@ var DashticzWidgetEditor = (function () {
     options.hide_data = definition.hide_data === true;
     options.last_update = definition.last_update === true;
     options.show_title = definition.hide_title !== true;
-    options.customFields = [];
+    options.customFields = [{
+      field: 'title',
+      setting: typeof definition.title === 'string' ? definition.title : _widgetTitle(item),
+      system: true,
+    }];
+    if (options.iconValue) {
+      options.customFields.push({ field: 'icon', setting: options.iconValue });
+    }
+    if (Object.prototype.hasOwnProperty.call(definition, 'c')) {
+      options.preservedFields.c = definition.c;
+    }
+    if (item.id === 'calendar' && !definition.icalurl && Array.isArray(definition.calendars)) {
+      var legacyAdjustments = {};
+      definition.calendars.forEach(function (legacy) {
+        var calendar = legacy && legacy.calendar ? legacy.calendar : {};
+        ['adjustTZ', 'adjustAllDayTZ'].forEach(function (property) {
+          if (
+            typeof definition[property] === 'undefined' &&
+            typeof legacyAdjustments[property] === 'undefined' &&
+            typeof calendar[property] !== 'undefined'
+          ) {
+            legacyAdjustments[property] = calendar[property];
+          }
+        });
+      });
+      Object.keys(legacyAdjustments).forEach(function (property) {
+        options.customFields.push({
+          field: property,
+          setting: _settingToText(legacyAdjustments[property]),
+        });
+      });
+    }
     Object.keys(definition || {}).forEach(function (property) {
       // Editor-managed properties belong to the regular widget payload, never
       // to custom_fields. This also filters stale/legacy copies of checkbox
       // properties such as icon, hide_data, last_update and hide_title.
       if (
         _isManagedWidgetProperty(item, property) ||
+        property === 'title' ||
         _isProtectedCustomWidgetProperty(property) ||
         /^_dashticz/.test(property)
       ) return;
-      // Generated widget titles do not need a redundant custom-field row, but
-      // a genuinely customised title is retained and can be edited.
-      if (property === 'title' && String(definition[property]) === _widgetTitle(item)) return;
       options.customFields.push({
         field: property,
         setting: _settingToText(definition[property]),
       });
     });
-    if (!options.customFields.length) {
-      options.customFields.push({ field: '', setting: '' });
-    }
     widgetBlockOptions[item.id] = options;
+  }
+
+  function _ensureWidgetSystemFields(item, options) {
+    options.customFields = (options.customFields || []).map(function (row) {
+      return $.extend({}, row);
+    });
+    var titleRow = null;
+    var iconRow = null;
+    options.customFields.forEach(function (row) {
+      var field = _normaliseCustomFieldName(row.field);
+      if (field === 'title') titleRow = row;
+      if (field === 'icon') iconRow = row;
+    });
+    if (!titleRow) {
+      titleRow = { field: 'title', setting: _widgetTitle(item), system: true };
+      options.customFields.unshift(titleRow);
+    }
+    titleRow.system = true;
+    if (options.iconValue && !iconRow) {
+      options.customFields.splice(1, 0, {
+        field: 'icon',
+        setting: options.iconValue,
+      });
+    }
   }
 
   function _normaliseCustomFieldName(value) {
@@ -405,6 +457,22 @@ var DashticzWidgetEditor = (function () {
     return { valid: true, value: text };
   }
 
+  function _encodeCustomSettingValue(value) {
+    if (Array.isArray(value)) {
+      return value.map(_encodeCustomSettingValue);
+    }
+    if (value && Object.prototype.toString.call(value) === '[object Object]') {
+      var keys = Object.keys(value);
+      if (!keys.length) return { __dashticz_empty_object__: true };
+      var encoded = {};
+      keys.forEach(function (key) {
+        encoded[key] = _encodeCustomSettingValue(value[key]);
+      });
+      return encoded;
+    }
+    return value;
+  }
+
   function _defaultCameraConfig(index) {
     return {
       title: _t('camera', 'Camera') + ' ' + (index + 1),
@@ -427,6 +495,75 @@ var DashticzWidgetEditor = (function () {
       widgetConfigs.camera.cameras = _defaultCameraConfigs();
     }
     return widgetConfigs.camera;
+  }
+
+  function _defaultCalendarSource(index) {
+    return {
+      name: _t('calendar_default_name', 'Calendar') + ' ' + (index + 1),
+      ics: '',
+      color: 'blue',
+    };
+  }
+
+  function _normaliseCalendarSources(icalurl, legacyCalendars) {
+    var sources = [];
+    if (typeof icalurl === 'string') {
+      if ($.trim(icalurl)) {
+        var single = _defaultCalendarSource(0);
+        single.name = _t('calendar_default_name', 'Calendar');
+        single.ics = icalurl;
+        single.color = 'white';
+        sources.push(single);
+      }
+    } else if (icalurl && typeof icalurl === 'object' && !Array.isArray(icalurl)) {
+      Object.keys(icalurl).forEach(function (name) {
+        var source = icalurl[name];
+        if (typeof source === 'string') source = { ics: source };
+        if (!source || typeof source !== 'object') return;
+        sources.push({
+          name: name,
+          ics: typeof source.ics === 'string' ? source.ics : '',
+          color: typeof source.color === 'string' && source.color
+            ? source.color
+            : 'white',
+        });
+      });
+    } else if (Array.isArray(legacyCalendars)) {
+      legacyCalendars.forEach(function (legacy, index) {
+        var definition = legacy && legacy.calendar ? legacy.calendar : {};
+        if (!definition.icalurl) return;
+        var source = _defaultCalendarSource(index);
+        source.ics = definition.icalurl;
+        source.color = legacy.color || 'white';
+        sources.push(source);
+      });
+    }
+    return sources.length ? sources : [_defaultCalendarSource(0)];
+  }
+
+  function _calendarWidgetConfig() {
+    if (!widgetConfigs.calendar) widgetConfigs.calendar = {};
+    if (!Array.isArray(widgetConfigs.calendar.sources)) {
+      widgetConfigs.calendar.sources = _normaliseCalendarSources(
+        widgetConfigs.calendar.icalurl
+      );
+      delete widgetConfigs.calendar.icalurl;
+    }
+    if (!widgetConfigs.calendar.sources.length) {
+      widgetConfigs.calendar.sources.push(_defaultCalendarSource(0));
+    }
+    return widgetConfigs.calendar;
+  }
+
+  function _calendarSourcesObject(sources) {
+    var result = Object.create(null);
+    (sources || []).forEach(function (source) {
+      result[source.name] = {
+        ics: source.ics,
+        color: source.color || 'white',
+      };
+    });
+    return result;
   }
 
   function open() {
@@ -553,7 +690,7 @@ var DashticzWidgetEditor = (function () {
         spot_clientid: _s('spot_clientid'),
       },
       calendar: {
-        icalurl: '',
+        sources: [_defaultCalendarSource(0)],
         calendarformat: _s('calendarformat', 'dd DD.MM HH:mm'),
         calendarlanguage: _s('calendarlanguage', 'en_US'),
         calendar_maxitems: _s('calendar_maxitems', '15'),
@@ -668,11 +805,11 @@ var DashticzWidgetEditor = (function () {
             widgetConfigs.weather.weather_icons = definition.icons;
           }
         }
-        if (
-          item.id === 'calendar' &&
-          typeof definition.icalurl === 'string'
-        ) {
-          widgetConfigs.calendar.icalurl = definition.icalurl;
+        if (item.id === 'calendar') {
+          widgetConfigs.calendar.sources = _normaliseCalendarSources(
+            definition.icalurl,
+            definition.calendars
+          );
         }
         if (item.id === 'calendar' && typeof definition.maxitems !== 'undefined') {
           widgetConfigs.calendar.calendar_maxitems = String(definition.maxitems);
@@ -1058,9 +1195,10 @@ var DashticzWidgetEditor = (function () {
         widgetConfigs.weather.weather_icons = definition.icons;
       }
     } else if (item.id === 'calendar') {
-      if (typeof definition.icalurl === 'string') {
-        widgetConfigs.calendar.icalurl = definition.icalurl;
-      }
+      widgetConfigs.calendar.sources = _normaliseCalendarSources(
+        definition.icalurl,
+        definition.calendars
+      );
       if (typeof definition.maxitems !== 'undefined') {
         widgetConfigs.calendar.calendar_maxitems = String(definition.maxitems);
       }
@@ -1406,24 +1544,74 @@ var DashticzWidgetEditor = (function () {
     );
   }
 
+  function _calendarPickerColor(color) {
+    var named = {
+      black: '#000000', blue: '#0000ff', green: '#008000', lightblue: '#add8e6',
+      lightgreen: '#90ee90', orange: '#ffa500', purple: '#800080', red: '#ff0000',
+      white: '#ffffff', yellow: '#ffff00',
+    };
+    var value = String(color || '').toLowerCase();
+    if (/^#[0-9a-f]{6}$/.test(value)) return value;
+    if (/^#[0-9a-f]{3}$/.test(value)) {
+      return '#' + value.charAt(1) + value.charAt(1) + value.charAt(2) +
+        value.charAt(2) + value.charAt(3) + value.charAt(3);
+    }
+    return named[value] || '#0000ff';
+  }
+
+  function _calendarRowHtml(source, index) {
+    source = source || _defaultCalendarSource(index);
+    var color = source.color || 'blue';
+    return (
+      '<div class="we-calendar-row border rounded p-2 mb-2" data-calendar-index="' +
+      index + '">' +
+      '<div class="d-flex align-items-center justify-content-between mb-2">' +
+      '<strong>' + _t('calendar_source', 'Calendar') + ' ' + (index + 1) + '</strong>' +
+      '<button type="button" class="btn btn-sm btn-outline-danger we-calendar-remove" aria-label="' +
+      _esc(_t('calendar_remove', 'Remove calendar')) + '">' +
+      '<i class="fas fa-minus" aria-hidden="true"></i></button></div>' +
+      '<div class="mb-2"><label class="form-label we-field-label">' +
+      _t('calendar_name', 'Name') + '</label>' +
+      '<input type="text" class="form-control form-control-sm we-calendar-name" maxlength="100" value="' +
+      _esc(source.name || '') + '"></div>' +
+      '<div class="mb-2"><label class="form-label we-field-label">' +
+      _t('ics_url', 'ICS URL') + '</label>' +
+      '<input type="url" class="form-control form-control-sm we-calendar-url" maxlength="2048" ' +
+      'placeholder="https://…/calendar.ics" value="' + _esc(source.ics || '') + '"></div>' +
+      '<div><label class="form-label we-field-label">' +
+      _t('calendar_color', 'Color') + '</label>' +
+      '<input type="color" class="form-control form-control-color we-calendar-color" value="' +
+      _calendarPickerColor(color) + '" data-calendar-color-value="' + _esc(color) + '"></div></div>'
+    );
+  }
+
   function _customFieldRowHtml(row) {
     row = row || { field: '', setting: '' };
+    var isSystem = row.system === true;
+    var field = String(row.field || '');
+    var rowClass = 'we-custom-field-row input-group input-group-sm mb-2';
+    if (field.toLowerCase() === 'icon') rowClass += ' we-icon-field-row';
+    if (isSystem) rowClass += ' we-system-field-row';
     return (
-      '<div class="we-custom-field-row input-group input-group-sm mb-2">' +
+      '<div class="' + rowClass + '">' +
       '<input type="text" class="form-control we-custom-field-name" placeholder="' +
-      _esc(_t('field', 'Field')) + '" value="' + _esc(row.field || '') + '">' +
+      _esc(_t('field', 'Field')) + '" value="' + _esc(field) + '"' +
+      (isSystem ? ' readonly aria-readonly="true"' : '') + '>' +
       '<input type="text" class="form-control we-custom-field-setting" placeholder="' +
       _esc(_t('setting', 'Setting')) + '" value="' + _esc(row.setting || '') + '">' +
       '<button type="button" class="btn btn-outline-success we-custom-field-add" title="' +
       _esc(_t('add_field', 'Add field')) + '"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
       '<button type="button" class="btn btn-outline-danger we-custom-field-remove" title="' +
-      _esc(_t('remove_field', 'Remove field')) + '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
+      _esc(_t('remove_field', 'Remove field')) + '"' + (isSystem ? ' disabled' : '') +
+      '><i class="fas fa-minus" aria-hidden="true"></i></button>' +
       '</div>'
     );
   }
 
   function _widgetBlockOptionsHtml(item) {
     var options = widgetBlockOptions[item.id] || _defaultWidgetBlockOptions();
+    _ensureWidgetSystemFields(item, options);
+    widgetBlockOptions[item.id] = options;
     var rows = options.customFields && options.customFields.length
       ? options.customFields
       : [{ field: '', setting: '' }];
@@ -1512,14 +1700,16 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField('translate_windspeed', lw.translate_windspeed || 'Translate wind speed', 'checkbox', cfg.translate_windspeed, null, lw.translate_windspeed_help || '');
 
     } else if (item.id === 'calendar') {
-      var ccal = widgetConfigs.calendar || {};
-      fields =
-        '<div class="mb-3">' +
-        '<label class="form-label we-field-label" for="we-cfg-calendar-url">' +
-        _t('ics_url', 'ICS URL') +
-        '</label>' +
-        '<input type="url" class="form-control form-control-sm we-widget-field" id="we-cfg-calendar-url" ' +
-        'placeholder="https://…/calendar.ics" value="' + _esc(ccal.icalurl || '') + '"></div>';
+      var ccal = _calendarWidgetConfig();
+      fields = '<div id="we-cfg-calendar-list">';
+      ccal.sources.forEach(function (source, index) {
+        fields += _calendarRowHtml(source, index);
+      });
+      fields += '</div>';
+      fields +=
+        '<button type="button" class="btn btn-sm btn-outline-success mb-3" id="we-calendar-add">' +
+        '<i class="fas fa-plus me-1" aria-hidden="true"></i>' +
+        _t('calendar_add', 'Add calendar') + '</button>';
       fields += _cfgField('calendarformat', ll.calendarformat || 'Calendar format', 'text', ccal.calendarformat);
       fields += _cfgField(
         'calendarlanguage',
@@ -1934,21 +2124,32 @@ var DashticzWidgetEditor = (function () {
     var $cfgModal = $('#we-config-popup');
 
     function refreshCustomFieldButtons() {
-      var count = $cfgModal.find('.we-custom-field-row').length;
-      $cfgModal.find('.we-custom-field-remove').prop('disabled', count <= 1);
+      var removable = $cfgModal.find('.we-custom-field-row:not(.we-system-field-row)').length;
+      $cfgModal.find('.we-custom-field-remove').each(function () {
+        var isSystem = $(this).closest('.we-custom-field-row').hasClass('we-system-field-row');
+        $(this).prop('disabled', isSystem || removable <= 0);
+      });
+    }
+
+    function refreshIconFieldVisibility() {
+      var enabled = $cfgModal.find('[data-block-option="icon"]').is(':checked');
+      $cfgModal.find('.we-icon-field-row').toggle(enabled);
     }
 
     $cfgModal.on('click', '.we-custom-field-add', function () {
       $(this).closest('.we-custom-field-row').after(_customFieldRowHtml());
       refreshCustomFieldButtons();
+      refreshIconFieldVisibility();
     });
 
     $cfgModal.on('click', '.we-custom-field-remove', function () {
-      if ($cfgModal.find('.we-custom-field-row').length <= 1) return;
+      if ($(this).prop('disabled')) return;
       $(this).closest('.we-custom-field-row').remove();
       refreshCustomFieldButtons();
     });
+    $cfgModal.on('change', '[data-block-option="icon"]', refreshIconFieldVisibility);
     refreshCustomFieldButtons();
+    refreshIconFieldVisibility();
 
     $cfgModal.on('change', '#we-cfg-weather-provider', function () {
       var provider = $(this).val() === 'wunderground' ? 'wunderground' : 'openweather';
@@ -1964,6 +2165,41 @@ var DashticzWidgetEditor = (function () {
       });
       $cfgModal.find('.we-clock-size-group').toggle(type !== 'miniclock');
     });
+
+    $cfgModal.on('click', '#we-calendar-add', function () {
+      var index = $cfgModal.find('.we-calendar-row').length;
+      $('#we-cfg-calendar-list').append(
+        _calendarRowHtml(_defaultCalendarSource(index), index)
+      );
+      $cfgModal.find('.we-calendar-remove').prop(
+        'disabled',
+        $cfgModal.find('.we-calendar-row').length <= 1
+      );
+    });
+
+    $cfgModal.on('input change', '.we-calendar-color', function () {
+      $(this).attr('data-calendar-color-value', $(this).val());
+    });
+
+    $cfgModal.on('click', '.we-calendar-remove', function () {
+      if ($cfgModal.find('.we-calendar-row').length <= 1) return;
+      $(this).closest('.we-calendar-row').remove();
+      $cfgModal.find('.we-calendar-row').each(function (index) {
+        $(this).attr('data-calendar-index', index);
+        $(this)
+          .find('strong')
+          .text(_t('calendar_source', 'Calendar') + ' ' + (index + 1));
+      });
+      $cfgModal.find('.we-calendar-remove').prop(
+        'disabled',
+        $cfgModal.find('.we-calendar-row').length <= 1
+      );
+    });
+
+    $cfgModal.find('.we-calendar-remove').prop(
+      'disabled',
+      $cfgModal.find('.we-calendar-row').length <= 1
+    );
 
     $cfgModal.on('click', '#we-camera-add', function () {
       var index = $cfgModal.find('.we-camera-row').length;
@@ -2002,13 +2238,17 @@ var DashticzWidgetEditor = (function () {
     $cfgModal.on('click', '#we-cfg-ok-btn', function () {
       var valid = true;
       var existingBlockOptions = widgetBlockOptions[widgetId] || _defaultWidgetBlockOptions();
+      var pendingTitle = '';
+      var pendingIconValue = null;
+      var hasIconField = false;
       var pendingBlockOptions = {
         icon: $cfgModal.find('[data-block-option="icon"]').is(':checked'),
-        iconValue: existingBlockOptions.iconValue || null,
+        iconValue: null,
         hide_data: !$cfgModal.find('[data-block-option="hide_data"]').is(':checked'),
         last_update: $cfgModal.find('[data-block-option="last_update"]').is(':checked'),
         show_title: $cfgModal.find('[data-block-option="show_title"]').is(':checked'),
         customFields: [],
+        preservedFields: $.extend({}, existingBlockOptions.preservedFields || {}),
       };
       var customKeys = {};
       $cfgModal.find('.we-custom-field-row').each(function () {
@@ -2017,7 +2257,7 @@ var DashticzWidgetEditor = (function () {
         var rawSetting = $.trim($(this).find('.we-custom-field-setting').val() || '');
         if (!rawField && !rawSetting) return;
         var field = _normaliseCustomFieldName(rawField);
-        if (!field || !rawSetting || !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(field)) {
+        if (!field || !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(field)) {
           valid = false;
           $('.we-cfg-message').addClass('text-danger').text(
             _t('invalid_field', 'Enter a valid Field and Setting.')
@@ -2026,12 +2266,49 @@ var DashticzWidgetEditor = (function () {
           return;
         }
         var lowerField = field.toLowerCase();
-        if (customKeys[lowerField] || _isProtectedCustomWidgetProperty(lowerField)) {
+        if (customKeys[lowerField]) {
           valid = false;
           $('.we-cfg-message').addClass('text-danger').text(
             _t('duplicate_field', 'This field is duplicated or reserved.')
           );
           $(this).find('.we-custom-field-name').trigger('focus');
+          return;
+        }
+        customKeys[lowerField] = true;
+        if (lowerField === 'title') {
+          pendingTitle = rawSetting;
+          return;
+        }
+        if (lowerField === 'icon') {
+          if (!pendingBlockOptions.icon) {
+            if ($(this).hasClass('we-icon-field-row')) return;
+            valid = false;
+            $('.we-cfg-message').addClass('text-danger').text(
+              _t('icon_requires_checkbox', 'Enable Icon before using the icon field.')
+            );
+            $(this).find('.we-custom-field-name').trigger('focus');
+            return;
+          }
+          if (!rawSetting) {
+            valid = false;
+            $('.we-cfg-message').addClass('text-danger').text(
+              _t('invalid_field', 'Enter a valid Field and Setting.')
+            );
+            $(this).find('.we-custom-field-setting').trigger('focus');
+            return;
+          }
+          hasIconField = true;
+          pendingIconValue = rawSetting;
+          return;
+        }
+        if (!rawSetting || _isProtectedCustomWidgetProperty(lowerField)) {
+          valid = false;
+          $('.we-cfg-message').addClass('text-danger').text(
+            _isProtectedCustomWidgetProperty(lowerField)
+              ? _t('duplicate_field', 'This field is duplicated or reserved.')
+              : _t('invalid_field', 'Enter a valid Field and Setting.')
+          );
+          $(this).find(!rawSetting ? '.we-custom-field-setting' : '.we-custom-field-name').trigger('focus');
           return;
         }
         var parsedSetting = _parseCustomSetting(rawSetting);
@@ -2043,15 +2320,25 @@ var DashticzWidgetEditor = (function () {
           $(this).find('.we-custom-field-setting').trigger('focus');
           return;
         }
-        customKeys[lowerField] = true;
         pendingBlockOptions.customFields.push({
           field: field,
           setting: rawSetting,
           value: parsedSetting.value,
         });
       });
-      if (!pendingBlockOptions.customFields.length) {
-        pendingBlockOptions.customFields.push({ field: '', setting: '' });
+      pendingBlockOptions.iconValue = hasIconField ? pendingIconValue : null;
+      pendingBlockOptions.customFields.unshift({
+        field: 'title',
+        setting: pendingTitle,
+        value: pendingTitle,
+        system: true,
+      });
+      if (hasIconField) {
+        pendingBlockOptions.customFields.splice(1, 0, {
+          field: 'icon',
+          setting: pendingIconValue,
+          value: pendingIconValue,
+        });
       }
 
       // Collect all generic config fields
@@ -2069,15 +2356,53 @@ var DashticzWidgetEditor = (function () {
         collected.provider = $('#we-cfg-weather-provider').val() || 'openweather';
         widgetConfigs.weather = collected;
       } else if (widgetId === 'calendar') {
-        var url = $.trim($('#we-cfg-calendar-url').val() || '');
-        if (url && !/^https?:\/\/\S+$/i.test(url)) {
-          $('.we-cfg-message')
-            .addClass('text-danger')
-            .text(_t('invalid_calendar_url', 'Enter a valid HTTP(S) ICS URL.'));
-          $('#we-cfg-calendar-url').trigger('focus');
+        var calendarSources = [];
+        var calendarNames = Object.create(null);
+        $cfgModal.find('.we-calendar-row').each(function () {
+          if (!valid) return;
+          var $row = $(this);
+          var name = $.trim($row.find('.we-calendar-name').val() || '');
+          var url = $.trim($row.find('.we-calendar-url').val() || '');
+          var color = String(
+            $row.find('.we-calendar-color').attr('data-calendar-color-value') ||
+            $row.find('.we-calendar-color').val() ||
+            'white'
+          );
+          if (!name || /^(?:__proto__|prototype|constructor)$/i.test(name)) {
+            $('.we-cfg-message').addClass('text-danger').text(
+              _t('calendar_name_required', 'Enter a name for every calendar.')
+            );
+            $row.find('.we-calendar-name').trigger('focus');
+            valid = false;
+            return;
+          }
+          if (Object.prototype.hasOwnProperty.call(calendarNames, name)) {
+            $('.we-cfg-message').addClass('text-danger').text(
+              _t('calendar_duplicate_name', 'Calendar names must be unique.')
+            );
+            $row.find('.we-calendar-name').trigger('focus');
+            valid = false;
+            return;
+          }
+          if (!/^https?:\/\/\S+$/i.test(url)) {
+            $('.we-cfg-message').addClass('text-danger').text(
+              _t('invalid_calendar_url', 'Enter a valid HTTP(S) ICS URL.')
+            );
+            $row.find('.we-calendar-url').trigger('focus');
+            valid = false;
+            return;
+          }
+          calendarNames[name] = true;
+          calendarSources.push({ name: name, ics: url, color: color });
+        });
+        if (valid && !calendarSources.length) {
+          $('.we-cfg-message').addClass('text-danger').text(
+            _t('calendar_needs_source', 'Add at least one calendar.')
+          );
           valid = false;
-        } else {
-          collected.icalurl = url;
+        }
+        if (valid) {
+          collected.sources = calendarSources;
           widgetConfigs.calendar = collected;
         }
       } else if (widgetId === 'clock') {
@@ -2377,13 +2702,26 @@ var DashticzWidgetEditor = (function () {
     entry.last_update = blockOptions.last_update === true;
     if (blockOptions.show_title === false) entry.hide_title = true;
     entry.custom_fields = {};
+    Object.keys(blockOptions.preservedFields || {}).forEach(function (field) {
+      entry.custom_fields[field] = _encodeCustomSettingValue(
+        blockOptions.preservedFields[field]
+      );
+    });
+    var blockTitle = '';
     (blockOptions.customFields || []).forEach(function (row) {
       var field = _normaliseCustomFieldName(row.field);
-      if (!field || _isProtectedCustomWidgetProperty(field)) return;
+      if (!field) return;
+      if (field === 'title') {
+        blockTitle = String(row.setting || '');
+        return;
+      }
+      if (field === 'icon' || field === 'c' || _isProtectedCustomWidgetProperty(field)) return;
       var parsed = typeof row.value !== 'undefined'
         ? { valid: true, value: row.value }
         : _parseCustomSetting(row.setting);
-      if (parsed.valid) entry.custom_fields[field] = parsed.value;
+      if (parsed.valid) {
+        entry.custom_fields[field] = _encodeCustomSettingValue(parsed.value);
+      }
     });
 
     if (item.id === 'garbage') {
@@ -2401,7 +2739,7 @@ var DashticzWidgetEditor = (function () {
       entry.icons = wcfg.weather_icons || 'line';
     }
     if (item.id === 'calendar') {
-      entry.icalurl = widgetConfigs.calendar.icalurl;
+      entry.icalurl = _calendarSourcesObject(_calendarWidgetConfig().sources);
       entry.maxitems = parseInt(widgetConfigs.calendar.calendar_maxitems, 10) || 15;
     }
     if (item.id === 'clock') {
@@ -2469,6 +2807,7 @@ var DashticzWidgetEditor = (function () {
       entry.separator = xcfg.separator || '-';
       entry.refresh = parseInt(xcfg.refresh, 10) || 3600;
     }
+    if ($.trim(blockTitle)) entry.title = $.trim(blockTitle);
     return entry;
   }
 
@@ -2504,8 +2843,9 @@ var DashticzWidgetEditor = (function () {
     if (
       selectedWidgets.calendar &&
       widgetConfigs.calendar &&
-      widgetConfigs.calendar.icalurl &&
-      !/^https?:\/\/\S+$/i.test(widgetConfigs.calendar.icalurl)
+      _calendarWidgetConfig().sources.some(function (source) {
+        return !source.name || !/^https?:\/\/\S+$/i.test(source.ics || '');
+      })
     ) {
       $('.we-message')
         .addClass('text-danger')

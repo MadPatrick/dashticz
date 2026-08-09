@@ -274,10 +274,11 @@ var DT_simpleblock = (function () {
             ? 'custom'
             : 'wizard';
         if (mode === currentMode) return;
-        if (mode === 'wizard') {
-          if (
-            !window.confirm(language.settings.config_mode.confirm_wizard)
-          ) {
+        _showConfigModeWarning(mode, function () {
+          if (mode !== 'wizard') {
+            if (typeof setConfigMode === 'function') {
+              setConfigMode(mode);
+            }
             return;
           }
           DT_function.loadDTScript('js/layouteditor.js').then(function () {
@@ -304,12 +305,49 @@ var DT_simpleblock = (function () {
               }
             });
           });
-          return;
-        }
-        if (typeof setConfigMode === 'function') {
-          setConfigMode(mode);
-        }
+        });
       });
+  }
+
+  function _showConfigModeWarning(mode, onContinue) {
+    var labels = language.settings.config_mode;
+    var message = mode === 'wizard'
+      ? labels.confirm_wizard
+      : labels.confirm_custom;
+
+    $('#configmodewarningpopup').remove();
+    var html =
+      '<div class="modal fade" id="configmodewarningpopup" tabindex="-1" ' +
+      'aria-labelledby="config-mode-warning-title" aria-describedby="config-mode-warning-message" aria-hidden="true">' +
+      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">' +
+      '<div class="modal-header"><h5 class="modal-title" id="config-mode-warning-title">' +
+      '<i class="fas fa-triangle-exclamation text-warning me-2" aria-hidden="true"></i>' +
+      $('<div>').text(labels.warning_title).html() +
+      '</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      $('<div>').text(labels.cancel).html() + '"></button></div>' +
+      '<div class="modal-body"><p id="config-mode-warning-message" class="mb-0">' +
+      $('<div>').text(message).html() + '</p></div>' +
+      '<div class="modal-footer">' +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      $('<div>').text(labels.cancel).html() + '</button>' +
+      '<button type="button" class="btn btn-warning" id="config-mode-warning-continue">' +
+      $('<div>').text(labels.continue).html() + '</button>' +
+      '</div></div></div></div>';
+    $('body').append(html);
+
+    var popup = document.getElementById('configmodewarningpopup');
+    var confirmed = false;
+    $('#config-mode-warning-continue').one('click', function () {
+      confirmed = true;
+      window.bootstrap.Modal.getInstance(popup).hide();
+    });
+    $(popup).one('hidden.bs.modal', function () {
+      $(popup).remove();
+      if (confirmed && typeof onContinue === 'function') {
+        onContinue();
+      }
+    });
+    window.bootstrap.Modal.getOrCreateInstance(popup).show();
   }
 
   function _screenEditorLabels() {
@@ -335,7 +373,7 @@ var DT_simpleblock = (function () {
   function _screenEditorAddMenuHtml() {
     var t = _screenEditorLabels();
     var tiles = [
-      { action: 'device', icon: 'fa-plus', label: t.devices || 'Devices' },
+      { action: 'device', icon: 'fa-plus', label: t.add_device },
       { action: 'widgets', icon: 'fa-puzzle-piece', label: t.title || 'Widgets' },
       { action: 'custom', icon: 'fa-cube', label: t.custom_devices || 'Custom devices' },
       { action: 'separator', icon: 'fa-heading', label: t.separator || 'Separator' },
@@ -363,30 +401,32 @@ var DT_simpleblock = (function () {
     $('body').append(_screenEditorAddMenuHtml());
     var popup = document.getElementById('screeneditoraddpopup');
     var $popup = $(popup);
+    var selectedAction = '';
     $popup.on('click', '.dt-screeneditor-add-tile', function () {
-      var action = String($(this).attr('data-add-action') || '');
-      $popup.one('hidden.bs.modal', function () {
-        $popup.remove();
-        if (action === 'widgets') {
+      if (selectedAction) return;
+      selectedAction = String($(this).attr('data-add-action') || '');
+      $popup.find('.dt-screeneditor-add-tile').prop('disabled', true);
+      window.bootstrap.Modal.getInstance(popup).hide();
+    });
+    $popup.one('hidden.bs.modal', function () {
+      $popup.remove();
+      if (selectedAction) {
+        if (selectedAction === 'widgets') {
           DT_function.loadDTScript('js/widgeteditor.js').then(function () {
             DashticzWidgetEditor.open();
           });
           return;
         }
         DT_function.loadDTScript('js/deviceeditor.js').then(function () {
-          if (action === 'custom') {
+          if (selectedAction === 'custom') {
             DashticzDeviceEditor.openCustom();
-          } else if (action === 'separator') {
+          } else if (selectedAction === 'separator') {
             DashticzDeviceEditor.addSeparator();
           } else {
             DashticzDeviceEditor.open();
           }
         });
-      });
-      window.bootstrap.Modal.getInstance(popup).hide();
-    });
-    $popup.one('hidden.bs.modal', function () {
-      if (document.body.contains(popup)) $popup.remove();
+      }
     });
     window.bootstrap.Modal.getOrCreateInstance(popup).show();
   }
@@ -592,7 +632,7 @@ var DT_simpleblock = (function () {
   }
 
   function renderSunrise(me) {
-    var isBar = me.block.c === 'bar';
+    var isBar = me.block._dashticzColumn === 'bar';
     var classes = 'block_' + me.block.type;
     var width = isBar ? 2 : me.block.width;
     classes += ' col-xs-' + width;

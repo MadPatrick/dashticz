@@ -1304,6 +1304,7 @@ function loadSettings() {
         bindWeatherProviderToggle();
         bindClockTypeToggle();
         bindThemeCssVarControls();
+        bindThemeCustomCssNotice();
 
         $('#php_version').html(phpversion);
 
@@ -1527,6 +1528,10 @@ function renderBackgroundPicker(settingName, definition) {
     '" value="' +
     escapeSettingsHtml(current) +
     '" placeholder="img/bg11.jpg or https://…">';
+  if (settingName === 'background_image') {
+    html += '<div class="settings-custom-css-notice d-none" role="status" ' +
+      'data-custom-css-notice></div>';
+  }
   html += '</div><div class="settings-help-slot">';
   if (help) {
     html +=
@@ -2068,6 +2073,38 @@ function bindThemeCssVarControls() {
 
   // Reflect "(custom)" state in the theme dropdown when panel first opens.
   _updateThemeCustomLabel();
+}
+
+function _activeCustomCssPath() {
+  if (window.DashticzCustomCssPath) {
+    return String(window.DashticzCustomCssPath);
+  }
+  var node = document.querySelector('style[data-dashticz-custom-css]');
+  return node ? String(node.getAttribute('data-dashticz-custom-css') || '') : '';
+}
+
+function bindThemeCustomCssNotice() {
+  function refresh(path) {
+    var activePath = String(path || _activeCustomCssPath()).trim();
+    var $notice = $('#settingspopup [data-custom-css-notice]');
+    if (!$notice.length) return;
+    if (!activePath) {
+      $notice.addClass('d-none').text('');
+      return;
+    }
+    var themeLabels = (language.settings && language.settings.theme) || {};
+    var message = themeLabels.custom_css_active || 'Active custom stylesheet: {path}';
+    $notice
+      .removeClass('d-none')
+      .text(String(message).replace('{path}', activePath));
+  }
+
+  $(document)
+    .off('dashticz:customcssloaded.themenotice')
+    .on('dashticz:customcssloaded.themenotice', function (event, path) {
+      refresh(path);
+    });
+  refresh();
 }
 
 function _syncSwatchFromText($swatch, value) {

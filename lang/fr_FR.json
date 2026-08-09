@@ -159,7 +159,11 @@
             "wizard": "Assistant",
             "aria_label": "Mode de configuration",
             "save_failed": "Impossible d’enregistrer le mode de configuration.",
-            "confirm_wizard": "L’Assistant utilise toujours une grille libre. L’écran actuel en colonnes sera converti avant l’activation de l’Assistant. Continuer ?"
+            "warning_title": "Modifier le mode de configuration ?",
+            "confirm_wizard": "Le passage à l’Assistant supprime la configuration actuelle du tableau de bord, efface les blocs, colonnes et écrans de CONFIG.js, puis crée une page vierge. Les paramètres de configuration sont conservés.",
+            "confirm_custom": "Le passage au mode Personnalisé conserve la configuration actuelle du tableau de bord, mais masque les commandes de l’Éditeur d’écran. Vous pouvez continuer à gérer le tableau de bord manuellement dans CONFIG.js.",
+            "cancel": "Annuler",
+            "continue": "Continuer"
         },
         "output": {
             "title": "Sortie des paramètres",
@@ -319,11 +323,21 @@
             "invalid_field": "Saisissez des valeurs Field et Setting valides.",
             "duplicate_field": "Ce champ est dupliqué ou réservé.",
             "invalid_setting": "Setting contient un JSON non valide.",
+            "icon_requires_checkbox": "Activez Icône avant d’utiliser le champ icon.",
             "provider": "Fournisseur",
             "openweather": "OpenWeather",
             "weather_underground": "Weather Underground",
             "image_url": "URL de l’image",
             "ics_url": "URL ICS",
+            "calendar_source": "Calendrier",
+            "calendar_default_name": "Calendrier",
+            "calendar_name": "Nom",
+            "calendar_color": "Couleur",
+            "calendar_add": "Ajouter un calendrier",
+            "calendar_remove": "Supprimer le calendrier",
+            "calendar_name_required": "Saisissez un nom pour chaque calendrier.",
+            "calendar_duplicate_name": "Les noms des calendriers doivent être uniques.",
+            "calendar_needs_source": "Ajoutez au moins un calendrier.",
             "rss_feed": "Flux RSS",
             "basic_clock": "Horloge simple",
             "flipclock": "Horloge à volets",
@@ -671,6 +685,9 @@
             "evohome_status_help": "Auto, Économie, Absent, Personnalisé, Jour de congé, Arrêt",
             "evohome_boost_zone": "Durée du boost de zone EvoHome (minutes)",
             "evohome_boost_hw": "Durée du boost eau chaude EvoHome (minutes)"
+        },
+        "theme": {
+            "custom_css_active": "Feuille de style personnalisée active : {path}"
         }
     },
     "switches": {

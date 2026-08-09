@@ -691,6 +691,18 @@ next css sets the default height of the frame popup
   box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
 }
 
+.settings-custom-css-notice {
+  margin-top: 8px;
+  padding: 8px 10px;
+  color: #0f5132;
+  background: #d1e7dd;
+  border: 2px solid #198754;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .settings-weather-heading {
   margin: 16px 0 10px;
   font-size: 14px;
@@ -1459,6 +1471,13 @@ body.dle-active {
 .dle-drag-icon,
 .dle-config-button {
   left: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  line-height: 1;
 }
 
 .dle-config-button {
@@ -1474,9 +1493,14 @@ body.dle-active {
 }
 
 .dle-drag-icon .fas,
-.dle-config-button .fas {
+.dle-config-button .fas,
+.dle-remove-button .fas {
+  display: inline-block;
+  width: 1em;
   margin: 0 !important;
   font-size: 16px !important;
+  line-height: 1 !important;
+  text-align: center;
 }
 
 .dle-size-label {
@@ -1489,8 +1513,8 @@ body.dle-active {
 
 .dle-remove-button {
   position: absolute;
-  bottom: 4px;
-  left: 4px;
+  top: 4px;
+  right: 4px;
   z-index: 4;
   display: inline-flex;
   align-items: center;
@@ -1510,13 +1534,6 @@ body.dle-active {
   background: #b02a37;
   outline: 2px solid #fff;
   outline-offset: 1px;
-}
-
-.dle-remove-button .fas {
-  display: inline-block;
-  width: 1em;
-  margin: 0 !important;
-  font-size: 16px !important;
 }
 
 .dle-resize-handle {
@@ -1798,8 +1815,8 @@ body.dle-active {
 .de-config-options .form-check-input {
   flex: 0 0 auto;
   float: none;
-  width: 2em;
-  height: 2em;
+  width: 32px;
+  height: 32px;
   margin: 0;
 }
 
@@ -1813,7 +1830,8 @@ body.dle-active {
   width: 100%;
 }
 
-.de-system-field-row .de-custom-field-name {
+.de-system-field-row .de-custom-field-name,
+.we-system-field-row .we-custom-field-name {
   background: var(--bs-secondary-bg, #e9ecef);
   font-weight: 600;
 }
@@ -2118,6 +2136,22 @@ body.dle-active {
   margin: 0;
   border-color: #adb5bd;
   cursor: pointer;
+}
+
+.we-block-option.form-check-input {
+  flex: 0 0 auto;
+  float: none;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  cursor: pointer;
+}
+
+#we-config-popup .form-check-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.25rem;
 }
 
 .we-message {

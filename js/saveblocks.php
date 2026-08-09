@@ -13,6 +13,9 @@ function _validate_custom_device_value($value, $depth = 0)
     if (is_int($value) || is_float($value) || is_bool($value) || $value === null) {
         return true;
     }
+    if (is_object($value)) {
+        $value = get_object_vars($value);
+    }
     if (!is_array($value) || count($value) > 100) {
         return false;
     }
@@ -57,6 +60,7 @@ function _normalise_custom_device_fields($entry)
         if (isset($seen[$fieldKey])) {
             dashticz_json_error(400, 'Duplicate custom device field.');
         }
+        $value = configwriter_restore_editor_value($value);
         if (!_validate_custom_device_value($value)) {
             dashticz_json_error(400, 'Invalid custom device field value.');
         }
@@ -103,7 +107,9 @@ foreach ($data['devices'] as $entry) {
         if ($kind === 'dummy') {
             $keyPattern = '/^dummyblock_\d+$/';
         } elseif ($kind === 'title') {
-            $keyPattern = '/^Title_\d+$/';
+            // Existing hand-written blocktitle keys remain editable; new
+            // separators still use the editor-generated Title_N convention.
+            $keyPattern = '/^[A-Za-z_$][A-Za-z0-9_$]*$/';
         } else {
             $keyPattern = '/^[A-Za-z_$][A-Za-z0-9_$]*$/';
         }

@@ -194,6 +194,9 @@ function _validate_custom_widget_value($value, $depth = 0)
     if (is_int($value) || is_float($value) || is_bool($value) || $value === null) {
         return true;
     }
+    if (is_object($value)) {
+        $value = get_object_vars($value);
+    }
     if (!is_array($value) || count($value) > 100) {
         return false;
     }
@@ -287,6 +290,7 @@ foreach ($data['widgets'] as $entry) {
             if (isset($seenCustomFields[$fieldKey])) {
                 dashticz_json_error(400, 'Duplicate custom widget field.');
             }
+            $value = configwriter_restore_editor_value($value);
             if (!_validate_custom_widget_value($value)) {
                 dashticz_json_error(400, 'Invalid custom widget field value.');
             }
@@ -349,13 +353,45 @@ foreach ($data['widgets'] as $entry) {
     }
 
     if ($id === 'calendar') {
-        $icalurl = isset($entry['icalurl']) && is_string($entry['icalurl'])
-            ? trim($entry['icalurl'])
-            : '';
-        if (strlen($icalurl) > 2048 || !preg_match('#^https?://[^\s]+$#i', $icalurl)) {
-            dashticz_json_error(400, 'Calendar requires a valid http(s) ICS URL.');
+        $icalurl = isset($entry['icalurl']) ? $entry['icalurl'] : null;
+        if (is_string($icalurl)) {
+            $icalurl = trim($icalurl);
+            if (strlen($icalurl) > 2048 || !preg_match('#^https?://[^\s]+$#i', $icalurl)) {
+                dashticz_json_error(400, 'Calendar requires a valid http(s) ICS URL.');
+            }
+            $widget['icalurl'] = $icalurl;
+        } elseif (is_array($icalurl) && count($icalurl) > 0 && count($icalurl) <= 20) {
+            $widget['icalurl'] = [];
+            foreach ($icalurl as $name => $source) {
+                if (!is_string($name) || $name === '' || strlen($name) > 100 ||
+                    preg_match('/[\x00-\x1F]/', $name) ||
+                    in_array(strtolower($name), ['__proto__', 'prototype', 'constructor'], true)) {
+                    dashticz_json_error(400, 'Each calendar requires a valid unique name.');
+                }
+                if (!is_array($source)) {
+                    dashticz_json_error(400, 'Each calendar requires valid settings.');
+                }
+                $ics = isset($source['ics']) && is_string($source['ics'])
+                    ? trim($source['ics'])
+                    : '';
+                if ($ics === '' || strlen($ics) > 2048 || !preg_match('#^https?://[^\s]+$#i', $ics)) {
+                    dashticz_json_error(400, 'Calendar ' . $name . ' requires a valid http(s) ICS URL.');
+                }
+                $color = isset($source['color']) && is_string($source['color'])
+                    ? trim($source['color'])
+                    : 'white';
+                if ($color === '' || strlen($color) > 64 ||
+                    !preg_match('/^(?:#[0-9A-Fa-f]{3,8}|[A-Za-z][A-Za-z0-9-]{0,31}|rgba?\([0-9.,%\s]+\)|hsla?\([0-9.,%\s]+\))$/', $color)) {
+                    dashticz_json_error(400, 'Calendar ' . $name . ' requires a valid color.');
+                }
+                $widget['icalurl'][$name] = [
+                    'ics' => $ics,
+                    'color' => $color,
+                ];
+            }
+        } else {
+            dashticz_json_error(400, 'Calendar requires one to twenty calendar sources.');
         }
-        $widget['icalurl'] = $icalurl;
         $maxitems = isset($entry['maxitems']) && is_numeric($entry['maxitems'])
             ? (int)$entry['maxitems']
             : 15;

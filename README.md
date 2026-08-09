@@ -243,7 +243,7 @@ icon strings remain intact until the Icon checkbox is explicitly switched off.
 | Spotify | Spotify client ID |
 | Sonarr | Server URL, API key and maximum items |
 | Clock | Basic, Station, Flip, Hayman or Mini clock; size and scale; 12/24-hour flipclock with optional seconds; station body, dial, hands, boss and hand behaviour |
-| Calendar (ICS) | HTTP(S) ICS URL, date format, calendar language and maximum visible rows (default 15) |
+| Calendar (ICS) | One or more named HTTP(S) ICS sources, a colour per source, date format, calendar language and maximum visible rows (default 15) |
 | Security panel | Button icons and fullscreen lock |
 | Public transport | Train, OV API, DRGL, iRail or De Lijn provider and station/stop |
 | Traffic information | ANWB API key |
@@ -262,6 +262,34 @@ enlarging the tile makes the additional rows visible again.
 
 Widget-specific settings are kept together with the other `config[...]`
 settings at the top of `custom/CONFIG.js`.
+
+Calendar Widget Config shows every source as a separate row with **Name**,
+**ICS URL** and **Color**. Use **Add calendar** to add a source and the minus
+button to remove one. Existing single-string `icalurl` blocks are loaded as one
+source and remain supported by the calendar runtime. Saving through the editor
+uses the named multi-source structure:
+
+```javascript
+blocks['gmail_calendars'] = {
+  type: 'calendar',
+  layout: 2,
+  icalurl: {
+    Personal: { ics: 'https://example.test/personal.ics', color: 'blue' },
+    Business: { ics: 'https://example.test/business.ics', color: 'purple' }
+  },
+  holidayurl: 'https://example.test/holidays.ics',
+  maxitems: 100,
+  weeks: 5,
+  lastweek: true,
+  isoweek: false,
+  width: 12
+};
+```
+
+Calendar properties outside the source list, including `holidayurl`, `layout`,
+`weeks`, `lastweek`, `isoweek`, `maxitems` and `width`, are retained when the
+Widget Config is saved. Calendar names must be unique and every source must
+contain a valid HTTP(S) ICS URL.
 
 All Settings and editor labels, widget status messages and validation errors
 are read from the JSON files in `lang/`. `en_US.json` is loaded as the complete
@@ -432,6 +460,10 @@ Theme files contain general-purpose styling only. Dashticz loads
 `custom/custom.css` after the selected theme, so device-specific block rules,
 personal layouts, private URLs, and local overrides can remain in that ignored
 file without being committed to Git.
+
+When `/custom/custom.css` is present and loaded, Settings > Theme shows a
+framed active-stylesheet notice beside the Path/URL field. The notice is
+informational: the file and all existing custom rules remain untouched.
 
 ## Security configuration
 
