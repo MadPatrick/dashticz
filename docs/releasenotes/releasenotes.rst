@@ -6,6 +6,17 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.41.3 beta (11-8-2026)
+--------------------------
+
+* **Code**
+
+- Fixed a stale ``$forceClone`` regex assertion in
+  ``tests/php-security.test.js`` (still expected the pre-issue-#98 shape of
+  that check).
+- Removed ``tests/phpsecurity.test.js``, a stale duplicate of
+  ``tests/php-security.test.js`` that had drifted out of sync with it.
+
 v3.41.2 beta (11-8-2026)
 --------------------------
 

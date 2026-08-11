@@ -1,5 +1,17 @@
 # Dashticz — Change log for recent update work
 
+## 3.41.3 — Test suite cleanup
+
+- Fixed a stale `$forceClone` regex assertion in
+  `tests/php-security.test.js` that still expected the pre-issue-#98 shape
+  of that check in `js/savegridlayout.php`, so it failed on every run
+  regardless of unrelated changes.
+- Removed `tests/phpsecurity.test.js`, a stale duplicate of
+  `tests/php-security.test.js` (same origin, diverged over time — it was
+  missing newer widget ids and had the same outdated `$forceClone` regex).
+  Both files matched `tests/*.test.js` and ran independently, doubling
+  maintenance and letting the two drift out of sync with each other.
+
 ## 3.41.2 — Radio widget layout, grid minimum height, Sunrise/Sunset resize fix
 
 - Radio Widget Config: each station row now only has a Remove (`-`) button.
