@@ -612,16 +612,25 @@ test('device and widget config editors share full widget config and preserve hid
   assert.doesNotMatch(configWriter, /configwriter_normalise_text_alignment/);
   assert.doesNotMatch(configWriter, /\$props\['text_alignment'\]/);
 
-  // Device Config is exactly Icon/Data/Update, centered on one row (Icon only
-  // for a separator/title bar, which has no data value or last-update of its own).
-  assert.match(deviceEditor, /isTitle \? \['icon'\] : \['icon', 'hide_data', 'last_update'\]/);
+  // Device Config is Icon/Data/Update/Title, centered on one row (Icon and
+  // Title only for a separator/title bar, which has no data value or
+  // last-update of its own). Title visibility is a checkbox here too, not
+  // just a typed Field/Setting row: it toggles hide_title exactly like the
+  // Widget Config editor's Title checkbox does.
+  assert.match(deviceEditor, /\? \['icon', 'show_title'\]/);
+  assert.match(deviceEditor, /: \['icon', 'hide_data', 'last_update', 'show_title'\]/);
   assert.match(deviceEditor, /configOptions\.forEach/);
-  assert.match(deviceEditor, /option === 'hide_data' \? options\.hide_data !== true/);
+  assert.match(deviceEditor, /if \(option === 'hide_data'\) \{\s*\n\s*checked = options\.hide_data !== true/);
+  assert.match(deviceEditor, /isSpecial \? special\.showTitle !== false : deviceTitleVisible\[ck\] !== false/);
   assert.match(deviceEditor, /updated\[option\] = option === 'hide_data' \? !checked : checked/);
+  assert.match(deviceEditor, /var pendingShowTitle = updated\.show_title !== false/);
+  assert.match(deviceEditor, /special\.showTitle = pendingShowTitle/);
+  assert.match(deviceEditor, /deviceTitleVisible\[ck\] = pendingShowTitle/);
   assert.match(widgetEditor, /options\.hide_data !== true/);
   assert.match(widgetEditor, /hide_data: !\$cfgModal\.find\('\[data-block-option="hide_data"\]'\)\.is\(':checked'\)/);
-  assert.match(deviceEditor, /de-config-options-three/);
+  assert.match(deviceEditor, /de-config-options-four/);
   assert.match(styles, /\.de-config-options-three[\s\S]*grid-template-columns: repeat\(3/);
+  assert.match(styles, /\.de-config-options-four[\s\S]*grid-template-columns: repeat\(4/);
   assert.match(styles, /\.de-config-options \.form-check-input[\s\S]*width: 32px;[\s\S]*height: 32px;/);
   assert.match(deviceEditor, /icon: true, iconValue: null, hide_data: false, last_update: false/);
   assert.match(styles, /\.we-block-option\.form-check-input[\s\S]*width: 32px;[\s\S]*height: 32px;/);

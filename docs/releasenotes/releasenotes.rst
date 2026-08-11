@@ -6,6 +6,18 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.41.5 beta (11-8-2026)
+--------------------------
+
+* **Enhancements**
+
+- Device Editor: the Device Config popup now has a **Title** checkbox next
+  to Icon/Data/Updated, toggling ``hide_title`` the same way the Widget
+  Config editor's Title checkbox already does. Title text remains a typed
+  Field/Setting; this only controls whether it's shown. Applies to plain
+  devices, the separator/title bar block (**Tussenbalk**), Slide button,
+  Multi Device, and Custom device — all of which share this same popup.
+
 v3.41.4 beta (11-8-2026)
 --------------------------
 
