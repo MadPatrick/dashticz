@@ -1889,6 +1889,28 @@ test('iFrame widget gets a default icon like other widgets', () => {
   assert.match(frameSource, /icon: 'fas fa-window-maximize'/);
 });
 
+test('iFrame widget keeps a symmetric right margin once it has an icon', () => {
+  const frameSource = fs.readFileSync(
+    path.join(root, 'js/components/frame.js'),
+    'utf8'
+  );
+  // Adding a default icon (previous test) made this code path - previously
+  // only reachable with a hand-set custom icon - the default for every
+  // iframe widget. It set marginRight to 0 while marginLeft stayed 5px, and
+  // left .dt_state's own width unset (so it kept flowing at its usual
+  // icon-unaware width): together the scaled content sat flush against the
+  // block's right edge with no matching gap on the right side, unlike the
+  // left. Margins must match, and .dt_state needs an explicit width that
+  // accounts for both to actually enforce it.
+  assert.doesNotMatch(frameSource, /marginRight\s*=\s*'0px'/);
+  const hasIconStart = frameSource.indexOf('if(hasIcon) {');
+  const hasIconEnd = frameSource.indexOf('}', hasIconStart);
+  const hasIconBody = frameSource.substring(hasIconStart, hasIconEnd);
+  assert.match(hasIconBody, /marginRight\s*=\s*'5px'/);
+  assert.match(hasIconBody, /marginLeft\s*=\s*'5px'/);
+  assert.match(hasIconBody, /dtstatecss\.width = width - 10;/);
+});
+
 test('log/streamplayer/sunrise stay a single shared block across screens instead of being cloned', () => {
   // These three are dispatched by their literal block key matching a
   // registered component name (Dashticz._mount in dashticz.js) rather than

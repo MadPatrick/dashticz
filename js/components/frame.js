@@ -61,8 +61,13 @@ var DT_frame = {
       dtstatecss= { };
       iframecss={'-webkit-transform': scalingStr, transform: scalingStr, width: iframeWidth, maxWidth: iframeWidth};
       if(hasIcon) {
-        dtstatecss.marginRight='0px';
+        dtstatecss.marginRight='5px';
         dtstatecss.marginLeft='5px';
+        // The scaled iframe's own width/transform keep it visually within
+        // bounds, but .dt_state's own box otherwise keeps flowing at its
+        // usual (icon-unaware) width, leaving no matching gap on the right
+        // to mirror the 5px margin just set on the left.
+        dtstatecss.width = width - 10;
       }
     }
     if(me.block.aspectratio) {
