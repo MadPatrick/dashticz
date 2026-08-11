@@ -999,9 +999,39 @@ test('clock components use public date APIs and a valid seconds setting', () => 
   assert.match(stationClock, /var width = clockFitSize\(me, 120\)/);
   assert.match(flipClock, /minEmSize: 3\.5/);
   assert.match(flipClock, /maxEmSize: 7/);
-  assert.match(flipClock, /FlipClock\(\$content, 0,/);
+  assert.match(flipClock, /FlipClock\(\$state, 0,/);
   assert.match(flipClock, /showSeconds: !settings\['hide_seconds'\]/);
   assert.doesNotMatch(flipClock, /showSecoonds/);
+});
+
+test('clock components render into .dt_state so block.title/hide_title survive', () => {
+  // .dt_content (built by dashticz.js's renderTitle()) holds both .dt_title
+  // and .dt_state. A clock component that overwrites .dt_content or the
+  // outer .dt_block wipes .dt_title out again right after it was rendered,
+  // silently breaking the Widget Config editor's Title checkbox for clocks.
+  const basicClock = fs.readFileSync(
+    path.join(root, 'js/components/basicclock.js'),
+    'utf8'
+  );
+  const stationClock = fs.readFileSync(
+    path.join(root, 'js/components/stationclock.js'),
+    'utf8'
+  );
+  const flipClock = fs.readFileSync(
+    path.join(root, 'js/components/flipclock.js'),
+    'utf8'
+  );
+  const haymanClock = fs.readFileSync(
+    path.join(root, 'js/components/haymanclock.js'),
+    'utf8'
+  );
+  assert.match(basicClock, /\$\(me\.mountPoint \+ ' \.dt_state'\)\.html\(/);
+  assert.doesNotMatch(basicClock, /\$\(me\.mountPoint \+ ' \.dt_content'\)\.html\(/);
+  assert.match(stationClock, /\$\(me\.mountPoint \+ ' \.dt_state'\)\.html\(/);
+  assert.doesNotMatch(stationClock, /\$\(me\.mountPoint \+ ' \.dt_content'\)\.html\(/);
+  assert.match(flipClock, /FlipClock\(\$state, 0,/);
+  assert.match(haymanClock, /\$\(me\.mountPoint \+ ' \.dt_state'\)\.html\(template\(me\.block\)\)/);
+  assert.doesNotMatch(haymanClock, /\$\(me\.mountPoint \+ ' \.dt_block'\)\.html\(template/);
 });
 
 test('remaining expert settings stay configurable while obsolete edit mode is removed', () => {
