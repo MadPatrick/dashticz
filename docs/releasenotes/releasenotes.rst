@@ -6,6 +6,27 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.41.2 beta (11-8-2026)
+--------------------------
+
+* **Enhancements**
+
+- Radio Widget Config: each station row now only has a Remove button. A
+  single Add station button is shown once, next to the Display options
+  checkboxes, with the station list between the checkboxes and the Custom
+  fields section.
+- Grid layout: lowered the minimum block height from 4 rows to 2 (already
+  proven safe for the Miniclock widget). A block whose content needs more
+  room than that simply gets its own internal scrollbar.
+
+* **Fixes**
+
+- Sunrise/Sunset: resizing the widget's height in a grid layout no longer
+  reverts to a small block. ``renderSunrise`` builds its own markup, which
+  did not receive the existing rule that lets other blocks fill their
+  reserved grid cell; only the visible content was affected, the stored
+  size was never actually lost.
+
 v3.41.1 beta (11-8-2026)
 --------------------------
 
