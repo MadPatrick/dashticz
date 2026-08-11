@@ -1824,6 +1824,31 @@ test('Radio widget gets a default icon like other widgets (log, WAQI)', () => {
   assert.match(streamplayer, /icon: 'fas fa-broadcast-tower'/);
 });
 
+test('Domoticz log widget defaults to an 8x8 grid cell instead of a full-width strip', () => {
+  const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
+
+  // The generic grid-default formula scales column width (1-12) proportionally
+  // to gridColumns, so log's width:12 (full width, needed for column-mode
+  // layouts) used to also make its *grid* default a full-width strip. log's
+  // catalog entry now opts into an explicit grid-only override; the width:12
+  // column-mode default is untouched.
+  assert.match(widgetEditor, /gridDefaultSize: \{ width: 8, height: 8 \}/);
+  assert.match(widgetEditor, /var gridDefault = catalogItem\.gridDefaultSize;/);
+  assert.match(
+    widgetEditor,
+    /var width = gridDefault\s*\n\s*\? Math\.max\(1, Math\.min\(gridConfig\.gridColumns, gridDefault\.width\)\)/
+  );
+  assert.match(
+    widgetEditor,
+    /var height = gridDefault\s*\n\s*\? Math\.max\(1, gridDefault\.height\)/
+  );
+  // log's own catalog width (used for column-mode layouts) must stay 12.
+  const logEntryStart = widgetEditor.indexOf("id: 'log',");
+  const logEntryEnd = widgetEditor.indexOf('},', logEntryStart);
+  const logEntry = widgetEditor.substring(logEntryStart, logEntryEnd);
+  assert.match(logEntry, /width: 12,/);
+});
+
 test('frame and WAQI blocks clip their CSS-scaled iframe instead of leaking a scrollbar', () => {
   const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
 
