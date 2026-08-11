@@ -11,15 +11,26 @@
   were unaffected and keep working exactly as before.
 - Changed the iFrame widget's default `scaletofit`/`aspectratio` from `300`/
   `0.9` to empty. With neither set, the iframe simply fills the tile's own
-  width/height (no JS scaling, no forced height) instead of assuming a fixed
-  256/300px-wide source. Existing blocks that already set these values are
-  read from the block itself and are unaffected.
+  width/height instead of assuming a fixed 256/300px-wide source. Existing
+  blocks that already set these values are read from the block itself and
+  are unaffected.
+  - Follow-up fix: `.dt_state` only gets a real (non-content-driven) height
+    through the `.fixedheight` class, which `js/dashticz.js` only adds when
+    `aspectratio` or a fixed `height` is set. With both empty, a grid-layout
+    iframe had no height at all and collapsed to the browser's own ~150px
+    default — too small, as reported. `DT_frame.run` (`js/components/frame.js`)
+    now measures its `.dt-grid-item` ancestor's already-allocated height and
+    applies that when neither `aspectratio` nor `height` is configured, so
+    the iframe fills the grid cell like other widgets.
 - Added a Radio widget to Widget Editor, built on the existing Streamplayer
   block (`js/components/streamplayer.js`). Stations (name + stream URL) can
   be added and removed from a repeatable list, each row with its own add/
   remove buttons. Saved stations are written as `blocks['streamplayer'].tracks`
   — the same shape a hand-written `_STREAMPLAYER_TRACKS` global uses — so
   existing Streamplayer configs keep working unchanged.
+  - Follow-up fix: `tracks` is now a managed property for the widget, so it
+    no longer also shows up as a raw JSON `tracks` row in the generic Custom
+    fields section underneath the dedicated station list.
 - Added a Multi Device type to the Screen Editor's add menu, for combining
   several IDX/value pairs (optionally from different Domoticz devices) into
   one block, for example:

@@ -16,7 +16,9 @@ Unreleased (11-8-2026)
   a repeatable list; saved stations are written as
   ``blocks['streamplayer'].tracks``, the same shape a hand-written
   ``_STREAMPLAYER_TRACKS`` global uses, so existing Streamplayer
-  configurations keep working unchanged. See :ref:`customstreamplayer`.
+  configurations keep working unchanged. ``tracks`` is a managed property,
+  so it does not also appear as a raw JSON row in the generic Custom fields
+  section. See :ref:`customstreamplayer`.
 
 - Added a **Multi Device** type to the Screen Editor's add menu, to combine
   several IDX/value pairs — optionally from different Domoticz devices —
@@ -45,8 +47,10 @@ Unreleased (11-8-2026)
 - iFrame widget: new blocks now default ``scaletofit``/``aspectratio`` to
   empty instead of ``300``/``0.9``, so a newly added iFrame simply fills the
   tile's own width/height instead of assuming a fixed-width embedded page.
-  Existing blocks that already set these values are unaffected. See
-  :ref:`Frames`.
+  Existing blocks that already set these values are unaffected. In a grid
+  layout, an iFrame with neither set now measures and fills its grid cell's
+  own height instead of collapsing to the browser's small default iframe
+  height. See :ref:`Frames`.
 
 * **Code**
 

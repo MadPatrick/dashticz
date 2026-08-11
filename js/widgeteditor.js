@@ -323,6 +323,9 @@ var DashticzWidgetEditor = (function () {
       xmltvurl: true, channels: true, maxitems: true, layout: true,
       separator: true, refresh: true,
     },
+    // tracks is edited through the dedicated station-list UI; without this it
+    // would also show up as a raw JSON row in the generic Custom fields list.
+    radio: { tracks: true },
   };
 
   function _isManagedWidgetProperty(item, property) {

@@ -1599,6 +1599,11 @@ test('Radio widget is a graphical front end for the existing Streamplayer compon
   assert.match(widgetEditor, /we-radio-add/);
   assert.match(widgetEditor, /we-radio-remove/);
 
+  // tracks is edited through the dedicated station rows; it must be marked
+  // as a managed property or it also shows up as a raw JSON row in the
+  // generic Custom fields list.
+  assert.match(widgetEditor, /radio: \{ tracks: true \}/);
+
   // Same issue #98 class of bug as iframe/xmltvguide: savewidgets.php requires
   // top-level tracks, so the Device Editor must resubmit them explicitly (with
   // a fallback to the legacy _STREAMPLAYER_TRACKS global) or an unrelated
@@ -1608,4 +1613,28 @@ test('Radio widget is a graphical front end for the existing Streamplayer compon
     deviceEditor,
     /widget\.id === 'radio'\) \{[\s\S]*?_STREAMPLAYER_TRACKS[\s\S]*?\}/
   );
+});
+
+test('iFrame without scaletofit/aspectratio fills its grid cell height instead of collapsing', () => {
+  const frameSource = fs.readFileSync(
+    path.join(root, 'js/components/frame.js'),
+    'utf8'
+  );
+
+  // .dt_state only gets a real height via the .fixedheight class, which
+  // dashticz.js only adds when aspectratio or a fixed height is configured
+  // (see js/dashticz.js renderBlock). With both left empty (the new default,
+  // see iframe_scaletofit/aspectratio defaults above) the iframe used to
+  // collapse to the browser's ~150px default height. It must now measure and
+  // apply the grid cell's own already-allocated height as a fallback.
+  const runStart = frameSource.indexOf('run: function(me) {');
+  const runEnd = frameSource.indexOf('\n  },\n\n  onResize', runStart);
+  assert.notEqual(runStart, -1, 'DT_frame.run not found');
+  assert.notEqual(runEnd, -1, 'end of DT_frame.run not found');
+  const runBody = frameSource.substring(runStart, runEnd);
+
+  assert.match(runBody, /else if \(!me\.block\.height\)/);
+  assert.match(runBody, /closest\('\.dt-grid-item'\)/);
+  assert.match(runBody, /dtstatecss\.height = gridHeight/);
+  assert.match(runBody, /iframecss\.height = gridHeight/);
 });
