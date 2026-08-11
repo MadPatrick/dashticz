@@ -70,14 +70,18 @@ var DT_frame = {
       iframecss.height=iframeWidth * me.block.aspectratio;
     } else if (!me.block.height) {
       var $gridItem = me.$mountPoint.closest('.dt-grid-item');
-      var gridHeight = $gridItem.length ? $gridItem.innerHeight() : 0;
-      // .dt_title (the block's title bar) sits above .dt_state inside the
-      // same grid item; sizing .dt_state to the *whole* grid item's height
-      // pushes it that far past the item's own bottom edge, showing as a
-      // scrollbar/overflow on the tile's side.
+      // .dt_block's *content-box* height (CSS pins it to the grid item's
+      // full height - see the .dt-grid-item > .frame rule in creative.css),
+      // not the grid item's own outer height: .dt_block has its own padding
+      // that the grid item doesn't, and .dt_title (the block's title bar)
+      // sits above .dt_state inside that content box. Sizing .dt_state to
+      // more than "content box minus title" pushes it past .dt_block's own
+      // bottom edge, showing as a scrollbar/cropped content on the tile.
+      var $block = $gridItem.length ? $gridItem.find('.dt_block').first() : $();
+      var blockHeight = $block.length ? $block.height() : 0;
       var $title = me.$mountPoint.find('.dt_title');
       var titleHeight = $title.length && $title.is(':visible') ? $title.outerHeight(true) : 0;
-      var availableHeight = gridHeight - titleHeight;
+      var availableHeight = blockHeight - titleHeight;
       if (availableHeight > 0) {
         dtstatecss.height = availableHeight;
         iframecss.height = availableHeight;

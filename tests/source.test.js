@@ -1688,13 +1688,25 @@ test('iFrame without scaletofit/aspectratio fills its grid cell height instead o
 
   assert.match(runBody, /else if \(!me\.block\.height\)/);
   assert.match(runBody, /closest\('\.dt-grid-item'\)/);
-  // .dt_title (the block's own title bar) sits above .dt_state inside the
-  // same grid item; sizing .dt_state to the tile's *whole* height pushes it
-  // that far past the tile's own bottom edge, showing as a stray scrollbar.
+  // .dt_block's content-box height (not the grid item's own outer height:
+  // .dt_block has its own padding the grid item doesn't) minus .dt_title's
+  // own height (the block's title bar, which sits above .dt_state inside
+  // that content box). Sizing .dt_state to more than that pushes it past
+  // .dt_block's own bottom edge, showing as a stray scrollbar/cropped
+  // content - and .dt_block itself is CSS-pinned to the grid item's full
+  // height (see the .dt-grid-item > .frame rule in creative.css) so nothing
+  // upstream can silently grow past the row either.
+  assert.match(runBody, /find\('\.dt_block'\)\.first\(\)/);
   assert.match(runBody, /find\('\.dt_title'\)/);
-  assert.match(runBody, /var availableHeight = gridHeight - titleHeight;/);
+  assert.match(runBody, /var availableHeight = blockHeight - titleHeight;/);
   assert.match(runBody, /dtstatecss\.height = availableHeight/);
   assert.match(runBody, /iframecss\.height = availableHeight/);
+
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  assert.match(
+    styles,
+    /\.dt-grid-item > \.frame,\s*\n\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.waqi \{\s*\n\s*height: 100% !important;/
+  );
 });
 
 test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Config editor', () => {
