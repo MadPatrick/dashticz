@@ -1894,17 +1894,22 @@ test('iFrame widget keeps a symmetric right margin once it has an icon', () => {
     path.join(root, 'js/components/frame.js'),
     'utf8'
   );
-  // Adding a default icon (previous test) made this code path - previously
+  // Adding a default icon (previous test) made hasIcon paths - previously
   // only reachable with a hand-set custom icon - the default for every
-  // iframe widget. It originally set marginRight to 0 while marginLeft
-  // stayed 5px, so the scaled content sat flush against the block's right
-  // edge with no matching gap. Reducing .dt_state's own box width to
-  // compensate wasn't enough on its own either: the iframe's *scaled
-  // visual* width is (width/scaling)*scaling === the original width
-  // regardless, so it still overflowed the narrower box and got clipped
-  // flush at its edge instead of leaving a visible gap. width itself must
-  // shrink before scaling is computed, so the scaled iframe's visual size
-  // matches the narrower box exactly.
+  // iframe widget, surfacing three margin bugs in turn:
+  // 1. marginRight was set to 0 while marginLeft stayed 5px.
+  // 2. Shrinking .dt_state's own box width wasn't enough on its own: the
+  //    iframe's *scaled visual* width is (width/scaling)*scaling === the
+  //    original width regardless, so it still overflowed the narrower box.
+  //    width itself must shrink before scaling is computed from it.
+  // 3. The whole fix lived inside `if (scaling !== 1)`, i.e. only when
+  //    scaletofit is configured. Without scaletofit (scaling stays 1),
+  //    dtstatecss stayed {marginRight: '', marginLeft: ''} - no inline
+  //    override - so .frame .dt_state's blanket `margin: -5px` in CSS (there
+  //    to cover .dt_block's own padding when there's *no* icon) pulled
+  //    .dt_state past the block's right edge instead, same missing-gap
+  //    symptom with no scaling involved at all. The margin fix must apply
+  //    whenever there's an icon, independent of whether scaling is active.
   assert.doesNotMatch(frameSource, /marginRight\s*=\s*'0px'/);
   assert.match(frameSource, /if \(hasIcon\) width -= 10;/);
   const scalingIndex = frameSource.indexOf('var scaling = me.block.scaletofit');
@@ -1912,12 +1917,22 @@ test('iFrame widget keeps a symmetric right margin once it has an icon', () => {
     frameSource.indexOf('if (hasIcon) width -= 10;') < scalingIndex,
     'width must shrink before scaling is computed from it'
   );
-  const hasIconStart = frameSource.indexOf('if(hasIcon) {');
-  const hasIconEnd = frameSource.indexOf('}', hasIconStart);
+
+  const scalingBlockStart = frameSource.indexOf('if(scaling!==1) {');
+  const scalingBlockEnd = frameSource.indexOf('\n    }', scalingBlockStart);
+  const scalingBlockBody = frameSource.substring(scalingBlockStart, scalingBlockEnd);
+  const hasIconStart = frameSource.indexOf('if (hasIcon) {', scalingBlockEnd);
+  assert.notEqual(hasIconStart, -1, 'hasIcon margin fix not found');
+  assert.ok(
+    hasIconStart > scalingBlockEnd,
+    'the hasIcon margin fix must sit outside (after) the scaling!==1 block, so it still applies when scaletofit is not configured'
+  );
+  assert.doesNotMatch(scalingBlockBody, /marginRight|marginLeft/);
+  const hasIconEnd = frameSource.indexOf('\n    }', hasIconStart);
   const hasIconBody = frameSource.substring(hasIconStart, hasIconEnd);
   assert.match(hasIconBody, /marginRight\s*=\s*'5px'/);
   assert.match(hasIconBody, /marginLeft\s*=\s*'5px'/);
-  assert.match(hasIconBody, /dtstatecss\.width = width;/);
+  assert.match(hasIconBody, /if \(scaling !== 1\) dtstatecss\.width = width;/);
 });
 
 test('log/streamplayer/sunrise stay a single shared block across screens instead of being cloned', () => {

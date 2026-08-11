@@ -68,11 +68,23 @@ var DT_frame = {
     if(scaling!==1) {
       dtstatecss= { };
       iframecss={'-webkit-transform': scalingStr, transform: scalingStr, width: iframeWidth, maxWidth: iframeWidth};
-      if(hasIcon) {
-        dtstatecss.marginRight='5px';
-        dtstatecss.marginLeft='5px';
-        dtstatecss.width = width;
-      }
+    }
+    // .frame .dt_state has a blanket margin: -5px in CSS (expanding it to
+    // cover .dt_block's own padding when there's no icon eating into the
+    // width). With an icon that negative margin has nothing to compensate
+    // for on the right - there's no matching padding removed there - so it
+    // just pulls .dt_state past the block's edge with no visible gap. This
+    // needs to apply whether or not scaletofit is scaling the iframe, so it
+    // can't live inside the block above.
+    if (hasIcon) {
+      dtstatecss.marginRight='5px';
+      dtstatecss.marginLeft='5px';
+      // Only scaletofit's fixed-pixel-width + transform:scale needs an
+      // explicit .dt_state width to match; without it, .dt_state's own
+      // width already follows from its (now non-negative) margins, and the
+      // iframe's default width:100% (see .dt_state iframe in creative.css)
+      // fits that automatically.
+      if (scaling !== 1) dtstatecss.width = width;
     }
     if(me.block.aspectratio) {
       dtstatecss.height=iframeWidth * me.block.aspectratio * scaling;
