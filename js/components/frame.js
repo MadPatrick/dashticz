@@ -12,6 +12,7 @@ var DT_frame = {
     var ios = navigator.userAgent.match(/(iPod|iPhone|iPad)/) ? ' ios' : '';
 
     var cfg = {
+      icon: 'fas fa-window-maximize',
       containerClass: 'swiper-no-swiping imgblock' + ios,
       refresh: 300,
     };
@@ -70,9 +71,16 @@ var DT_frame = {
     } else if (!me.block.height) {
       var $gridItem = me.$mountPoint.closest('.dt-grid-item');
       var gridHeight = $gridItem.length ? $gridItem.innerHeight() : 0;
-      if (gridHeight > 0) {
-        dtstatecss.height = gridHeight;
-        iframecss.height = gridHeight;
+      // .dt_title (the block's title bar) sits above .dt_state inside the
+      // same grid item; sizing .dt_state to the *whole* grid item's height
+      // pushes it that far past the item's own bottom edge, showing as a
+      // scrollbar/overflow on the tile's side.
+      var $title = me.$mountPoint.find('.dt_title');
+      var titleHeight = $title.length && $title.is(':visible') ? $title.outerHeight(true) : 0;
+      var availableHeight = gridHeight - titleHeight;
+      if (availableHeight > 0) {
+        dtstatecss.height = availableHeight;
+        iframecss.height = availableHeight;
       }
     }
     $dtstate.css(dtstatecss);

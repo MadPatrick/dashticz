@@ -1688,8 +1688,13 @@ test('iFrame without scaletofit/aspectratio fills its grid cell height instead o
 
   assert.match(runBody, /else if \(!me\.block\.height\)/);
   assert.match(runBody, /closest\('\.dt-grid-item'\)/);
-  assert.match(runBody, /dtstatecss\.height = gridHeight/);
-  assert.match(runBody, /iframecss\.height = gridHeight/);
+  // .dt_title (the block's own title bar) sits above .dt_state inside the
+  // same grid item; sizing .dt_state to the tile's *whole* height pushes it
+  // that far past the tile's own bottom edge, showing as a stray scrollbar.
+  assert.match(runBody, /find\('\.dt_title'\)/);
+  assert.match(runBody, /var availableHeight = gridHeight - titleHeight;/);
+  assert.match(runBody, /dtstatecss\.height = availableHeight/);
+  assert.match(runBody, /iframecss\.height = availableHeight/);
 });
 
 test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Config editor', () => {
@@ -1862,4 +1867,61 @@ test('frame and WAQI blocks clip their CSS-scaled iframe instead of leaking a sc
   // only sets the iframe's own internal scrolling attribute).
   assert.match(styles, /\.frame \.dt_state \{\s*\n\s*overflow: hidden;/);
   assert.match(styles, /\.waqi \.dt_state \{[\s\S]*?overflow: hidden;/);
+});
+
+test('iFrame widget gets a default icon like other widgets', () => {
+  const frameSource = fs.readFileSync(
+    path.join(root, 'js/components/frame.js'),
+    'utf8'
+  );
+  assert.match(frameSource, /icon: 'fas fa-window-maximize'/);
+});
+
+test('log/streamplayer/sunrise stay a single shared block across screens instead of being cloned', () => {
+  // These three are dispatched by their literal block key matching a
+  // registered component name (Dashticz._mount in dashticz.js) rather than
+  // by a 'type' property or catalog id (see js/components/log.js and
+  // streamplayer.js, which have no canHandle at all). The "clone this block
+  // for a screen that doesn't already own it" logic (TAAK1, issue #98
+  // follow-up) used to rename them too - e.g. 'log' -> 'screen2_log' - which
+  // made the clone invisible to every component's dispatch check: the
+  // widget silently stopped rendering (no icon, no content) on the second
+  // screen, and the Screen Editor's per-tile overlay fell back to showing
+  // the plain drag icon instead of the config cog, since it couldn't
+  // resolve the renamed reference back to a widget/device kind either.
+  const configWriter = fs.readFileSync(path.join(root, 'js/configwriter.php'), 'utf8');
+  const saveWidgets = fs.readFileSync(path.join(root, 'js/savewidgets.php'), 'utf8');
+  const saveGridLayout = fs.readFileSync(path.join(root, 'js/savegridlayout.php'), 'utf8');
+  const layoutEditor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+  const logSource = fs.readFileSync(path.join(root, 'js/components/log.js'), 'utf8');
+  const streamplayerSource = fs.readFileSync(
+    path.join(root, 'js/components/streamplayer.js'),
+    'utf8'
+  );
+
+  assert.doesNotMatch(logSource, /canHandle/);
+  assert.doesNotMatch(streamplayerSource, /canHandle/);
+
+  assert.match(configWriter, /function configwriter_is_component_dispatched_key\(\$key\)/);
+  assert.match(
+    configWriter,
+    /return in_array\(\$key, \['log', 'streamplayer', 'sunrise'\], true\);/
+  );
+  assert.match(
+    configWriter,
+    /if \(configwriter_is_component_dispatched_key\(\$key\)\) \{\s*\n\s*return \$key;/
+  );
+  assert.match(
+    saveGridLayout,
+    /\$forceClone = !configwriter_is_component_dispatched_key\(\$ref\)/
+  );
+
+  // layouteditor.js's own widget-kind resolution (used to decide whether the
+  // Screen Editor overlay shows a config cog or falls back to the generic
+  // drag icon) recognises these three only by their literal key - so if
+  // savewidgets.php/savegridlayout.php ever renamed one again, it would
+  // still misclassify the clone as a plain, non-configurable grid item.
+  assert.match(layoutEditor, /log: 'log',/);
+  assert.match(layoutEditor, /sunrise: 'sunrise',/);
+  assert.match(layoutEditor, /streamplayer: 'radio',/);
 });
