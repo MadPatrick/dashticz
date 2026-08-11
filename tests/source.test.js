@@ -844,8 +844,11 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.match(widgetEditor, /garbage_maxitems: _s\('garbage_maxitems', '4'\)/);
   assert.match(widgetEditor, /garbage_maxdays: _s\('garbage_maxdays', '32'\)/);
   assert.match(widgetEditor, /calendar_maxitems: _s\('calendar_maxitems', '15'\)/);
-  assert.match(widgetEditor, /scaletofit: '300'/);
-  assert.match(widgetEditor, /aspectratio: '0\.9'/);
+  // New iframe widgets default to no scaling/aspect ratio so they simply
+  // fill the tile's own width/height; existing saved blocks with explicit
+  // values keep working via the hydration path below.
+  assert.match(widgetEditor, /scaletofit: '',/);
+  assert.match(widgetEditor, /aspectratio: '',/);
   assert.match(widgetEditor, /delete entry\.iframeHeight/);
   assert.match(savewidgets, /unset\(\$props\['height'\]\)/);
   assert.equal(english.settings.garbage.garbage_maxdays, 'Maximum days ahead');
@@ -1535,4 +1538,74 @@ test('device editor resubmits xmltvguide and iframe URLs so an unrelated device 
   });
   assert.equal(iframeEntry.frameurl, 'https://example.com/dashboard');
   assert.equal(iframeEntry.scrollbars, false);
+});
+
+test('Multi Device reuses the Custom Device engine and its per-value idx fallback', () => {
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const simpleBlock = fs.readFileSync(path.join(root, 'js/components/simpleblock.js'), 'utf8');
+  const blocksSource = fs.readFileSync(path.join(root, 'js/blocks.js'), 'utf8');
+
+  // The Multi Device popup is a new add-flow, but it must save through the
+  // existing specialType 'custom' pipeline so no rendering/parsing logic is
+  // duplicated: saving, editing and CONFIG.js writing stay exactly the same
+  // as any other Custom Device.
+  assert.match(deviceEditor, /function openMultiDevice\(\)/);
+  assert.match(deviceEditor, /function _showMultiDevicePopup\(\)/);
+  assert.match(deviceEditor, /openMultiDevice: openMultiDevice/);
+  assert.match(
+    deviceEditor,
+    /specialType: 'custom',[\s\S]*?customFields: customRows/
+  );
+  assert.match(simpleBlock, /action: 'multidevice'/);
+  assert.match(simpleBlock, /DashticzDeviceEditor\.openMultiDevice\(\)/);
+
+  // blocks['combine'] = {idx: 43, values: [{value: '<A>'}, {idx: 1247, value: '<B>'}]}
+  // relies on each values[] entry inheriting the parent block's idx when it
+  // doesn't set its own: origBlock is merged in before the per-value `value`,
+  // so a later, more specific idx on the row still wins.
+  assert.match(
+    blocksSource,
+    /\$\.extend\(newValue, protoBlock, origBlock, value\)/
+  );
+});
+
+test('Radio widget is a graphical front end for the existing Streamplayer component', () => {
+  const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
+  const layoutEditor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+  const savewidgets = fs.readFileSync(path.join(root, 'js/savewidgets.php'), 'utf8');
+  const streamplayer = fs.readFileSync(
+    path.join(root, 'js/components/streamplayer.js'),
+    'utf8'
+  );
+
+  // DT_streamplayer is matched by its registered component name (Dashticz._mount
+  // in dashticz.js only checks components[selector] for a string block reference),
+  // so every layer must keep using the literal 'streamplayer' key rather than a
+  // synthetic 'widget_radio' key, or the block silently stops being playable.
+  assert.match(streamplayer, /name: 'streamplayer'/);
+  assert.match(widgetEditor, /id: 'radio',\s*\n\s*blockKey: 'streamplayer'/);
+  assert.match(layoutEditor, /streamplayer: 'radio'/);
+  assert.match(savewidgets, /'radio' => \['key' => 'streamplayer'/);
+
+  // New tracks are written onto the block itself (blocks['streamplayer'].tracks),
+  // which getBlockConfig merges over DT_streamplayer's defaultCfg — so it takes
+  // precedence over a legacy _STREAMPLAYER_TRACKS global without replacing it.
+  assert.match(streamplayer, /_STREAMPLAYER_TRACKS/);
+  assert.match(widgetEditor, /entry\.tracks = \(widgetConfigs\.radio \|\| \{\}\)\.tracks/);
+  assert.match(savewidgets, /\$widget\['tracks'\]\[\] = \[/);
+
+  // Every station row gets its own + button (per spec), not just one add
+  // button below the whole list.
+  assert.match(widgetEditor, /we-radio-add/);
+  assert.match(widgetEditor, /we-radio-remove/);
+
+  // Same issue #98 class of bug as iframe/xmltvguide: savewidgets.php requires
+  // top-level tracks, so the Device Editor must resubmit them explicitly (with
+  // a fallback to the legacy _STREAMPLAYER_TRACKS global) or an unrelated
+  // device save would 400 out any existing Radio widget.
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  assert.match(
+    deviceEditor,
+    /widget\.id === 'radio'\) \{[\s\S]*?_STREAMPLAYER_TRACKS[\s\S]*?\}/
+  );
 });

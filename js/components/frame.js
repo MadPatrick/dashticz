@@ -31,8 +31,13 @@ var DT_frame = {
 
     return html;
   },
+  // scaletofit is the embedded page's own design width in px; the iframe is
+  // CSS-scaled (transform: scale) so that width maps onto the tile's actual
+  // rendered width. aspectratio (height/width) then derives the height from
+  // the scaled width. When both are empty, scaling stays 1 and no height is
+  // forced, so the iframe simply fills the tile's own width/height.
   run: function(me) {
-    
+
     var hasIcon = me.$mountPoint.find('.col-icon').length;
     var $iframe = me.$mountPoint.find('iframe');
     var $dtstate = me.$mountPoint.find('.dt_state');
