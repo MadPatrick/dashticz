@@ -252,6 +252,17 @@
   margin: -5px;
 }
 
+/* frame.js CSS-scales the iframe with transform: scale() for scaletofit,
+   which visually shrinks it but leaves its pre-scale layout box (often much
+   wider/taller than the tile) intact for overflow purposes. Without this,
+   that untransformed box pokes out of .dt_state and shows as a stray
+   scrollbar on the block's edge, independent of the widget's own "Show
+   scrollbars" setting (which only controls the iframe's *internal*
+   scrollbar, not this container overflow). */
+.frame .dt_state {
+  overflow: hidden;
+}
+
 .dt_block.dt_button .col-icon,
 .dt_block.dt_button .dt_title {
   min-height: 55px;
@@ -6226,6 +6237,12 @@ canvas {
 
 .waqi .dt_state {
   margin: 0px;
+  /* waqi.js CSS-scales its iframe with transform: scale() to fit the tile,
+     which visually shrinks it but leaves its pre-scale (often wider) layout
+     box intact for overflow purposes - without this, that box can clip
+     against a different ancestor's boundary and crop the badge's right edge
+     instead of fitting cleanly inside this block. Same fix as .frame .dt_state. */
+  overflow: hidden;
 }
 
 .waqi.xxl {

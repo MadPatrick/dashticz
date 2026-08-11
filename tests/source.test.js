@@ -1804,3 +1804,37 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
     assert.ok(we.timegraph_value_idx, `${locale} timegraph value idx translation`);
   }
 });
+
+test('Radio widget gets a default icon like other widgets (log, WAQI)', () => {
+  const streamplayer = fs.readFileSync(
+    path.join(root, 'js/components/streamplayer.js'),
+    'utf8'
+  );
+  const logSource = fs.readFileSync(path.join(root, 'js/components/log.js'), 'utf8');
+  const waqiSource = fs.readFileSync(path.join(root, 'js/components/waqi.js'), 'utf8');
+
+  // A freshly added Radio widget had no icon at all until the user typed one
+  // into the Widget Config editor's Icon custom field by hand - every other
+  // widget with an Icon checkbox (log, WAQI) instead bakes a sensible default
+  // into its own defaultCfg, which getBlockConfig only overrides once the
+  // block itself sets an explicit icon (including icon:'' when the Icon
+  // checkbox is unchecked). Match that existing pattern for streamplayer too.
+  assert.match(logSource, /icon: 'fas fa-microchip'/);
+  assert.match(waqiSource, /icon: 'fas fa-wind'/);
+  assert.match(streamplayer, /icon: 'fas fa-broadcast-tower'/);
+});
+
+test('frame and WAQI blocks clip their CSS-scaled iframe instead of leaking a scrollbar', () => {
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  // frame.js and waqi.js both shrink an iframe to fit the tile with
+  // transform: scale(), which only changes how it's painted - the iframe's
+  // pre-scale (often much wider/taller) box is still what ancestors use to
+  // decide whether they need a scrollbar. Without overflow: hidden on the
+  // immediate .dt_state container, that oversized box pokes out and shows a
+  // stray scrollbar (frame) or crops the badge's edge (WAQI), independent of
+  // and not fixed by the frame widget's own "Show scrollbars" option (that
+  // only sets the iframe's own internal scrolling attribute).
+  assert.match(styles, /\.frame \.dt_state \{\s*\n\s*overflow: hidden;/);
+  assert.match(styles, /\.waqi \.dt_state \{[\s\S]*?overflow: hidden;/);
+});
