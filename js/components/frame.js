@@ -47,6 +47,14 @@ var DT_frame = {
     var $iframe = me.$mountPoint.find('iframe');
     var $dtstate = me.$mountPoint.find('.dt_state');
     var width = hasIcon ? parseInt(me.$mountPoint.find('.dt_content').outerWidth()) : parseInt(me.$mountPoint.find('div').innerWidth());
+    // Reserve a symmetric 5px gap on both sides of the content area when
+    // there's an icon column, matching the gap the icon itself already
+    // gets. This must happen *before* scaling is computed: the iframe's
+    // scaled visual width is width/scaling * scaling = width, so shrinking
+    // .dt_state's own box afterwards without also shrinking this would
+    // leave the (still full-width) scaled iframe overflowing the narrower
+    // box, clipped flush against its edge instead of leaving a visible gap.
+    if (hasIcon) width -= 10;
     var scaling = me.block.scaletofit ? width/me.block.scaletofit : 1;
     var iframeWidth = width/scaling;
     var dtstatecss={marginRight:'', marginLeft:''};
@@ -63,11 +71,7 @@ var DT_frame = {
       if(hasIcon) {
         dtstatecss.marginRight='5px';
         dtstatecss.marginLeft='5px';
-        // The scaled iframe's own width/transform keep it visually within
-        // bounds, but .dt_state's own box otherwise keeps flowing at its
-        // usual (icon-unaware) width, leaving no matching gap on the right
-        // to mirror the 5px margin just set on the left.
-        dtstatecss.width = width - 10;
+        dtstatecss.width = width;
       }
     }
     if(me.block.aspectratio) {

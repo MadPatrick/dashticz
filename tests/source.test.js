@@ -1896,19 +1896,28 @@ test('iFrame widget keeps a symmetric right margin once it has an icon', () => {
   );
   // Adding a default icon (previous test) made this code path - previously
   // only reachable with a hand-set custom icon - the default for every
-  // iframe widget. It set marginRight to 0 while marginLeft stayed 5px, and
-  // left .dt_state's own width unset (so it kept flowing at its usual
-  // icon-unaware width): together the scaled content sat flush against the
-  // block's right edge with no matching gap on the right side, unlike the
-  // left. Margins must match, and .dt_state needs an explicit width that
-  // accounts for both to actually enforce it.
+  // iframe widget. It originally set marginRight to 0 while marginLeft
+  // stayed 5px, so the scaled content sat flush against the block's right
+  // edge with no matching gap. Reducing .dt_state's own box width to
+  // compensate wasn't enough on its own either: the iframe's *scaled
+  // visual* width is (width/scaling)*scaling === the original width
+  // regardless, so it still overflowed the narrower box and got clipped
+  // flush at its edge instead of leaving a visible gap. width itself must
+  // shrink before scaling is computed, so the scaled iframe's visual size
+  // matches the narrower box exactly.
   assert.doesNotMatch(frameSource, /marginRight\s*=\s*'0px'/);
+  assert.match(frameSource, /if \(hasIcon\) width -= 10;/);
+  const scalingIndex = frameSource.indexOf('var scaling = me.block.scaletofit');
+  assert.ok(
+    frameSource.indexOf('if (hasIcon) width -= 10;') < scalingIndex,
+    'width must shrink before scaling is computed from it'
+  );
   const hasIconStart = frameSource.indexOf('if(hasIcon) {');
   const hasIconEnd = frameSource.indexOf('}', hasIconStart);
   const hasIconBody = frameSource.substring(hasIconStart, hasIconEnd);
   assert.match(hasIconBody, /marginRight\s*=\s*'5px'/);
   assert.match(hasIconBody, /marginLeft\s*=\s*'5px'/);
-  assert.match(hasIconBody, /dtstatecss\.width = width - 10;/);
+  assert.match(hasIconBody, /dtstatecss\.width = width;/);
 });
 
 test('log/streamplayer/sunrise stay a single shared block across screens instead of being cloned', () => {
