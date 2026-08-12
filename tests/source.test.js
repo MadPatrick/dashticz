@@ -1841,6 +1841,25 @@ test('Radio widget gets a default icon like other widgets (log, WAQI)', () => {
   assert.match(streamplayer, /icon: 'fas fa-broadcast-tower'/);
 });
 
+test('Timegraph widget gets a default icon like other widgets', () => {
+  const timegraph = fs.readFileSync(
+    path.join(root, 'js/components/timegraph.js'),
+    'utf8'
+  );
+  const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
+
+  // Same pattern as log/WAQI/Radio/iFrame: a freshly added Timegraph widget
+  // had no icon in its title bar at all until one was typed into the Widget
+  // Config editor's Icon custom field by hand. getBlockConfig (dashticz.js)
+  // only overrides special.defaultCfg.icon once the block itself sets an
+  // explicit icon (including icon:'' when the Icon checkbox is unchecked),
+  // so baking a default into defaultCfg here is fully overridable as before.
+  assert.match(timegraph, /defaultCfg: \{\s*\n\s*icon: 'fas fa-chart-line',/);
+  // Matches the icon already used for Timegraph's own tile in the Widget
+  // Config editor's "Add Widget" catalog.
+  assert.match(widgetEditor, /id: 'timegraph',[\s\S]*?icon: 'fas fa-chart-line',/);
+});
+
 test('Domoticz log widget defaults to an 8x8 grid cell instead of a full-width strip', () => {
   const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
 
