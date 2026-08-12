@@ -4944,8 +4944,8 @@ canvas {
 
 .dial .dial-container {
   position: absolute;
-  width: 90%;
-  height: 90%;
+  width: 93%;
+  height: 93%;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -4995,8 +4995,8 @@ canvas {
 }
 
 .dial .dial-center {
-  width: 85%;
-  height: 85%;
+  width: 88%;
+  height: 88%;
   font-size: 10%;
   /*
   top: 0;

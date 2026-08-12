@@ -40,6 +40,10 @@ v3.42.0 beta (12-8-2026)
   style was invalid and got dropped, and the oversized CSS default won.
   The guard now correctly detects a failed measurement and falls back to a
   sane default (also lowered the CSS backstop default from 240px to 100px).
+- The dial's default face/content area (``.dial-container``/``.dial-center``)
+  left a visibly roomy margin before the outer ring. Tightened from 90%/85%
+  to 93%/88% — still comfortably inside the 95% already used for ``fixed``
+  dials, so the ring, needle and numbers keep their existing clearance.
 
 v3.41.7 beta (12-8-2026)
 --------------------------

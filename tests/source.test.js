@@ -2109,3 +2109,14 @@ test('Dial checkbox shows an inline hint pointing to the dial docs and Custom fi
   assert.match(deviceEditor, /dial_hint: '/);
   assert.match(deviceEditor, /dial_hint_link: '/);
 });
+
+test('Dial face/content area fills more of the dial instead of leaving roomy margins', () => {
+  // .dial-container/.dial-center were 90%/85%, leaving a very visible gap
+  // before the ring. `.dial.fixed .dial-center` already ships at 95% with no
+  // clipping against the ring/needle (sized independently in fixed em
+  // fractions of .dial itself), so 93%/88% is a safe, still-conservative
+  // tightening of the default (non-fixed, non-hover) dial content area.
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  assert.match(styles, /\.dial \.dial-container \{[\s\S]*?width: 93%;[\s\S]*?height: 93%;/);
+  assert.match(styles, /\.dial \.dial-center \{[\s\S]*?width: 88%;[\s\S]*?height: 88%;/);
+});
