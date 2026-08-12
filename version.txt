@@ -1,8 +1,9 @@
 {
-    "version": "3.41.8",
+    "version": "3.41.9",
     "branch": "beta",
-    "last_changes": "Device Editor: add a Dial checkbox to Device Config, writing type: 'dial' to CONFIG.js",
+    "last_changes": "Fix dial blocks rendering oversized by default; document the dial scale parameter; Dial checkbox shows a Custom fields hint",
     "changelog": {
+        "3.41.9": "Fix dial blocks rendering oversized by default; document the dial scale parameter; Dial checkbox shows a Custom fields hint",
         "3.41.8": "Device Editor: add a Dial checkbox to Device Config, writing type: 'dial' to CONFIG.js",
         "3.41.7": "Fix TimeGraph config icon opening the wrong device settings; add default icons for Multi Device and Custom Device",
         "3.41.6": "Domoticz log widget now defaults to an 8x8 grid cell instead of a full-width strip",

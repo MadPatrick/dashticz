@@ -4776,7 +4776,9 @@ canvas {
   left: 50%;
   transform: translate(-50%, -50%);
   
-  font-size: 240px;
+  /* Backstop only: js/components/dial.js sets an inline font-size that
+     matches the block's actual measured/configured size on every mount. */
+  font-size: 100px;
   width: 1em;
   height: 1em;
   -webkit-border-radius: 50%;

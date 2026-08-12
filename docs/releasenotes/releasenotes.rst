@@ -6,6 +6,34 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.41.9 beta (12-8-2026)
+--------------------------
+
+* **Fixes**
+
+- Dial blocks could render far larger than their block (up to a hardcoded
+  240px font-size) whenever the automatic size measurement failed — for
+  example on a block sitting on a screen that isn't the active tab at mount
+  time, where the container is ``display:none`` and has zero measured
+  width. The dead ``height < 0`` guard in ``js/components/dial.js`` never
+  actually caught this (a failed measurement yields ``NaN``/``0``, never a
+  negative number), so ``fontsize`` became ``NaN``, the resulting inline
+  style was invalid and got dropped, and the oversized CSS default won.
+  The guard now correctly detects a failed measurement and falls back to a
+  sane default (also lowered the CSS backstop default from 240px to 100px).
+
+* **Enhancements**
+
+- Documented the dial block's previously-undocumented ``scale`` parameter
+  (a multiplier on the dial's automatically measured/configured size) as
+  the supported way to manually fine-tune a dial that still renders too
+  large/small for its block. It isn't a reserved Custom field name, so it
+  already works via the Device Editor's Custom fields with no code change.
+- Device Editor: checking the **Dial** checkbox in Device Config now shows
+  an inline hint explaining that the remaining dial options (color,
+  min/max, subtype, values, etc.) are set manually via Custom fields, with
+  a link to the dial documentation.
+
 v3.41.8 beta (12-8-2026)
 --------------------------
 

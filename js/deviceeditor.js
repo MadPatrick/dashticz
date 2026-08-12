@@ -57,6 +57,8 @@ var DashticzDeviceEditor = (function () {
         last_update: 'Last update',
         switch: 'Switch',
         dial: 'Dial',
+        dial_hint: 'Dial type selected. Set the remaining dial options (color, min/max, subtype, values, etc.) manually via Custom fields below.',
+        dial_hint_link: 'Dial documentation',
         show_title: 'Title',
         device_config: 'Device Config',
         widget_config: 'Widget Config',
@@ -1915,6 +1917,13 @@ var DashticzDeviceEditor = (function () {
       html += '><span class="form-check-label">' + _esc(t[option]) + '</span></label>';
     });
     html += '</div>';
+    if (!isTitle) {
+      html += '<div class="alert alert-info de-dial-hint d-none" role="note">';
+      html += _esc(t.dial_hint) + ' ';
+      html += '<a href="https://dashticz.readthedocs.io/en/beta/blocks/specials/dial.html" target="_blank" rel="noopener">' +
+        _esc(t.dial_hint_link) + '</a>';
+      html += '</div>';
+    }
     html += '<div class="de-custom-fields-section"><h6>' + _esc(t.custom_fields) + '</h6>';
     html += '<p class="form-text">' + _esc(t.custom_fields_help) + '</p>';
     html += '<div class="de-custom-fields">';
@@ -1938,6 +1947,10 @@ var DashticzDeviceEditor = (function () {
       var enabled = $popup.find('[data-option="icon"]').is(':checked');
       $popup.find('.de-icon-field-row').toggle(enabled);
     }
+    function refreshDialHint() {
+      var enabled = $popup.find('[data-option="dial"]').is(':checked');
+      $popup.find('.de-dial-hint').toggleClass('d-none', !enabled);
+    }
     $popup.on('click', '.de-custom-field-add', function () {
       $(this).closest('.de-custom-field-row').after(_customFieldRowHtml());
       refreshCustomFieldButtons();
@@ -1949,8 +1962,10 @@ var DashticzDeviceEditor = (function () {
       refreshCustomFieldButtons();
     });
     $popup.on('change', '[data-option="icon"]', refreshIconFieldVisibility);
+    $popup.on('change', '[data-option="dial"]', refreshDialHint);
     refreshCustomFieldButtons();
     refreshIconFieldVisibility();
+    refreshDialHint();
 
     $('#de-config-ok').on('click', function () {
       var updated = {};

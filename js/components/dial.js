@@ -77,9 +77,13 @@ var DT_dial = (function () {
       var height = isDefined(me.block.height)
         ? parseInt(me.block.height)
         : parseInt($(me.mountPoint + ' div').outerWidth());
-      if (height < 0) {
+      if (!height || isNaN(height)) {
+        // Container not laid out yet, or hidden (e.g. an inactive screen tab)
+        // at mount time: outerWidth() then returns 0/undefined. Fall back to a
+        // sane default instead of letting fontsize become NaN, which silently
+        // falls through to the much larger CSS default.
         console.log('dial width unknown.');
-        me.height = me.height * me.block.scale || 100;
+        me.height = (me.height || 100) * (me.block.scale || 1);
       } else me.height = height * me.block.scale || me.height;
       me.fontsize = 0.95 * me.height;
       $(me.mountPoint + ' .dt_block').css('height', me.height + 'px');

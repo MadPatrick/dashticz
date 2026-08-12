@@ -2065,3 +2065,47 @@ test('Multi Device and Custom Device get a sensible default icon when none is co
   assert.match(multiDevicePopup, /iconValue: 'fas fa-layer-group',/);
   assert.match(customDevicePopup, /iconValue: iconValue \|\| 'fas fa-cube',/);
 });
+
+test('Dial sizing falls back sanely instead of silently rendering oversized', () => {
+  // js/components/dial.js measures the block's real container width via
+  // outerWidth() when no explicit `height` is configured. On a block that
+  // isn't laid out yet (or sits on an inactive screen tab, display:none),
+  // that measurement is 0/undefined, so parseInt() yields NaN or 0 - never
+  // a negative number. The old `height < 0` guard could therefore never
+  // trigger the intended fallback, fontsize became NaN, the invalid inline
+  // style was dropped by the browser, and the component's own oversized
+  // CSS default (was 240px) won by default - "dial too large for the block".
+  const dialComponent = fs.readFileSync(path.join(root, 'js/components/dial.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  assert.doesNotMatch(dialComponent, /if \(height < 0\)/);
+  assert.match(dialComponent, /if \(!height \|\| isNaN\(height\)\)/);
+  assert.match(dialComponent, /me\.height = \(me\.height \|\| 100\) \* \(me\.block\.scale \|\| 1\);/);
+  assert.match(styles, /\.dt_content \.dial \{[\s\S]*?font-size: 100px;/);
+  assert.doesNotMatch(styles, /font-size: 240px;/);
+
+  // The already-existing (but previously undocumented) block-level `scale`
+  // multiplier is now documented as the supported way to fine-tune a dial's
+  // size manually; it isn't a reserved custom-field name so it already
+  // round-trips through the Device Editor's Custom fields with no code change.
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const dialDocs = fs.readFileSync(path.join(root, 'docs/blocks/specials/dial.rst'), 'utf8');
+  assert.match(dialDocs, /\* - scale/);
+  assert.doesNotMatch(deviceEditor, /protectedCustomDeviceProperties = \{[^}]*\bscale: true\b/s);
+});
+
+test('Dial checkbox shows an inline hint pointing to the dial docs and Custom fields', () => {
+  // Checking Dial only sets type:'dial'; every other dial parameter (color,
+  // min/max, subtype, values, ...) still has to be added by hand via Custom
+  // fields, so the popup surfaces a dismissable, non-blocking hint (an
+  // inline alert rather than a stacked modal, so toggling the checkbox a
+  // few times while experimenting doesn't spam the user with popups) that
+  // only appears while Dial is checked and links to the dial docs.
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  assert.match(deviceEditor, /class="alert alert-info de-dial-hint d-none"/);
+  assert.match(deviceEditor, /href="https:\/\/dashticz\.readthedocs\.io\/en\/beta\/blocks\/specials\/dial\.html"/);
+  assert.match(deviceEditor, /function refreshDialHint\(\) \{/);
+  assert.match(deviceEditor, /\$popup\.find\('\.de-dial-hint'\)\.toggleClass\('d-none', !enabled\)/);
+  assert.match(deviceEditor, /\$popup\.on\('change', '\[data-option="dial"\]', refreshDialHint\)/);
+  assert.match(deviceEditor, /dial_hint: '/);
+  assert.match(deviceEditor, /dial_hint_link: '/);
+});
