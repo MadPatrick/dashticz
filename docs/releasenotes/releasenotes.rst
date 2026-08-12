@@ -6,8 +6,27 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
-v3.41.9 beta (12-8-2026)
+v3.42.0 beta (12-8-2026)
 --------------------------
+
+* **Enhancements**
+
+- Device Editor: the Device Config popup now has a **Dial** checkbox next to
+  Icon/Data/Updated, writing ``type: 'dial'`` to CONFIG.js so the block
+  renders using the :ref:`dial <dial>` block instead of the default one.
+  Applies to plain devices, Domoticz groups/scenes, dummy blocks and Custom
+  devices — all of which share this same popup. ``type`` itself stays a
+  rejected/reserved name in the Custom fields section; the checkbox is the
+  only way to set it. Dial-specific parameters (``color``, ``min``, ``max``,
+  ``subtype``, ``values``, etc.) remain configurable via Custom fields.
+- Checking the **Dial** checkbox now shows an inline hint explaining that
+  the remaining dial options are set manually via Custom fields, with a
+  link to the dial documentation.
+- Documented the dial block's previously-undocumented ``scale`` parameter
+  (a multiplier on the dial's automatically measured/configured size) as
+  the supported way to manually fine-tune a dial that still renders too
+  large/small for its block. It isn't a reserved Custom field name, so it
+  already works via the Device Editor's Custom fields with no code change.
 
 * **Fixes**
 
@@ -21,32 +40,6 @@ v3.41.9 beta (12-8-2026)
   style was invalid and got dropped, and the oversized CSS default won.
   The guard now correctly detects a failed measurement and falls back to a
   sane default (also lowered the CSS backstop default from 240px to 100px).
-
-* **Enhancements**
-
-- Documented the dial block's previously-undocumented ``scale`` parameter
-  (a multiplier on the dial's automatically measured/configured size) as
-  the supported way to manually fine-tune a dial that still renders too
-  large/small for its block. It isn't a reserved Custom field name, so it
-  already works via the Device Editor's Custom fields with no code change.
-- Device Editor: checking the **Dial** checkbox in Device Config now shows
-  an inline hint explaining that the remaining dial options (color,
-  min/max, subtype, values, etc.) are set manually via Custom fields, with
-  a link to the dial documentation.
-
-v3.41.8 beta (12-8-2026)
---------------------------
-
-* **Enhancements**
-
-- Device Editor: the Device Config popup now has a **Dial** checkbox next to
-  Icon/Data/Updated, writing ``type: 'dial'`` to CONFIG.js so the block
-  renders using the :ref:`dial <dial>` block instead of the default one.
-  Applies to plain devices, Domoticz groups/scenes, dummy blocks and Custom
-  devices — all of which share this same popup. ``type`` itself stays a
-  rejected/reserved name in the Custom fields section; the checkbox is the
-  only way to set it. Dial-specific parameters (``color``, ``min``, ``max``,
-  ``subtype``, ``values``, etc.) remain configurable via Custom fields.
 
 v3.41.7 beta (12-8-2026)
 --------------------------
