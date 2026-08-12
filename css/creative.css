@@ -1869,8 +1869,14 @@ body.dle-active {
   justify-items: center;
 }
 
+.de-config-options-five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  justify-items: center;
+}
+
 .de-config-options-three .form-check,
-.de-config-options-four .form-check {
+.de-config-options-four .form-check,
+.de-config-options-five .form-check {
   justify-content: center;
   width: 100%;
 }
@@ -1900,7 +1906,7 @@ body.dle-active {
     grid-template-columns: repeat(2, minmax(100px, 1fr));
   }
 
-  .de-config-options:not(.de-config-options-three):not(.de-config-options-four) {
+  .de-config-options:not(.de-config-options-three):not(.de-config-options-four):not(.de-config-options-five) {
     grid-template-columns: 1fr;
   }
 
@@ -1908,7 +1914,8 @@ body.dle-active {
     gap: 8px;
   }
 
-  .de-config-options-four {
+  .de-config-options-four,
+  .de-config-options-five {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }

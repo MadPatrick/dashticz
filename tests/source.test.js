@@ -612,13 +612,13 @@ test('device and widget config editors share full widget config and preserve hid
   assert.doesNotMatch(configWriter, /configwriter_normalise_text_alignment/);
   assert.doesNotMatch(configWriter, /\$props\['text_alignment'\]/);
 
-  // Device Config is Icon/Data/Update/Title, centered on one row (Icon and
+  // Device Config is Icon/Data/Update/Dial/Title, centered on one row (Icon and
   // Title only for a separator/title bar, which has no data value or
   // last-update of its own). Title visibility is a checkbox here too, not
   // just a typed Field/Setting row: it toggles hide_title exactly like the
   // Widget Config editor's Title checkbox does.
   assert.match(deviceEditor, /\? \['icon', 'show_title'\]/);
-  assert.match(deviceEditor, /: \['icon', 'hide_data', 'last_update', 'show_title'\]/);
+  assert.match(deviceEditor, /: \['icon', 'hide_data', 'last_update', 'dial', 'show_title'\]/);
   assert.match(deviceEditor, /configOptions\.forEach/);
   assert.match(deviceEditor, /if \(option === 'hide_data'\) \{\s*\n\s*checked = options\.hide_data !== true/);
   assert.match(deviceEditor, /isSpecial \? special\.showTitle !== false : deviceTitleVisible\[ck\] !== false/);
@@ -628,12 +628,28 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(deviceEditor, /deviceTitleVisible\[ck\] = pendingShowTitle/);
   assert.match(widgetEditor, /options\.hide_data !== true/);
   assert.match(widgetEditor, /hide_data: !\$cfgModal\.find\('\[data-block-option="hide_data"\]'\)\.is\(':checked'\)/);
-  assert.match(deviceEditor, /de-config-options-four/);
+  assert.match(deviceEditor, /de-config-options-five/);
   assert.match(styles, /\.de-config-options-three[\s\S]*grid-template-columns: repeat\(3/);
   assert.match(styles, /\.de-config-options-four[\s\S]*grid-template-columns: repeat\(4/);
+  assert.match(styles, /\.de-config-options-five[\s\S]*grid-template-columns: repeat\(5/);
   assert.match(styles, /\.de-config-options \.form-check-input[\s\S]*width: 32px;[\s\S]*height: 32px;/);
   assert.match(deviceEditor, /icon: true, iconValue: null, hide_data: false, last_update: false/);
   assert.match(styles, /\.we-block-option\.form-check-input[\s\S]*width: 32px;[\s\S]*height: 32px;/);
+
+  // Dial checkbox: writes type:'dial' into CONFIG.js (the only way to render a
+  // device as a dial block; a hand-typed 'type' custom field stays rejected as
+  // reserved), and round-trips back into the checkbox when re-opening Device Config.
+  assert.match(deviceEditor, /dial: definition\.type === 'dial'/);
+  assert.match(deviceEditor, /dial: configured\.type === 'dial'/);
+  assert.match(deviceEditor, /if \(specialOptions\.dial === true\) specialEntry\.type = 'dial'/);
+  assert.match(deviceEditor, /if \(options\.dial === true\) entry\.type = 'dial'/);
+  assert.match(
+    deviceEditor,
+    /\(!definition\.type \|\| definition\.type === 'dial'\) &&\s*\n\s*parseInt\(definition\.idx, 10\) > 0/
+  );
+  assert.match(saveBlocks, /function _dashticz_editor_block_type\(\$entry\)/);
+  assert.match(saveBlocks, /'type' => _dashticz_editor_block_type\(\$entry\)/);
+  assert.match(configWriter, /if \(!empty\(\$device\['type'\]\)\) \{\s*\n\s*\$props\['type'\] = \(string\)\$device\['type'\];/);
 
   // Title is a system Field/Setting row and c is hidden while being preserved in the payload.
   assert.match(deviceEditor, /field: 'title'[\s\S]*system: true/);

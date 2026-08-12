@@ -6,6 +6,20 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.41.8 beta (12-8-2026)
+--------------------------
+
+* **Enhancements**
+
+- Device Editor: the Device Config popup now has a **Dial** checkbox next to
+  Icon/Data/Updated, writing ``type: 'dial'`` to CONFIG.js so the block
+  renders using the :ref:`dial <dial>` block instead of the default one.
+  Applies to plain devices, Domoticz groups/scenes, dummy blocks and Custom
+  devices — all of which share this same popup. ``type`` itself stays a
+  rejected/reserved name in the Custom fields section; the checkbox is the
+  only way to set it. Dial-specific parameters (``color``, ``min``, ``max``,
+  ``subtype``, ``values``, etc.) remain configurable via Custom fields.
+
 v3.41.7 beta (12-8-2026)
 --------------------------
 
