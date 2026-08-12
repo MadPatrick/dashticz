@@ -47,13 +47,25 @@ v3.42.0 beta (12-8-2026)
 - Dial sizing now measures its actual rendered block (both width **and**
   height, using the smaller of the two — the dial is always a perfect
   circle) via a live ``ResizeObserver``, instead of only re-measuring width
-  at mount time. This fixes two related problems: resizing a dial's block
-  in the editor (grid row/column span or classic column width) now updates
-  the dial live, matching what you see right after saving instead of only
-  after a reload; and a dial could previously overflow past its block
-  (visible as scrollbars on grid screens, whose grid items scroll on
-  overflow) whenever its diameter — sized off height alone once an explicit
-  height was involved — exceeded the block's actual width.
+  at mount time. Resizing a dial's block in the editor (grid row/column span
+  or classic column width) now updates the dial live, matching what you see
+  right after saving instead of only after a reload.
+- Fixed two further sources of scrollbars around a dial block on grid
+  screens (``.dt-grid-item`` scrolls on overflow):
+
+  - ``getContainer()`` gives a block's *outer* wrapper the component name as
+    a CSS class too, which for the dial component is literally ``dial`` — so
+    the live-resize code's ``.dial`` selector also matched that outer
+    wrapper (not just the template's own inner circle) and inflated its
+    (and everything em-sized inside it) font-size, overflowing the block
+    sideways. Scoped to ``.dt_content .dial``, matching the dial's own CSS.
+  - The colored ring/slice indicator is rotated (``transform:
+    rotate(-140deg)``), so its axis-aligned bounding box is wider/taller
+    than its own size; the old ``clip: rect()`` used to shape it into a
+    pie-slice only clips *painting*, not layout, so the full rotated box
+    still counted toward the scrollable area of every ancestor. Wrapped in
+    a new ``.dial-ring-clip`` container (not ``.dial`` itself, which would
+    also clip the dial's own intentional glow/flash effect).
 
 v3.41.7 beta (12-8-2026)
 --------------------------

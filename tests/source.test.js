@@ -2160,3 +2160,48 @@ test('Dial keeps its rendered size in sync with live editor resize (grid or colu
   assert.match(dialComponent, /me\.dialResizeObserver\.disconnect\(\);/);
   assert.match(dialComponent, /me\.dialResizeObserver = null;/);
 });
+
+test('Dial live-resize does not inflate the outer block wrapper font-size', () => {
+  // getContainer() (js/dashticz.js) gives the OUTER .dt_block wrapper the
+  // component name as a class too - for this component that is literally
+  // "dial" (DT_dial.name === 'dial'), so a bare '.dial' selector matches
+  // that outer wrapper as well as the template's own inner circle. Patching
+  // font-size via such a selector inflated the wrapper's (and everything
+  // em-sized inside it) font-size, overflowing the block sideways.
+  // '.dt_content .dial' mirrors the scoping the dial's own CSS already uses
+  // (see the base `.dt_content .dial { ... }` rule) and only reaches the
+  // inner circle.
+  const dialComponent = fs.readFileSync(path.join(root, 'js/components/dial.js'), 'utf8');
+  assert.match(dialComponent, /name: 'dial',/);
+  assert.match(
+    dialComponent,
+    /\$\(me\.mountPoint \+ ' \.dt_content \.dial'\)\.css\('font-size', me\.fontsize \+ 'px'\)/
+  );
+  assert.match(dialComponent, /\$\(me\.mountPoint \+ ' \.dt_content \.dial-needle'\)\.css\(\{/);
+  assert.doesNotMatch(dialComponent, /\$\(me\.mountPoint \+ ' \.dial'\)\.css\('font-size'/);
+
+  const dashticz = fs.readFileSync(path.join(root, 'js/dashticz.js'), 'utf8');
+  assert.match(dashticz, /me\.name \+\s*\n?\s*'\s*dt_block/);
+});
+
+test('Dial ring/slice indicator is clipped to the dial instead of inflating ancestor scrollWidth', () => {
+  // .slice is rotated (transform: rotate(-140deg)), so its axis-aligned
+  // bounding box is wider/taller than its own 1em x 1em size. The old
+  // deprecated `clip: rect()` used to shape it into a pie-slice only clips
+  // painting, not layout - the full rotated box still counted toward the
+  // scrollable overflow of every ancestor, which surfaced as visible
+  // scrollbars on grid screens (.dt-grid-item has overflow: auto). A
+  // dedicated .dial-ring-clip wrapper (not .dial itself, which would also
+  // clip .dial-center's intentional glow/flash box-shadow that extends past
+  // .dial's own edge) contains just the slice.
+  const dialTpl = fs.readFileSync(path.join(root, 'tpl/dial.tpl'), 'utf8');
+  assert.match(
+    dialTpl,
+    /<div class="dial-ring-clip">\s*\n\s*<div class="slice /
+  );
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  assert.match(
+    styles,
+    /\.dial-ring-clip \{[\s\S]*?width: 1em;[\s\S]*?height: 1em;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;/
+  );
+});

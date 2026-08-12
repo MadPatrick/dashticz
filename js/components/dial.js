@@ -192,10 +192,17 @@ var DT_dial = (function () {
     $(me.mountPoint + ' .dt_block').css('height', me.height + 'px');
     // The template bakes font-size/needle dimensions into inline styles at
     // render time; on a live resize (no re-render) they need patching
-    // directly. Both selectors are simply empty before the first render -
-    // a no-op jQuery .css() call, not an error.
-    $(me.mountPoint + ' .dial').css('font-size', me.fontsize + 'px');
-    $(me.mountPoint + ' .dial-needle').css({
+    // directly. getContainer() (js/dashticz.js) gives the OUTER .dt_block
+    // wrapper the component name as a class too, which for this component
+    // is literally "dial" - so a bare '.dial' selector matches that outer
+    // wrapper as well as the template's own inner circle, inflating the
+    // wrapper's (and everything em-sized inside it, e.g. the icon/title)
+    // font-size and overflowing the block sideways. '.dt_content .dial'
+    // mirrors the scoping the dial's own CSS already uses and only reaches
+    // the inner circle. Both selectors are simply empty before the first
+    // render - a no-op jQuery .css() call, not an error.
+    $(me.mountPoint + ' .dt_content .dial').css('font-size', me.fontsize + 'px');
+    $(me.mountPoint + ' .dt_content .dial-needle').css({
       '--needle-length': me.height / 2 + 'px',
       '--needle-width': me.height / 17 + 'px',
     });

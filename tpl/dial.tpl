@@ -29,11 +29,13 @@
 {{/inline}}
 
 <div class="dial {{size}} {{#if fixed}}fixed{{/if}} {{active}} {{addclass}} {{deviceStatus}}" style="font-size: {{fontsize}}px;--dial-color: {{rgba}};">
-    <div class="slice {{#if split}}{{slice}}{{/if}} primary {{class}}">
-        <div class="bar"></div>
-        <div class="fill"></div>
+    <div class="dial-ring-clip">
+        <div class="slice {{#if split}}{{slice}}{{/if}} primary {{class}}">
+            <div class="bar"></div>
+            <div class="fill"></div>
+        </div>
     </div>
-    <div class="dial-container">         
+    <div class="dial-container">
         <div id="face{{id}}" class="dial-face">
             <div class="dial-numbers">
                 {{#if numbers}}       

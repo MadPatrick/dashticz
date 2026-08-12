@@ -4915,6 +4915,22 @@ canvas {
   background-color: transparent;
 }
 
+/* .slice is rotated, so its axis-aligned bounding box is wider/taller than
+   its own 1em x 1em size - left unclipped, that inflated box contributes to
+   the scrollable overflow of any ancestor, which showed up as scrollbars on
+   grid screens (.dt-grid-item has overflow: auto). This wrapper - not .dial
+   itself - contains just that, so .dial-center's own glow/flash effects
+   (which intentionally extend past .dial's own edge) are left untouched. */
+.dial-ring-clip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
 .dial .slice {
   position: absolute;
   width: 1em;
