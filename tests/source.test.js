@@ -1983,3 +1983,50 @@ test('log/streamplayer/sunrise stay a single shared block across screens instead
   assert.match(layoutEditor, /sunrise: 'sunrise',/);
   assert.match(layoutEditor, /streamplayer: 'radio',/);
 });
+
+test('screen editor config icon resolves widget-typed blocks before their own idx looks like a device', () => {
+  // TimeGraph (and any other widget whose catalog entry sets a fallback
+  // idx for value rows without their own - see savewidgets.php's
+  // $catalog) carries a `type` AND an `idx` at the same time. _resolveBlock
+  // used to check widget-ness only after falling through an idx-shaped-value
+  // check, so a widget block with its own idx was misclassified as a plain
+  // device: the Screen Editor's config-cog opened that idx's Device Config
+  // instead of the widget's own Widget Config.
+  const layoutEditor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+  const resolveBlockBody = layoutEditor.slice(
+    layoutEditor.indexOf('function _resolveBlock('),
+    layoutEditor.indexOf('function _widgetIdFromReference(')
+  );
+  const earlyWidgetCheckIndex = resolveBlockBody.indexOf('_widgetIdFromReference(ref, definition)');
+  const idxDeviceFallbackIndex = resolveBlockBody.indexOf("String(rawIdx).match(/^(\\d+)(?:_(\\d+))?$/)");
+  assert.ok(earlyWidgetCheckIndex > -1, 'expected _resolveBlock to call _widgetIdFromReference');
+  assert.ok(idxDeviceFallbackIndex > -1, 'expected _resolveBlock to keep its idx-based device fallback');
+  assert.ok(
+    earlyWidgetCheckIndex < idxDeviceFallbackIndex,
+    '_resolveBlock must resolve widget-ness before falling through to idx-based device detection'
+  );
+  assert.match(
+    resolveBlockBody,
+    /var earlyWidgetId = _widgetIdFromReference\(ref, definition\);\s*\n\s*if \(earlyWidgetId\) \{\s*\n\s*return \{\s*\n\s*definition: definition,\s*\n\s*kind: 'widget',/
+  );
+});
+
+test('Multi Device and Custom Device get a sensible default icon when none is configured', () => {
+  // Neither popup has (Multi Device) or requires (Custom Device) the user to
+  // type an icon; without a fallback the saved block carried no `icon` field
+  // at all (see _showConfigPopup's options.icon/iconValue handling in
+  // deviceeditor.js), and since these idx values aren't a real recognised
+  // Domoticz device type there was nothing else to derive an icon from -
+  // the tile rendered with no icon at all.
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const multiDevicePopup = deviceEditor.slice(
+    deviceEditor.indexOf('function _showMultiDevicePopup('),
+    deviceEditor.indexOf('function _showSlideButtonPopup(')
+  );
+  const customDevicePopup = deviceEditor.slice(
+    deviceEditor.indexOf('function _showCustomDevicePopup('),
+    deviceEditor.indexOf('function _showMultiDevicePopup(')
+  );
+  assert.match(multiDevicePopup, /iconValue: 'fas fa-layer-group',/);
+  assert.match(customDevicePopup, /iconValue: iconValue \|\| 'fas fa-cube',/);
+});
