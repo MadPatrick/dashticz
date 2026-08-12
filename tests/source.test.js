@@ -2120,3 +2120,32 @@ test('Dial face/content area fills more of the dial instead of leaving roomy mar
   assert.match(styles, /\.dial \.dial-container \{[\s\S]*?width: 93%;[\s\S]*?height: 93%;/);
   assert.match(styles, /\.dial \.dial-center \{[\s\S]*?width: 88%;[\s\S]*?height: 88%;/);
 });
+
+test('Grid resize keeps a dial block\'s saved height in sync with its dragged row span', () => {
+  // js/components/dial.js uses an explicit block `height` as-is instead of
+  // re-measuring its container, but plain repositioning of an EXISTING grid
+  // block (js/savegridlayout.php's reposition path) only ever rewrote the
+  // grid x/y/w/h position, never the block's own properties - so dragging a
+  // dial taller/shorter in grid mode had no effect on its saved/rendered
+  // size after reload; only width (which dial.js does re-measure) mattered.
+  // configwriter_build_grid_layout_section now derives and writes an
+  // explicit height from the item's row span for dial-typed blocks only, so
+  // other grid block types keep the responsive (non-fixed-height) sizing
+  // fixed in 3.40.3 (see "widgets no longer get a default fixed pixel
+  // height that fights the grid row sizing").
+  const php = `
+    require '${path.join(root, 'js/configwriter.php').replace(/\\/g, '\\\\').replace(/'/g, "\\'")}';
+    $items = [
+      ['ref' => 'dial1', 'grid' => ['x'=>1,'y'=>1,'w'=>6,'h'=>10],
+       'propsLiteral' => "{idx:1, type:'dial', width:6}"],
+      ['ref' => 'weather1', 'grid' => ['x'=>7,'y'=>1,'w'=>6,'h'=>10],
+       'propsLiteral' => "{type:'weather', width:6}"],
+    ];
+    echo configwriter_build_grid_layout_section($items, 1, 24, 20, 4, 'stack');
+  `;
+  const result = spawnSync('php', ['-r', php], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  // h=10, rowHeight=20, gap=4 -> 10*20 + 9*4 = 236px for the dial only.
+  assert.match(result.stdout, /blocks\['dial1'\]\['height'\] = 236;/);
+  assert.doesNotMatch(result.stdout, /blocks\['weather1'\]\['height'\]/);
+});

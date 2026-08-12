@@ -44,6 +44,13 @@ v3.42.0 beta (12-8-2026)
   left a visibly roomy margin before the outer ring. Tightened from 90%/85%
   to 93%/88% — still comfortably inside the 95% already used for ``fixed``
   dials, so the ring, needle and numbers keep their existing clearance.
+- Grid screens: resizing an *existing* dial block only ever rewrote its grid
+  x/y/w/h position, never its own properties, so a dragged row-height change
+  had no effect on the dial's saved/rendered size after reload — only width
+  (which the dial re-measures) mattered. ``configwriter_build_grid_layout_section``
+  now derives and writes an explicit ``height`` from the dragged row span for
+  dial-typed blocks only, leaving every other grid block type's responsive
+  sizing (fixed in 3.40.3) untouched.
 
 v3.41.7 beta (12-8-2026)
 --------------------------
