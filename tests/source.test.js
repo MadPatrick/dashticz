@@ -2121,31 +2121,42 @@ test('Dial face/content area fills more of the dial instead of leaving roomy mar
   assert.match(styles, /\.dial \.dial-center \{[\s\S]*?width: 88%;[\s\S]*?height: 88%;/);
 });
 
-test('Grid resize keeps a dial block\'s saved height in sync with its dragged row span', () => {
-  // js/components/dial.js uses an explicit block `height` as-is instead of
-  // re-measuring its container, but plain repositioning of an EXISTING grid
-  // block (js/savegridlayout.php's reposition path) only ever rewrote the
-  // grid x/y/w/h position, never the block's own properties - so dragging a
-  // dial taller/shorter in grid mode had no effect on its saved/rendered
-  // size after reload; only width (which dial.js does re-measure) mattered.
-  // configwriter_build_grid_layout_section now derives and writes an
-  // explicit height from the item's row span for dial-typed blocks only, so
-  // other grid block types keep the responsive (non-fixed-height) sizing
-  // fixed in 3.40.3 (see "widgets no longer get a default fixed pixel
-  // height that fights the grid row sizing").
-  const php = `
-    require '${path.join(root, 'js/configwriter.php').replace(/\\/g, '\\\\').replace(/'/g, "\\'")}';
-    $items = [
-      ['ref' => 'dial1', 'grid' => ['x'=>1,'y'=>1,'w'=>6,'h'=>10],
-       'propsLiteral' => "{idx:1, type:'dial', width:6}"],
-      ['ref' => 'weather1', 'grid' => ['x'=>7,'y'=>1,'w'=>6,'h'=>10],
-       'propsLiteral' => "{type:'weather', width:6}"],
-    ];
-    echo configwriter_build_grid_layout_section($items, 1, 24, 20, 4, 'stack');
-  `;
-  const result = spawnSync('php', ['-r', php], { encoding: 'utf8' });
-  assert.equal(result.status, 0, result.stderr);
-  // h=10, rowHeight=20, gap=4 -> 10*20 + 9*4 = 236px for the dial only.
-  assert.match(result.stdout, /blocks\['dial1'\]\['height'\] = 236;/);
-  assert.doesNotMatch(result.stdout, /blocks\['weather1'\]\['height'\]/);
+test('Dial keeps its rendered size in sync with live editor resize (grid or column)', () => {
+  // A previous attempt fixed "grid resize doesn't affect the dial" by having
+  // configwriter_build_grid_layout_section (js/configwriter.php) compute and
+  // persist a pixel `height` from the dragged row span for dial-typed grid
+  // blocks. That caused a regression: the persisted height made dial.js pick
+  // its circle diameter from HEIGHT alone (ignoring width), and any drift
+  // between that PHP-computed pixel value and the browser's own CSS Grid
+  // rendering showed up as scrollbars on `.dt-grid-item` (which has
+  // `overflow: auto`). Reverted; configwriter_build_grid_layout_section must
+  // no longer special-case dial blocks at all.
+  const configWriter = fs.readFileSync(path.join(root, 'js/configwriter.php'), 'utf8');
+  const gridSectionFn = configWriter.slice(
+    configWriter.indexOf('function configwriter_build_grid_layout_section('),
+    configWriter.indexOf('function configwriter_extract_block_lines(')
+  );
+  assert.doesNotMatch(gridSectionFn, /isDial/);
+  assert.doesNotMatch(gridSectionFn, /\['height'\]/);
+
+  // Instead, js/components/dial.js measures its own actual rendered box
+  // (both width AND height, not just width) and uses the SMALLER of the
+  // two - the dial is always a perfect circle (.dial is width:1em ==
+  // height:1em), so it can never be made to overflow either dimension of a
+  // non-square block. A ResizeObserver on that same container keeps this
+  // in sync live (grid drag, column-width drag, window resize, ...)
+  // instead of only updating after a save+reload, without re-running the
+  // full mount/device-subscribe pipeline (see the historically-disabled
+  // `resize()` function's own comment about not wanting to recreate and
+  // resubscribe on every resize).
+  const dialComponent = fs.readFileSync(path.join(root, 'js/components/dial.js'), 'utf8');
+  assert.match(dialComponent, /function _dialFitSize\(me\)/);
+  assert.match(dialComponent, /var measuredWidth = parseInt\(\$container\.outerWidth\(\)\);/);
+  assert.match(dialComponent, /var measuredHeight = parseInt\(\$container\.outerHeight\(\)\);/);
+  assert.match(dialComponent, /Math\.min\.apply\(Math, candidates\)/);
+  assert.match(dialComponent, /typeof ResizeObserver !== 'undefined'/);
+  assert.match(dialComponent, /me\.dialResizeObserver = new ResizeObserver/);
+  assert.match(dialComponent, /me\.dialResizeObserver\.observe\(/);
+  assert.match(dialComponent, /me\.dialResizeObserver\.disconnect\(\);/);
+  assert.match(dialComponent, /me\.dialResizeObserver = null;/);
 });

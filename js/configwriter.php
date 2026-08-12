@@ -1246,31 +1246,15 @@ function configwriter_build_grid_layout_section(
             $index + 1
         );
         $inlineGrid = configwriter_format_props($position);
-        $isDial = false;
         if (isset($item['propsLiteral']) && is_string($item['propsLiteral'])) {
             $section .= "blocks['" . $ref . "'] = "
                 . $item['propsLiteral'] . ";\n";
             $section .= "blocks['" . $ref . "']['grid'] = "
                 . $inlineGrid . ";\n";
-            $isDial = (bool)preg_match(
-                "/\\btype\\s*:\\s*(['\"])dial\\1/",
-                $item['propsLiteral']
-            );
         } elseif (isset($item['props']) && is_array($item['props'])) {
             $props = $item['props'];
             $props['grid'] = $position;
             $section .= configwriter_emit_block_line($ref, $props);
-            $isDial = isset($props['type']) && $props['type'] === 'dial';
-        }
-        if ($isDial) {
-            // js/components/dial.js uses an explicit block height as-is
-            // instead of re-measuring its container, so a grid resize has to
-            // keep it in sync with the dragged row span - otherwise only
-            // width changes would ever affect the dial's rendered size.
-            $dialHeight = max(50, min(2000, (int)round(
-                $position['h'] * $row + max(0, $position['h'] - 1) * $gridGap
-            )));
-            $section .= "blocks['" . $ref . "']['height'] = " . $dialHeight . ";\n";
         }
         /* Every item stores its per-screen grid position as an inline
          * {key, grid} descriptor so that the same block key can appear
