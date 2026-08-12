@@ -66,6 +66,12 @@ v3.42.0 beta (12-8-2026)
     still counted toward the scrollable area of every ancestor. Wrapped in
     a new ``.dial-ring-clip`` container (not ``.dial`` itself, which would
     also clip the dial's own intentional glow/flash effect).
+  - The needle (drawn via a CSS border-triangle, deliberately a little
+    longer than ``.dial``'s own radius so its tip reaches the ring) was
+    never clipped by anything either, contributing a small but constant
+    overflow regardless of the needle's rotation angle/device value —
+    confirmed with a dimmer dial swept across its full 0–100% range.
+    Wrapped in a new ``.dial-needle-clip`` container.
 
 v3.41.7 beta (12-8-2026)
 --------------------------

@@ -46,8 +46,10 @@
             </div>
         </div>        
         {{#unless fixed}}
-        <div class="draggable">
-            <div class="dial-needle" style="--dial-color: {{color}};--needle-length: {{needleL}}px;--needle-width: {{needleW}}px;"></div>
+        <div class="dial-needle-clip">
+            <div class="draggable">
+                <div class="dial-needle" style="--dial-color: {{color}};--needle-length: {{needleL}}px;--needle-width: {{needleW}}px;"></div>
+            </div>
         </div>
         {{/unless}}
         <div id="{{id}}" class="dial-center {{on}}" style="--dial-rgba: {{rgba}};">

@@ -2205,3 +2205,28 @@ test('Dial ring/slice indicator is clipped to the dial instead of inflating ance
     /\.dial-ring-clip \{[\s\S]*?width: 1em;[\s\S]*?height: 1em;[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;/
   );
 });
+
+test('Dial needle is clipped to the dial instead of leaking a small overflow at every angle', () => {
+  // .dial-needle::before/::after draw the needle via the CSS border-triangle
+  // trick (deliberately a bit longer than .dial's own radius so the tip
+  // reaches the ring), further offset by `top: -53%`. That box was never
+  // clipped by any ancestor (.draggable/.dial/.dt_content are all
+  // overflow:visible), so it contributed a small but constant amount
+  // (confirmed empirically: ~6px on a ~200px dial) to the scrollable
+  // overflow of .dt-grid-item regardless of the needle's rotation angle -
+  // unlike .slice's rotation-dependent overflow, this reproduced at every
+  // device value, not just specific angles. Wrapped in .dial-needle-clip,
+  // sized/centered like .dial-ring-clip but centered via percentage since
+  // this wrapper's parent is .dial-container (a smaller, inset box), not
+  // .dial itself.
+  const dialTpl = fs.readFileSync(path.join(root, 'tpl/dial.tpl'), 'utf8');
+  assert.match(
+    dialTpl,
+    /<div class="dial-needle-clip">\s*\n\s*<div class="draggable">/
+  );
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  assert.match(
+    styles,
+    /\.dial-needle-clip \{[\s\S]*?width: 1em;[\s\S]*?height: 1em;[\s\S]*?top: 50%;[\s\S]*?left: 50%;[\s\S]*?transform: translate\(-50%, -50%\);[\s\S]*?overflow: hidden;[\s\S]*?border-radius: 50%;/
+  );
+});

@@ -5001,6 +5001,25 @@ canvas {
   transition-timing-function: ease-in;
 }
 
+/* .dial-needle::before/::after draw the needle via the CSS border-triangle
+   trick, deliberately a little longer than .dial's own radius so the tip
+   reaches the ring - but the border-triangle's own box (further offset by
+   its `top: -53%`) is unclipped, so it always contributed a small amount to
+   the scrollable overflow of any ancestor, regardless of needle rotation.
+   Matches .dial-ring-clip's approach; centered via percentage (rather than
+   .dial-ring-clip's top/left: 0) because this wrapper's parent is
+   .dial-container - a smaller, inset box - not .dial itself. */
+.dial-needle-clip {
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  border-radius: 50%;
+}
+
 .dial .draggable {
   width: 1em;
   height: 1em;
