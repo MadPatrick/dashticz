@@ -2625,4 +2625,19 @@ test('Clock widgets (Basic/Station/Flip/Hayman) get a default icon and correctly
   assert.match(stationclock, /var \$title = \$mount\.find\('\.dt_title'\)\.first\(\);/);
   assert.match(stationclock, /var \$state = \$mount\.find\('\.dt_state'\)\.first\(\);/);
   assert.match(stationclock, /var availH = \(\$block\.length \? \$block\.height\(\) : 0\) - titleHeight - stateMarginV;/);
+
+  // The JS-side subtraction above still isn't a hard guarantee: .dt_block's
+  // own min-height: 100% (creative.css, shared by every grid block) is only
+  // a floor, not a cap, and .dt_block's flex/box-sizing behaves slightly
+  // differently once the icon+title are both turned off (empirically
+  // verified: headless browser, real grid screen). If the JS measurement is
+  // even a fraction short, the block grows past its grid row instead of
+  // clipping, and the grid item's own overflow:auto then shows a scrollbar
+  // around an unchanged-size clock face with wasted space on the sides.
+  // Same belt-and-suspenders CSS cap already used for .frame/.waqi.
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  assert.match(
+    styles,
+    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.basicclock,\s*\n\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.stationclock,\s*\n\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.flipclock,\s*\n\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.haymanclock \{\s*\n\s*height: 100% !important;\s*\n\s*min-height: 0 !important;\s*\n\s*overflow: hidden !important;/
+  );
 });
