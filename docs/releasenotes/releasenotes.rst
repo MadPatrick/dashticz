@@ -6,6 +6,19 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.42.6 beta (14-8-2026)
+--------------------------
+
+* **Enhancements**
+
+- Added the **Liquid Glass Grey** and **Liquid Glass Blue** themes. Both are
+  based on **Modern Dark** and keep its block rounding, spacing and block
+  heights unchanged, but restyle blocks as frosted, translucent "liquid
+  glass" panels — blurred backgrounds with a soft top sheen — in a neutral
+  graphite/silver palette (Grey) and a deep navy/blue palette (Blue). Enable
+  either with ``config['theme'] = 'liquid-glass-grey';`` or
+  ``config['theme'] = 'liquid-glass-blue';``.
+
 v3.42.5 beta (14-8-2026)
 --------------------------
 
