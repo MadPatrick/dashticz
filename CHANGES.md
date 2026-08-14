@@ -40,9 +40,16 @@
     (e.g. a slide button). Added `text-align: left` (column/classic mode)
     and `align-self: flex-start` (the grid rule's flex column, where
     `align-items: center` would otherwise still center the header's own
-    shrink-to-fit box) and `justify-content: flex-start` on the grid rule
-    (was `center`, leaving a vertical gap above the header instead of
-    sitting flush at the top).
+    shrink-to-fit box).
+  - Forcing the grid rule's `justify-content` straight to `flex-start`
+    fixed the header case but regressed the header-less one: with Icon and
+    Title both off, the sunrise/sunset line - the block's only content -
+    also got pinned to the top of a tall grid cell instead of staying
+    vertically centered like before. `renderSunrise()` now only adds a
+    `sunrise-has-header` class when it actually renders a header, and a
+    `.sunriseholder.sunrise-has-header` rule is the only thing that
+    overrides `justify-content` to `flex-start`; the base rule stays
+    `center` for the data-only case.
 - Fixed Multi Device and Custom Device creation always saving
   `last_update: false` with no checkbox in either creation popup
   (`_showCustomDevicePopup`/`_showMultiDevicePopup`, `js/deviceeditor.js`)

@@ -28,7 +28,11 @@ v3.42.5 beta (14-8-2026)
   single, cramped row instead of stacking properly; both rows now stack
   vertically there too, matching column/classic mode. The header also sits
   flush at the top-left of the block now, matching every other device and
-  widget, instead of being centered with empty space above it.
+  widget, instead of being centered with empty space above it - but only
+  when a header actually renders: with Icon and Title both off, the
+  sunrise/sunset line is the block's only content again and correctly stays
+  vertically centered on a grid screen, instead of also being pinned to the
+  top.
 - Fixed **Multi Device** and **Custom Device** creation silently defaulting
   the "Updated" (last update timestamp) option off, with no checkbox in
   either creation popup to turn it on — the only way to enable it was to

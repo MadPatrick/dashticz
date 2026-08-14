@@ -757,8 +757,15 @@ var DT_simpleblock = (function () {
     // flexing every individual icon/span in both rows side by side.
     var icon = me.block.icon;
     var showTitle = !me.block.hide_title && me.block.title;
+    var hasHeader = !!(icon || showTitle);
+    // With no header, the sunrise/sunset line stays the block's only
+    // content and should keep sitting vertically centered in a tall grid
+    // cell (the original behaviour); only a header pins the block's
+    // content to the top like every other device/widget - see the
+    // .sunriseholder.sunrise-has-header grid rule in creative.css.
+    if (hasHeader) classes += ' sunrise-has-header';
     var html = '<div data-id="sunrise" class="' + classes + '">';
-    if (icon || showTitle) {
+    if (hasHeader) {
       html += '<div class="sunrise-header">';
       if (icon) html += '<em class="' + icon + '"></em> ';
       if (showTitle) html += '<strong class="title">' + me.block.title + '</strong>';

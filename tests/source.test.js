@@ -1545,12 +1545,13 @@ test('topbar and layout editor keep controls usable', () => {
   // dedicated rule a resized Sunrise grid cell kept its reserved size while
   // the visible content stayed pinned at its small natural size (looking
   // like the resize "didn't stick"). It must fill and center like the other
-  // grid-aware blocks. justify-content is flex-start, not center: the icon+
-  // title header must sit flush at the top of the block like every other
-  // device/widget, not vertically centered with a gap above it.
+  // grid-aware blocks. With no icon/title header the sunrise/sunset line is
+  // the block's only content and stays vertically centered (justify-content:
+  // center) - a separate .sunrise-has-header rule overrides this to
+  // flex-start only when a header is actually rendered (see below).
   assert.match(
     styles,
-    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.sunriseholder\s*\{[^}]*min-height:\s*100%;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*flex-start;/s
+    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.sunriseholder\s*\{[^}]*min-height:\s*100%;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;/s
   );
 });
 
@@ -1862,6 +1863,16 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
   assert.match(
     styles,
     /\.sunriseholder \.sunrise-header \{[\s\S]*?text-align: left;[\s\S]*?align-self: flex-start;/
+  );
+  // Pinning content to the top must only kick in when a header is actually
+  // rendered - unconditionally forcing flex-start regressed the header-less
+  // case (just the sunrise/sunset line) from vertically centered to stuck
+  // at the top of a tall grid cell. renderSunrise only adds this class when
+  // it renders a .sunrise-header.
+  assert.match(renderSunriseBody, /if \(hasHeader\) classes \+= ' sunrise-has-header';/);
+  assert.match(
+    styles,
+    /\.sunriseholder\.sunrise-has-header \{\s*\n\s*justify-content: flex-start;/
   );
 
   // OWM and Timegraph use the standard 'widget_' catalog key convention with
