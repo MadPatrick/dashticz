@@ -1985,6 +1985,19 @@ test('Timegraph widget gets a default icon like other widgets', () => {
   assert.match(widgetEditor, /id: 'timegraph',[\s\S]*?icon: 'fas fa-chart-line',/);
 });
 
+test('Google Maps widget gets a default icon like other widgets', () => {
+  const map = fs.readFileSync(path.join(root, 'js/components/map.js'), 'utf8');
+  const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
+
+  // Same pattern as log/WAQI/Radio/Timegraph/iFrame: a freshly added map
+  // widget (showmap: true, the default) had no icon at all - defaultCfg only
+  // set one for the showmap: false (route-only) branch - so checking Icon
+  // with no custom value rendered nothing. Use the same icon already shown
+  // for Google Maps in the Widget Config editor's "Add Widget" catalog.
+  assert.match(map, /icon='fas fa-map-marked-alt'/);
+  assert.match(widgetEditor, /id: 'map',[\s\S]*?icon: 'fas fa-map-marked-alt',/);
+});
+
 test('Domoticz log widget defaults to an 8x8 grid cell instead of a full-width strip', () => {
   const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
 
