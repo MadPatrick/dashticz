@@ -2824,6 +2824,10 @@ div.big {
   font-size: 14px !important;
 }
 
+.sunriseholder .sunrise-header {
+  margin-bottom: 5px;
+}
+
 .sunriseholder .wi-sunset {
   padding-left: 10px;
 }

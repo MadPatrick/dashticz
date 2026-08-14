@@ -1822,16 +1822,22 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
   // other block, so the Widget Editor's Icon/Title checkboxes correctly save
   // block.icon/block.title/block.hide_title, but nothing ever painted them -
   // no icon and no title ever appeared on a Sunrise/Sunset block (#follow-up).
-  // renderSunrise now reads them directly and emits the same .col-icon/
-  // .dt_title markup the shared helpers would have produced.
+  // renderSunrise now reads them directly. Icon and title are combined into
+  // one small .sunrise-header row (not the floated .col-icon or the 150%
+  // .dt_title, both sized for a full .dt_block flex layout this small,
+  // centered, single-line tile deliberately doesn't use) above the
+  // sunrise/sunset line.
   const renderSunriseBody = simpleBlockSource.slice(
     simpleBlockSource.indexOf('function renderSunrise'),
     simpleBlockSource.indexOf('function renderHorizon')
   );
-  assert.match(renderSunriseBody, /if \(me\.block\.icon\) \{/);
-  assert.match(renderSunriseBody, /class="col-icon"><em class="'\s*\+\s*me\.block\.icon/);
-  assert.match(renderSunriseBody, /if \(!me\.block\.hide_title && me\.block\.title\) \{/);
-  assert.match(renderSunriseBody, /class="dt_title">'\s*\+\s*me\.block\.title/);
+  assert.match(renderSunriseBody, /var icon = me\.block\.icon;/);
+  assert.match(renderSunriseBody, /var showTitle = !me\.block\.hide_title && me\.block\.title;/);
+  assert.match(renderSunriseBody, /class="sunrise-header"/);
+  assert.match(renderSunriseBody, /class="title">'\s*\+\s*me\.block\.title/);
+  // Sunrise ships its own default icon (like news.js/weather.js) so the
+  // Icon checkbox isn't a no-op when checked with no custom icon typed.
+  assert.match(simpleBlockSource, /if \(block && block\.type === 'sunrise'\) cfg\.icon = 'fas fa-sun';/);
 
   // OWM and Timegraph use the standard 'widget_' catalog key convention with
   // an explicit type, like weather/iframe/xmltvguide.

@@ -95,9 +95,14 @@ var DT_simpleblock = (function () {
     },
     defaultCfg: function (block) {
       var thisBlock = getBlock(block);
-      return {
+      var cfg = {
         width: (thisBlock && thisBlock.defaultWidth) || 12,
       };
+      // Same reasoning as news.js/weather.js: the Widget Editor's Icon
+      // checkbox is checked by default but has nothing to fall back to
+      // unless the user also types a custom icon value.
+      if (block && block.type === 'sunrise') cfg.icon = 'fas fa-sun';
+      return cfg;
     },
     run: function (me) {
       var thisBlock = getBlock(me.block);
@@ -739,13 +744,21 @@ var DT_simpleblock = (function () {
     // getContainer()/getColIcon()/renderTitle() (js/dashticz.js) like every
     // other block, so the Widget Editor's Icon/Title checkboxes - which do
     // save block.icon/block.title/block.hide_title correctly - were never
-    // actually painted anywhere.
+    // actually painted anywhere. Icon and title are combined into one small
+    // inline header row above the sunrise/sunset line instead of reusing
+    // getColIcon()'s floated .col-icon (sized/positioned for a .dt_block's
+    // flex layout, which sunriseholder deliberately isn't - see the
+    // .dt-grid-item > .sunriseholder rule in creative.css) or .dt_title
+    // (150% font-size, meant for a full-size widget header, not this small,
+    // single-line, centered tile).
+    var icon = me.block.icon;
+    var showTitle = !me.block.hide_title && me.block.title;
     var html = '<div data-id="sunrise" class="' + classes + '">';
-    if (me.block.icon) {
-      html += '<div class="col-icon"><em class="' + me.block.icon + '"></em></div>';
-    }
-    if (!me.block.hide_title && me.block.title) {
-      html += '<div class="dt_title">' + me.block.title + '</div>';
+    if (icon || showTitle) {
+      html += '<div class="sunrise-header">';
+      if (icon) html += '<em class="' + icon + '"></em> ';
+      if (showTitle) html += '<strong class="title">' + me.block.title + '</strong>';
+      html += '</div>';
     }
     html +=
       '<em class="wi wi-sunrise"></em><span class="sunrise"></span><em class="wi wi-sunset"></em><span class="sunset"></span>' +

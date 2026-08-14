@@ -1,5 +1,23 @@
 # Dashticz — Change log for recent update work
 
+## 3.42.6 — Sunrise/Sunset icon + compact header (3.42.5 follow-up)
+
+- The 3.42.5 fix made `renderSunrise()` (`js/components/simpleblock.js`)
+  read `me.block.icon`/`me.block.title`, but two problems remained, both
+  reported against a live screenshot: no icon appeared at all, and the
+  title looked wrong, sitting as an oversized block above the sunrise/
+  sunset line. Root causes: (1) Sunrise/Sunset's `defaultCfg` had no
+  fallback icon the way `news.js`/`weather.js` do, so with the Widget
+  Editor's Icon checkbox on and no custom value typed, `block.icon` stayed
+  unset - added `icon: 'fas fa-sun'` to `DT_simpleblock.defaultCfg` for
+  `block.type === 'sunrise'`. (2) The icon/title reused `.col-icon`
+  (floated, sized for a `.dt_block`'s flex layout) and `.dt_title` (150%
+  font-size, meant for a full widget header) - both wrong for this small,
+  centered, single-line tile, which deliberately isn't a `.dt_block` (see
+  the grid CSS comment on `.sunriseholder`). Combined icon + title into one
+  small `.sunrise-header` row instead, using the same compact `.title`
+  class a plain device tile's data row uses.
+
 ## 3.42.5 — News icon, Sunrise/Sunset icon+title, Custom/Multi Device Updated checkbox
 
 - Fixed the News widget never showing an icon despite the Widget Editor's

@@ -6,6 +6,19 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.42.6 beta (14-8-2026)
+--------------------------
+
+* **Fixes**
+
+- Follow-up to the 3.42.5 Sunrise/Sunset fix: the icon still didn't show
+  because, unlike News, Sunrise/Sunset had no default icon of its own to
+  fall back to (added ``fas fa-sun``), and the title used the same 150%,
+  full-width style as a large widget header, which looked oversized and out
+  of place stacked above such a small, single-line, centered tile. Icon and
+  title are now combined into one small, compact header row above the
+  sunrise/sunset line instead.
+
 v3.42.5 beta (14-8-2026)
 --------------------------
 
