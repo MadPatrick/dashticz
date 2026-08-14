@@ -6,40 +6,6 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
-v3.42.7 beta (14-8-2026)
---------------------------
-
-* **Fixes**
-
-- Fixed Custom Device and Multi Device's Icon checkbox not actually turning
-  the icon off: unchecking it and saving left the icon showing (falling
-  back to the underlying Domoticz device type's own default icon) and
-  reopening Device Config showed the checkbox checked again. The Device
-  Editor always writes a full replacement of the block, and the checkbox
-  being off correctly sent an empty icon value, but the config writer
-  skipped writing it whenever it was empty specifically for this block kind
-  - so the property ended up simply absent instead of explicitly cleared,
-  which read back as "never configured" rather than "off".
-- Fixed the Sunrise/Sunset icon+title header (added in 3.42.6) and the
-  sunrise/sunset time line being flexed onto a single, cramped row on grid
-  screens instead of the header sitting above the data like every other
-  device/widget. The sunrise/sunset line is now its own row, and both rows
-  stack vertically on a grid screen the same way they already did in
-  column/classic mode.
-
-v3.42.6 beta (14-8-2026)
---------------------------
-
-* **Fixes**
-
-- Follow-up to the 3.42.5 Sunrise/Sunset fix: the icon still didn't show
-  because, unlike News, Sunrise/Sunset had no default icon of its own to
-  fall back to (added ``fas fa-sun``), and the title used the same 150%,
-  full-width style as a large widget header, which looked oversized and out
-  of place stacked above such a small, single-line, centered tile. Icon and
-  title are now combined into one small, compact header row above the
-  sunrise/sunset line instead.
-
 v3.42.5 beta (14-8-2026)
 --------------------------
 
@@ -53,12 +19,30 @@ v3.42.5 beta (14-8-2026)
   Unlike every other block, this widget builds its own markup instead of
   going through the shared container/icon/title rendering, so the Icon and
   Title options in its Widget Config popup were saved correctly but never
-  actually painted onto the block. It now reads and renders them.
+  actually painted onto the block. It now reads and renders them, using its
+  own default icon (it had none to fall back to, unlike News/Weather) and a
+  small, compact icon+title header row sitting above the sunrise/sunset
+  line - like every other device/widget - instead of the oversized,
+  full-width title style a large widget header uses. On grid screens that
+  header and the sunrise/sunset line previously also got flexed onto a
+  single, cramped row instead of stacking properly; both rows now stack
+  vertically there too, matching column/classic mode. The header also sits
+  flush at the top-left of the block now, matching every other device and
+  widget, instead of being centered with empty space above it.
 - Fixed **Multi Device** and **Custom Device** creation silently defaulting
   the "Updated" (last update timestamp) option off, with no checkbox in
   either creation popup to turn it on — the only way to enable it was to
   create the device first, then separately reopen its Device Config popup.
   Both creation popups now show an Updated checkbox, checked by default.
+- Fixed Custom Device and Multi Device's Icon checkbox not actually turning
+  the icon off: unchecking it and saving left the icon showing (falling
+  back to the underlying Domoticz device type's own default icon) and
+  reopening Device Config showed the checkbox checked again. The Device
+  Editor always writes a full replacement of the block, and the checkbox
+  being off correctly sent an empty icon value, but the config writer
+  skipped writing it whenever it was empty specifically for this block kind
+  - so the property ended up simply absent instead of explicitly cleared,
+  which read back as "never configured" rather than "off".
 
 v3.42.4 beta (14-8-2026)
 --------------------------

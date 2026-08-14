@@ -1,55 +1,6 @@
 # Dashticz — Change log for recent update work
 
-## 3.42.7 — Custom/Multi Device Icon-off persistence; Sunrise/Sunset grid layout (follow-ups)
-
-- Fixed Custom/Multi Device's Icon checkbox not persisting when turned off.
-  `configwriter_special_block_props()`'s `'custom'` branch
-  (`js/configwriter.php`) only wrote `props['icon']` when the value was both
-  non-null AND non-empty, unlike the regular-device path and every other
-  special-block branch (both only require non-null). Since
-  `configwriter_emit_block_line()` always writes a full replacement
-  `blocks[key] = {...}` literal - never a merge onto the existing file -
-  skipping the property when the user unchecks Icon (client correctly sends
-  `icon: ''`) left it simply absent from the freshly written block instead
-  of explicitly cleared. On reload that showed up two ways: `$.extend(block,
-  protoBlock, origBlock)` (`js/blocks.js`) fell through to the underlying
-  Domoticz device type's own default icon (protoBlock never got overridden
-  by an absent property), reinstating an icon; and the Device Config
-  popup's hydration (`typeof definition.icon === 'undefined' || ...`,
-  `js/deviceeditor.js`) read the absent property as "still enabled",
-  flipping the checkbox back on. Now writes `icon: ''` explicitly whenever
-  the value is non-null, matching every other code path.
-- Fixed the Sunrise/Sunset header (icon + title, added in 3.42.6) and the
-  sunrise/sunset time line rendering side by side on one cramped row on
-  grid screens, instead of the header sitting above the data. Root cause:
-  `.dt-grid-item > .sunriseholder` (`css/creative.css`) is `display: flex`
-  with no `flex-direction`, defaulting to `row` - every direct child
-  (the header div, plus each individual icon/time `<em>`/`<span>` making up
-  the sunrise/sunset line) became its own flex item in that single row.
-  Wrapped the sunrise/sunset line in its own `.sunrise-data` div
-  (`js/components/simpleblock.js`) and added `flex-direction: column` to
-  the grid rule, so it stacks exactly two rows - header, then data - the
-  same as column/classic mode already did.
-
-## 3.42.6 — Sunrise/Sunset icon + compact header (3.42.5 follow-up)
-
-- The 3.42.5 fix made `renderSunrise()` (`js/components/simpleblock.js`)
-  read `me.block.icon`/`me.block.title`, but two problems remained, both
-  reported against a live screenshot: no icon appeared at all, and the
-  title looked wrong, sitting as an oversized block above the sunrise/
-  sunset line. Root causes: (1) Sunrise/Sunset's `defaultCfg` had no
-  fallback icon the way `news.js`/`weather.js` do, so with the Widget
-  Editor's Icon checkbox on and no custom value typed, `block.icon` stayed
-  unset - added `icon: 'fas fa-sun'` to `DT_simpleblock.defaultCfg` for
-  `block.type === 'sunrise'`. (2) The icon/title reused `.col-icon`
-  (floated, sized for a `.dt_block`'s flex layout) and `.dt_title` (150%
-  font-size, meant for a full widget header) - both wrong for this small,
-  centered, single-line tile, which deliberately isn't a `.dt_block` (see
-  the grid CSS comment on `.sunriseholder`). Combined icon + title into one
-  small `.sunrise-header` row instead, using the same compact `.title`
-  class a plain device tile's data row uses.
-
-## 3.42.5 — News icon, Sunrise/Sunset icon+title, Custom/Multi Device Updated checkbox
+## 3.42.5 — News icon, Sunrise/Sunset icon+title, Custom/Multi Device Updated checkbox and Icon-off persistence
 
 - Fixed the News widget never showing an icon despite the Widget Editor's
   Icon checkbox being on. `js/widgeteditor.js`'s `_buildWidgetPayloadEntry`
@@ -64,8 +15,34 @@
   markup instead of going through `getContainer()`/`getColIcon()`/
   `renderTitle()` (`js/dashticz.js`) like every other block - `me.block.icon`
   and `me.block.title`/`hide_title` were saved correctly by the Widget
-  Editor but nothing ever read or painted them. `renderSunrise()` now emits
-  the same `.col-icon`/`.dt_title` markup those helpers would have produced.
+  Editor but nothing ever read or painted them. Several follow-up rounds
+  against live screenshots got this to its final shape:
+  - `renderSunrise()` now reads and renders `block.icon`/`block.title`/
+    `block.hide_title` itself, combined into one small `.sunrise-header`
+    row (not the floated `.col-icon` or the 150%-font `.dt_title`, both
+    sized for a full `.dt_block` flex layout this small, centered,
+    single-line tile doesn't use) above a `.sunrise-data` row wrapping the
+    sunrise/sunset line.
+  - Sunrise/Sunset ships its own default icon (`fas fa-sun`, in
+    `DT_simpleblock.defaultCfg`), matching how `news.js`/`weather.js`
+    already do - otherwise the Icon checkbox was a no-op with no custom
+    icon typed.
+  - `.dt-grid-item > .sunriseholder` (`css/creative.css`) is `display: flex`
+    with no `flex-direction`, defaulting to `row`; every individual element
+    - the header div AND each icon/time `<em>`/`<span>` in the sunrise/
+    sunset line - became its own flex item side by side on one cramped
+    row. Wrapping the sunrise/sunset line in its own `.sunrise-data` div
+    plus `flex-direction: column` on that rule stacks exactly two rows
+    (header, then data) on a grid screen too, matching column/classic mode.
+  - The header still rendered centered (inherited from `.sunriseholder`'s
+    `text-center`, kept for the sunrise/sunset line below it) instead of
+    flush at the top-left like every other device/widget's icon+title
+    (e.g. a slide button). Added `text-align: left` (column/classic mode)
+    and `align-self: flex-start` (the grid rule's flex column, where
+    `align-items: center` would otherwise still center the header's own
+    shrink-to-fit box) and `justify-content: flex-start` on the grid rule
+    (was `center`, leaving a vertical gap above the header instead of
+    sitting flush at the top).
 - Fixed Multi Device and Custom Device creation always saving
   `last_update: false` with no checkbox in either creation popup
   (`_showCustomDevicePopup`/`_showMultiDevicePopup`, `js/deviceeditor.js`)
@@ -74,6 +51,20 @@
   looked like the option didn't exist. Both popups now show an "Updated"
   checkbox (checked by default) that feeds directly into
   `options.last_update`, same as the existing Device Config popup.
+- Fixed Custom Device and Multi Device's Icon checkbox not actually turning
+  the icon off: unchecking it and saving left the icon showing (falling
+  back to the underlying Domoticz device type's own default icon via
+  `$.extend(block, protoBlock, origBlock)` in `js/blocks.js`) and reopening
+  Device Config showed the checkbox checked again. `configwriter_special_
+  block_props()`'s `'custom'` branch (`js/configwriter.php`) only wrote
+  `props['icon']` when non-null AND non-empty, unlike every other code path
+  (regular devices, and this same function's other branches, which only
+  require non-null) - since the Device Editor always writes a full
+  replacement `blocks[key] = {...}` literal, never a merge onto the
+  existing file, skipping the property when the checkbox sends `icon: ''`
+  left it simply absent instead of explicitly cleared, which read back as
+  "never configured" (icon on) rather than "off". Now writes `icon: ''`
+  explicitly whenever the value is non-null, matching every other path.
 
 ## 3.42.4 — Multi-camera grid visibility fix (#132); Dial checkbox on multi-value devices (#118 follow-up)
 

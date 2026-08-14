@@ -155,7 +155,11 @@
      intact instead of also blowing it apart into individual flex items). */
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* flex-start, not center: every other device/widget's icon+title sits
+     flush at the top of the block (getContainer()'s .dt_block is
+     align-items: flex-start), not vertically centered with empty space
+     above it. */
+  justify-content: flex-start;
 }
 
 /* Grid title bars follow their assigned row height instead of forcing their
@@ -2834,6 +2838,16 @@ div.big {
 
 .sunriseholder .sunrise-header {
   margin-bottom: 5px;
+  /* sunriseholder is text-center (for the sunrise/sunset line below, kept
+     centered as before), but every other device/widget's icon+title sits
+     left-aligned at the top of the block, not centered - override just
+     this row back to that convention. align-self only matters on the grid
+     rule above (flex column): without it the header's own box, though
+     text-align: left inside it, would still be centered as a whole because
+     align-items: center there centers the shrink-to-fit box itself, not
+     just the text inside it. */
+  text-align: left;
+  align-self: flex-start;
 }
 
 .sunriseholder .wi-sunset {

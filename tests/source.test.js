@@ -1545,10 +1545,12 @@ test('topbar and layout editor keep controls usable', () => {
   // dedicated rule a resized Sunrise grid cell kept its reserved size while
   // the visible content stayed pinned at its small natural size (looking
   // like the resize "didn't stick"). It must fill and center like the other
-  // grid-aware blocks.
+  // grid-aware blocks. justify-content is flex-start, not center: the icon+
+  // title header must sit flush at the top of the block like every other
+  // device/widget, not vertically centered with a gap above it.
   assert.match(
     styles,
-    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.sunriseholder\s*\{[^}]*min-height:\s*100%;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;/s
+    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.sunriseholder\s*\{[^}]*min-height:\s*100%;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*flex-start;/s
   );
 });
 
@@ -1848,6 +1850,18 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
   assert.match(
     styles,
     /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.sunriseholder \{[\s\S]*?flex-direction: column;/
+  );
+  // .sunriseholder is text-center (the sunrise/sunset line stays centered,
+  // as before), but a live screenshot showed the icon+title header
+  // centered along with it instead of left-aligned at the top like every
+  // other device/widget's icon+title (e.g. a slide button). Override just
+  // that row back to flush top-left: text-align for column/classic mode,
+  // align-self for the grid rule's flex column (align-items: center there
+  // would otherwise still center the header's own shrink-to-fit box, not
+  // just the text inside it).
+  assert.match(
+    styles,
+    /\.sunriseholder \.sunrise-header \{[\s\S]*?text-align: left;[\s\S]*?align-self: flex-start;/
   );
 
   // OWM and Timegraph use the standard 'widget_' catalog key convention with
