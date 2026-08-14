@@ -2841,3 +2841,30 @@ test('Domoticz log widget block is capped to its grid row so it cannot trigger a
     /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.frame,\s*\n\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.waqi,\s*\n\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.log \{\s*\n\s*height: 100% !important;\s*\n\s*min-height: 0 !important;\s*\n\s*overflow: hidden !important;/
   );
 });
+
+test('Google Maps widget is visible on grid screens instead of collapsing to zero height (#135)', () => {
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  // map.js's Google Maps canvas (.state_map) is height: 100% of its
+  // .dt_state parent, which itself only gets a real height from the
+  // .fixedheight class - added in dashticz.js's renderBlock() only when a
+  // fixed pixel height is applied via inline CSS, which the grid inGrid
+  // guard there intentionally skips (the grid row governs height instead).
+  // So on a grid screen .map never received .fixedheight, .dt_state stayed
+  // at its unsized default, and the map canvas Google Maps created
+  // collapsed to that same near-zero height - rendering invisible even
+  // though the API loaded and initialized fine. Reproduce .fixedheight's
+  // two effects directly for grid map blocks instead.
+  assert.match(
+    styles,
+    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.map \{\s*\n\s*height: 100% !important;\s*\n\s*min-height: 0 !important;\s*\n\s*overflow: hidden !important;/
+  );
+  assert.match(
+    styles,
+    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.map \.dt_content \{\s*\n\s*display: flex;\s*\n\s*flex-direction: column;\s*\n\s*height: 100%;/
+  );
+  assert.match(
+    styles,
+    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.map \.dt_state \{\s*\n\s*height: 100%;/
+  );
+});
