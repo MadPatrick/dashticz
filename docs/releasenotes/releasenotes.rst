@@ -6,6 +6,27 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.42.7 beta (14-8-2026)
+--------------------------
+
+* **Fixes**
+
+- Fixed Custom Device and Multi Device's Icon checkbox not actually turning
+  the icon off: unchecking it and saving left the icon showing (falling
+  back to the underlying Domoticz device type's own default icon) and
+  reopening Device Config showed the checkbox checked again. The Device
+  Editor always writes a full replacement of the block, and the checkbox
+  being off correctly sent an empty icon value, but the config writer
+  skipped writing it whenever it was empty specifically for this block kind
+  - so the property ended up simply absent instead of explicitly cleared,
+  which read back as "never configured" rather than "off".
+- Fixed the Sunrise/Sunset icon+title header (added in 3.42.6) and the
+  sunrise/sunset time line being flexed onto a single, cramped row on grid
+  screens instead of the header sitting above the data like every other
+  device/widget. The sunrise/sunset line is now its own row, and both rows
+  stack vertically on a grid screen the same way they already did in
+  column/classic mode.
+
 v3.42.6 beta (14-8-2026)
 --------------------------
 

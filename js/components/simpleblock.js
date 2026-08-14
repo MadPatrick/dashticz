@@ -745,12 +745,16 @@ var DT_simpleblock = (function () {
     // other block, so the Widget Editor's Icon/Title checkboxes - which do
     // save block.icon/block.title/block.hide_title correctly - were never
     // actually painted anywhere. Icon and title are combined into one small
-    // inline header row above the sunrise/sunset line instead of reusing
+    // header row above the sunrise/sunset line - like the top-of-block
+    // placement every other device/widget uses - instead of reusing
     // getColIcon()'s floated .col-icon (sized/positioned for a .dt_block's
     // flex layout, which sunriseholder deliberately isn't - see the
     // .dt-grid-item > .sunriseholder rule in creative.css) or .dt_title
     // (150% font-size, meant for a full-size widget header, not this small,
-    // single-line, centered tile).
+    // single-line, centered tile). The sunrise/sunset line is wrapped in its
+    // own .sunrise-data div so grid mode's flex-direction: column on
+    // .sunriseholder stacks exactly two rows (header, data) instead of
+    // flexing every individual icon/span in both rows side by side.
     var icon = me.block.icon;
     var showTitle = !me.block.hide_title && me.block.title;
     var html = '<div data-id="sunrise" class="' + classes + '">';
@@ -761,8 +765,9 @@ var DT_simpleblock = (function () {
       html += '</div>';
     }
     html +=
+      '<div class="sunrise-data">' +
       '<em class="wi wi-sunrise"></em><span class="sunrise"></span><em class="wi wi-sunset"></em><span class="sunset"></span>' +
-      '</div>';
+      '</div></div>';
     return html;
   }
 

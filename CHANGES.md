@@ -1,5 +1,36 @@
 # Dashticz — Change log for recent update work
 
+## 3.42.7 — Custom/Multi Device Icon-off persistence; Sunrise/Sunset grid layout (follow-ups)
+
+- Fixed Custom/Multi Device's Icon checkbox not persisting when turned off.
+  `configwriter_special_block_props()`'s `'custom'` branch
+  (`js/configwriter.php`) only wrote `props['icon']` when the value was both
+  non-null AND non-empty, unlike the regular-device path and every other
+  special-block branch (both only require non-null). Since
+  `configwriter_emit_block_line()` always writes a full replacement
+  `blocks[key] = {...}` literal - never a merge onto the existing file -
+  skipping the property when the user unchecks Icon (client correctly sends
+  `icon: ''`) left it simply absent from the freshly written block instead
+  of explicitly cleared. On reload that showed up two ways: `$.extend(block,
+  protoBlock, origBlock)` (`js/blocks.js`) fell through to the underlying
+  Domoticz device type's own default icon (protoBlock never got overridden
+  by an absent property), reinstating an icon; and the Device Config
+  popup's hydration (`typeof definition.icon === 'undefined' || ...`,
+  `js/deviceeditor.js`) read the absent property as "still enabled",
+  flipping the checkbox back on. Now writes `icon: ''` explicitly whenever
+  the value is non-null, matching every other code path.
+- Fixed the Sunrise/Sunset header (icon + title, added in 3.42.6) and the
+  sunrise/sunset time line rendering side by side on one cramped row on
+  grid screens, instead of the header sitting above the data. Root cause:
+  `.dt-grid-item > .sunriseholder` (`css/creative.css`) is `display: flex`
+  with no `flex-direction`, defaulting to `row` - every direct child
+  (the header div, plus each individual icon/time `<em>`/`<span>` making up
+  the sunrise/sunset line) became its own flex item in that single row.
+  Wrapped the sunrise/sunset line in its own `.sunrise-data` div
+  (`js/components/simpleblock.js`) and added `flex-direction: column` to
+  the grid rule, so it stacks exactly two rows - header, then data - the
+  same as column/classic mode already did.
+
 ## 3.42.6 — Sunrise/Sunset icon + compact header (3.42.5 follow-up)
 
 - The 3.42.5 fix made `renderSunrise()` (`js/components/simpleblock.js`)

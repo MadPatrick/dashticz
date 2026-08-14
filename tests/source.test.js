@@ -1796,6 +1796,7 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
     path.join(root, 'js/components/timegraph.js'),
     'utf8'
   );
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
 
   // DT_log is matched by its registered component name (Dashticz._mount in
   // dashticz.js only checks components[selector] for a string block
@@ -1838,6 +1839,16 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
   // Sunrise ships its own default icon (like news.js/weather.js) so the
   // Icon checkbox isn't a no-op when checked with no custom icon typed.
   assert.match(simpleBlockSource, /if \(block && block\.type === 'sunrise'\) cfg\.icon = 'fas fa-sun';/);
+  // The sunrise/sunset line is its own .sunrise-data row, separate from
+  // .sunrise-header, so grid mode's flex-direction: column (creative.css)
+  // stacks exactly those two rows instead of flexing every individual
+  // icon/span inside both onto one line (a live screenshot showed icon,
+  // title and the sunrise/sunset line all crammed side by side).
+  assert.match(renderSunriseBody, /class="sunrise-data"/);
+  assert.match(
+    styles,
+    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.sunriseholder \{[\s\S]*?flex-direction: column;/
+  );
 
   // OWM and Timegraph use the standard 'widget_' catalog key convention with
   // an explicit type, like weather/iframe/xmltvguide.

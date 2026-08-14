@@ -1,8 +1,9 @@
 {
-    "version": "3.42.6",
+    "version": "3.42.7",
     "branch": "beta",
-    "last_changes": "Sunrise/Sunset: ship a default icon and lay out icon+title as a compact header row instead of the oversized full-width title block (3.42.5 follow-up)",
+    "last_changes": "Fix Custom/Multi Device Icon checkbox not persisting when turned off; fix Sunrise/Sunset icon+title being flexed onto one line with the sunrise/sunset data on grid screens",
     "changelog": {
+        "3.42.7": "Fix Custom/Multi Device Icon checkbox not persisting when turned off; fix Sunrise/Sunset icon+title being flexed onto one line with the sunrise/sunset data on grid screens",
         "3.42.6": "Sunrise/Sunset: ship a default icon and lay out icon+title as a compact header row instead of the oversized full-width title block (3.42.5 follow-up)",
         "3.42.5": "Fix missing News widget icon and Sunrise/Sunset icon/title; Custom/Multi Device creation now offers an Updated checkbox instead of silently defaulting it off",
         "3.42.4": "Fix invisible multi-camera thumbnails on grid screens (#132); Dial checkbox on a multi-value device (e.g. Temp+Humidity) now saves the base idx instead of a sub-value idx (#118)",

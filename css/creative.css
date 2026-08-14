@@ -146,6 +146,14 @@
   box-sizing: border-box;
   min-height: 100%;
   display: flex;
+  /* Without this, flex's row default put every direct child - the
+     .sunrise-header row AND each individual icon/time span making up the
+     sunrise/sunset line - side by side as its own flex item, cramming
+     everything onto a single line instead of the header sitting above the
+     data (js/components/simpleblock.js wraps the sunrise/sunset line in
+     its own .sunrise-data div precisely so column stacking keeps that line
+     intact instead of also blowing it apart into individual flex items). */
+  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
