@@ -6,6 +6,19 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.42.7 beta (14-8-2026)
+--------------------------
+
+* **Fixes**
+
+- The web UI's **Update** button now recognizes Git's "insufficient
+  permission for adding an object to repository database .git/objects" /
+  "failed to write object" errors (seen when ``.git/objects`` is owned by a
+  different user than the web-server process, e.g. after a manual ``git``
+  run as root) and shows the same concrete ``chown``/permission-fix hint as
+  the existing "permission denied" and "dubious ownership" cases, instead of
+  just the raw Git error.
+
 v3.42.6 beta (14-8-2026)
 --------------------------
 
