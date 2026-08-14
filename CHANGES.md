@@ -1,5 +1,31 @@
 # Dashticz — Change log for recent update work
 
+## 3.42.5 — News icon, Sunrise/Sunset icon+title, Custom/Multi Device Updated checkbox
+
+- Fixed the News widget never showing an icon despite the Widget Editor's
+  Icon checkbox being on. `js/widgeteditor.js`'s `_buildWidgetPayloadEntry`
+  only writes `entry.icon` when the checkbox is off (`''`) or a custom value
+  was typed (`blockOptions.iconValue`); with the checkbox on and no typed
+  value, `block.icon` is simply left unset in CONFIG.js, same as every other
+  widget - the difference is `js/components/weather.js`'s `defaultCfg` ships
+  `icon: 'fas fa-sun'` as a fallback and `js/components/news.js` had none.
+  Added `icon: 'fas fa-newspaper'` to News' `defaultCfg`.
+- Fixed the Sunrise/Sunset widget never showing an icon or title at all.
+  `renderSunrise()` (`js/components/simpleblock.js`) builds its own flat
+  markup instead of going through `getContainer()`/`getColIcon()`/
+  `renderTitle()` (`js/dashticz.js`) like every other block - `me.block.icon`
+  and `me.block.title`/`hide_title` were saved correctly by the Widget
+  Editor but nothing ever read or painted them. `renderSunrise()` now emits
+  the same `.col-icon`/`.dt_title` markup those helpers would have produced.
+- Fixed Multi Device and Custom Device creation always saving
+  `last_update: false` with no checkbox in either creation popup
+  (`_showCustomDevicePopup`/`_showMultiDevicePopup`, `js/deviceeditor.js`)
+  to change it — the option only became reachable by creating the device
+  first and separately reopening its Device Config popup afterward, which
+  looked like the option didn't exist. Both popups now show an "Updated"
+  checkbox (checked by default) that feeds directly into
+  `options.last_update`, same as the existing Device Config popup.
+
 ## 3.42.4 — Multi-camera grid visibility fix (#132); Dial checkbox on multi-value devices (#118 follow-up)
 
 - Fixed multi-camera blocks rendering invisible (0-height) thumbnails on

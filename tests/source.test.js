@@ -1817,11 +1817,21 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
   assert.match(deviceEditor, /sunrise:\s*\{\s*id: 'sunrise'/);
   assert.match(savewidgets, /'sunrise' => \['key' => 'sunrise'/);
 
-  // renderSunrise builds its own markup and never calls the generic
-  // renderTitle()/getColIcon() helpers, so Sunrise must not get fictional
-  // Title/Height fields it cannot actually use — only the common
-  // Title/Width/Custom fields options every catalog widget already has.
-  assert.doesNotMatch(simpleBlockSource, /function renderSunrise[\s\S]*?renderTitle/);
+  // renderSunrise builds its own markup instead of going through
+  // getContainer()/getColIcon()/renderTitle() (js/dashticz.js) like every
+  // other block, so the Widget Editor's Icon/Title checkboxes correctly save
+  // block.icon/block.title/block.hide_title, but nothing ever painted them -
+  // no icon and no title ever appeared on a Sunrise/Sunset block (#follow-up).
+  // renderSunrise now reads them directly and emits the same .col-icon/
+  // .dt_title markup the shared helpers would have produced.
+  const renderSunriseBody = simpleBlockSource.slice(
+    simpleBlockSource.indexOf('function renderSunrise'),
+    simpleBlockSource.indexOf('function renderHorizon')
+  );
+  assert.match(renderSunriseBody, /if \(me\.block\.icon\) \{/);
+  assert.match(renderSunriseBody, /class="col-icon"><em class="'\s*\+\s*me\.block\.icon/);
+  assert.match(renderSunriseBody, /if \(!me\.block\.hide_title && me\.block\.title\) \{/);
+  assert.match(renderSunriseBody, /class="dt_title">'\s*\+\s*me\.block\.title/);
 
   // OWM and Timegraph use the standard 'widget_' catalog key convention with
   // an explicit type, like weather/iframe/xmltvguide.

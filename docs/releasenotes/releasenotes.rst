@@ -6,6 +6,26 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.42.5 beta (14-8-2026)
+--------------------------
+
+* **Fixes**
+
+- Fixed the **News** widget never showing an icon even with the Widget
+  Editor's Icon checkbox on. Checking Icon without typing a custom value
+  relies on the widget's own default icon (the same pattern Weather already
+  uses), but News had none to fall back to. Added a default news icon.
+- Fixed the **Sunrise/Sunset** widget never showing an icon or a title.
+  Unlike every other block, this widget builds its own markup instead of
+  going through the shared container/icon/title rendering, so the Icon and
+  Title options in its Widget Config popup were saved correctly but never
+  actually painted onto the block. It now reads and renders them.
+- Fixed **Multi Device** and **Custom Device** creation silently defaulting
+  the "Updated" (last update timestamp) option off, with no checkbox in
+  either creation popup to turn it on — the only way to enable it was to
+  create the device first, then separately reopen its Device Config popup.
+  Both creation popups now show an Updated checkbox, checked by default.
+
 v3.42.4 beta (14-8-2026)
 --------------------------
 

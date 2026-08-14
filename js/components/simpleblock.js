@@ -735,13 +735,22 @@ var DT_simpleblock = (function () {
     classes += ' col-xs-' + width;
     if (!isBar) classes += ' transbg';
     classes += ' text-center sunriseholder';
-    return (
-      '<div data-id="sunrise" class="' +
-      classes +
-      '">' +
+    // This renderer builds its own flat markup instead of going through
+    // getContainer()/getColIcon()/renderTitle() (js/dashticz.js) like every
+    // other block, so the Widget Editor's Icon/Title checkboxes - which do
+    // save block.icon/block.title/block.hide_title correctly - were never
+    // actually painted anywhere.
+    var html = '<div data-id="sunrise" class="' + classes + '">';
+    if (me.block.icon) {
+      html += '<div class="col-icon"><em class="' + me.block.icon + '"></em></div>';
+    }
+    if (!me.block.hide_title && me.block.title) {
+      html += '<div class="dt_title">' + me.block.title + '</div>';
+    }
+    html +=
       '<em class="wi wi-sunrise"></em><span class="sunrise"></span><em class="wi wi-sunset"></em><span class="sunset"></span>' +
-      '</div>'
-    );
+      '</div>';
+    return html;
   }
 
   function renderHorizon() {
