@@ -2320,6 +2320,10 @@ test('Dial keeps its rendered size in sync with live editor resize (grid or colu
   // resubscribe on every resize).
   const dialComponent = fs.readFileSync(path.join(root, 'js/components/dial.js'), 'utf8');
   assert.match(dialComponent, /function _dialFitSize\(me\)/);
+  assert.match(
+    dialComponent,
+    /var \$container = inGrid\s*\n\s*\? me\.\$mountPoint\s*\n\s*: \$\(me\.mountPoint \+ ' div'\)\.first\(\);/
+  );
   assert.match(dialComponent, /var measuredWidth = parseInt\(\$container\.outerWidth\(\)\);/);
   assert.match(dialComponent, /var measuredHeight = parseInt\(\$container\.outerHeight\(\)\);/);
   assert.match(dialComponent, /var inGrid = me\.\$mountPoint && me\.\$mountPoint\.hasClass\('dt-grid-item'\);/);

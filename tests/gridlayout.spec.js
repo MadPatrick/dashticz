@@ -119,6 +119,58 @@ screens[1] = {
     expect(dialSizes.dialWidth).toBeLessThanOrEqual(dialSizes.itemWidth + 1);
     expect(dialSizes.dialHeight).toBeLessThanOrEqual(dialSizes.itemHeight + 1);
 
+    // Wizard/Layout Editor resizing updates the outer grid item. Growing used
+    // to work because min-height stretched the inner block, but shrinking then
+    // measured the stale inline height that dial.js had written on the previous
+    // pass. Exercise both directions so the Dial must follow the actual cell.
+    await dialItem.evaluate((item) => {
+      DashticzGridLayout.applyGridPosition(item, {
+        x: 1,
+        y: 1,
+        w: 8,
+        h: 12,
+      });
+    });
+    await expect
+      .poll(() =>
+        dialItem.evaluate((item) => {
+          const dial = item.querySelector('.dt_content .dial');
+          return dial ? dial.getBoundingClientRect().height : 0;
+        })
+      )
+      .toBeGreaterThan(dialSizes.dialHeight + 20);
+    const grownDialHeight = await dialItem
+      .locator('.dt_content .dial')
+      .evaluate((dial) => dial.getBoundingClientRect().height);
+
+    await dialItem.evaluate((item) => {
+      DashticzGridLayout.applyGridPosition(item, {
+        x: 1,
+        y: 1,
+        w: 8,
+        h: 5,
+      });
+    });
+    await expect
+      .poll(() =>
+        dialItem.evaluate((item) => {
+          const block = item.querySelector('.dt_block');
+          const dial = item.querySelector('.dt_content .dial');
+          const itemHeight = item.getBoundingClientRect().height;
+          return Boolean(
+            block &&
+              dial &&
+              block.getBoundingClientRect().height <= itemHeight + 1 &&
+              dial.getBoundingClientRect().height <= itemHeight + 1
+          );
+        })
+      )
+      .toBe(true);
+    const shrunkDialHeight = await dialItem
+      .locator('.dt_content .dial')
+      .evaluate((dial) => dial.getBoundingClientRect().height);
+    expect(shrunkDialHeight).toBeLessThan(grownDialHeight);
+
     await expect(
       page.locator(
         '.screen1 [data-grid-block="grid_frame_icon"] .col-icon'
