@@ -6,6 +6,24 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.42.10 beta (15-8-2026)
+---------------------------
+
+* **Fixes**
+
+- Restored full-size Dials in classic Bootstrap column layouts. Their
+  content-driven, pre-render height is no longer treated as a fixed size;
+  grid Dials still respect both dimensions of their assigned cell.
+- Existing iframe and Sunrise/Sunset blocks without an ``icon`` property keep
+  their historic iconless appearance. Newly added Editor widgets retain the
+  newer default icons by saving those icons explicitly in ``CONFIG.js``.
+- Explicit custom/default icons remain supported for both widgets.
+
+* **Code**
+
+- Added Chromium regressions covering legacy column sizing/icon behavior and
+  fixed grid-cell sizing with explicit icons.
+
 v3.42.9 beta (15-8-2026)
 --------------------------
 

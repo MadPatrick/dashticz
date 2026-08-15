@@ -1,5 +1,16 @@
 # Dashticz — Change log for recent update work
 
+## 3.42.10 — Legacy layout compatibility for Dials, iframe and Sunrise/Sunset
+
+- Classic Bootstrap columns now size a Dial from their width (or an explicit
+  configured height) instead of their short, content-driven pre-render height.
+  Grid cells continue to constrain the Dial by both width and height.
+- Removed runtime default icons from iframe and Sunrise/Sunset blocks so old
+  configurations which omit ``icon`` remain visually unchanged. The Widget
+  Editor explicitly persists the catalog icon for newly added instances,
+  preserving the current new-widget experience and all custom icons.
+- Added browser regressions for the affected legacy and grid layouts.
+
 ## 3.42.9 — Secure log rendering, stable log listeners, Group fix and build maintenance
 
 - Escaped Domoticz log timestamps and messages before inserting them into the

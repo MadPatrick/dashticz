@@ -117,6 +117,25 @@ test('Domoticz log escapes messages and keeps one namespaced listener set', () =
   assert.equal($items.lastScrollTop, 123);
 });
 
+test('Legacy iframe and Sunrise blocks do not acquire a new default icon', () => {
+  const frame = loadComponent('js/components/frame.js', {
+    navigator: { userAgent: '' },
+  });
+  const simpleBlock = loadComponent('js/components/simpleblock.js', {});
+
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(frame.defaultCfg(), 'icon'),
+    false
+  );
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      simpleBlock.defaultCfg({ type: 'sunrise' }),
+      'icon'
+    ),
+    false
+  );
+});
+
 test('Webpack cleans stale output while preserving legacy font assets', () => {
   const config = require(path.join(root, 'build/webpack.config.js'));
   assert.equal(config.output.clean.keep.test('assets/fonts/legacy.woff'), true);

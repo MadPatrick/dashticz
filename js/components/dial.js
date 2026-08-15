@@ -174,11 +174,18 @@ var DT_dial = (function () {
     var configuredHeight = isDefined(me.block.height)
       ? parseInt(me.block.height)
       : NaN;
-    var candidates = [measuredWidth, measuredHeight, configuredHeight].filter(
-      function (value) {
-        return !isNaN(value) && value > 0;
-      }
-    );
+    // A grid cell has a deliberate row height, so both dimensions constrain
+    // its circular dial. A classic Bootstrap column is content-height driven:
+    // before the dial is rendered its transient height is only a short device
+    // row and must not shrink the circle. The column can grow to fit it.
+    var inGrid = me.$mountPoint && me.$mountPoint.hasClass('dt-grid-item');
+    var candidates = (
+      inGrid
+        ? [measuredWidth, measuredHeight, configuredHeight]
+        : [measuredWidth, configuredHeight]
+    ).filter(function (value) {
+      return !isNaN(value) && value > 0;
+    });
     var height = candidates.length ? Math.min.apply(Math, candidates) : NaN;
     if (!height || isNaN(height)) {
       // Container not laid out yet, or hidden (e.g. an inactive screen tab)
