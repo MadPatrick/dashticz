@@ -6,6 +6,31 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.42.9 beta (15-8-2026)
+--------------------------
+
+* **Fixes**
+
+- Domoticz log messages are now escaped before they are rendered, preventing
+  device, plugin or script log text from being interpreted as dashboard HTML.
+- The Domoticz log widget now keeps one namespaced set of scroll listeners
+  instead of adding another pair on every refresh.
+- Fixed Group blocks using ``switchMode: 'toggleoff'`` sending an undefined
+  command instead of an explicit ``On`` or ``Off`` command.
+
+* **Code**
+
+- Updated the Playwright, Prettier and Webpack patch/minor versions and patched
+  the indirect ``fast-uri``, ``nanoid`` and ``postcss`` build
+  dependencies. The npm security audit now reports no vulnerabilities.
+- Removed unused ``@babel/node`` and ``style-loader`` build dependencies, and
+  moved the optional jQuery migration diagnostics package to development-only
+  dependencies.
+- Webpack now removes stale generated chunks from ``dist`` before producing a
+  new build, while retaining legacy font formats for custom CSS compatibility.
+  Removed the obsolete unreferenced ``dist/475.js`` chunk and duplicate legacy
+  ``packagelock.json`` file.
+
 v3.42.8 beta (14-8-2026)
 --------------------------
 
