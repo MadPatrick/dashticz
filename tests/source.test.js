@@ -1292,6 +1292,18 @@ test('Hayman clock does not depend on Moment locale internals for rendering', ()
     path.join(root, 'js/components/haymanclock.js'),
     'utf8'
   );
+  const template = fs.readFileSync(
+    path.join(root, 'tpl/clock_hayman.tpl'),
+    'utf8'
+  );
+  const widgetEditor = fs.readFileSync(
+    path.join(root, 'js/widgeteditor.js'),
+    'utf8'
+  );
+  const saveWidgets = fs.readFileSync(
+    path.join(root, 'js/savewidgets.php'),
+    'utf8'
+  );
   assert.match(source, /typeof value !== 'string'/);
   assert.match(source, /var now = new Date\(\)/);
   assert.match(source, /new Intl\.DateTimeFormat/);
@@ -1299,6 +1311,18 @@ test('Hayman clock does not depend on Moment locale internals for rendering', ()
   assert.match(source, /updateTime\(\);\s*Dashticz\.setInterval/);
   assert.doesNotMatch(source, /moment\(\)\.format\(/);
   assert.doesNotMatch(source, /_relativeTime/);
+
+  // Widget Config persists size and scale, and Hayman must apply the final
+  // size * scale result as a pixel width. Its former percentage only used
+  // scale, ignored size and flattened every scale above 1 to 100%.
+  assert.match(widgetEditor, /if \(ccfg\.size[^\n]*entry\.size = ccfg\.size;/);
+  assert.match(widgetEditor, /if \(ccfg\.scale[^\n]*entry\.scale = ccfg\.scale;/);
+  assert.match(saveWidgets, /\$props\['size'\] = \$widget\['size'\];/);
+  assert.match(saveWidgets, /\$props\['scale'\] = \$widget\['scale'\];/);
+  assert.match(source, /var width = base \* scale;/);
+  assert.match(source, /me\.block\.clockwidth = Math\.max\(1, Math\.floor\(width\)\) \+ 'px';/);
+  assert.doesNotMatch(source, /Math\.min\(100, scale \* 100\)/);
+  assert.match(template, /style="width: \{\{clockwidth\}\}; font-size: \{\{fontsize\}\}px;"/);
 });
 
 test('clock components use public date APIs and a valid seconds setting', () => {

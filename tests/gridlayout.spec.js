@@ -183,6 +183,48 @@ screens[1] = {
     ).toBeVisible();
   });
 
+  test('Hayman clock applies Widget Config size and scale to its rendered width', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `
+blocks['hayman_sized'] = {
+  type: 'haymanclock',
+  width: 3,
+  size: 50,
+  scale: 2,
+  icon: '',
+  hide_title: true,
+  grid: {x: 1, y: 1, w: 12, h: 10}
+};
+screens[1] = {
+  layout: 'grid',
+  gridColumns: 24,
+  rowHeight: 20,
+  gap: 5,
+  mobileLayout: 'stack',
+  blocks: ['hayman_sized']
+};
+`,
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+
+    const clock = page.locator(
+      '[data-grid-block="hayman_sized"] .clock-container'
+    );
+    await expect(clock).toBeVisible();
+    await expect(clock).toHaveCSS('width', '100px');
+  });
+
   test('hides Icon and Title controls only while Device Config is a Dial', async ({
     page,
   }) => {
