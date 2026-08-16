@@ -1582,6 +1582,11 @@ test('settings modal uses compact Bootstrap 5 controls and aligned help icons', 
   assert.match(settings, /standby_background/);
   assert.doesNotMatch(settings, /standby_blocks/);
   assert.match(settings, /class="settings-brand"/);
+  assert.match(settings, /class="btn btn-secondary settings-back d-none"/);
+  assert.match(settings, /\.settings-widget-panel:not\(\.d-none\)/);
+  assert.match(settings, /showSettingsHome\(\)/);
+  assert.doesNotMatch(settings, /settings-category-back/);
+  assert.doesNotMatch(settings, /settings-widget-back/);
   assert.match(settings, /img\/favicon\/app-icon-192x192\.png/);
   assert.match(settings, /window\.bootstrap\.Tooltip/);
   assert.match(settings, /data-bs-trigger="click"/);
@@ -1604,6 +1609,8 @@ test('settings modal uses compact Bootstrap 5 controls and aligned help icons', 
   assert.match(styles, /color: #0b6fc2;/);
   assert.match(styles, /\.settings-tooltip[\s\S]*z-index: 10050;/);
   assert.match(styles, /\.settings-help \.fas/);
+  assert.doesNotMatch(styles, /\.settings-category-back/);
+  assert.doesNotMatch(styles, /\.settings-widget-back/);
   assert.doesNotMatch(styles, /\.material-switch/);
 });
 

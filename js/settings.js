@@ -1270,6 +1270,11 @@ function loadSettings() {
       html += '</div><div class="modal-footer settings-footer">';
       html += '<div class="settings-footer-actions">';
       html +=
+        '<button type="button" class="btn btn-secondary settings-back d-none">' +
+        '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' +
+        escapeSettingsHtml(language.settings.back || 'Back') +
+        '</button> ';
+      html +=
         '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
         language.settings.close +
         '</button> ';
@@ -1353,7 +1358,6 @@ function getSettingsCategoryTitle(id) {
 }
 
 function renderSettingsCategoryHome() {
-  var backLabel = language.settings.back || 'Back';
   var chooseLabel =
     language.settings.choose || 'Choose a category to configure.';
   var tabs = getSettingsCategories();
@@ -1398,11 +1402,6 @@ function renderSettingsCategoryHome() {
       ' me-2" aria-hidden="true"></i>' +
       escapeSettingsHtml(title) +
       '</h5>';
-    html +=
-      '<button type="button" class="btn btn-sm btn-outline-secondary settings-category-back">' +
-      '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' +
-      escapeSettingsHtml(backLabel) +
-      '</button>';
     html += '</div>';
     if (id === 'widgets') {
       html += renderWidgetSettingsTab();
@@ -1541,10 +1540,6 @@ function renderBackgroundPicker(settingName, definition) {
 }
 
 function renderWidgetSettingsTab() {
-  var backLabel =
-    (language.settings.widgets && language.settings.widgets.back) ||
-    language.settings.back ||
-    'Back';
   var chooseLabel =
     (language.settings.widgets && language.settings.widgets.choose) ||
     'Choose a widget to configure its settings.';
@@ -1582,11 +1577,6 @@ function renderWidgetSettingsTab() {
       ' me-2" aria-hidden="true"></i>' +
       escapeSettingsHtml(tile.title) +
       '</h5>';
-    html +=
-      '<button type="button" class="btn btn-sm btn-outline-secondary settings-widget-back">' +
-      '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' +
-      escapeSettingsHtml(backLabel) +
-      '</button>';
     html += '</div>';
     if (tile.id === 'weather') {
       html += renderWeatherWidgetSettings(tile);
@@ -1793,6 +1783,7 @@ function showSettingsHome() {
   $popup
     .find('#settings-widget-tiles, .settings-widgets-intro')
     .removeClass('d-none');
+  $popup.find('.settings-back').addClass('d-none');
 }
 
 function showSettingsCategory(id) {
@@ -1804,8 +1795,9 @@ function showSettingsCategory(id) {
     .find('#settings-widget-tiles, .settings-widgets-intro')
     .removeClass('d-none');
   $popup
-    .find('#settings-category-widgets > .settings-category-back, #settings-category-widgets > .settings-panel-title')
+    .find('#settings-category-widgets > .settings-panel-title')
     .removeClass('d-none');
+  $popup.find('.settings-back').removeClass('d-none');
 }
 
 function bindSettingsCategoryTiles() {
@@ -1816,30 +1808,29 @@ function bindSettingsCategoryTiles() {
   $popup.on('click.settingsnav', '.settings-tile[data-settings-category]', function () {
     showSettingsCategory(String($(this).data('settings-category')));
   });
-  $popup.on('click.settingsnav', '.settings-category-back', function () {
-    showSettingsHome();
-  });
   $popup.on('click.settingsnav', '.settings-widget-tile', function () {
     var id = String($(this).data('widget-id'));
     $popup.find('#settings-widget-tiles, .settings-widgets-intro').addClass('d-none');
     $popup
       .find(
-        '#settings-category-widgets > .settings-category-back, #settings-category-widgets > .settings-panel-title'
+        '#settings-category-widgets > .settings-panel-title'
       )
       .addClass('d-none');
     $popup.find('.settings-widget-panel').addClass('d-none');
     $popup.find('#settings-widget-panel-' + id).removeClass('d-none');
   });
-  $popup.on('click.settingsnav', '.settings-widget-back', function () {
-    $popup.find('.settings-widget-panel').addClass('d-none');
-    $popup
-      .find('#settings-widget-tiles, .settings-widgets-intro')
-      .removeClass('d-none');
-    $popup
-      .find(
-        '#settings-category-widgets > .settings-category-back, #settings-category-widgets > .settings-panel-title'
-      )
-      .removeClass('d-none');
+  $popup.on('click.settingsnav', '.settings-back', function () {
+    if ($popup.find('.settings-widget-panel:not(.d-none)').length) {
+      $popup.find('.settings-widget-panel').addClass('d-none');
+      $popup
+        .find('#settings-widget-tiles, .settings-widgets-intro')
+        .removeClass('d-none');
+      $popup
+        .find('#settings-category-widgets > .settings-panel-title')
+        .removeClass('d-none');
+      return;
+    }
+    showSettingsHome();
   });
 }
 

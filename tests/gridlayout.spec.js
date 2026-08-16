@@ -1368,7 +1368,18 @@ screens[1] = {
     await page.mouse.move(10, 10);
     await page.getByRole('button', { name: 'Open settings' }).first().click();
     await expect(page.locator('#settingspopup')).toBeVisible();
+    await expect(page.locator('.settings-back')).toBeHidden();
     await page.locator('[data-settings-category="widgets"]').click();
+    const settingsBack = page.locator('.settings-back');
+    const settingsClose = page.locator('.settings-footer-actions [data-bs-dismiss="modal"]').first();
+    await expect(settingsBack).toBeVisible();
+    await expect(settingsBack).toHaveClass(/btn-secondary/);
+    await expect(settingsClose).toHaveClass(/btn-secondary/);
+    const [backBox, closeBox] = await Promise.all([
+      settingsBack.boundingBox(),
+      settingsClose.boundingBox(),
+    ]);
+    expect(backBox.right).toBeLessThanOrEqual(closeBox.left);
 
     for (const widgetId of ['publictransport', 'alarmmeldingen', 'camera', 'moon']) {
       await expect(
@@ -1386,7 +1397,7 @@ screens[1] = {
     await expect(page.locator('#setting-security_panel_lock option').nth(1)).toHaveValue('1');
     await expect(page.locator('#setting-security_panel_lock option').nth(2)).toHaveValue('2');
     await expect(page.locator('#setting-security_button_icons')).toHaveCount(0);
-    await page.locator('.settings-widget-back').click();
+    await settingsBack.click();
     await expect(
       page.locator('.settings-widget-tile[data-widget-id="map"]')
     ).toBeVisible();
@@ -1394,7 +1405,7 @@ screens[1] = {
     for (const setting of ['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude']) {
       await expect(page.locator(`#setting-${setting}`)).toBeVisible();
     }
-    await page.locator('.settings-widget-back').click();
+    await settingsBack.click();
     await expect(
       page.locator('.settings-widget-tile[data-widget-id="clock"]')
     ).toBeVisible();
@@ -1406,7 +1417,7 @@ screens[1] = {
     ]) {
       await expect(page.locator(`#setting-${setting}`)).toHaveCount(1);
     }
-    await page.locator('.settings-widget-back').click();
+    await settingsBack.click();
     await page.locator('.settings-widget-tile[data-widget-id="calendar"]').click();
     await expect(page.locator('label[for="setting-calendarurl"]')).toHaveText(
       'Full calendar link'
@@ -1414,6 +1425,13 @@ screens[1] = {
     await expect(
       page.locator('#setting-calendarurl').locator('xpath=ancestor::div[contains(@class,"settings-row")]')
     ).toContainText('Calendar data is configured separately with an ICS source.');
+    await settingsBack.click();
+    await expect(
+      page.locator('.settings-widget-tile[data-widget-id="calendar"]')
+    ).toBeVisible();
+    await settingsBack.click();
+    await expect(page.locator('#settings-home')).toBeVisible();
+    await expect(settingsBack).toBeHidden();
   });
 
   test('Custom devices accept empty objects and arrays as typed settings', async ({
