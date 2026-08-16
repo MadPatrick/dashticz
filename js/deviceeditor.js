@@ -287,7 +287,8 @@ var DashticzDeviceEditor = (function () {
           (item.id === 'iframe' || item.id === 'sunrise') &&
           typeof item.definition.icon === 'undefined';
         widgetOptions[item.orderKey] = {
-          icon: !legacyImplicitIcon && item.definition.icon !== '',
+          icon: (typeof item.definition.image === 'string' && item.definition.image !== '') ||
+            (!legacyImplicitIcon && item.definition.icon !== ''),
           iconValue: typeof item.definition.icon === 'string' && item.definition.icon !== ''
             ? item.definition.icon
             : null,
@@ -464,7 +465,8 @@ var DashticzDeviceEditor = (function () {
       // hide_data/last_update/switch are unused for a title/separator block,
       // but icon applies to every special kind.
       options: {
-        icon: typeof definition.icon === 'undefined' || definition.icon !== '',
+        icon: (typeof definition.image === 'string' && definition.image !== '') ||
+          typeof definition.icon === 'undefined' || definition.icon !== '',
         iconValue: typeof definition.icon === 'string' && definition.icon !== ''
           ? definition.icon
           : (kind === 'title' && typeof definition.icon === 'undefined'
@@ -693,12 +695,18 @@ var DashticzDeviceEditor = (function () {
       value: typeof titleValue === 'undefined' ? String((definition || {}).title || '') : String(titleValue || ''),
       system: true,
     }];
-    if (definition && typeof definition.icon === 'string' && definition.icon !== '') {
+    if (definition && typeof definition.image === 'string' && definition.image !== '') {
+      rows.push({ field: 'image', setting: definition.image, value: definition.image });
+    } else if (definition && typeof definition.icon === 'string' && definition.icon !== '') {
       rows.push({ field: 'icon', setting: definition.icon, value: definition.icon });
     }
     Object.keys(definition || {}).forEach(function (property) {
       var lowerProperty = property.toLowerCase();
-      if (protectedCustomDeviceProperties[lowerProperty] || /^_dashticz/i.test(property)) return;
+      if (
+        lowerProperty === 'image' ||
+        protectedCustomDeviceProperties[lowerProperty] ||
+        /^_dashticz/i.test(property)
+      ) return;
       var value = definition[property];
       if (typeof value === 'undefined' || typeof value === 'function') return;
       rows.push({
@@ -1284,7 +1292,8 @@ var DashticzDeviceEditor = (function () {
         ? ''
         : (typeof configured.title === 'string' ? configured.title : '');
       deviceOptions[ck] = {
-        icon: typeof configured.icon === 'undefined' || configured.icon !== '',
+        icon: (typeof configured.image === 'string' && configured.image !== '') ||
+          typeof configured.icon === 'undefined' || configured.icon !== '',
         iconValue: typeof configured.icon === 'string' && configured.icon !== ''
           ? configured.icon
           : null,
@@ -1409,18 +1418,26 @@ var DashticzDeviceEditor = (function () {
     row = row || { field: '', setting: '' };
     var isSystem = row.system === true;
     var field = String(row.field || '');
+    var lowerField = field.toLowerCase();
+    var isIconSource = lowerField === 'icon' || lowerField === 'image';
     var rowClass = 'de-custom-field-row input-group input-group-sm mb-2';
-    if (field.toLowerCase() === 'icon') rowClass += ' de-icon-field-row';
+    if (isIconSource) rowClass += ' de-icon-field-row';
     if (isSystem) rowClass += ' de-system-field-row';
     return '<div class="' + rowClass + '"' +
       (row.generated === true
         ? ' data-generated-icon="true" data-initial-setting="' + _esc(row.setting || '') + '"'
         : '') + '>' +
-      '<input type="text" class="form-control de-custom-field-name" placeholder="' +
-      _esc(t.field) + '" value="' + _esc(field) + '"' +
-      (isSystem ? ' readonly aria-readonly="true"' : '') + '>' +
+      (isIconSource
+        ? '<select class="form-select de-custom-field-name de-icon-source" aria-label="' +
+          _esc(t.field) + '"><option value="icon"' + (lowerField === 'icon' ? ' selected' : '') +
+          '>Icon</option><option value="image"' + (lowerField === 'image' ? ' selected' : '') +
+          '>Image</option></select>'
+        : '<input type="text" class="form-control de-custom-field-name" placeholder="' +
+          _esc(t.field) + '" value="' + _esc(field) + '"' +
+          (isSystem ? ' readonly aria-readonly="true"' : '') + '>') +
       '<input type="text" class="form-control de-custom-field-setting" placeholder="' +
-      _esc(t.setting) + '" value="' + _esc(row.setting || '') + '">' +
+      _esc(lowerField === 'image' ? 'custom/icon.png' : t.setting) + '" value="' +
+      _esc(row.setting || '') + '">' +
       '<button type="button" class="btn btn-outline-success de-custom-field-add" title="' +
       _esc(t.add_field) + '"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
       '<button type="button" class="btn btn-outline-danger de-custom-field-remove" title="' +
@@ -1994,7 +2011,8 @@ var DashticzDeviceEditor = (function () {
       customRows.unshift({ field: 'title', setting: currentTitle, value: currentTitle, system: true });
     }
     var iconRow = customRows.find(function (row) {
-      return String(row.field || '').toLowerCase() === 'icon';
+      var field = String(row.field || '').toLowerCase();
+      return field === 'icon' || field === 'image';
     });
     var effectiveIcon = _effectiveDeviceConfigIcon(ck, special, options);
     if (!iconRow) {
@@ -2159,6 +2177,17 @@ var DashticzDeviceEditor = (function () {
       refreshCustomFieldButtons();
       refreshIconFieldVisibility();
     });
+    $popup.on('change', '.de-icon-source', function () {
+      var $row = $(this).closest('.de-icon-field-row');
+      var useImage = $(this).val() === 'image';
+      var $setting = $row.find('.de-custom-field-setting');
+      $setting
+        .val(useImage ? '' : effectiveIcon)
+        .attr('placeholder', useImage ? 'custom/icon.png' : t.setting);
+      $row
+        .attr('data-generated-icon', useImage ? 'false' : 'true')
+        .attr('data-initial-setting', useImage ? '' : effectiveIcon);
+    });
     $popup.on('change', '[data-option="dial"]', refreshDialOptions);
     function refreshMdValueButtons() {
       var $rows = $popup.find('.md-value-row');
@@ -2234,9 +2263,9 @@ var DashticzDeviceEditor = (function () {
           pendingTitle = rawSetting;
           return;
         }
-        if (lowerField === 'icon') {
+        if (lowerField === 'icon' || lowerField === 'image') {
           // An existing icon row is hidden/inactive while Icon is off. A newly
-          // entered visible icon row gets an explicit validation message instead.
+          // entered visible icon/image row gets an explicit validation message instead.
           if (updated.icon !== true) {
             if ($(this).hasClass('de-icon-field-row')) return;
             valid = false;
@@ -2248,6 +2277,14 @@ var DashticzDeviceEditor = (function () {
             valid = false;
             $popup.find('.de-config-message').addClass('text-danger').text(t.invalid_field);
             $(this).find('.de-custom-field-setting').trigger('focus');
+            return;
+          }
+          if (lowerField === 'image') {
+            pendingCustomFields.push({
+              field: 'image',
+              setting: rawSetting,
+              value: rawSetting,
+            });
             return;
           }
           var generatedIcon = $(this).attr('data-generated-icon') === 'true';

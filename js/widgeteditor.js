@@ -470,7 +470,8 @@ var DashticzWidgetEditor = (function () {
     var legacyImplicitIcon =
       _usesExplicitEditorDefaultIcon(item) &&
       typeof definition.icon === 'undefined';
-    options.icon = !legacyImplicitIcon && definition.icon !== '';
+    options.icon = (typeof definition.image === 'string' && definition.image !== '') ||
+      (!legacyImplicitIcon && definition.icon !== '');
     options.iconValue = typeof definition.icon === 'string' && definition.icon !== ''
       ? definition.icon
       : null;
@@ -482,7 +483,9 @@ var DashticzWidgetEditor = (function () {
       setting: typeof definition.title === 'string' ? definition.title : _widgetTitle(item),
       system: true,
     }];
-    if (options.iconValue) {
+    if (typeof definition.image === 'string' && definition.image !== '') {
+      options.customFields.push({ field: 'image', setting: definition.image });
+    } else if (options.iconValue) {
       options.customFields.push({ field: 'icon', setting: options.iconValue });
     }
     if (Object.prototype.hasOwnProperty.call(definition, 'c')) {
@@ -516,6 +519,7 @@ var DashticzWidgetEditor = (function () {
       if (
         _isManagedWidgetProperty(item, property) ||
         property === 'title' ||
+        property === 'image' ||
         _isProtectedCustomWidgetProperty(property) ||
         /^_dashticz/.test(property)
       ) return;
@@ -536,7 +540,7 @@ var DashticzWidgetEditor = (function () {
     options.customFields.forEach(function (row) {
       var field = _normaliseCustomFieldName(row.field);
       if (field === 'title') titleRow = row;
-      if (field === 'icon') iconRow = row;
+      if (field === 'icon' || field === 'image') iconRow = row;
     });
     if (!titleRow) {
       titleRow = { field: 'title', setting: _widgetTitle(item), system: true };
@@ -1990,19 +1994,27 @@ var DashticzWidgetEditor = (function () {
     row = row || { field: '', setting: '' };
     var isSystem = row.system === true;
     var field = String(row.field || '');
+    var lowerField = field.toLowerCase();
+    var isIconSource = lowerField === 'icon' || lowerField === 'image';
     var rowClass = 'we-custom-field-row input-group input-group-sm mb-2';
-    if (field.toLowerCase() === 'icon') rowClass += ' we-icon-field-row';
+    if (isIconSource) rowClass += ' we-icon-field-row';
     if (isSystem) rowClass += ' we-system-field-row';
     return (
       '<div class="' + rowClass + '"' +
       (row.generated === true
         ? ' data-generated-icon="true" data-initial-setting="' + _esc(row.setting || '') + '"'
         : '') + '>' +
-      '<input type="text" class="form-control we-custom-field-name" placeholder="' +
-      _esc(_t('field', 'Field')) + '" value="' + _esc(field) + '"' +
-      (isSystem ? ' readonly aria-readonly="true"' : '') + '>' +
+      (isIconSource
+        ? '<select class="form-select we-custom-field-name we-icon-source" aria-label="' +
+          _esc(_t('field', 'Field')) + '"><option value="icon"' +
+          (lowerField === 'icon' ? ' selected' : '') + '>Icon</option><option value="image"' +
+          (lowerField === 'image' ? ' selected' : '') + '>Image</option></select>'
+        : '<input type="text" class="form-control we-custom-field-name" placeholder="' +
+          _esc(_t('field', 'Field')) + '" value="' + _esc(field) + '"' +
+          (isSystem ? ' readonly aria-readonly="true"' : '') + '>') +
       '<input type="text" class="form-control we-custom-field-setting" placeholder="' +
-      _esc(_t('setting', 'Setting')) + '" value="' + _esc(row.setting || '') + '">' +
+      _esc(lowerField === 'image' ? 'custom/icon.png' : _t('setting', 'Setting')) +
+      '" value="' + _esc(row.setting || '') + '">' +
       '<button type="button" class="btn btn-outline-success we-custom-field-add" title="' +
       _esc(_t('add_field', 'Add field')) + '"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
       '<button type="button" class="btn btn-outline-danger we-custom-field-remove" title="' +
@@ -2674,6 +2686,18 @@ var DashticzWidgetEditor = (function () {
       refreshCustomFieldButtons();
       refreshIconFieldVisibility();
     });
+    $cfgModal.on('change', '.we-icon-source', function () {
+      var $row = $(this).closest('.we-icon-field-row');
+      var useImage = $(this).val() === 'image';
+      var effectiveIcon = _effectiveWidgetConfigIcon(item, { iconValue: null });
+      var $setting = $row.find('.we-custom-field-setting');
+      $setting
+        .val(useImage ? '' : effectiveIcon)
+        .attr('placeholder', useImage ? 'custom/icon.png' : _t('setting', 'Setting'));
+      $row
+        .attr('data-generated-icon', useImage ? 'false' : 'true')
+        .attr('data-initial-setting', useImage ? '' : effectiveIcon);
+    });
     refreshCustomFieldButtons();
     refreshIconFieldVisibility();
 
@@ -2864,7 +2888,7 @@ var DashticzWidgetEditor = (function () {
           pendingTitle = rawSetting;
           return;
         }
-        if (lowerField === 'icon') {
+        if (lowerField === 'icon' || lowerField === 'image') {
           if (!pendingBlockOptions.icon) {
             if ($(this).hasClass('we-icon-field-row')) return;
             valid = false;
@@ -2880,6 +2904,14 @@ var DashticzWidgetEditor = (function () {
               _t('invalid_field', 'Enter a valid Field and Setting.')
             );
             $(this).find('.we-custom-field-setting').trigger('focus');
+            return;
+          }
+          if (lowerField === 'image') {
+            pendingBlockOptions.customFields.push({
+              field: 'image',
+              setting: rawSetting,
+              value: rawSetting,
+            });
             return;
           }
           var generatedIcon = $(this).attr('data-generated-icon') === 'true';

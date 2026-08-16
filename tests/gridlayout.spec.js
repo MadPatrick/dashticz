@@ -885,6 +885,14 @@ screens[1] = {
     await expect(separatorIconRow).toBeVisible();
     await expect(separatorIconRow.locator('.de-custom-field-name')).toHaveValue('icon');
     await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('fas fa-heading');
+    await separatorIconRow.locator('.de-icon-source').selectOption('image');
+    await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('');
+    await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveAttribute(
+      'placeholder',
+      'custom/icon.png'
+    );
+    await separatorIconRow.locator('.de-icon-source').selectOption('icon');
+    await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('fas fa-heading');
     await separatorIconRow.locator('.de-custom-field-remove').click();
     await expect(separatorIconRow).toHaveCount(0);
     await expect(page.locator('[data-option="icon"]')).not.toBeChecked();
@@ -1049,7 +1057,13 @@ screens[1] = {
     await expect(page.locator('[data-block-option="icon"]')).not.toBeChecked();
     await page.locator('[data-block-option="icon"]').check();
     await expect(widgetIconRow).toBeVisible();
-    await widgetIconRow.locator('.we-custom-field-setting').fill('fas fa-star');
+    await widgetIconRow.locator('.we-icon-source').selectOption('image');
+    await expect(widgetIconRow.locator('.we-custom-field-setting')).toHaveValue('');
+    await expect(widgetIconRow.locator('.we-custom-field-setting')).toHaveAttribute(
+      'placeholder',
+      'custom/icon.png'
+    );
+    await widgetIconRow.locator('.we-custom-field-setting').fill('custom/weather.png');
     expect(
       await page.locator('.we-custom-field-name').evaluateAll((inputs) =>
         inputs.map((input) => input.value)
@@ -1066,7 +1080,7 @@ screens[1] = {
     await expect.poll(() => widgetRequest).not.toBeNull();
     const savedWidget = widgetRequest.widgets[0];
     expect(savedWidget.title).toBe('Forecast changed');
-    expect(savedWidget.icon).toBe('fas fa-star');
+    expect(savedWidget).not.toHaveProperty('icon');
     expect(savedWidget.hide_data).toBe(true);
     expect(savedWidget.last_update).toBe(true);
     expect(savedWidget.custom_fields.c).toBe('legacy-grid');
@@ -1075,6 +1089,7 @@ screens[1] = {
     });
     expect(savedWidget.custom_fields.emptyArray).toEqual([]);
     expect(savedWidget.custom_fields.futureOption).toEqual({ enabled: true });
+    expect(savedWidget.custom_fields.image).toBe('custom/weather.png');
     expect(widgetRequest.settings.owm_days).toBe(1);
     expect(widgetRequest.settings.translate_windspeed).toBe(0);
     expect(widgetRequest.settings.garbage_width).toBe('9');

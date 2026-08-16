@@ -778,6 +778,14 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(widgetEditor, /\$cfgModal\.find\('\.we-icon-field-row'\)\.toggle\(enabled\)/);
   assert.match(deviceEditor, /removesIcon[\s\S]*\[data-option="icon"\][\s\S]*\.prop\('checked', false\)/);
   assert.match(widgetEditor, /removesIcon[\s\S]*\[data-block-option="icon"\][\s\S]*\.prop\('checked', false\)/);
+  assert.match(deviceEditor, /class="form-select de-custom-field-name de-icon-source"/);
+  assert.match(widgetEditor, /class="form-select we-custom-field-name we-icon-source"/);
+  assert.match(deviceEditor, /lowerField === 'icon' \|\| lowerField === 'image'/);
+  assert.match(widgetEditor, /lowerField === 'icon' \|\| lowerField === 'image'/);
+  assert.match(deviceEditor, /useImage \? 'custom\/icon\.png' : t\.setting/);
+  assert.match(widgetEditor, /useImage \? 'custom\/icon\.png' : _t\('setting', 'Setting'\)/);
+  assert.match(deviceEditor, /field: 'image',[\s\S]*value: rawSetting/);
+  assert.match(widgetEditor, /field: 'image',[\s\S]*value: rawSetting/);
   assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';/);
   assert.match(deviceEditor, /specialEntry\.icon = titleOptions\.iconValue \|\| SEPARATOR_DEFAULT_ICON;/);
   assert.match(deviceEditor, /kind === 'title' && typeof definition\.icon === 'undefined'[\s\S]*\? SEPARATOR_DEFAULT_ICON/);
