@@ -796,10 +796,10 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(widgetEditor, /class="dt-custom-image-grid"/);
   assert.match(styles, /\.dt-custom-image-grid \{[\s\S]*grid-template-columns: repeat\(6/);
   assert.match(styles, /\.dt-custom-image-thumb \{[\s\S]*object-fit: contain/);
-  assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';/);
+  assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-divide';/);
   assert.match(deviceEditor, /specialEntry\.icon = titleOptions\.iconValue \|\| SEPARATOR_DEFAULT_ICON;/);
   assert.match(deviceEditor, /kind === 'title' && typeof definition\.icon === 'undefined'[\s\S]*\? SEPARATOR_DEFAULT_ICON/);
-  assert.match(blockTitle, /defaultCfg:\s*\{[\s\S]*icon: 'fas fa-heading'/);
+  assert.match(blockTitle, /defaultCfg:\s*\{[\s\S]*icon: 'fas fa-divide'/);
   assert.match(configWriter, /if \(array_key_exists\('icon', \$block\) && \$block\['icon'\] !== null\) \{\s*\n\s*\$props\['icon'\] = \(string\)\$block\['icon'\];/);
 
   // Widget gears opened from Device Editor use the complete Widget Editor modal/save model.

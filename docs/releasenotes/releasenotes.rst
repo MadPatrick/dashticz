@@ -6,6 +6,16 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.43.1 beta (16-8-2026)
+-------------------------
+
+* **Fixes**
+
+- Changed the Separator/title block's default icon (``blocktitle``'s
+  ``defaultCfg.icon``, the Device Editor's ``SEPARATOR_DEFAULT_ICON``, and
+  its editor-list icon) and the Screen Editor add-menu's **Separator** tile
+  icon from ``fa-heading`` to ``fa-divide``.
+
 v3.43.0 beta (16-8-2026)
 -------------------------
 
@@ -21,7 +31,6 @@ v3.43.0 beta (16-8-2026)
 - Fixed Dial configuration state and resizing behavior.
 - Separator icons now have a visible default and remain hidden after the Icon
   option is unchecked and saved.
-
 
 v3.42.10 beta (15-8-2026)
 ---------------------------

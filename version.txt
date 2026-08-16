@@ -1,8 +1,9 @@
 {
-    "version": "3.43.0",
+    "version": "3.43.1",
     "branch": "beta",
-    "last_changes": "Refine Widget and Device configuration, fix Dial state and sizing, and improve compact grid blocks",
+    "last_changes": "Change the Separator/title block's default icon and its Screen Editor add-menu tile icon to fa-divide",
     "changelog": {
+        "3.43.1": "Change the Separator/title block's default icon and its Screen Editor add-menu tile icon to fa-divide",
         "3.43.0": "Refine Widget and Device configuration, fix Dial state and sizing, and improve compact grid blocks",
         "3.42.10": "Restore classic-column Dial sizing and preserve iconless legacy iframe and Sunrise/Sunset configurations",
         "3.42.9": "Secure Domoticz log rendering, prevent repeated log listeners, fix Group toggleoff commands, update build dependencies, and clean stale build output",

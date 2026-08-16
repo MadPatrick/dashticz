@@ -864,7 +864,7 @@ screens[1] = {
     await page.goto(dashboardUrl);
     await waitForDashboard(page);
     await expect(
-      page.locator('[data-grid-block="grid_text"] .col-icon .fa-heading')
+      page.locator('[data-grid-block="grid_text"] .col-icon .fa-divide')
     ).toBeVisible();
     await page.locator('.screen1 .layouteditoricon').click();
     await expect(page.locator('body')).toHaveClass(/dle-active/);
@@ -884,7 +884,7 @@ screens[1] = {
     const separatorIconRow = page.locator('.de-icon-field-row');
     await expect(separatorIconRow).toBeVisible();
     await expect(separatorIconRow.locator('.de-custom-field-name')).toHaveValue('icon');
-    await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('fas fa-heading');
+    await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('fas fa-divide');
     await separatorIconRow.locator('.de-icon-source').selectOption('image');
     await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('');
     await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveAttribute(
@@ -892,7 +892,7 @@ screens[1] = {
       'custom/icon.png'
     );
     await separatorIconRow.locator('.de-icon-source').selectOption('icon');
-    await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('fas fa-heading');
+    await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('fas fa-divide');
     await separatorIconRow.locator('.de-custom-field-remove').click();
     await expect(separatorIconRow).toHaveCount(0);
     await expect(page.locator('[data-option="icon"]')).not.toBeChecked();

@@ -449,7 +449,7 @@ var DT_simpleblock = (function () {
       { action: 'custom', icon: 'fa-cube', label: t.custom_devices || 'Custom devices' },
       { action: 'multidevice', icon: 'fa-layer-group', label: t.multi_device || 'Multi Device' },
       { action: 'slidebutton', icon: 'fa-sliders-h', label: t.slide_button || 'Slide button' },
-      { action: 'separator', icon: 'fa-heading', label: t.separator || 'Separator' },
+      { action: 'separator', icon: 'fa-divide', label: t.separator || 'Separator' },
     ];
     var html =
       '<div class="modal fade" id="screeneditoraddpopup" tabindex="-1" aria-hidden="true">' +
