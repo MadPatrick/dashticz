@@ -1296,6 +1296,10 @@ test('Hayman clock does not depend on Moment locale internals for rendering', ()
     path.join(root, 'tpl/clock_hayman.tpl'),
     'utf8'
   );
+  const clockCss = fs.readFileSync(
+    path.join(root, 'js/components/haymanclock.css'),
+    'utf8'
+  );
   const widgetEditor = fs.readFileSync(
     path.join(root, 'js/widgeteditor.js'),
     'utf8'
@@ -1321,8 +1325,12 @@ test('Hayman clock does not depend on Moment locale internals for rendering', ()
   assert.match(saveWidgets, /\$props\['scale'\] = \$widget\['scale'\];/);
   assert.match(source, /var width = base \* scale;/);
   assert.match(source, /me\.block\.clockwidth = Math\.max\(1, Math\.floor\(width\)\) \+ 'px';/);
+  assert.match(source, /me\.block\.fontsize = width \/ 40;/);
+  assert.doesNotMatch(source, /me\.block\.fontsize = Math\.max\(8,/);
   assert.doesNotMatch(source, /Math\.min\(100, scale \* 100\)/);
   assert.match(template, /style="width: \{\{clockwidth\}\}; font-size: \{\{fontsize\}\}px;"/);
+  assert.match(clockCss, /\.clock-col:not\(:last-child\):after\s*\{[\s\S]*content: ':';[\s\S]*font-size: 420%;[\s\S]*transform: translateX\(50%\);/);
+  assert.doesNotMatch(clockCss, /\.clock-col:not\(:last-child\):before/);
 });
 
 test('clock components use public date APIs and a valid seconds setting', () => {

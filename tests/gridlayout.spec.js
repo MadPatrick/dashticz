@@ -223,6 +223,19 @@ screens[1] = {
     );
     await expect(clock).toBeVisible();
     await expect(clock).toHaveCSS('width', '100px');
+    await expect(clock).toHaveCSS('font-size', '2.5px');
+
+    const firstColumn = clock.locator('.clock-col').first();
+    const timerFontSize = await firstColumn.locator('.clock-timer').evaluate(
+      (element) => getComputedStyle(element, '::before').fontSize
+    );
+    const separator = await firstColumn.evaluate((element) => {
+      const style = getComputedStyle(element, '::after');
+      return { content: style.content, fontSize: style.fontSize };
+    });
+    expect(timerFontSize).toBe('10.5px');
+    expect(separator.content).toBe('":"');
+    expect(separator.fontSize).toBe(timerFontSize);
   });
 
   test('hides Icon and Title controls only while Device Config is a Dial', async ({

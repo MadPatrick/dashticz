@@ -38,22 +38,15 @@
   position: relative;
   flex: 1;
 }
-.haymanclock .clock-col:not(:last-child):before,
 .haymanclock .clock-col:not(:last-child):after {
-  content: '';
-  background-color: rgba(255, 255, 255, 0.3);
-  height: 4%;
-  width: 4%;
-  border-radius: 50%;
-  display: block;
+  content: ':';
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 420%;
+  line-height: normal;
   position: absolute;
-  right: -3%;
-}
-.haymanclock .clock-col:not(:last-child):before {
-  top: 37%;
-}
-.haymanclock .clock-col:not(:last-child):after {
-  top: 52%;
+  right: 0;
+  top: 0;
+  transform: translateX(50%);
 }
 .haymanclock .clock-timer:before {
   color: #fff;
