@@ -938,7 +938,7 @@ screens[1] = {
     expect(customCssWrites).toBe(0);
     expect(gridRequest.items).toEqual([
       { ref: 's5', grid: { x: 2, y: 2, w: 6, h: 4 } },
-      { ref: 'grid_text', grid: { x: 10, y: 5, w: 8, h: 3 } },
+      { ref: 'grid_text', grid: { x: 10, y: 5, w: 8, h: 2 } },
     ]);
   });
 
@@ -1566,7 +1566,7 @@ screens[1] = {
     expect(columnSaves).toBe(0);
     expect(gridRequest.items).toEqual([
       { ref: 'grid_weather', grid: { x: 3, y: 2, w: 8, h: 4 } },
-      { ref: 'grid_text', grid: { x: 12, y: 8, w: 6, h: 3 } },
+      { ref: 'grid_text', grid: { x: 12, y: 8, w: 6, h: 2 } },
     ]);
   });
 

@@ -1744,6 +1744,10 @@ test('topbar screen switcher supports standby and extra screens', () => {
 test('topbar and layout editor keep controls usable', () => {
   const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
   const editor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
   const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
   const blocks = fs.readFileSync(path.join(root, 'js/blocks.js'), 'utf8');
   const simpleblock = fs.readFileSync(
@@ -1767,7 +1771,8 @@ test('topbar and layout editor keep controls usable', () => {
   // was already proven safe for miniclock, which no longer needs its own
   // separate (now-redundant) minimum.
   assert.match(editor, /var MIN_GRID_HEIGHT = 2;/);
-  assert.match(editor, /var MIN_TITLE_GRID_HEIGHT = 3;/);
+  assert.match(editor, /var MIN_TITLE_GRID_HEIGHT = 2;/);
+  assert.match(deviceEditor, /var TITLE_GRID_HEIGHT = 2;/);
   assert.doesNotMatch(editor, /MIN_MINICLOCK_GRID_HEIGHT/);
   assert.match(editor, /function _minimumGridHeight/);
   assert.match(editor, /type === 'blocktitle'\) return MIN_TITLE_GRID_HEIGHT;/);
@@ -1798,9 +1803,14 @@ test('garbage dates use the selected interface language', () => {
     path.join(root, 'js/components/garbage.js'),
     'utf8'
   );
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
 
   assert.match(garbage, /garbage\.date\.locale\(settings\['language'\]\)/);
   assert.match(garbage, /localizedDate\.format\('dddd'\)/);
+  assert.match(
+    styles,
+    /\.trash \.state\s*\{[^}]*font-size:\s*calc\(var\(--font-small\) - 2px\) !important;[^}]*transform:\s*translateY\(-10px\);/s
+  );
 });
 
 

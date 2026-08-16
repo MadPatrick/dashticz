@@ -6238,6 +6238,11 @@ canvas {
 /*end colorpicker*/
 
 /*garbage*/
+.trash .state {
+    font-size: calc(var(--font-small) - 2px) !important;
+    transform: translateY(-10px);
+}
+
 .trashsep {
     width: 10px;
     text-align: center;

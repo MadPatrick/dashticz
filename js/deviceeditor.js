@@ -30,7 +30,7 @@ var DashticzDeviceEditor = (function () {
   var gridPositions  = {};   // order key -> {x,y,w,h}
   var gridRefs       = {};   // order key -> block reference
   var gridExtras     = [];   // non-device/widget blocks
-  var TITLE_GRID_HEIGHT = 3;
+  var TITLE_GRID_HEIGHT = 2;
 
   function _translations() {
     var configured =
