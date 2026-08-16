@@ -59,27 +59,50 @@ var DT_flipclock = {
       // js/components/dial.js's _dialFitSize().
       var inGrid = me.$mountPoint && me.$mountPoint.hasClass('dt-grid-item');
       var $sizeBox = inGrid ? me.$mountPoint : $block;
+      // .dt_block is display:flex (icon + .dt_content side by side), so the
+      // outer box's own width also counts the icon's fixed 45px column and
+      // .dt_block's own padding/border - .dt_content's width already
+      // excludes all of that. Unlike the height fix above, this doesn't
+      // risk a growth loop: .dt_content's width comes from flexing against
+      // the icon's *fixed* width within .dt_block's own *fixed* (grid- or
+      // column-bounded) width, not from the clock's own em-sized content.
       var availW =
-        $sizeBox.outerWidth() || $content.width() || $(me.mountPoint).width() || 320;
+        $content.width() || $sizeBox.outerWidth() || $(me.mountPoint).width() || 320;
       var availH = ($sizeBox.outerHeight() || $(me.mountPoint).height() || 0) - titleHeight - stateMarginV;
       if (availW <= 0 || availH <= 0) return;
       var scale = Number(me.block.scale);
       if (!isFinite(scale) || scale <= 0) scale = 1;
 
       // .flip-clock-wrapper is display:flex with flex-shrink:1 digit/divider
-      // children, so a "natural size" measured any other way (the wrapper's
+      // children, so a "natural size" measured via the DOM (the wrapper's
       // own shrink-wrapped box, summed children) either compresses to fit
       // the current block or gets clamped by an ancestor's available width -
-      // neither reports the row's true, block-independent size. Use the
-      // same known-stable "fit within min(availW, availH)" approach as
-      // js/components/stationclock.js instead: less exact for a very
-      // wide/short block (like js/components/basicclock.js used to be, see
-      // #135), but deterministic.
-      var base = availH > 0 ? Math.min(availW, availH) : availW;
-      var width = base * scale;
-      if (availW > 0) width = Math.min(width, availW);
-      if (availH > 0) width = Math.min(width, availH);
-      var emSize = width / 82;
+      // neither reliably reports the row's true, block-independent size.
+      // The digit row is also far wider than it is tall (6 digit cards in a
+      // line), so min(availW, availH) - appropriate for the roughly square
+      // faces of station/dial clocks - picks availH alone in any block
+      // that isn't extremely wide, badly under-using availW and leaving
+      // most of the block empty below a short, narrow-looking clock.
+      // flipclock.css's sizes are all fixed multiples of --flipclock-em
+      // (10em digit width, 15em digit height, 5/6em digit margin, 20/6em
+      // divider width, 1em wrapper margin), so the row's natural size per
+      // em is a deterministic constant - computing it analytically avoids
+      // the DOM-measurement flakiness entirely.
+      var digitCount = me.block.showSeconds ? 6 : 4;
+      // TwentyFourHourClockFace/TwelveHourClockFace always create exactly 2
+      // dividers regardless of digit count; without seconds the 2nd one
+      // lands before the very first digit (i.e. becomes the wrapper's
+      // first-child), where flipclock.css forces its width to 0.
+      var dividerCount = me.block.showSeconds ? 2 : 1;
+      var perDigitWidthEm = 10 + 5 / 6 * 2; // ul width + margin-left + margin-right
+      var dividerWidthEm = 20 / 6;
+      var naturalWidthPerEm =
+        digitCount * perDigitWidthEm + dividerCount * dividerWidthEm + 1 * 2; // + wrapper's own left/right margin
+      var naturalHeightPerEm = 15 + 5 / 6 * 2 + 1 * 2; // ul height + its margin + wrapper's own top/bottom margin
+
+      var emSize =
+        Math.min(availW / naturalWidthPerEm, availH / naturalHeightPerEm) *
+        scale;
       $content.css('--flipclock-em', emSize + 'px');
     }
 

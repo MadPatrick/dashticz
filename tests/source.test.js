@@ -1372,10 +1372,78 @@ test('clock components use public date APIs and a valid seconds setting', () => 
   assert.doesNotMatch(flipClock, /me\.block\.size/);
   assert.doesNotMatch(flipClock, /minEmSize/);
   assert.doesNotMatch(flipClock, /maxEmSize/);
-  assert.match(flipClock, /var emSize = width \/ 82;/);
+  // The digit row is far wider than tall, so a naive min(availW, availH) -
+  // appropriate for the roughly square station/dial faces - badly
+  // under-fills availW. The natural size per --flipclock-em is computed
+  // analytically from flipclock.css's own fixed multipliers instead.
+  assert.match(flipClock, /naturalWidthPerEm/);
+  assert.match(flipClock, /naturalHeightPerEm/);
+  assert.match(
+    flipClock,
+    /Math\.min\(availW \/ naturalWidthPerEm, availH \/ naturalHeightPerEm\)/
+  );
   assert.match(flipClock, /FlipClock\(\$state, 0,/);
   assert.match(flipClock, /showSeconds: !settings\['hide_seconds'\]/);
   assert.doesNotMatch(flipClock, /showSecoonds/);
+});
+
+test('FlipClock width fix, Hayman dot alignment and Miniclock live-resize scaling', () => {
+  const flipClock = fs.readFileSync(
+    path.join(root, 'js/components/flipclock.js'),
+    'utf8'
+  );
+  const haymanCss = fs.readFileSync(
+    path.join(root, 'js/components/haymanclock.css'),
+    'utf8'
+  );
+  const simpleblock = fs.readFileSync(
+    path.join(root, 'js/components/simpleblock.js'),
+    'utf8'
+  );
+
+  // .dt_block is display:flex (fixed-width icon column + .dt_content), so
+  // the outer box's own width also counts the icon and .dt_block's own
+  // padding/border. .dt_content's width already excludes all of that and
+  // must be preferred, or the flip cards overflow past the block's edge.
+  assert.match(flipClock, /var availW =\s*\n?\s*\$content\.width\(\) \|\|/);
+  assert.doesNotMatch(flipClock, /console\.log\('FLIP_ANALYTIC'/);
+
+  // .clock-col{flex:1} has no min-width:0, so the 3-letter day-label column
+  // intentionally claims more than an even quarter of the row (its
+  // automatic minimum size) so its text doesn't overflow - a %-based dot
+  // offset therefore landed at a different pixel position next to that
+  // column than next to a 2-digit column. Dots are sized/positioned in em
+  // (the shared .clock-container font-size), consistent regardless of each
+  // column's own width.
+  assert.match(haymanCss, /\.clock-col:not\(:last-child\):before,/);
+  assert.match(haymanCss, /width: 0\.15em;/);
+  assert.match(haymanCss, /right: -0\.15em;/);
+  assert.doesNotMatch(haymanCss, /right:\s*-3%/);
+
+  // Miniclock has no Size/Scale controls; its .weekday/.date/.clock spans
+  // must still scale with the block's own resize, the same way the four
+  // dedicated clock widgets do.
+  assert.match(simpleblock, /function _fitMiniclockSize\(me\)/);
+  assert.match(simpleblock, /function _initMiniclockFitSize\(me\)/);
+  assert.match(
+    simpleblock,
+    /style\.setProperty\('font-size', \(REF \* fitScale\) \+ 'px', 'important'\)/
+  );
+  assert.match(simpleblock, /me\.miniclockResizeObserver = new ResizeObserver/);
+  assert.match(
+    simpleblock,
+    /if \(me\.miniclockResizeObserver\) \{\s*\n\s*me\.miniclockResizeObserver\.disconnect\(\);/
+  );
+
+  // The topbar's miniclock (".dt-topbar-item") is a fixed 40px strip in the
+  // fixed-height .colbar, not a resizable grid/column block, and isn't
+  // wrapped by .dt-grid-item - so the live fit-to-block sizing above must
+  // not touch it, or its own elastic flex box feeds a runaway
+  // grow-remeasure-grow font-size loop that breaks the whole topbar.
+  assert.match(
+    simpleblock,
+    /function _initMiniclockFitSize\(me\) \{\s*\n\s*var \$mount = me\.\$mountPoint;\s*\n[\s\S]*?if \(\$mount\.hasClass\('dt-topbar-item'\)\) return;/
+  );
 });
 
 test('clock widgets no longer expose a px Size field, only Scale', () => {

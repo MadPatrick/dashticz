@@ -6,6 +6,30 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.43.4 beta (16-8-2026)
+-------------------------
+
+* **Fixes**
+
+- Fixed the Flip clock leaving a lot of empty space below the digits: it
+  was sized to fit inside a square (``min(availW, availH)``), badly
+  under-using the available width for a clock face that is much wider than
+  it is tall. Its size is now computed analytically from flipclock.css's
+  own fixed per-``em`` multipliers, filling the block correctly.
+- Fixed the Flip clock overflowing past its block's right edge: the block's
+  own width also included the fixed-width icon column next to the clock,
+  which is now excluded from the available-width calculation.
+- Fixed the Hayman clock's ``:`` separator dots being inconsistently
+  positioned between columns (most noticeable next to the wider day-label
+  column): they were positioned as a percentage of each column's own
+  (variable) width, and are now positioned in ``em`` instead, consistent
+  regardless of a column's width.
+- Fixed the Miniclock's text (weekday/date/time) never getting bigger or
+  smaller when its block is resized - it now fits and live-resizes the
+  same way the four dedicated clock widgets do, including overriding the
+  theme's ``!important`` font-size/height rules. The fixed-height topbar
+  Miniclock is unaffected.
+
 v3.43.3 beta (16-8-2026)
 -------------------------
 

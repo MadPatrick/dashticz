@@ -53,12 +53,19 @@
 .haymanclock .clock-col:not(:last-child):after {
   content: '';
   background-color: rgba(255, 255, 255, 0.3);
-  height: 4%;
-  width: 4%;
+  /* em-based, not a % of the column's own width: flex:1's *automatic*
+     minimum width still lets a wider label (the 3-letter day column) claim
+     more than an even quarter of the row - by design, so its text doesn't
+     overflow - which made a %-based dot offset land at a different pixel
+     position next to that column than next to a 2-digit hour/minute/second
+     column. em (the shared .clock-container font-size) is the one thing
+     consistent across every column regardless of its own width. */
+  height: 0.15em;
+  width: 0.15em;
   border-radius: 50%;
   display: block;
   position: absolute;
-  right: -3%;
+  right: -0.15em;
 }
 .haymanclock .clock-col:not(:last-child):before {
   top: 37%;
