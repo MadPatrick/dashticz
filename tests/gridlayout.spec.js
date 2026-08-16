@@ -881,6 +881,7 @@ screens[1] = {
     await expect(page.locator('.de-config-option')).toHaveCount(2);
     await expect(page.locator('[data-option="icon"]')).toBeChecked();
     await expect(page.locator('[data-option="show_title"]')).toBeChecked();
+    await page.locator('[data-option="icon"]').uncheck();
     await expect(page.locator('.de-custom-field-name').first()).toHaveValue('title');
     await expect(page.locator('.de-custom-field-setting').first()).toHaveValue('Keep me');
     await expect(page.locator('.de-custom-field-name')).toHaveCount(4);
@@ -929,7 +930,7 @@ screens[1] = {
         key: 'grid_text',
         title: 'Keep me',
         width: 12,
-        icon: 'fas fa-heading',
+        icon: '',
         custom_fields: {
           c: { legacy: true },
           layout: 1,

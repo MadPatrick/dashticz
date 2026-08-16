@@ -164,6 +164,7 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   assert.match(source, /\^\[A-Za-z_\$\]/);
   assert.match(source, /positive integer idx/);
   assert.match(source, /configwriter_special_block_props/);
+  assert.match(writer, /array_key_exists\('icon', \$block\) && \$block\['icon'\] !== null/);
   assert.match(source, /custom_fields/);
   assert.match(source, /Invalid or reserved custom device field/);
   assert.match(source, /_validate_custom_device_value/);

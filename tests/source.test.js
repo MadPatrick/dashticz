@@ -768,6 +768,7 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(deviceEditor, /specialEntry\.icon = titleOptions\.iconValue \|\| SEPARATOR_DEFAULT_ICON;/);
   assert.match(deviceEditor, /kind === 'title' && typeof definition\.icon === 'undefined'[\s\S]*\? SEPARATOR_DEFAULT_ICON/);
   assert.match(blockTitle, /defaultCfg:\s*\{[\s\S]*icon: 'fas fa-heading'/);
+  assert.match(configWriter, /if \(array_key_exists\('icon', \$block\) && \$block\['icon'\] !== null\) \{\s*\n\s*\$props\['icon'\] = \(string\)\$block\['icon'\];/);
 
   // Widget gears opened from Device Editor use the complete Widget Editor modal/save model.
   assert.match(deviceEditor, /DashticzWidgetEditor\.openConfig\(widget\.id/);
