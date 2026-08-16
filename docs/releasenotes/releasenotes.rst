@@ -6,6 +6,30 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.43.3 beta (16-8-2026)
+-------------------------
+
+* **Fixes**
+
+- Fixed the Basic clock leaving large unused margins on a wide/short block:
+  it was sized to fit inside a square (``min(availW, availH)``), instead of
+  actually measuring the rendered text and filling both the width and
+  height of the block.
+- All four clock types (Basic, Station, Flip, Hayman) now keep resizing
+  live while dragging a block in the Grid Layout Editor, instead of only
+  picking up the new size after a save/reload - the same
+  ``ResizeObserver``-based approach already used by the Dial widget.
+- Fixed a runaway grow-remeasure-grow loop specific to grid screens: the
+  clock components measured ``.dt_block``'s own box, which a grid item's
+  automatic minimum size can inflate past its actual grid row (its
+  ``height: 100%`` only *looks* fixed); each resize picked up that inflated
+  height and grew it further. They now measure the outer, CSS-Grid-fixed
+  mount point instead, same as Dial's ``_dialFitSize()``.
+- Fixed the Flip clock not resizing at all when its block changed size.
+- Fixed the Hayman clock rendering with an oversized, overlapping face
+  (digits touching, the ':' separators hidden behind them) instead of
+  scaling with the block.
+
 v3.43.2 beta (16-8-2026)
 -------------------------
 

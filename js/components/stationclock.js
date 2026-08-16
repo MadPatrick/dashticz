@@ -40,7 +40,20 @@ function clockFitSize(me, fallback) {
     $mount.innerWidth() || 0,
     fallback || 0
   );
-  var availH = ($block.length ? $block.height() : 0) - titleHeight - stateMarginV;
+  // In a grid, the outer mount point owns the live row/column dimensions (a
+  // hard, CSS-Grid-track-sized box); .dt_block only *looks* fixed (height:
+  // 100% !important) but a grid item's automatic minimum size still grows to
+  // fit its content unless the item itself clips overflow, which
+  // .dt-grid-item doesn't. Measuring .dt_block here would read that
+  // already-inflated height back (the canvas's own square width/height is
+  // .dt_block's content), feeding a runaway grow-remeasure-grow loop with
+  // every ResizeObserver tick. Same fix as js/components/dial.js's
+  // _dialFitSize().
+  var inGrid = $mount.hasClass('dt-grid-item');
+  var availH =
+    (inGrid ? $mount.outerHeight() : $block.length ? $block.height() : 0) -
+    titleHeight -
+    stateMarginV;
   var scale = Number(me.block.scale);
   if (!isFinite(scale) || scale <= 0) scale = 1;
   var base = availH > 0 ? Math.min(availW, availH) : availW;
@@ -115,6 +128,31 @@ var DT_stationclock = {
     Dashticz.setInterval(me, function () {
       clock.draw();
     }, 50);
+
+    // Keep the clock's size in sync with live editor drag-resizing (grid
+    // row/column span, classic column width) and not just after a
+    // save+reload - same ResizeObserver pattern as js/components/dial.js.
+    // The already-running 50ms draw() loop above reads the canvas's own
+    // width/height on every frame, so simply resizing that element in place
+    // is enough - no need to recreate the StationClock instance. Observing
+    // the *outer* mount point (rather than the inner canvas being resized)
+    // avoids the observer reacting to its own writes.
+    if (typeof ResizeObserver !== 'undefined' && me.$mountPoint && me.$mountPoint.length) {
+      me.stationClockResizeObserver = new ResizeObserver(function () {
+        var canvas = document.getElementById('clock' + me.mountPoint);
+        if (!canvas) return;
+        var newWidth = clockFitSize(me, 120);
+        canvas.width = newWidth;
+        canvas.height = newWidth;
+      });
+      me.stationClockResizeObserver.observe(me.$mountPoint[0]);
+    }
+  },
+  destroy: function (me) {
+    if (me.stationClockResizeObserver) {
+      me.stationClockResizeObserver.disconnect();
+      me.stationClockResizeObserver = null;
+    }
   },
 };
 

@@ -38,6 +38,17 @@
   position: relative;
   flex: 1;
 }
+/* Used only while js/components/haymanclock.js's fitSize() measures the
+   natural (unstretched) size of the day/hours/minutes/seconds row - shrinks
+   the container and its columns to their real content width instead of the
+   flex:1/space-evenly stretch used for the actual rendered clock. */
+.haymanclock .clock-container.hc-measuring {
+  display: inline-flex;
+  width: auto;
+}
+.haymanclock .clock-container.hc-measuring .clock-col {
+  flex: 0 0 auto;
+}
 .haymanclock .clock-col:not(:last-child):before,
 .haymanclock .clock-col:not(:last-child):after {
   content: '';

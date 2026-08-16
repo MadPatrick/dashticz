@@ -1334,7 +1334,12 @@ test('Hayman clock does not depend on Moment locale internals for rendering', ()
   assert.match(source, /var now = new Date\(\)/);
   assert.match(source, /new Intl\.DateTimeFormat/);
   assert.match(source, /\.fromNow\(true\)/);
-  assert.match(source, /updateTime\(\);\s*Dashticz\.setInterval/);
+  // updateTime() is now also called once, early, before the template
+  // renders - so fitSize()'s measurement sees real day/hours/minutes/
+  // seconds digits instead of empty ones - in addition to the interval
+  // that keeps it ticking every second.
+  assert.match(source, /updateTime\(\);\s*\n\s*\n\s*\/\/ Render into \.dt_state/);
+  assert.match(source, /Dashticz\.setInterval\(me, function \(\) \{\s*\n\s*updateTime\(\);/);
   assert.doesNotMatch(source, /moment\(\)\.format\(/);
   assert.doesNotMatch(source, /_relativeTime/);
 });
@@ -1359,7 +1364,7 @@ test('clock components use public date APIs and a valid seconds setting', () => 
   // px "Size" field or a hard cap unrelated to the block's own size.
   assert.doesNotMatch(basicClock, /me\.block\.size/);
   assert.doesNotMatch(basicClock, /maxFontSize/);
-  assert.match(basicClock, /\$block\.css\('font-size', fontSize\)/);
+  assert.match(basicClock, /\$block\.css\('font-size', REF \* fitScale \* scale\)/);
   assert.match(stationClock, /function clockFitSize/);
   assert.doesNotMatch(stationClock, /me\.block\.size/);
   assert.doesNotMatch(stationClock, /me\.block\.maxSize/);
@@ -3203,7 +3208,23 @@ test('Clock widgets (Basic/Station/Flip/Hayman) get a default icon and correctly
 
   assert.match(stationclock, /var \$title = \$mount\.find\('\.dt_title'\)\.first\(\);/);
   assert.match(stationclock, /var \$state = \$mount\.find\('\.dt_state'\)\.first\(\);/);
-  assert.match(stationclock, /var availH = \(\$block\.length \? \$block\.height\(\) : 0\) - titleHeight - stateMarginV;/);
+  // A grid item's own box is a hard, CSS-Grid-track-sized box; .dt_block
+  // only *looks* fixed (height: 100% !important) but a grid item's
+  // automatic minimum size still grows to fit its content unless the item
+  // itself clips overflow, which .dt-grid-item doesn't. Measuring .dt_block
+  // there would read that already-inflated height back, feeding a runaway
+  // grow-remeasure-grow loop with every ResizeObserver tick - so all four
+  // clock components measure the outer mount point instead, in grid mode
+  // (same fix as js/components/dial.js's _dialFitSize()).
+  [basicclock, flipclock, haymanclock].forEach(function (source, i) {
+    var name = ['basicclock', 'flipclock', 'haymanclock'][i];
+    assert.match(source, /me\.\$mountPoint && me\.\$mountPoint\.hasClass\('dt-grid-item'\)/, name);
+  });
+  assert.match(stationclock, /var inGrid = \$mount\.hasClass\('dt-grid-item'\);/);
+  assert.match(
+    stationclock,
+    /var availH =\s*\n\s*\(inGrid \? \$mount\.outerHeight\(\) : \$block\.length \? \$block\.height\(\) : 0\) -/
+  );
 
   // The JS-side subtraction above still isn't a hard guarantee: .dt_block's
   // own min-height: 100% (creative.css, shared by every grid block) is only

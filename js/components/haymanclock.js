@@ -46,32 +46,6 @@ var DT_haymanclock = {
   },
   run: function (me) {
     templateEngine.load('clock_hayman').then(function (template) {
-      var $block = $(me.mountPoint + ' .dt_block');
-      var $title = $(me.mountPoint + ' .dt_title');
-      var $state = $(me.mountPoint + ' .dt_state');
-      // .dt_block's height includes the title bar (built by dashticz.js's
-      // renderTitle()) and .dt_state's own 5px/5px vertical margin (see
-      // creative.css), so sizing the clock to the full block height pushed
-      // it past the block's own bottom edge and needed an oversized block
-      // just to avoid a scrollbar. Same fix as js/components/frame.js.
-      var titleHeight = $title.length && $title.is(':visible') ? $title.outerHeight(true) : 0;
-      var stateMarginV = $state.length
-        ? (parseFloat($state.css('margin-top')) || 0) + (parseFloat($state.css('margin-bottom')) || 0)
-        : 0;
-      var availW = $block.width() || $(me.mountPoint).width() || 120;
-      var availH = ($block.height() || $(me.mountPoint).height() || 0) - titleHeight - stateMarginV;
-      var scale = Number(me.block.scale);
-      if (!isFinite(scale) || scale <= 0) scale = 1;
-      var base = availH > 0 ? Math.min(availW, availH) : availW;
-      var width = base * scale;
-      if (availW > 0) width = Math.min(width, availW);
-      if (availH > 0) width = Math.min(width, availH);
-      me.block.clockwidth = Math.floor(width) + 'px';
-      me.block.fontsize = Math.max(8, (width / 40));
-      // Render into .dt_state, not .dt_block: .dt_block also holds .dt_title
-      // (built by dashticz.js's renderTitle() from block.title/hide_title),
-      // and overwriting .dt_block wipes that title back out right after it's set.
-      $(me.mountPoint + ' .dt_state').html(template(me.block));
       function updateTime() {
         var now = new Date();
         var hours = now.getHours() || 24;
@@ -105,11 +79,117 @@ var DT_haymanclock = {
         );
       }
 
+      // Set the --timer-* custom properties (read by .clock-timer:before's
+      // content in haymanclock.css) before the template's descendants exist,
+      // so the day/hours/minutes/seconds digits are already real when
+      // fitSize() below measures them, not empty.
       updateTime();
+
+      // Render into .dt_state, not .dt_block: .dt_block also holds .dt_title
+      // (built by dashticz.js's renderTitle() from block.title/hide_title),
+      // and overwriting .dt_block wipes that title back out right after it's
+      // set. clockwidth/fontsize start as harmless placeholders - fitSize()
+      // below immediately replaces them with the real, measured values, all
+      // within the same synchronous pass so nothing is visibly painted first.
+      me.block.clockwidth = 'auto';
+      me.block.fontsize = 16;
+      $(me.mountPoint + ' .dt_state').html(template(me.block));
+
+      function fitSize() {
+        var $block = $(me.mountPoint + ' .dt_block');
+        var $title = $(me.mountPoint + ' .dt_title');
+        var $state = $(me.mountPoint + ' .dt_state');
+        // .dt_block's height includes the title bar (built by dashticz.js's
+        // renderTitle()) and .dt_state's own 5px/5px vertical margin (see
+        // creative.css), so sizing the clock to the full block height pushed
+        // it past the block's own bottom edge and needed an oversized block
+        // just to avoid a scrollbar. Same fix as js/components/frame.js.
+        var titleHeight = $title.length && $title.is(':visible') ? $title.outerHeight(true) : 0;
+        var stateMarginV = $state.length
+          ? (parseFloat($state.css('margin-top')) || 0) + (parseFloat($state.css('margin-bottom')) || 0)
+          : 0;
+        // In a grid, the outer mount point owns the live row/column
+        // dimensions (a hard, CSS-Grid-track-sized box); .dt_block only
+        // *looks* fixed (height: 100% !important) but a grid item's
+        // automatic minimum size still grows to fit its content unless the
+        // item itself clips overflow, which .dt-grid-item doesn't.
+        // Measuring .dt_block here would read that already-inflated height
+        // back, feeding a runaway grow-remeasure-grow loop with every
+        // ResizeObserver tick. Same fix as js/components/dial.js's
+        // _dialFitSize().
+        var inGrid = me.$mountPoint && me.$mountPoint.hasClass('dt-grid-item');
+        var $sizeBox = inGrid ? me.$mountPoint : $block;
+        var availW = $sizeBox.outerWidth() || $(me.mountPoint).width() || 120;
+        var availH = ($sizeBox.outerHeight() || $(me.mountPoint).height() || 0) - titleHeight - stateMarginV;
+        if (availW <= 0 || availH <= 0) return;
+        var scale = Number(me.block.scale);
+        if (!isFinite(scale) || scale <= 0) scale = 1;
+
+        // .clock-container's 4 columns are flex:1 (they always stretch to
+        // fill whatever width they're given), so measuring the real element
+        // only ever reports back the width we last set it to, not how much
+        // room the day/hours/minutes/seconds digits actually need. Measure
+        // it shrink-wrapped (display:inline-flex, columns flex:0 0 auto) at
+        // a reference font-size to get that real natural box, then scale it
+        // to fill the available space on both axes - with GAP_FACTOR extra
+        // width reserved, since the ':' separators are absolutely positioned
+        // just outside each column and get hidden behind the next column's
+        // digits without that slack (the original bug report here).
+        var $container = $(me.mountPoint + ' .clock-container');
+        if (!$container.length) return;
+        var GAP_FACTOR = 1.15;
+        var REF = 100;
+        // A previous fitSize() call may have left an inline width on
+        // $container (set below); inline styles always beat the
+        // .hc-measuring class's `width: auto`, so it must be cleared first
+        // or every measurement after the first just re-measures its own
+        // last output instead of the container's true natural size.
+        $container
+          .css({ 'font-size': REF + 'px', width: '' })
+          .addClass('hc-measuring');
+        var naturalW = $container.outerWidth() || 0;
+        var naturalH = $container.outerHeight() || 0;
+        $container.removeClass('hc-measuring');
+        if (naturalW <= 0 || naturalH <= 0) return;
+
+        var fitScale = Math.min(
+          availW / (naturalW * GAP_FACTOR),
+          availH / naturalH
+        ) * scale;
+        var fontSize = Math.max(8, REF * fitScale);
+        var width = Math.max(1, naturalW * GAP_FACTOR * fitScale);
+
+        me.block.fontsize = fontSize;
+        me.block.clockwidth = Math.floor(width) + 'px';
+        $container.css({
+          width: me.block.clockwidth,
+          'font-size': fontSize + 'px',
+        });
+      }
+
+      fitSize();
+
+      // Keep the clock's size in sync with live editor drag-resizing (grid
+      // row/column span, classic column width) and not just after a
+      // save+reload - same ResizeObserver pattern as js/components/dial.js.
+      // Observing the *outer* mount point (rather than .clock-container,
+      // which fitSize() resizes) avoids the observer reacting to its own
+      // writes.
+      if (typeof ResizeObserver !== 'undefined' && me.$mountPoint && me.$mountPoint.length) {
+        me.haymanClockResizeObserver = new ResizeObserver(fitSize);
+        me.haymanClockResizeObserver.observe(me.$mountPoint[0]);
+      }
+
       Dashticz.setInterval(me, function () {
         updateTime();
       }, 1000);
     });
+  },
+  destroy: function (me) {
+    if (me.haymanClockResizeObserver) {
+      me.haymanClockResizeObserver.disconnect();
+      me.haymanClockResizeObserver = null;
+    }
   },
 };
 
