@@ -1809,7 +1809,11 @@ test('garbage dates use the selected interface language', () => {
   assert.match(garbage, /localizedDate\.format\('dddd'\)/);
   assert.match(
     styles,
-    /\.trash \.state\s*\{[^}]*font-size:\s*calc\(var\(--font-small\) - 2px\) !important;[^}]*transform:\s*translateY\(-10px\);/s
+    /\.trash \.state\s*\{[^}]*font-size:\s*calc\(var\(--font-small\) - 2px\) !important;[^}]*margin-top:\s*-10px;/s
+  );
+  assert.match(
+    styles,
+    /> \.dt-grid-item > \.trash\s*\{[^}]*height:\s*100% !important;[^}]*min-height:\s*0 !important;[^}]*overflow:\s*hidden !important;/s
   );
 });
 
