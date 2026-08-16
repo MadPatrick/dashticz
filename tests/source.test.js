@@ -646,6 +646,7 @@ test('screen editor add menu exposes device, widget, custom-device and separator
 test('device and widget config editors share full widget config and preserve hidden device fields', () => {
   const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
   const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
+  const saveWidgets = fs.readFileSync(path.join(root, 'js/savewidgets.php'), 'utf8');
   const saveBlocks = fs.readFileSync(path.join(root, 'js/saveblocks.php'), 'utf8');
   const configWriter = fs.readFileSync(path.join(root, 'js/configwriter.php'), 'utf8');
   const layoutEditor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
@@ -685,8 +686,25 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(deviceEditor, /var pendingShowTitle = updated\.show_title !== false/);
   assert.match(deviceEditor, /special\.showTitle = pendingShowTitle/);
   assert.match(deviceEditor, /deviceTitleVisible\[ck\] = pendingShowTitle/);
-  assert.match(widgetEditor, /options\.hide_data !== true/);
-  assert.match(widgetEditor, /hide_data: !\$cfgModal\.find\('\[data-block-option="hide_data"\]'\)\.is\(':checked'\)/);
+  // Catalog Widget Config only exposes Icon and Title. Existing hide_data and
+  // last_update values remain hydrated, preserved and accepted by the writer;
+  // Device Config retains its separate Data/Updated controls above.
+  const widgetOptionsStart = widgetEditor.indexOf('function _widgetBlockOptionsHtml');
+  const widgetOptionsEnd = widgetEditor.indexOf('function _buildConfigModalHtml', widgetOptionsStart);
+  const widgetOptionsBody = widgetEditor.substring(widgetOptionsStart, widgetOptionsEnd);
+  assert.match(widgetOptionsBody, /\['icon', _t\('icon', 'Icon'\), options\.icon\]/);
+  assert.match(widgetOptionsBody, /\['show_title', _t\('show_title', 'Title'\), options\.show_title\]/);
+  assert.doesNotMatch(widgetOptionsBody, /data-block-option="hide_data"/);
+  assert.doesNotMatch(widgetOptionsBody, /data-block-option="last_update"/);
+  assert.match(widgetEditor, /hide_data: existingBlockOptions\.hide_data === true/);
+  assert.match(widgetEditor, /last_update: existingBlockOptions\.last_update === true/);
+  assert.match(widgetEditor, /options\.hide_data = definition\.hide_data === true/);
+  assert.match(widgetEditor, /options\.last_update = definition\.last_update === true/);
+  assert.match(widgetEditor, /entry\.hide_data = blockOptions\.hide_data === true/);
+  assert.match(widgetEditor, /entry\.last_update = blockOptions\.last_update === true/);
+  assert.match(saveWidgets, /'icon', 'hide_data', 'last_update', 'hide_title'/);
+  assert.match(saveWidgets, /if \(!empty\(\$widget\['hide_data'\]\)\)/);
+  assert.match(saveWidgets, /if \(!empty\(\$widget\['last_update'\]\)\)/);
   assert.match(deviceEditor, /de-config-options-five/);
   assert.match(styles, /\.de-config-options-three[\s\S]*grid-template-columns: repeat\(3/);
   assert.match(styles, /\.de-config-options-four[\s\S]*grid-template-columns: repeat\(4/);
@@ -781,6 +799,57 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(styles, /\.dle-remove-button \.fas[\s\S]*font-size: 16px !important/);
 });
 
+test('savewidgets accepts only exact security panel lock modes', () => {
+  const source = fs.readFileSync(path.join(root, 'js/savewidgets.php'), 'utf8');
+  const branchStart = source.indexOf("} elseif ($type === 'security_panel_lock') {");
+  const branchEnd = source.indexOf('} else {', branchStart);
+
+  assert.notEqual(branchStart, -1, 'security_panel_lock branch not found');
+  assert.notEqual(branchEnd, -1, 'security_panel_lock branch end not found');
+
+  const branch = source.slice(branchStart, branchEnd);
+  const whitelist = branch.match(
+    /in_array\(\$value, \[([^\]]+)\], true\)/
+  );
+  assert.ok(whitelist, 'security_panel_lock must validate the original value strictly');
+  assert.doesNotMatch(branch, /is_numeric|\(int\)\$value[\s\S]*in_array/);
+  assert.match(
+    branch,
+    /if \(in_array\(\$value, \[[^\]]+\], true\)\) \{\s*\$configSettings\[\$key\] = \(int\)\$value;/
+  );
+
+  const allowedValues = whitelist[1].split(',').map((literal) => {
+    const value = literal.trim();
+    return /^'.*'$/.test(value) ? value.slice(1, -1) : Number(value);
+  });
+  const accepts = (value) =>
+    allowedValues.some(
+      (allowed) => typeof allowed === typeof value && allowed === value
+    );
+
+  for (const value of [0, 1, 2, '0', '1', '2']) {
+    assert.equal(accepts(value), true, `expected ${String(value)} to be accepted`);
+  }
+  for (const value of [
+    -1,
+    3,
+    1.5,
+    2.9,
+    -0.5,
+    '1.5',
+    '2.9',
+    '-0.5',
+    '3',
+    'foo',
+    '',
+    null,
+    true,
+    false,
+  ]) {
+    assert.equal(accepts(value), false, `expected ${String(value)} to be rejected`);
+  }
+});
+
 test('widget editor exposes the supported catalog and keeps legacy options out of settings UI', () => {
   const simpleBlock = fs.readFileSync(
     path.join(root, 'js/components/simpleblock.js'),
@@ -802,12 +871,29 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
     path.join(root, 'js/savewidgets.php'),
     'utf8'
   );
+  const blocks = fs.readFileSync(path.join(root, 'js/blocks.js'), 'utf8');
+  const stationClock = fs.readFileSync(
+    path.join(root, 'js/components/stationclock.js'),
+    'utf8'
+  );
+  const flipClock = fs.readFileSync(
+    path.join(root, 'js/components/flipclock.js'),
+    'utf8'
+  );
+  const securityPanel = fs.readFileSync(
+    path.join(root, 'js/components/secpanel.js'),
+    'utf8'
+  );
   const dashticz = fs.readFileSync(path.join(root, 'js/dashticz.js'), 'utf8');
   const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
   const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
   const weather = fs.readFileSync(
     path.join(root, 'js/components/weather.js'),
+    'utf8'
+  );
+  const legacyOwmWeather = fs.readFileSync(
+    path.join(root, 'js/weather_owm.js'),
     'utf8'
   );
   const garbage = fs.readFileSync(
@@ -863,8 +949,95 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
     'news',
   ]) {
     assert.match(widgetEditor, new RegExp(`id: '${id}'`));
+  }
+  for (const id of [
+    'weather',
+    'garbage',
+    'spotify',
+    'sonarr',
+    'clock',
+    'calendar',
+    'secpanel',
+    'trafficinfo',
+    'map',
+    'longfonds',
+    'news',
+  ]) {
     assert.match(settings, new RegExp(`id: '${id}'`));
   }
+  for (const id of ['publictransport', 'alarmmeldingen', 'camera', 'moon']) {
+    assert.doesNotMatch(settings, new RegExp(`id: '${id}'`));
+  }
+  const securitySettings = settings.slice(
+    settings.indexOf("id: 'secpanel'"),
+    settings.indexOf("id: 'trafficinfo'")
+  );
+  assert.match(securitySettings, /security_panel_lock:/);
+  assert.match(securitySettings, /type: 'select'/);
+  assert.match(securitySettings, /noEmptyOption: true/);
+  assert.match(securitySettings, /security_panel_lock_disabled/);
+  assert.match(securitySettings, /security_panel_lock_away/);
+  assert.match(securitySettings, /security_panel_lock_home_away/);
+  assert.doesNotMatch(securitySettings, /security_button_icons:/);
+  const clockSettings = settings.slice(
+    settings.indexOf("id: 'clock'"),
+    settings.indexOf("id: 'calendar'")
+  );
+  assert.match(clockSettings, /boss_stationclock:/);
+  assert.match(clockSettings, /hide_seconds:/);
+  assert.match(clockSettings, /hide_seconds_stationclock:/);
+  const mapSettings = settings.slice(
+    settings.indexOf("id: 'map'"),
+    settings.indexOf("id: 'longfonds'")
+  );
+  assert.match(mapSettings, /gm_api:/);
+  assert.match(mapSettings, /gm_zoomlevel:/);
+  assert.match(mapSettings, /gm_latitude:/);
+  assert.match(mapSettings, /gm_longitude:/);
+  assert.match(blocks, /settings\['security_button_icons'\]/);
+  assert.match(blocks, /settings\['gm_zoomlevel'\]/);
+  assert.match(blocks, /settings\['gm_latitude'\]/);
+  assert.match(blocks, /settings\['gm_longitude'\]/);
+  assert.match(main, /if \(settings\['security_panel_lock'\]\)/);
+  assert.match(
+    securityPanel,
+    /secstatus == 1 && settings\['security_panel_lock'\] == 2/
+  );
+  assert.match(stationClock, /settings\['boss_stationclock'\]/);
+  assert.match(stationClock, /settings\['hide_seconds_stationclock'\]/);
+  assert.match(flipClock, /settings\['hide_seconds'\]/);
+  assert.match(savewidgets, /'security_button_icons'\s*=>\s*'bool'/);
+  assert.match(
+    savewidgets,
+    /'security_panel_lock'\s*=>\s*'security_panel_lock'/
+  );
+  assert.match(
+    savewidgets,
+    /in_array\(\$value, \[0, 1, 2, '0', '1', '2'\], true\)/
+  );
+  assert.match(savewidgets, /'idx_moonpicture'\s*=>\s*'string'/);
+  assert.match(savewidgets, /'gm_zoomlevel'\s*=>\s*'number'/);
+  assert.match(savewidgets, /'boss_stationclock'\s*=>\s*'string'/);
+  assert.match(savewidgets, /'owm_days'\s*=>\s*'bool'/);
+  assert.match(savewidgets, /'translate_windspeed'\s*=>\s*'bool'/);
+  assert.match(savewidgets, /'garbage_width'\s*=>\s*'number'/);
+  assert.match(legacyOwmWeather, /settings\['owm_days'\]/);
+  assert.match(weather, /\/\/\s*days: choose\(settings\['owm_days'\], true\)/);
+  assert.match(garbage, /width: settings\['garbage_width'\] \|\| 12/);
+  const calendarSettings = settings.slice(
+    settings.indexOf("id: 'calendar'"),
+    settings.indexOf("id: 'sonarr'")
+  );
+  assert.match(calendarSettings, /calendarurl_link/);
+  assert.match(calendarSettings, /calendarurl_link_help/);
+  assert.match(calendar, /settings\['calendarurl'\]/);
+  assert.match(calendar, /calurl\.length > 0/);
+  assert.equal(english.settings.localize.calendarurl_link, 'Full calendar link');
+  assert.match(english.settings.localize.calendarurl_link_help, /ICS source/);
+  assert.equal(
+    dutch.settings.localize.calendarurl_link,
+    'Link naar volledige kalender'
+  );
   assert.doesNotMatch(settings, /settingList\['screen'\]\['security_button_icons'\]/);
   assert.doesNotMatch(settings, /settingList\['localize'\]\['gm_api'\]/);
   assert.doesNotMatch(settings, /settingList\['other'\]\['longfonds_zipcode'\]/);
@@ -882,6 +1055,50 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
   assert.match(widgetEditor, /id="we-calendar-add"/);
   assert.match(widgetEditor, /class="we-calendar-row/);
   assert.match(widgetEditor, /we-cfg-clock-type/);
+  assert.doesNotMatch(widgetEditor, /_cfgField\('hide_seconds',/);
+  assert.doesNotMatch(widgetEditor, /_cfgField\('boss_stationclock',/);
+  assert.doesNotMatch(widgetEditor, /_cfgField\('hide_seconds_stationclock',/);
+  assert.doesNotMatch(
+    widgetEditor,
+    /clock:\s*\['boss_stationclock', 'hide_seconds', 'hide_seconds_stationclock'\]/
+  );
+  for (const field of [
+    'owm_days',
+    'translate_windspeed',
+    'garbage_width',
+    'security_button_icons',
+    'security_panel_lock',
+    'gm_zoomlevel',
+    'gm_latitude',
+    'gm_longitude',
+    'idx_moonpicture',
+  ]) {
+    assert.doesNotMatch(
+      widgetEditor,
+      new RegExp(`_cfgField\\('${field}',`)
+    );
+  }
+  assert.match(widgetEditor, /_cfgField\('gm_api',/);
+  assert.match(widgetEditor, /_cfgField\(\s*'showSeconds',/);
+  assert.match(widgetEditor, /_cfgField\('boss',/);
+  assert.match(widgetEditor, /_cfgField\('secondhand',/);
+  assert.doesNotMatch(widgetEditor, /boss_stationclock: _s\(/);
+  assert.doesNotMatch(widgetEditor, /hide_seconds: _n\(/);
+  assert.doesNotMatch(widgetEditor, /hide_seconds_stationclock: _n\(/);
+  // Hidden legacy/global values remain hydrated and re-submitted unchanged so
+  // editing another option cannot erase a hand-written CONFIG.js value.
+  assert.match(widgetEditor, /owm_days: _n\('owm_days'\)/);
+  assert.match(widgetEditor, /translate_windspeed: _n\('translate_windspeed', 1\)/);
+  assert.match(widgetEditor, /garbage_width: _s\('garbage_width'\)/);
+  assert.match(widgetEditor, /security_button_icons: _n\('security_button_icons'\)/);
+  assert.doesNotMatch(widgetEditor, /security_panel_lock: _n\(/);
+  assert.match(widgetEditor, /gm_zoomlevel: _s\('gm_zoomlevel'\)/);
+  assert.match(widgetEditor, /idx_moonpicture: _s\('idx_moonpicture'\)/);
+  assert.match(widgetEditor, /weather:\s*\[[\s\S]*?'owm_days'[\s\S]*?'translate_windspeed'/);
+  assert.match(widgetEditor, /garbage:\s*\[[\s\S]*?'garbage_width'/);
+  assert.match(widgetEditor, /secpanel: \['security_button_icons'\]/);
+  assert.match(widgetEditor, /map: \['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude'\]/);
+  assert.match(widgetEditor, /moon: \['idx_moonpicture'\]/);
   assert.match(widgetEditor, /id="we-camera-add"/);
   assert.match(widgetEditor, /class="we-camera-row/);
   assert.match(widgetEditor, /weather:\s*\{[\s\S]*provider:/);

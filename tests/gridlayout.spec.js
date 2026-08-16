@@ -307,6 +307,59 @@ screens[1] = {
     expect(sunrise.icon).toBe('fas fa-sun');
   });
 
+  test('Widget Config hides legacy globals and keeps current widget controls', async ({
+    page,
+  }) => {
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+    await page.addScriptTag({
+      url: new URL('/js/widgeteditor.js', dashboardUrl).href,
+    });
+    await page.evaluate('DashticzWidgetEditor.open()');
+    await expect(page.locator('#widgeteditorpopup')).toBeVisible();
+
+    const cases = [
+      {
+        id: 'weather',
+        hidden: ['owm-days', 'translate-windspeed'],
+        visible: ['owm-api'],
+      },
+      { id: 'garbage', hidden: ['garbage-width'], visible: ['garbage-company'] },
+      {
+        id: 'secpanel',
+        hidden: ['security-button-icons', 'security-panel-lock'],
+        visible: [],
+      },
+      {
+        id: 'map',
+        hidden: ['gm-zoomlevel', 'gm-latitude', 'gm-longitude'],
+        visible: ['gm-api'],
+      },
+      { id: 'moon', hidden: ['idx-moonpicture'], visible: [] },
+    ];
+
+    for (const item of cases) {
+      await page.locator(`.we-config-btn[data-widget-id="${item.id}"]`).click();
+      await expect(page.locator('#we-config-popup')).toBeVisible();
+      for (const field of item.hidden) {
+        await expect(page.locator(`#we-cfg-${field}`)).toHaveCount(0);
+      }
+      for (const field of item.visible) {
+        await expect(page.locator(`#we-cfg-${field}`)).toBeVisible();
+      }
+      await page.locator('#we-config-popup .btn-secondary').click();
+      await expect(page.locator('#we-config-popup')).toHaveCount(0);
+    }
+
+    await page.locator('.we-config-btn[data-widget-id="clock"]').click();
+    await expect(page.locator('#we-config-popup')).toBeVisible();
+    await page.locator('#we-cfg-clock-type').selectOption('flipclock');
+    await expect(page.locator('#we-cfg-showSeconds')).toBeVisible();
+    await page.locator('#we-cfg-clock-type').selectOption('stationclock');
+    await expect(page.locator('#we-cfg-boss')).toBeVisible();
+    await expect(page.locator('#we-cfg-secondhand')).toBeVisible();
+  });
+
   test('converts a Wizard column screen to a compact grid after confirmation', async ({
     page,
   }) => {
@@ -812,9 +865,19 @@ screens[1] = {
           `
 blocks['grid_weather'] = {
   type: 'weather', widget_provider: 'openweather', title: 'Forecast',
-  icon: 'fas fa-cloud', c: 'legacy-grid', emptyObject: {}, emptyArray: [],
+  icon: 'fas fa-cloud', hide_data: true, last_update: true,
+  c: 'legacy-grid', emptyObject: {}, emptyArray: [],
   futureOption: {enabled: true}, grid: {x: 2, y: 2, w: 8, h: 4}
 };
+config['owm_days'] = 1;
+config['translate_windspeed'] = 0;
+config['garbage_width'] = 9;
+config['security_button_icons'] = 1;
+config['security_panel_lock'] = 2;
+config['gm_zoomlevel'] = 11;
+config['gm_latitude'] = '52.1';
+config['gm_longitude'] = '5.1';
+config['idx_moonpicture'] = '817';
 screens[1] = {
   layout: 'grid', gridColumns: 24, rowHeight: 20, gap: 5,
   mobileLayout: 'stack', blocks: ['grid_weather']
@@ -860,10 +923,12 @@ screens[1] = {
     await expect(page.locator('#we-config-popup')).toBeVisible();
     await expect(page.locator('#we-cfg-weather-provider')).toBeVisible();
 
-    for (const option of ['icon', 'hide_data', 'show_title']) {
+    for (const option of ['icon', 'show_title']) {
       await expect(page.locator(`[data-block-option="${option}"]`)).toBeChecked();
     }
-    await expect(page.locator('[data-block-option="last_update"]')).not.toBeChecked();
+    await expect(page.locator('[data-block-option="hide_data"]')).toHaveCount(0);
+    await expect(page.locator('[data-block-option="last_update"]')).toHaveCount(0);
+    await expect(page.getByText('Custom fields', { exact: true })).toBeVisible();
     await expect(page.locator('[data-block-option="icon"]')).toHaveCSS('width', '32px');
     await expect(page.locator('[data-block-option="icon"]')).toHaveCSS('height', '32px');
     await expect(page.locator('.we-custom-field-name').first()).toHaveValue('title');
@@ -885,12 +950,24 @@ screens[1] = {
     const savedWidget = widgetRequest.widgets[0];
     expect(savedWidget.title).toBe('Forecast changed');
     expect(savedWidget.icon).toBe('fas fa-cloud');
+    expect(savedWidget.hide_data).toBe(true);
+    expect(savedWidget.last_update).toBe(true);
     expect(savedWidget.custom_fields.c).toBe('legacy-grid');
     expect(savedWidget.custom_fields.emptyObject).toEqual({
       __dashticz_empty_object__: true,
     });
     expect(savedWidget.custom_fields.emptyArray).toEqual([]);
     expect(savedWidget.custom_fields.futureOption).toEqual({ enabled: true });
+    expect(widgetRequest.settings.owm_days).toBe(1);
+    expect(widgetRequest.settings.translate_windspeed).toBe(0);
+    expect(widgetRequest.settings.garbage_width).toBe('9');
+    expect(widgetRequest.settings.security_button_icons).toBe(1);
+    expect(widgetRequest.settings).not.toHaveProperty('security_panel_lock');
+    expect(await page.evaluate(() => settings.security_panel_lock)).toBe(2);
+    expect(widgetRequest.settings.gm_zoomlevel).toBe('11');
+    expect(widgetRequest.settings.gm_latitude).toBe('52.1');
+    expect(widgetRequest.settings.gm_longitude).toBe('5.1');
+    expect(widgetRequest.settings.idx_moonpicture).toBe('817');
   });
 
   test('Calendar Widget Config manages named sources without dropping calendar options', async ({
@@ -1174,6 +1251,72 @@ screens[1] = {
     await expect(notice).toBeVisible();
     await expect(notice).toContainText('tests/custom.css');
     await expect(notice).toHaveCSS('border-top-width', '2px');
+  });
+
+  test('Widget settings only show tiles with supported global settings', async ({
+    page,
+  }) => {
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `\nconfig['config_mode'] = 'custom';\nconfig['security_panel_lock'] = 2;\n`,
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+    await page.mouse.move(10, 10);
+    await page.getByRole('button', { name: 'Open settings' }).first().click();
+    await expect(page.locator('#settingspopup')).toBeVisible();
+    await page.locator('[data-settings-category="widgets"]').click();
+
+    for (const widgetId of ['publictransport', 'alarmmeldingen', 'camera', 'moon']) {
+      await expect(
+        page.locator(`.settings-widget-tile[data-widget-id="${widgetId}"]`)
+      ).toHaveCount(0);
+    }
+    await expect(
+      page.locator('.settings-widget-tile[data-widget-id="secpanel"]')
+    ).toBeVisible();
+    await page.locator('.settings-widget-tile[data-widget-id="secpanel"]').click();
+    await expect(page.locator('#setting-security_panel_lock')).toBeVisible();
+    await expect(page.locator('#setting-security_panel_lock')).toHaveValue('2');
+    await expect(page.locator('#setting-security_panel_lock option')).toHaveCount(3);
+    await expect(page.locator('#setting-security_panel_lock option').nth(0)).toHaveValue('0');
+    await expect(page.locator('#setting-security_panel_lock option').nth(1)).toHaveValue('1');
+    await expect(page.locator('#setting-security_panel_lock option').nth(2)).toHaveValue('2');
+    await expect(page.locator('#setting-security_button_icons')).toHaveCount(0);
+    await page.locator('.settings-widget-back').click();
+    await expect(
+      page.locator('.settings-widget-tile[data-widget-id="map"]')
+    ).toBeVisible();
+    await page.locator('.settings-widget-tile[data-widget-id="map"]').click();
+    for (const setting of ['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude']) {
+      await expect(page.locator(`#setting-${setting}`)).toBeVisible();
+    }
+    await page.locator('.settings-widget-back').click();
+    await expect(
+      page.locator('.settings-widget-tile[data-widget-id="clock"]')
+    ).toBeVisible();
+    await page.locator('.settings-widget-tile[data-widget-id="clock"]').click();
+    for (const setting of [
+      'boss_stationclock',
+      'hide_seconds',
+      'hide_seconds_stationclock',
+    ]) {
+      await expect(page.locator(`#setting-${setting}`)).toHaveCount(1);
+    }
+    await page.locator('.settings-widget-back').click();
+    await page.locator('.settings-widget-tile[data-widget-id="calendar"]').click();
+    await expect(page.locator('label[for="setting-calendarurl"]')).toHaveText(
+      'Full calendar link'
+    );
+    await expect(
+      page.locator('#setting-calendarurl').locator('xpath=ancestor::div[contains(@class,"settings-row")]')
+    ).toContainText('Calendar data is configured separately with an ICS source.');
   });
 
   test('Custom devices accept empty objects and arrays as typed settings', async ({

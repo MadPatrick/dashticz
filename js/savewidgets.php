@@ -87,7 +87,7 @@ $allowedSettings = [
     'calendar_maxitems'      => 'number',
     // security panel
     'security_button_icons'  => 'bool',
-    'security_panel_lock'    => 'bool',
+    'security_panel_lock'    => 'security_panel_lock',
     // traffic info
     'anwb_apikey'            => 'string',
     // google maps
@@ -165,6 +165,10 @@ if (isset($data['settings']) && is_array($data['settings'])) {
         } elseif ($type === 'waqi_layout') {
             if (in_array((string)$value, $allowedWaqiLayouts, true)) {
                 $configSettings[$key] = (string)$value;
+            }
+        } elseif ($type === 'security_panel_lock') {
+            if (in_array($value, [0, 1, 2, '0', '1', '2'], true)) {
+                $configSettings[$key] = (int)$value;
             }
         } else {
             // string: sanitize

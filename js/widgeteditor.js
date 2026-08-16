@@ -777,9 +777,6 @@ var DashticzWidgetEditor = (function () {
       },
       clock: {
         clockType: 'basicclock',
-        boss_stationclock: _s('boss_stationclock', 'RedBoss'),
-        hide_seconds: _n('hide_seconds'),
-        hide_seconds_stationclock: _n('hide_seconds_stationclock'),
         size: '',
         scale: '',
         showSeconds: 1,
@@ -831,7 +828,6 @@ var DashticzWidgetEditor = (function () {
       },
       secpanel: {
         security_button_icons: _n('security_button_icons'),
-        security_panel_lock: _n('security_panel_lock'),
       },
       alarmmeldingen: {
         rss: 'https://www.alarmeringen.nl/feeds/all.rss',
@@ -2001,9 +1997,6 @@ var DashticzWidgetEditor = (function () {
     html += '<div class="d-flex flex-wrap">';
     [
       ['icon', _t('icon', 'Icon'), options.icon],
-      // Data is a positive user-facing option: checked means visible.
-      ['hide_data', _t('data', 'Data'), options.hide_data !== true],
-      ['last_update', _t('updated', 'Updated'), options.last_update],
       ['show_title', _t('show_title', 'Title'), options.show_title],
     ].forEach(function (option) {
       html += '<label class="form-check form-check-inline mb-2">' +
@@ -2066,7 +2059,6 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField('owm_country', lw.owm_country || 'Country code', 'text', cfg.owm_country);
       fields += _cfgField('owm_lang', lw.owm_lang || 'Language code', 'text', cfg.owm_lang, null, lw.owm_lang_help || '');
       fields += _cfgField('owm_cnt', lw.owm_cnt || 'Number of periods', 'text', cfg.owm_cnt, null, lw.owm_cnt_help || '');
-      fields += _cfgField('owm_days', lw.owm_days || 'Daily forecast', 'checkbox', cfg.owm_days, null, lw.owm_days_help || '');
       fields += _cfgField('owm_min', lw.owm_min || 'Show minimum temperature', 'checkbox', cfg.owm_min, null, lw.owm_min_help || '');
       fields += _cfgHeading(lw.display || _t('display', 'Display'));
       fields += _cfgField('weather_show_rain', lw.show_rain || 'Show rain', 'checkbox', cfg.weather_show_rain);
@@ -2088,7 +2080,6 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgHeading(lw.shared_display || _t('general_display', 'General display'));
       fields += _cfgField('use_fahrenheit', lw.use_fahrenheit || 'Use Fahrenheit', 'checkbox', cfg.use_fahrenheit);
       fields += _cfgField('use_beaufort', lw.use_beaufort || 'Use Beaufort', 'checkbox', cfg.use_beaufort);
-      fields += _cfgField('translate_windspeed', lw.translate_windspeed || 'Translate wind speed', 'checkbox', cfg.translate_windspeed, null, lw.translate_windspeed_help || '');
 
     } else if (item.id === 'calendar') {
       var ccal = _calendarWidgetConfig();
@@ -2231,7 +2222,6 @@ var DashticzWidgetEditor = (function () {
         ccfg.clockFace || '24',
         clockFaceOpts
       );
-      fields += _cfgField('hide_seconds', ll.hide_seconds || 'Default: seconden verbergen', 'checkbox', ccfg.hide_seconds);
       fields += '</div>';
 
       fields +=
@@ -2247,8 +2237,6 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField('boss', _t('clock_boss', 'Boss'), 'select', ccfg.boss || 'RedBoss', bossOpts);
       fields += _cfgField('minutehandbehavior', _t('clock_minute_behavior', 'Minute-hand behavior'), 'select', ccfg.minutehandbehavior || 'BouncingMinuteHand', minuteBehOpts);
       fields += _cfgField('secondhandbehavior', _t('clock_second_behavior', 'Second-hand behavior'), 'select', ccfg.secondhandbehavior || 'OverhastySecondHand', secondBehOpts);
-      fields += _cfgField('boss_stationclock', ll.boss_stationclock || 'Default as-kap (config)', 'select', ccfg.boss_stationclock || 'RedBoss', bossOpts);
-      fields += _cfgField('hide_seconds_stationclock', ll.hide_seconds_stationclock || 'Default: seconden verbergen', 'checkbox', ccfg.hide_seconds_stationclock);
       fields += '</div>';
 
       fields +=
@@ -2274,7 +2262,6 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField('garbage_maxitems', lg.garbage_maxitems || 'Maximum items', 'text', gcfg.garbage_maxitems);
       fields += _cfgField('garbage_maxdays', lg.garbage_maxdays || 'Maximum days', 'text', gcfg.garbage_maxdays,
         null, lg.garbage_maxdays_help || 'Maximum number of days ahead to search. Default: 32.');
-      fields += _cfgField('garbage_width', lg.garbage_width || 'Width', 'text', gcfg.garbage_width);
       fields += _cfgHeading(_t('ical_google', 'iCal / Google'));
       fields += _cfgField('garbage_icalurl', lg.garbage_icalurl || 'iCal URL', 'text', gcfg.garbage_icalurl);
       fields += _cfgField('google_api_key', lg.google_api_key || 'Google API key', 'text', gcfg.google_api_key);
@@ -2295,12 +2282,6 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'spotify') {
       var spcfg = widgetConfigs.spotify || {};
       fields += _cfgField('spot_clientid', lm.spot_clientid || 'Spotify Client ID', 'text', spcfg.spot_clientid);
-
-    } else if (item.id === 'secpanel') {
-      var sec = widgetConfigs.secpanel || {};
-      var ls = lng.screen || {};
-      fields += _cfgField('security_button_icons', ls.security_button_icons || 'Iconen i.p.v. tekst', 'checkbox', sec.security_button_icons);
-      fields += _cfgField('security_panel_lock', ls.security_panel_lock || 'Security panel fullscreen', 'checkbox', sec.security_panel_lock, null, ls.security_panel_lock_help || '');
 
     } else if (item.id === 'publictransport') {
       var ptcfg = widgetConfigs.publictransport || {};
@@ -2374,9 +2355,6 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'map') {
       var mcfg = widgetConfigs.map || {};
       fields += _cfgField('gm_api', ll.gm_api || 'Google Maps API key', 'text', mcfg.gm_api);
-      fields += _cfgField('gm_zoomlevel', ll.gm_zoomlevel || 'Zoomniveau', 'text', mcfg.gm_zoomlevel);
-      fields += _cfgField('gm_latitude', ll.gm_latitude || 'Latitude', 'text', mcfg.gm_latitude);
-      fields += _cfgField('gm_longitude', ll.gm_longitude || 'Longitude', 'text', mcfg.gm_longitude);
 
     } else if (item.id === 'longfonds') {
       var lcfg = widgetConfigs.longfonds || {};
@@ -2389,10 +2367,6 @@ var DashticzWidgetEditor = (function () {
         xlarge: 'Extra large',
         xxl: 'XXL',
       });
-
-    } else if (item.id === 'moon') {
-      var mooncfg = widgetConfigs.moon || {};
-      fields += _cfgField('idx_moonpicture', lw.idx_moonpicture || 'IDX moonpicture', 'text', mooncfg.idx_moonpicture, null, lw.idx_moonpicture_help || '');
 
     } else if (item.id === 'news') {
       var ncfg = widgetConfigs.news || {};
@@ -2798,8 +2772,11 @@ var DashticzWidgetEditor = (function () {
       var pendingBlockOptions = {
         icon: $cfgModal.find('[data-block-option="icon"]').is(':checked'),
         iconValue: null,
-        hide_data: !$cfgModal.find('[data-block-option="hide_data"]').is(':checked'),
-        last_update: $cfgModal.find('[data-block-option="last_update"]').is(':checked'),
+        // Catalog widgets do not expose Data/Updated controls. Preserve values
+        // loaded from an existing CONFIG.js so a different widget edit cannot
+        // silently remove settings still supported elsewhere in Dashticz.
+        hide_data: existingBlockOptions.hide_data === true,
+        last_update: existingBlockOptions.last_update === true,
         show_title: $cfgModal.find('[data-block-option="show_title"]').is(':checked'),
         customFields: [],
         preservedFields: $.extend({}, existingBlockOptions.preservedFields || {}),
@@ -3263,7 +3240,6 @@ var DashticzWidgetEditor = (function () {
         'wu_city', 'wu_name', 'wu_country', 'use_fahrenheit', 'use_beaufort',
         'translate_windspeed',
       ],
-      clock: ['boss_stationclock', 'hide_seconds', 'hide_seconds_stationclock'],
       garbage: [
         'garbage_company', 'garbage_icalurl', 'google_api_key', 'garbage_calendar_id',
         'garbage_zipcode', 'garbage_street', 'garbage_housenumber',
@@ -3274,7 +3250,7 @@ var DashticzWidgetEditor = (function () {
       sonarr: ['sonarr_url', 'sonarr_apikey', 'sonarr_maxitems'],
       spotify: ['spot_clientid'],
       calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],
-      secpanel: ['security_button_icons', 'security_panel_lock'],
+      secpanel: ['security_button_icons'],
       trafficinfo: ['anwb_apikey'],
       map: ['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude'],
       longfonds: ['waqi_city', 'waqi_layout'],

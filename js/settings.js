@@ -545,8 +545,13 @@ var widgetSettingTiles = [
         type: 'text',
       },
       calendarurl: {
-        title: language.settings.localize.calendarurl || 'Calendar URL',
+        title:
+          language.settings.localize.calendarurl_link ||
+          'Full calendar link',
         type: 'text',
+        help:
+          language.settings.localize.calendarurl_link_help ||
+          'Link opened from calendar events. Calendar data is configured separately with an ICS source.',
       },
       calendar_maxitems: {
         title:
@@ -640,23 +645,24 @@ var widgetSettingTiles = [
     title: widgetEditorTranslations.secpanel_title || 'Security panel',
     icon: 'fas fa-shield-alt',
     settings: {
-      security_button_icons: {
-        title: language.settings.screen.security_button_icons,
-        type: 'checkbox',
-      },
       security_panel_lock: {
         title: language.settings.screen.security_panel_lock,
-        type: 'checkbox',
+        type: 'select',
+        noEmptyOption: true,
+        options: {
+          0:
+            language.settings.screen.security_panel_lock_disabled ||
+            'Disabled',
+          1:
+            language.settings.screen.security_panel_lock_away ||
+            'Armed Away',
+          2:
+            language.settings.screen.security_panel_lock_home_away ||
+            'Armed Home and Armed Away',
+        },
         help: language.settings.screen.security_panel_lock_help,
       },
     },
-  },
-  {
-    id: 'publictransport',
-    title:
-      widgetEditorTranslations.publictransport_title || 'Public transport',
-    icon: 'fas fa-train',
-    settings: {},
   },
   {
     id: 'trafficinfo',
@@ -674,18 +680,6 @@ var widgetSettingTiles = [
           'API key for ANWB traffic info (trafficinfo widget).',
       },
     },
-  },
-  {
-    id: 'alarmmeldingen',
-    title: widgetEditorTranslations.alarmmeldingen_title || '112',
-    icon: 'fas fa-bullhorn',
-    settings: {},
-  },
-  {
-    id: 'camera',
-    title: widgetEditorTranslations.camera_title || 'Cameras',
-    icon: 'fas fa-video',
-    settings: {},
   },
   {
     id: 'map',
@@ -724,18 +718,6 @@ var widgetSettingTiles = [
         title: language.settings.weather.waqi_layout,
         type: 'select',
         options: waqiLayoutOptions,
-      },
-    },
-  },
-  {
-    id: 'moon',
-    title: widgetEditorTranslations.moon_title || 'Moon',
-    icon: 'fas fa-moon',
-    settings: {
-      idx_moonpicture: {
-        title: language.settings.weather.idx_moonpicture,
-        type: 'text',
-        help: language.settings.weather.idx_moonpicture_help,
       },
     },
   },
