@@ -32,6 +32,7 @@ var DashticzDeviceEditor = (function () {
   var gridExtras     = [];   // non-device/widget blocks
   var TITLE_GRID_HEIGHT = 2;
   var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';
+  var customImageListPromise = null;
 
   function _translations() {
     var configured =
@@ -67,6 +68,10 @@ var DashticzDeviceEditor = (function () {
         configure: 'Configure',
         custom_fields: 'Custom fields',
         custom_fields_help: 'Field and Setting are written as typed block parameters in CONFIG.js.',
+        custom_images: 'Custom images',
+        loading_images: 'Loading images…',
+        no_custom_images: 'No custom images found.',
+        custom_images_error: 'Unable to load custom images.',
         custom_devices: 'Custom devices',
         slide_button: 'Slide button',
         slide_button_name: 'Button name',
@@ -780,6 +785,38 @@ var DashticzDeviceEditor = (function () {
     return 'fas fa-question';
   }
 
+  function _loadCustomImages() {
+    if (customImageListPromise) return customImageListPromise;
+    customImageListPromise = $.getJSON(
+      (settings['dashticz_php_path'] || '') + 'js/listcustomicons.php'
+    ).then(function (data) {
+      return data && Array.isArray(data.images) ? data.images : [];
+    });
+    customImageListPromise.fail(function () {
+      customImageListPromise = null;
+    });
+    return customImageListPromise;
+  }
+
+  function _renderCustomImageGrid($picker, images, selectedPath, emptyText) {
+    var $grid = $picker.find('.dt-custom-image-grid').empty();
+    $picker.find('.dt-custom-image-status').toggle(!images.length).text(
+      images.length ? '' : emptyText
+    );
+    images.forEach(function (imagePath) {
+      var filename = String(imagePath).replace(/^custom\//, '');
+      var $button = $('<button type="button" class="dt-custom-image-option"></button>')
+        .attr('data-image-path', imagePath)
+        .attr('title', filename)
+        .toggleClass('is-selected', String(selectedPath || '') === imagePath);
+      $('<img class="dt-custom-image-thumb" loading="lazy" alt="">')
+        .attr('src', 'img/' + imagePath)
+        .appendTo($button);
+      $('<span class="dt-custom-image-name"></span>').text(filename).appendTo($button);
+      $grid.append($button);
+    });
+  }
+
   function _devicePreservedFieldValues(definition) {
     var preserved = {};
     if (definition && Object.prototype.hasOwnProperty.call(definition, 'c')) {
@@ -1438,6 +1475,11 @@ var DashticzDeviceEditor = (function () {
       '<input type="text" class="form-control de-custom-field-setting" placeholder="' +
       _esc(lowerField === 'image' ? 'custom/icon.png' : t.setting) + '" value="' +
       _esc(row.setting || '') + '">' +
+      (isIconSource
+        ? '<div class="dropdown-menu dt-custom-image-picker" role="dialog" aria-label="' +
+          _esc(t.custom_images) + '"><div class="dt-custom-image-status"></div>' +
+          '<div class="dt-custom-image-grid"></div></div>'
+        : '') +
       '<button type="button" class="btn btn-outline-success de-custom-field-add" title="' +
       _esc(t.add_field) + '"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
       '<button type="button" class="btn btn-outline-danger de-custom-field-remove" title="' +
@@ -2142,6 +2184,31 @@ var DashticzDeviceEditor = (function () {
       if ($titleRow.length) $titleRow.after(rowHtml);
       else $popup.find('.de-custom-fields').prepend(rowHtml);
     }
+    function closeCustomImagePickers() {
+      $popup.find('.dt-custom-image-picker').removeClass('show');
+      $popup.find('.de-icon-field-row').removeClass('dt-custom-image-picker-open');
+    }
+    function openCustomImagePicker($row) {
+      if ($row.find('.de-icon-source').val() !== 'image') {
+        closeCustomImagePickers();
+        return;
+      }
+      var $picker = $row.find('.dt-custom-image-picker');
+      var selectedPath = String($row.find('.de-custom-field-setting').val() || '');
+      closeCustomImagePickers();
+      $row.addClass('dt-custom-image-picker-open');
+      $picker.addClass('show');
+      $picker.find('.dt-custom-image-status').show().text(t.loading_images);
+      $picker.find('.dt-custom-image-grid').empty();
+      _loadCustomImages()
+        .done(function (images) {
+          _renderCustomImageGrid($picker, images, selectedPath, t.no_custom_images);
+        })
+        .fail(function () {
+          $picker.find('.dt-custom-image-grid').empty();
+          $picker.find('.dt-custom-image-status').show().text(t.custom_images_error);
+        });
+    }
     function refreshDialHint() {
       var enabled = $popup.find('[data-option="dial"]').is(':checked');
       $popup.find('.de-dial-hint').toggleClass('d-none', !enabled);
@@ -2187,6 +2254,19 @@ var DashticzDeviceEditor = (function () {
       $row
         .attr('data-generated-icon', useImage ? 'false' : 'true')
         .attr('data-initial-setting', useImage ? '' : effectiveIcon);
+      closeCustomImagePickers();
+    });
+    $popup.on('click focus', '.de-icon-field-row .de-custom-field-setting', function () {
+      openCustomImagePicker($(this).closest('.de-icon-field-row'));
+    });
+    $popup.on('click', '.dt-custom-image-option', function () {
+      var $row = $(this).closest('.de-icon-field-row');
+      $row.find('.de-custom-field-setting').val(String($(this).attr('data-image-path') || ''));
+      closeCustomImagePickers();
+    });
+    $popup.on('click', function (event) {
+      if ($(event.target).closest('.dt-custom-image-picker, .de-custom-field-setting').length) return;
+      closeCustomImagePickers();
     });
     $popup.on('change', '[data-option="dial"]', refreshDialOptions);
     function refreshMdValueButtons() {

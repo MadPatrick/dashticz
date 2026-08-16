@@ -445,6 +445,19 @@ test('background list endpoint safely exposes bundled and custom images', () => 
   assert.doesNotMatch(source, /\$_POST\[/);
 });
 
+test('custom icon list endpoint safely exposes non-background images', () => {
+  const source = read('js/listcustomicons.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  assert.match(source, /REQUEST_METHOD.*GET/);
+  assert.match(source, /realpath\(__DIR__ \. '\/\.\.\/img\/custom'\)/);
+  assert.match(source, /preg_match\('\/\^bg_\/i', \$entry\)/);
+  assert.match(source, /\(\?:jpe\?g\|png\|webp\|gif\)/);
+  assert.match(source, /is_link\(\$full\)/);
+  assert.match(source, /\$images\[\] = 'custom\/' \. \$entry/);
+  assert.doesNotMatch(source, /\$_GET\[/);
+  assert.doesNotMatch(source, /\$_POST\[/);
+});
+
 test('theme list endpoint exposes only valid direct theme directories', () => {
   const source = read('js/listthemes.php');
 

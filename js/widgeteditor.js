@@ -3,6 +3,8 @@
 var DashticzWidgetEditor = (function () {
   'use strict';
 
+  var customImageListPromise = null;
+
   var catalog = [
     {
       id: 'weather',
@@ -456,6 +458,38 @@ var DashticzWidgetEditor = (function () {
     }
     return _fontIconClass($mount.find('.col-icon em, .sunrise-header em').first()) ||
       item.icon || 'fas fa-question';
+  }
+
+  function _loadCustomImages() {
+    if (customImageListPromise) return customImageListPromise;
+    customImageListPromise = $.getJSON(
+      (settings['dashticz_php_path'] || '') + 'js/listcustomicons.php'
+    ).then(function (data) {
+      return data && Array.isArray(data.images) ? data.images : [];
+    });
+    customImageListPromise.fail(function () {
+      customImageListPromise = null;
+    });
+    return customImageListPromise;
+  }
+
+  function _renderCustomImageGrid($picker, images, selectedPath) {
+    var $grid = $picker.find('.dt-custom-image-grid').empty();
+    $picker.find('.dt-custom-image-status').toggle(!images.length).text(
+      images.length ? '' : _t('no_custom_images', 'No custom images found.')
+    );
+    images.forEach(function (imagePath) {
+      var filename = String(imagePath).replace(/^custom\//, '');
+      var $button = $('<button type="button" class="dt-custom-image-option"></button>')
+        .attr('data-image-path', imagePath)
+        .attr('title', filename)
+        .toggleClass('is-selected', String(selectedPath || '') === imagePath);
+      $('<img class="dt-custom-image-thumb" loading="lazy" alt="">')
+        .attr('src', 'img/' + imagePath)
+        .appendTo($button);
+      $('<span class="dt-custom-image-name"></span>').text(filename).appendTo($button);
+      $grid.append($button);
+    });
   }
 
   function _settingToText(value) {
@@ -2015,6 +2049,12 @@ var DashticzWidgetEditor = (function () {
       '<input type="text" class="form-control we-custom-field-setting" placeholder="' +
       _esc(lowerField === 'image' ? 'custom/icon.png' : _t('setting', 'Setting')) +
       '" value="' + _esc(row.setting || '') + '">' +
+      (isIconSource
+        ? '<div class="dropdown-menu dt-custom-image-picker" role="dialog" aria-label="' +
+          _esc(_t('custom_images', 'Custom images')) +
+          '"><div class="dt-custom-image-status"></div>' +
+          '<div class="dt-custom-image-grid"></div></div>'
+        : '') +
       '<button type="button" class="btn btn-outline-success we-custom-field-add" title="' +
       _esc(_t('add_field', 'Add field')) + '"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
       '<button type="button" class="btn btn-outline-danger we-custom-field-remove" title="' +
@@ -2664,6 +2704,37 @@ var DashticzWidgetEditor = (function () {
       else $cfgModal.find('.we-custom-fields').prepend(rowHtml);
     }
 
+    function closeCustomImagePickers() {
+      $cfgModal.find('.dt-custom-image-picker').removeClass('show');
+      $cfgModal.find('.we-icon-field-row').removeClass('dt-custom-image-picker-open');
+    }
+
+    function openCustomImagePicker($row) {
+      if ($row.find('.we-icon-source').val() !== 'image') {
+        closeCustomImagePickers();
+        return;
+      }
+      var $picker = $row.find('.dt-custom-image-picker');
+      var selectedPath = String($row.find('.we-custom-field-setting').val() || '');
+      closeCustomImagePickers();
+      $row.addClass('dt-custom-image-picker-open');
+      $picker.addClass('show');
+      $picker.find('.dt-custom-image-status').show().text(
+        _t('loading_images', 'Loading images…')
+      );
+      $picker.find('.dt-custom-image-grid').empty();
+      _loadCustomImages()
+        .done(function (images) {
+          _renderCustomImageGrid($picker, images, selectedPath);
+        })
+        .fail(function () {
+          $picker.find('.dt-custom-image-grid').empty();
+          $picker.find('.dt-custom-image-status').show().text(
+            _t('custom_images_error', 'Unable to load custom images.')
+          );
+        });
+    }
+
     $cfgModal.on('click', '.we-custom-field-add', function () {
       $(this).closest('.we-custom-field-row').after(_customFieldRowHtml());
       refreshCustomFieldButtons();
@@ -2697,6 +2768,19 @@ var DashticzWidgetEditor = (function () {
       $row
         .attr('data-generated-icon', useImage ? 'false' : 'true')
         .attr('data-initial-setting', useImage ? '' : effectiveIcon);
+      closeCustomImagePickers();
+    });
+    $cfgModal.on('click focus', '.we-icon-field-row .we-custom-field-setting', function () {
+      openCustomImagePicker($(this).closest('.we-icon-field-row'));
+    });
+    $cfgModal.on('click', '.dt-custom-image-option', function () {
+      var $row = $(this).closest('.we-icon-field-row');
+      $row.find('.we-custom-field-setting').val(String($(this).attr('data-image-path') || ''));
+      closeCustomImagePickers();
+    });
+    $cfgModal.on('click', function (event) {
+      if ($(event.target).closest('.dt-custom-image-picker, .we-custom-field-setting').length) return;
+      closeCustomImagePickers();
     });
     refreshCustomFieldButtons();
     refreshIconFieldVisibility();

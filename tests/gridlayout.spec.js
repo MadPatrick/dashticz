@@ -1007,6 +1007,24 @@ screens[1] = {
         body: JSON.stringify({ token: 'widget-from-device-token' }),
       })
     );
+    await page.route('**/js/listcustomicons.php*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          images: [
+            'custom/door.png',
+            'custom/garage.png',
+            'custom/light.png',
+            'custom/motion.png',
+            'custom/weather.png',
+            'custom/window.png',
+            'custom/z-wave.png',
+          ],
+        }),
+      })
+    );
     await page.route('**/js/saveblocks.php*', (route) =>
       route.fulfill({
         status: 200,
@@ -1063,7 +1081,22 @@ screens[1] = {
       'placeholder',
       'custom/icon.png'
     );
-    await widgetIconRow.locator('.we-custom-field-setting').fill('custom/weather.png');
+    await widgetIconRow.locator('.we-custom-field-setting').click();
+    const customImageGrid = widgetIconRow.locator('.dt-custom-image-grid');
+    await expect(widgetIconRow.locator('.dt-custom-image-picker')).toBeVisible();
+    await expect(customImageGrid.locator('.dt-custom-image-option')).toHaveCount(7);
+    expect(
+      await customImageGrid.evaluate((grid) =>
+        getComputedStyle(grid).gridTemplateColumns.split(' ').length
+      )
+    ).toBe(6);
+    await customImageGrid
+      .locator('.dt-custom-image-option[data-image-path="custom/weather.png"]')
+      .click();
+    await expect(widgetIconRow.locator('.we-custom-field-setting')).toHaveValue(
+      'custom/weather.png'
+    );
+    await expect(widgetIconRow.locator('.dt-custom-image-picker')).toBeHidden();
     expect(
       await page.locator('.we-custom-field-name').evaluateAll((inputs) =>
         inputs.map((input) => input.value)

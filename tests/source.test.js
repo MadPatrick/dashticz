@@ -786,6 +786,12 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(widgetEditor, /useImage \? 'custom\/icon\.png' : _t\('setting', 'Setting'\)/);
   assert.match(deviceEditor, /field: 'image',[\s\S]*value: rawSetting/);
   assert.match(widgetEditor, /field: 'image',[\s\S]*value: rawSetting/);
+  assert.match(deviceEditor, /js\/listcustomicons\.php/);
+  assert.match(widgetEditor, /js\/listcustomicons\.php/);
+  assert.match(deviceEditor, /class="dt-custom-image-grid"/);
+  assert.match(widgetEditor, /class="dt-custom-image-grid"/);
+  assert.match(styles, /\.dt-custom-image-grid \{[\s\S]*grid-template-columns: repeat\(6/);
+  assert.match(styles, /\.dt-custom-image-thumb \{[\s\S]*object-fit: contain/);
   assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';/);
   assert.match(deviceEditor, /specialEntry\.icon = titleOptions\.iconValue \|\| SEPARATOR_DEFAULT_ICON;/);
   assert.match(deviceEditor, /kind === 'title' && typeof definition\.icon === 'undefined'[\s\S]*\? SEPARATOR_DEFAULT_ICON/);
