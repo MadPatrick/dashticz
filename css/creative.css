@@ -1640,6 +1640,8 @@ body.dle-active {
 
 .dle-config-button {
   border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
+  background: rgb(13, 24, 40);
   cursor: pointer;
 }
 
@@ -1651,12 +1653,20 @@ body.dle-active {
 }
 
 .dle-drag-icon .fas,
-.dle-config-button .fas,
 .dle-remove-button .fas {
   display: inline-block;
   width: 1em;
   margin: 0 !important;
   font-size: 16px !important;
+  line-height: 1 !important;
+  text-align: center;
+}
+
+.dle-config-button .fas {
+  display: inline-block;
+  width: 1em;
+  margin: 0 !important;
+  font-size: 26px !important;
   line-height: 1 !important;
   text-align: center;
 }

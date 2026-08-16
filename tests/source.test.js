@@ -809,9 +809,13 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(settings, /themeLabels\.custom_css_active/);
   assert.match(styles, /\.settings-custom-css-notice[\s\S]*border: 2px solid #198754/);
 
-  // Screen Editor controls share one explicit button and icon size.
+  // Screen Editor controls share one explicit button size. The configuration
+  // gear is deliberately larger than the drag/remove symbols and its opaque
+  // button background prevents a block's own icon from showing through.
   assert.match(styles, /\.dle-drag-icon,[\s\S]*\.dle-config-button[\s\S]*width: 32px;[\s\S]*height: 32px;/);
   assert.match(styles, /\.dle-remove-button[\s\S]*width: 32px;[\s\S]*height: 32px;/);
+  assert.match(styles, /\.dle-config-button \{[\s\S]*color: #fff;[\s\S]*background: rgb\(13, 24, 40\);/);
+  assert.match(styles, /\.dle-config-button \.fas \{[\s\S]*font-size: 26px !important;/);
   assert.match(styles, /\.dle-remove-button \.fas[\s\S]*font-size: 16px !important/);
 });
 
