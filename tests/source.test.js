@@ -1566,6 +1566,7 @@ test('modern dark theme is portable and documented', () => {
 
 test('settings modal uses compact Bootstrap 5 controls and aligned help icons', () => {
   const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
+  const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
   const simpleblock = fs.readFileSync(
     path.join(root, 'js/components/simpleblock.js'),
     'utf8'
@@ -1587,6 +1588,7 @@ test('settings modal uses compact Bootstrap 5 controls and aligned help icons', 
   assert.match(settings, /showSettingsHome\(\)/);
   assert.doesNotMatch(settings, /settings-category-back/);
   assert.doesNotMatch(settings, /settings-widget-back/);
+  assert.match(main, /url: 'js\/settings\.js\?v=' \+ _DASHTICZ_VERSION/);
   assert.match(settings, /img\/favicon\/app-icon-192x192\.png/);
   assert.match(settings, /window\.bootstrap\.Tooltip/);
   assert.match(settings, /data-bs-trigger="click"/);
