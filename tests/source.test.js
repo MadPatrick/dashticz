@@ -1466,6 +1466,30 @@ test('FlipClock width fix, Hayman dot alignment and Miniclock live-resize scalin
     /\.haymanclock \.clock-container \{[\s\S]*?margin-left: auto;\s*\n\s*margin-right: auto;/
   );
 
+  // The custom themes' standby-only Hayman styling pinned the digits'
+  // rendered size with `font-size: 80px !important`, which cannot be
+  // overridden by haymanclock.js's fitSize() (jQuery .css() never beats an
+  // !important rule) - the standby clock stayed one fixed size no matter
+  // how its grid block was resized. Removing the fixed size lets
+  // .clock-timer:before inherit .clock-container's JS-driven font-size
+  // (via the base haymanclock.css's `font-size: 420%`) instead.
+  ['modern-dark', 'liquid-glass-blue', 'liquid-glass-grey'].forEach(function (
+    themeName
+  ) {
+    var themeCss = fs.readFileSync(
+      path.join(root, 'themes/' + themeName + '/' + themeName + '.css'),
+      'utf8'
+    );
+    assert.match(
+      themeCss,
+      /\.standby \.clock-container \.clock-timer:before\s*\{[^}]*margin: 0 !important;/
+    );
+    assert.doesNotMatch(
+      themeCss,
+      /\.standby \.clock-container[\s\S]*?font-size: 80px !important/
+    );
+  });
+
   // Miniclock has no Size/Scale controls; its .weekday/.date/.clock spans
   // must still scale with the block's own resize, the same way the four
   // dedicated clock widgets do.
