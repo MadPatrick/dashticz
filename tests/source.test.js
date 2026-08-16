@@ -643,6 +643,22 @@ test('screen editor add menu exposes device, widget, custom-device and separator
   }
 });
 
+test('Device Editor configuration cog stays centered inside its button', () => {
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  assert.match(deviceEditor, /class="btn btn-outline-secondary btn-sm de-config-btn"/);
+  assert.match(deviceEditor, /<i class="fas fa-cog" aria-hidden="true"><\/i><\/button>/);
+  assert.match(
+    styles,
+    /\.de-config-btn \{[\s\S]*?display: inline-flex;[\s\S]*?align-items: center;[\s\S]*?justify-content: center;[\s\S]*?width: 34px;[\s\S]*?height: 34px;[\s\S]*?padding: 0;/
+  );
+  assert.match(
+    styles,
+    /\.de-config-btn \.fas \{[\s\S]*?margin: 0 !important;[\s\S]*?font-size: 18px !important;[\s\S]*?line-height: 1;/
+  );
+});
+
 test('device and widget config editors share full widget config and preserve hidden device fields', () => {
   const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
   const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');

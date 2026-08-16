@@ -1939,9 +1939,21 @@ body.dle-active {
 }
 
 .de-config-btn {
+  box-sizing: border-box;
+  display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
   width: 34px;
   height: 34px;
+  padding: 0;
+  line-height: 1;
+}
+
+.de-config-btn .fas {
+  margin: 0 !important;
+  font-size: 18px !important;
+  line-height: 1;
 }
 
 .de-config-popup {
