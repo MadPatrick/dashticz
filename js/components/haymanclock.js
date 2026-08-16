@@ -70,11 +70,7 @@ var DT_haymanclock = {
       var width = base * scale;
       if (availW > 0) width = Math.min(width, availW);
       if (availH > 0) width = Math.min(width, availH);
-      // `size` is an absolute clock width and `scale` is its multiplier.
-      // Converting only scale back to a percentage discarded size entirely
-      // (and scale values above 1 were all flattened to 100%). Pass the
-      // calculated, tile-constrained width to the template instead.
-      me.block.clockwidth = Math.max(1, Math.floor(width)) + 'px';
+      me.block.clockwidth = Math.min(100, scale * 100) + '%';
       me.block.fontsize = Math.max(8, (width / 40));
       // Render into .dt_state, not .dt_block: .dt_block also holds .dt_title
       // (built by dashticz.js's renderTitle() from block.title/hide_title),
