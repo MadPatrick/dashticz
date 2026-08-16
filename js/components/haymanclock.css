@@ -67,11 +67,15 @@
   position: absolute;
   right: -0.15em;
 }
+/* .clock-col's height also includes .clock-label below the digit, so the
+   column's own vertical center (50%) sits lower than the digit's - dots
+   centered on the column looked high relative to the actual digits. Shifted
+   down to line up with the digit itself instead of the whole column. */
 .haymanclock .clock-col:not(:last-child):before {
-  top: 37%;
+  top: 46%;
 }
 .haymanclock .clock-col:not(:last-child):after {
-  top: 52%;
+  top: 61%;
 }
 .haymanclock .clock-timer:before {
   color: #fff;

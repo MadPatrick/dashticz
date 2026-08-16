@@ -6,6 +6,21 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.43.5 beta (16-8-2026)
+-------------------------
+
+* **Fixes**
+
+- Fixed the Hayman clock rendering disproportionately large compared to the
+  other three clock types: its face is mostly whitespace around a thin
+  digit/label glyph, so fitting it to the full available block space the
+  same way looked oversized. Its computed size is now halved on top of the
+  usual fit-to-block/Scale calculation.
+- Fixed the ``:`` separator dots sitting too high above the digits: they
+  were vertically centered on the whole column (digit + label underneath),
+  which pulls the center down away from the digit itself. Repositioned
+  lower to align with the digit.
+
 v3.43.4 beta (16-8-2026)
 -------------------------
 

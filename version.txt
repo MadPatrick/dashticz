@@ -1,8 +1,9 @@
 {
-    "version": "3.43.4",
+    "version": "3.43.5",
     "branch": "beta",
-    "last_changes": "Fix Flip clock leaving empty space below the digits, Hayman clock's separator dots being misaligned/not scaling, and Miniclock's text not resizing with its block",
+    "last_changes": "Fix Hayman clock rendering oversized and its separator dots sitting too high above the digits",
     "changelog": {
+        "3.43.5": "Fix Hayman clock rendering oversized and its separator dots sitting too high above the digits",
         "3.43.4": "Fix Flip clock leaving empty space below the digits, Hayman clock's separator dots being misaligned/not scaling, and Miniclock's text not resizing with its block",
         "3.43.3": "Fix Basic clock's oversized margins and make all four clock types live-resize with the grid editor, without runaway growth or Flip/Hayman rendering glitches",
         "3.43.2": "Clock widgets always scale to fill their block; remove the Size (px) field (Scale-only) and add a preview image to the Clock type picker",

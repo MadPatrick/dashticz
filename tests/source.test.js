@@ -1420,6 +1420,28 @@ test('FlipClock width fix, Hayman dot alignment and Miniclock live-resize scalin
   assert.match(haymanCss, /right: -0\.15em;/);
   assert.doesNotMatch(haymanCss, /right:\s*-3%/);
 
+  // The dots must sit lower than the column's own vertical center, since
+  // .clock-label below the digit pulls that center down away from the
+  // digit itself.
+  assert.match(haymanCss, /top: 46%;/);
+  assert.match(haymanCss, /top: 61%;/);
+  assert.doesNotMatch(haymanCss, /top:\s*37%/);
+  assert.doesNotMatch(haymanCss, /top:\s*52%/);
+
+  // Hayman's face is mostly whitespace around a thin glyph, unlike the
+  // other three clocks' solid faces, so fitting it to the full available
+  // space the same way looked disproportionately large - halved on top of
+  // the normal fit-to-block/Scale calculation.
+  const haymanClock = fs.readFileSync(
+    path.join(root, 'js/components/haymanclock.js'),
+    'utf8'
+  );
+  assert.match(haymanClock, /var HAYMAN_SIZE_FACTOR = 0\.5;/);
+  assert.match(
+    haymanClock,
+    /\* scale \* HAYMAN_SIZE_FACTOR;/
+  );
+
   // Miniclock has no Size/Scale controls; its .weekday/.date/.clock spans
   // must still scale with the block's own resize, the same way the four
   // dedicated clock widgets do.

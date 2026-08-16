@@ -152,10 +152,19 @@ var DT_haymanclock = {
         $container.removeClass('hc-measuring');
         if (naturalW <= 0 || naturalH <= 0) return;
 
+        // Hayman's face reads as oversized well before it actually fills the
+        // block (its columns are mostly whitespace around a thin digit/label
+        // glyph, unlike the solid faces of the other three clock types), so
+        // fitting it to the full available space the same way looks
+        // disproportionate. Halving the fit-to-block result brings it back
+        // in line with how big the other clocks visually appear at the same
+        // block size; Scale still applies on top of that as a relative
+        // factor, same as before.
+        var HAYMAN_SIZE_FACTOR = 0.5;
         var fitScale = Math.min(
           availW / (naturalW * GAP_FACTOR),
           availH / naturalH
-        ) * scale;
+        ) * scale * HAYMAN_SIZE_FACTOR;
         var fontSize = Math.max(8, REF * fitScale);
         var width = Math.max(1, naturalW * GAP_FACTOR * fitScale);
 
