@@ -415,16 +415,6 @@ var widgetSettingTiles = [
     title: widgetEditorTranslations.clock_title || 'Clock',
     icon: 'fas fa-clock',
     settings: {
-      clock_size: {
-        title:
-          (language.settings.widgets && language.settings.widgets.clock_size) ||
-          'Size (px)',
-        type: 'text',
-        help:
-          (language.settings.widgets &&
-            language.settings.widgets.clock_size_help) ||
-          'Empty = fit to tile width. Example: 120',
-      },
       clock_scale: {
         title:
           (language.settings.widgets && language.settings.widgets.clock_scale) ||
@@ -895,7 +885,6 @@ var defaultSettings = {
   weather_show_gust: 0,
   weather_icons: 'line',
   boss_stationclock: 'RedBoss',
-  clock_size: '',
   clock_scale: 1,
   use_fahrenheit: 0,
   use_beaufort: 0,
@@ -1634,9 +1623,6 @@ function renderClockWidgetSettings(tile) {
       language.settings.widgeteditor.display) ||
       'Display') +
     '</h6>';
-  if (tile.settings.clock_size) {
-    html += renderSettingsRow('clock_size', tile.settings.clock_size);
-  }
   if (tile.settings.clock_scale) {
     html += renderSettingsRow('clock_scale', tile.settings.clock_scale);
   }

@@ -42,10 +42,6 @@ var DT_haymanclock = {
       var scale = Number(settings['clock_scale']);
       if (isFinite(scale) && scale > 0) cfg.scale = scale;
     }
-    if (settings['clock_size'] !== '' && settings['clock_size'] != null) {
-      var size = Number(settings['clock_size']);
-      if (isFinite(size) && size > 0) cfg.size = size;
-    }
     return cfg;
   },
   run: function (me) {
@@ -66,11 +62,11 @@ var DT_haymanclock = {
       var availH = ($block.height() || $(me.mountPoint).height() || 0) - titleHeight - stateMarginV;
       var scale = Number(me.block.scale);
       if (!isFinite(scale) || scale <= 0) scale = 1;
-      var base = me.block.size || (availH > 0 ? Math.min(availW, availH) : availW);
+      var base = availH > 0 ? Math.min(availW, availH) : availW;
       var width = base * scale;
       if (availW > 0) width = Math.min(width, availW);
       if (availH > 0) width = Math.min(width, availH);
-      me.block.clockwidth = Math.min(100, scale * 100) + '%';
+      me.block.clockwidth = Math.floor(width) + 'px';
       me.block.fontsize = Math.max(8, (width / 40));
       // Render into .dt_state, not .dt_block: .dt_block also holds .dt_title
       // (built by dashticz.js's renderTitle() from block.title/hide_title),

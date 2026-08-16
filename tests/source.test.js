@@ -1354,16 +1354,58 @@ test('clock components use public date APIs and a valid seconds setting', () => 
     'utf8'
   );
   assert.doesNotMatch(dateTime, /dayjs\.Ls/);
-  assert.match(basicClock, /maxFontSize: 42/);
-  assert.match(basicClock, /Math\.min\(fontSize, me\.block\.maxFontSize\)/);
+  // The clock face always fills the available block space; only the Scale
+  // setting adjusts it further, so no component keeps an independent
+  // px "Size" field or a hard cap unrelated to the block's own size.
+  assert.doesNotMatch(basicClock, /me\.block\.size/);
+  assert.doesNotMatch(basicClock, /maxFontSize/);
+  assert.match(basicClock, /\$block\.css\('font-size', fontSize\)/);
   assert.match(stationClock, /function clockFitSize/);
-  assert.match(stationClock, /if \(me\.block\.maxSize\)/);
+  assert.doesNotMatch(stationClock, /me\.block\.size/);
+  assert.doesNotMatch(stationClock, /me\.block\.maxSize/);
   assert.match(stationClock, /var width = clockFitSize\(me, 120\)/);
-  assert.match(flipClock, /minEmSize: 3\.5/);
-  assert.match(flipClock, /maxEmSize: 7/);
+  assert.doesNotMatch(flipClock, /me\.block\.size/);
+  assert.doesNotMatch(flipClock, /minEmSize/);
+  assert.doesNotMatch(flipClock, /maxEmSize/);
+  assert.match(flipClock, /var emSize = width \/ 82;/);
   assert.match(flipClock, /FlipClock\(\$state, 0,/);
   assert.match(flipClock, /showSeconds: !settings\['hide_seconds'\]/);
   assert.doesNotMatch(flipClock, /showSecoonds/);
+});
+
+test('clock widgets no longer expose a px Size field, only Scale', () => {
+  const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const settingsSource = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
+  const savewidgets = fs.readFileSync(path.join(root, 'js/savewidgets.php'), 'utf8');
+  const haymanClock = fs.readFileSync(
+    path.join(root, 'js/components/haymanclock.js'),
+    'utf8'
+  );
+  const english = JSON.parse(fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8'));
+
+  assert.doesNotMatch(widgetEditor, /'size_px'/);
+  assert.doesNotMatch(widgetEditor, /ccfg\.size/);
+  assert.doesNotMatch(widgetEditor, /entry\.size = /);
+  assert.doesNotMatch(deviceEditor, /'size'/);
+  assert.match(deviceEditor, /_copyDefinedWidgetProperties\(entry, definition, \[\s*\n\s*'scale',/);
+  assert.doesNotMatch(settingsSource, /clock_size/);
+  assert.doesNotMatch(savewidgets, /'clock_size'/);
+  assert.doesNotMatch(savewidgets, /\$widget\['size'\]/);
+  assert.doesNotMatch(savewidgets, /\$props\['size'\]/);
+  assert.equal(typeof english.settings.widgets.clock_size, 'undefined');
+  assert.equal(typeof english.settings.widgeteditor.size_px, 'undefined');
+
+  // Hayman's container width now derives from the same fit-to-block `width`
+  // used for its font size, instead of being capped at `scale * 100%` (which
+  // made Scale > 1 a no-op and Size have no effect on the visible width).
+  assert.match(haymanClock, /me\.block\.clockwidth = Math\.floor\(width\) \+ 'px';/);
+  assert.doesNotMatch(haymanClock, /scale \* 100/);
+
+  // The Clock type dropdown shows a preview image of the selected type.
+  assert.match(widgetEditor, /id="we-cfg-clock-preview"/);
+  assert.match(widgetEditor, /function _clockPreviewSrc/);
+  assert.match(widgetEditor, /'img\/clock-' \+ type/);
 });
 
 test('clock components render into .dt_state so block.title/hide_title survive', () => {

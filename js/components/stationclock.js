@@ -12,12 +12,6 @@ function clockDefaultSizeScale() {
       cfg.scale = scale;
     }
   }
-  if (settings['clock_size'] !== '' && settings['clock_size'] != null) {
-    var size = Number(settings['clock_size']);
-    if (isFinite(size) && size > 0) {
-      cfg.size = size;
-    }
-  }
   return cfg;
 }
 
@@ -49,14 +43,10 @@ function clockFitSize(me, fallback) {
   var availH = ($block.length ? $block.height() : 0) - titleHeight - stateMarginV;
   var scale = Number(me.block.scale);
   if (!isFinite(scale) || scale <= 0) scale = 1;
-  var base = Number(me.block.size);
-  if (!isFinite(base) || base <= 0) {
-    base = availH > 0 ? Math.min(availW, availH) : availW;
-  }
+  var base = availH > 0 ? Math.min(availW, availH) : availW;
   var width = base * scale;
   if (availW > 0) width = Math.min(width, availW);
   if (availH > 0) width = Math.min(width, availH);
-  if (me.block.maxSize) width = Math.min(width, Number(me.block.maxSize) || width);
   width = Math.min(width, window.innerHeight || width);
   return Math.max(32, Math.floor(width));
 }

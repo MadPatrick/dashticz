@@ -906,7 +906,6 @@ var DashticzDeviceEditor = (function () {
     } else if (widget.id === 'clock') {
       entry.clockType = definition.type || 'basicclock';
       _copyDefinedWidgetProperties(entry, definition, [
-        'size',
         'scale',
         'showSeconds',
         'clockFace',

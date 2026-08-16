@@ -193,8 +193,6 @@
             "news": "News",
             "anwb_apikey": "ANWB API key",
             "anwb_apikey_help": "API key for ANWB traffic info (trafficinfo widget).",
-            "clock_size": "Size (px)",
-            "clock_size_help": "Empty = fit to the tile. Example: 120",
             "clock_scale": "Scale",
             "clock_scale_help": "Relative scale factor, e.g. 0.75 (default 1)",
             "miniclock_note": "Miniclock has no extra display options."
@@ -394,8 +392,6 @@
             "filter_help": "Comma-separated search terms, for example Amsterdam, Utrecht.",
             "clock_type": "Clock type",
             "station_clock": "Station clock",
-            "size_px": "Size (px)",
-            "size_help": "Empty = column width",
             "scale": "Scale",
             "scale_help": "For example 0.75 (default 1)",
             "show_seconds": "Show seconds",

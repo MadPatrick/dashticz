@@ -12,8 +12,6 @@ var DT_flipclock = {
     var cfg = {
       width: 12,
       scale: 1,
-      minEmSize: 3.5,
-      maxEmSize: 7,
       showSeconds: !settings['hide_seconds'],
       clockFace: settings['shorttime'].match(/A/i) ? 12 : 24,
       icon: 'far fa-clock',
@@ -21,10 +19,6 @@ var DT_flipclock = {
     if (settings['clock_scale'] !== '' && settings['clock_scale'] != null) {
       var scale = Number(settings['clock_scale']);
       if (isFinite(scale) && scale > 0) cfg.scale = scale;
-    }
-    if (settings['clock_size'] !== '' && settings['clock_size'] != null) {
-      var size = Number(settings['clock_size']);
-      if (isFinite(size) && size > 0) cfg.size = size;
     }
     return cfg;
   },
@@ -47,14 +41,11 @@ var DT_flipclock = {
     var availH = ($block.height() || $(me.mountPoint).height() || 0) - titleHeight - stateMarginV;
     var scale = Number(me.block.scale);
     if (!isFinite(scale) || scale <= 0) scale = 1;
-    var base = me.block.size || (availH > 0 ? Math.min(availW, availH) : availW);
+    var base = availH > 0 ? Math.min(availW, availH) : availW;
     var width = base * scale;
     if (availW > 0) width = Math.min(width, availW);
     if (availH > 0) width = Math.min(width, availH);
-    var emSize = Math.max(
-      me.block.minEmSize,
-      Math.min(me.block.maxEmSize, width / 82)
-    );
+    var emSize = width / 82;
     $content.css('--flipclock-em', emSize + 'px');
 
     // FlipClock() replaces the target element's content wholesale, so it must

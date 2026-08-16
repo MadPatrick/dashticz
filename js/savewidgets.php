@@ -56,7 +56,6 @@ $allowedSettings = [
     'boss_stationclock'      => 'string',
     'hide_seconds'           => 'bool',
     'hide_seconds_stationclock' => 'bool',
-    'clock_size'             => 'number',
     'clock_scale'            => 'number',
     // garbage
     'garbage_company'        => 'garbage_company',
@@ -444,12 +443,6 @@ foreach ($data['widgets'] as $entry) {
         $widget['clockType'] = $clockType;
 
         if ($clockType !== 'miniclock') {
-            if (isset($entry['size']) && $entry['size'] !== '' && is_numeric($entry['size'])) {
-                $size = (int)$entry['size'];
-                if ($size > 0 && $size <= 2000) {
-                    $widget['size'] = $size;
-                }
-            }
             if (isset($entry['scale']) && $entry['scale'] !== '' && is_numeric($entry['scale'])) {
                 $scale = (float)$entry['scale'];
                 if ($scale > 0 && $scale <= 5) {
@@ -1008,9 +1001,6 @@ function _widgetBlockProps($widget)
         case 'clock':
             $props['type'] = $widget['clockType'];
             $props['title'] = 'Klok';
-            if (isset($widget['size'])) {
-                $props['size'] = $widget['size'];
-            }
             if (isset($widget['scale'])) {
                 $props['scale'] = $widget['scale'];
             }

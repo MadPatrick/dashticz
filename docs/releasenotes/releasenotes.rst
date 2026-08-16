@@ -6,6 +6,28 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.43.2 beta (16-8-2026)
+-------------------------
+
+* **Enhancements**
+
+- The Clock widget's Size (px) field has been removed; **Scale** is now the
+  only sizing control. All four clock types (Basic, Station, Flip, Hayman)
+  always fit their block automatically, and Scale is a relative factor on
+  top of that (still capped to the available block space).
+- Basic clock's 42px font-size cap, Flip clock's 3.5-7em size range, and
+  Hayman clock's ``scale``-only (max 100%) container width are removed, so
+  all four clock types now scale proportionally with their block instead of
+  plateauing well before the block is filled.
+- The Widget Config **Clock type** dropdown now shows a small preview image
+  of the selected clock style.
+
+* **Fixes**
+
+- Hayman clock's visible width now follows the same computed size as its
+  font, instead of only reacting to Scale (and never past 100%) while Size
+  had no effect on the visible clock at all.
+
 v3.43.1 beta (16-8-2026)
 -------------------------
 

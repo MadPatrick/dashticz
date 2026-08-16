@@ -361,7 +361,7 @@ var DashticzWidgetEditor = (function () {
     calendar: { icalurl: true, calendars: true, maxitems: true },
     garbage: { maxitems: true, maxdays: true },
     clock: {
-      size: true, scale: true, showSeconds: true, clockFace: true, body: true,
+      scale: true, showSeconds: true, clockFace: true, body: true,
       dial: true, hourhand: true, minutehand: true, secondhand: true, boss: true,
       minutehandbehavior: true, secondhandbehavior: true,
     },
@@ -1063,9 +1063,6 @@ var DashticzWidgetEditor = (function () {
           )
         ) {
           widgetConfigs.clock.clockType = definition.type;
-          if (typeof definition.size !== 'undefined' && definition.size !== null && definition.size !== '') {
-            widgetConfigs.clock.size = definition.size;
-          }
           if (typeof definition.scale !== 'undefined' && definition.scale !== null && definition.scale !== '') {
             widgetConfigs.clock.scale = definition.scale;
           }
@@ -1484,7 +1481,6 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'clock') {
       widgetConfigs.clock.clockType = definition.type || 'basicclock';
       [
-        'size',
         'scale',
         'showSeconds',
         'clockFace',
@@ -2261,20 +2257,15 @@ var DashticzWidgetEditor = (function () {
         _clockOption('flipclock', _t('flipclock', 'Flipclock'), currentClockType) +
         _clockOption('haymanclock', _t('hayman_clock', 'Hayman clock'), currentClockType) +
         _clockOption('miniclock', _t('miniclock', 'Miniclock'), currentClockType) +
-        '</select></div>';
+        '</select>' +
+        '<img class="we-clock-preview" id="we-cfg-clock-preview" src="' +
+        _clockPreviewSrc(currentClockType) + '" alt="">' +
+        '</div>';
 
       fields +=
         '<div class="we-clock-size-group"' +
         (showSizeScale ? '' : ' style="display:none"') +
         '>';
-      fields += _cfgField(
-        'size',
-        _t('size_px', 'Size (px)'),
-        'text',
-        ccfg.size,
-        null,
-        _t('size_help', 'Empty = column width')
-      );
       fields += _cfgField(
         'scale',
         _t('scale', 'Scale'),
@@ -2796,6 +2787,7 @@ var DashticzWidgetEditor = (function () {
         $(this).toggle(String($(this).data('clock-type')) === type);
       });
       $cfgModal.find('.we-clock-size-group').toggle(type !== 'miniclock');
+      $cfgModal.find('#we-cfg-clock-preview').attr('src', _clockPreviewSrc(type));
     });
 
     $cfgModal.on('click', '#we-calendar-add', function () {
@@ -3342,6 +3334,12 @@ var DashticzWidgetEditor = (function () {
     );
   }
 
+  function _clockPreviewSrc(clockType) {
+    var known = ['basicclock', 'stationclock', 'flipclock', 'haymanclock', 'miniclock'];
+    var type = known.indexOf(clockType) > -1 ? clockType : 'basicclock';
+    return 'img/clock-' + type + '.jpg';
+  }
+
   function _ptOption(value, label, currentProvider) {
     return (
       '<option value="' +
@@ -3524,7 +3522,6 @@ var DashticzWidgetEditor = (function () {
       entry.clockType = clockType;
       var ccfg = widgetConfigs.clock || {};
       if (clockType !== 'miniclock') {
-        if (ccfg.size !== '' && ccfg.size !== null && typeof ccfg.size !== 'undefined') entry.size = ccfg.size;
         if (ccfg.scale !== '' && ccfg.scale !== null && typeof ccfg.scale !== 'undefined') entry.scale = ccfg.scale;
       }
       if (clockType === 'flipclock') {

@@ -2409,6 +2409,18 @@ body.dle-active {
   z-index: 2;
 }
 
+.we-clock-preview {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  height: 90px;
+  margin-top: 8px;
+  object-fit: contain;
+  background: var(--bs-tertiary-bg, #f8f9fa);
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: 4px;
+}
+
 .we-widget-field.form-check-input {
   float: none;
   width: 38px;
