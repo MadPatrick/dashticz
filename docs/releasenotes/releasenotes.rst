@@ -6,6 +6,23 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.43.0 beta (16-8-2026)
+-------------------------
+
+* **Improvements**
+
+- Cleaned up Widget Config and Global Settings by removing duplicate, unused
+  and misleading controls while keeping legacy configuration keys compatible.
+- Improved compact grid layouts with two-row Separators, consistently sized
+  configuration controls and a Garbage widget without an unnecessary scrollbar.
+
+* **Fixes**
+
+- Fixed Dial configuration state and resizing behavior.
+- Separator icons now have a visible default and remain hidden after the Icon
+  option is unchecked and saved.
+
+
 v3.42.10 beta (15-8-2026)
 ---------------------------
 

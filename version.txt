@@ -1,8 +1,9 @@
 {
-    "version": "3.42.10",
+    "version": "3.43.0",
     "branch": "beta",
-    "last_changes": "Restore classic-column Dial sizing and preserve iconless legacy iframe and Sunrise/Sunset configurations",
+    "last_changes": "Refine Widget and Device configuration, fix Dial state and sizing, and improve compact grid blocks",
     "changelog": {
+        "3.43.0": "Refine Widget and Device configuration, fix Dial state and sizing, and improve compact grid blocks",
         "3.42.10": "Restore classic-column Dial sizing and preserve iconless legacy iframe and Sunrise/Sunset configurations",
         "3.42.9": "Secure Domoticz log rendering, prevent repeated log listeners, fix Group toggleoff commands, update build dependencies, and clean stale build output",
         "3.42.8": "Fix Settings save sending an empty payload (theme and other settings silently reverted after save) caused by a merge conflict resolution splitting the collected values into an unused local object",
