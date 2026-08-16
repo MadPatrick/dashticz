@@ -1428,18 +1428,25 @@ test('FlipClock width fix, Hayman dot alignment and Miniclock live-resize scalin
   assert.doesNotMatch(haymanCss, /top:\s*37%/);
   assert.doesNotMatch(haymanCss, /top:\s*52%/);
 
-  // Hayman's face is mostly whitespace around a thin glyph, unlike the
-  // other three clocks' solid faces, so fitting it to the full available
-  // space the same way looked disproportionately large - halved on top of
-  // the normal fit-to-block/Scale calculation.
+  // Hayman's natural face is wide and short, so it's almost always
+  // width-bound; a too-small GAP_FACTOR let the digits fill that width
+  // edge-to-edge, reading as oversized with barely any room for the ':'
+  // separators. A bigger GAP_FACTOR reserves more of that same
+  // fit-to-width budget as real, visible gaps between columns instead of
+  // shrinking (and thus wasting) the whole result post-fit.
   const haymanClock = fs.readFileSync(
     path.join(root, 'js/components/haymanclock.js'),
     'utf8'
   );
-  assert.match(haymanClock, /var HAYMAN_SIZE_FACTOR = 0\.5;/);
+  assert.match(haymanClock, /var GAP_FACTOR = 1\.6;/);
+  assert.doesNotMatch(haymanClock, /HAYMAN_SIZE_FACTOR/);
+
+  // .dt_block is display:flex (icon column + .dt_content side by side);
+  // .dt_content's measured width already excludes the icon column, unlike
+  // $sizeBox's (grid item/.dt_block), which still includes it.
   assert.match(
     haymanClock,
-    /\* scale \* HAYMAN_SIZE_FACTOR;/
+    /var availW = \$content\.width\(\) \|\| \$sizeBox\.outerWidth\(\)/
   );
 
   // Miniclock has no Size/Scale controls; its .weekday/.date/.clock spans

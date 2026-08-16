@@ -119,7 +119,15 @@ var DT_haymanclock = {
         // _dialFitSize().
         var inGrid = me.$mountPoint && me.$mountPoint.hasClass('dt-grid-item');
         var $sizeBox = inGrid ? me.$mountPoint : $block;
-        var availW = $sizeBox.outerWidth() || $(me.mountPoint).width() || 120;
+        var $content = $(me.mountPoint + ' .dt_content');
+        // .dt_block is display:flex (icon column + .dt_content side by side).
+        // .dt_content's own CSS is width:100%, which as a flex-basis resolves
+        // against .dt_block's full width, not against the room actually left
+        // over next to the icon - but flexbox then shrinks it to what's
+        // really available, so its measured width (unlike $sizeBox's, which
+        // still includes the icon) already excludes the icon column. Same
+        // fix as js/components/flipclock.js's availW.
+        var availW = $content.width() || $sizeBox.outerWidth() || $(me.mountPoint).width() || 120;
         var availH = ($sizeBox.outerHeight() || $(me.mountPoint).height() || 0) - titleHeight - stateMarginV;
         if (availW <= 0 || availH <= 0) return;
         var scale = Number(me.block.scale);
@@ -137,7 +145,18 @@ var DT_haymanclock = {
         // digits without that slack (the original bug report here).
         var $container = $(me.mountPoint + ' .clock-container');
         if (!$container.length) return;
-        var GAP_FACTOR = 1.15;
+        // Hayman's natural face is wide and short (4 columns in a single
+        // row), so it's almost always width-bound: it fills availW and
+        // leaves availH mostly unused, the same way any fixed-aspect
+        // content "letterboxes" in a differently-shaped box. A small
+        // GAP_FACTOR meant only the digits themselves filled that width
+        // edge-to-edge, reading as oversized and leaving the ':' separators
+        // barely any room. Reserving much more of that width as real,
+        // visible gaps between columns - rather than shrinking the whole
+        // result post-fit, which would just trade "oversized digits" for
+        // "same wasted margin, smaller content" - makes the face read as
+        // smaller *and* better spaced out of the same fit-to-width budget.
+        var GAP_FACTOR = 1.6;
         var REF = 100;
         // A previous fitSize() call may have left an inline width on
         // $container (set below); inline styles always beat the
@@ -152,19 +171,10 @@ var DT_haymanclock = {
         $container.removeClass('hc-measuring');
         if (naturalW <= 0 || naturalH <= 0) return;
 
-        // Hayman's face reads as oversized well before it actually fills the
-        // block (its columns are mostly whitespace around a thin digit/label
-        // glyph, unlike the solid faces of the other three clock types), so
-        // fitting it to the full available space the same way looks
-        // disproportionate. Halving the fit-to-block result brings it back
-        // in line with how big the other clocks visually appear at the same
-        // block size; Scale still applies on top of that as a relative
-        // factor, same as before.
-        var HAYMAN_SIZE_FACTOR = 0.5;
         var fitScale = Math.min(
           availW / (naturalW * GAP_FACTOR),
           availH / naturalH
-        ) * scale * HAYMAN_SIZE_FACTOR;
+        ) * scale;
         var fontSize = Math.max(8, REF * fitScale);
         var width = Math.max(1, naturalW * GAP_FACTOR * fitScale);
 
