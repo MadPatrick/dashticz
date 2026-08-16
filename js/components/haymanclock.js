@@ -75,11 +75,7 @@ var DT_haymanclock = {
       // (and scale values above 1 were all flattened to 100%). Pass the
       // calculated, tile-constrained width to the template instead.
       me.block.clockwidth = Math.max(1, Math.floor(width)) + 'px';
-      // Keep the type proportional to the final clock width. A minimum of
-      // 8px here made small configured sizes render with exactly the same
-      // type at scale 1 and 2, while their containers did resize. That made
-      // the columns overlap and detached the separators from the digits.
-      me.block.fontsize = width / 40;
+      me.block.fontsize = Math.max(8, (width / 40));
       // Render into .dt_state, not .dt_block: .dt_block also holds .dt_title
       // (built by dashticz.js's renderTitle() from block.title/hide_title),
       // and overwriting .dt_block wipes that title back out right after it's set.
