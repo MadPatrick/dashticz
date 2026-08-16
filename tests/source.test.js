@@ -788,6 +788,10 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(widgetEditor, /field: 'image',[\s\S]*value: rawSetting/);
   assert.match(deviceEditor, /js\/listcustomicons\.php/);
   assert.match(widgetEditor, /js\/listcustomicons\.php/);
+  assert.match(deviceEditor, /\$\.getJSON\('js\/listcustomicons\.php'\)/);
+  assert.match(widgetEditor, /\$\.getJSON\('js\/listcustomicons\.php'\)/);
+  assert.doesNotMatch(deviceEditor, /dashticz_php_path[^\n]*listcustomicons/);
+  assert.doesNotMatch(widgetEditor, /dashticz_php_path[^\n]*listcustomicons/);
   assert.match(deviceEditor, /class="dt-custom-image-grid"/);
   assert.match(widgetEditor, /class="dt-custom-image-grid"/);
   assert.match(styles, /\.dt-custom-image-grid \{[\s\S]*grid-template-columns: repeat\(6/);

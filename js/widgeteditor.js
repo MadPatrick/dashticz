@@ -462,9 +462,7 @@ var DashticzWidgetEditor = (function () {
 
   function _loadCustomImages() {
     if (customImageListPromise) return customImageListPromise;
-    customImageListPromise = $.getJSON(
-      (settings['dashticz_php_path'] || '') + 'js/listcustomicons.php'
-    ).then(function (data) {
+    customImageListPromise = $.getJSON('js/listcustomicons.php').then(function (data) {
       return data && Array.isArray(data.images) ? data.images : [];
     });
     customImageListPromise.fail(function () {
