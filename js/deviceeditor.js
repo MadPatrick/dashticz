@@ -14,6 +14,7 @@ var DashticzDeviceEditor = (function () {
   var deviceHeights  = {};   // composite key -> optional block height
   var deviceTitles   = {};   // composite key -> optional title override
   var deviceOptions  = {};   // composite key -> icon/hide_data/last_update/switch
+  var deviceRefs     = {};   // composite key -> exact block reference on the active screen
   var deviceTitleVisible = {}; // composite key -> title shown/hidden
   var deviceCustomFields = {}; // composite key -> editable extra CONFIG.js fields
   var devicePreservedFields = {}; // hidden CONFIG.js fields (for example c) that must survive saves
@@ -239,6 +240,7 @@ var DashticzDeviceEditor = (function () {
     deviceHeights  = {};
     deviceTitles   = {};
     deviceOptions  = {};
+    deviceRefs     = {};
     deviceTitleVisible = {};
     deviceCustomFields = {};
     devicePreservedFields = {};
@@ -290,6 +292,7 @@ var DashticzDeviceEditor = (function () {
         managedSpecials[item.orderKey] = item;
       } else {
         managedDevices.push(item.ck);
+        deviceRefs[item.ck] = item.reference;
       }
     });
   }
@@ -2460,6 +2463,7 @@ var DashticzDeviceEditor = (function () {
       delete deviceHeights[ck];
       delete deviceTitles[ck];
       delete deviceOptions[ck];
+      delete deviceRefs[ck];
       delete deviceTitleVisible[ck];
       delete deviceCustomFields[ck];
       delete devicePreservedFields[ck];
@@ -2636,6 +2640,7 @@ var DashticzDeviceEditor = (function () {
       }
       deviceWidths[ck] = _parseWidth($row.find('.de-width-input').val());
       deviceTitles[ck] = '';
+      deviceRefs[ck] = _stableDeviceReference(ck);
       deviceOptions[ck] = {
         icon: true, iconValue: null, hide_data: false, last_update: false, switch: false,
       };
@@ -3074,6 +3079,19 @@ var DashticzDeviceEditor = (function () {
   /* Find the CONFIG.js block definition associated with a composite IDX. */
   function _getConfiguredBlockForCk(ck) {
     if (typeof blocks === 'undefined') return null;
+    // The same Domoticz IDX may legitimately appear on several screens with
+    // different presentation settings (for example Dial on one screen and a
+    // normal block on another). Prefer the exact active-screen reference;
+    // falling back to the first matching IDX would reapply another block's
+    // stale Dial/Icon settings during an unrelated Device Editor save.
+    var reference = deviceRefs[ck];
+    if (
+      reference &&
+      blocks[reference] &&
+      _toCompositeKey(blocks[reference]) === ck
+    ) {
+      return blocks[reference];
+    }
     var keys = Object.keys(blocks);
     for (var i = 0; i < keys.length; i++) {
       if (_toCompositeKey(blocks[keys[i]]) === ck) return blocks[keys[i]];

@@ -248,6 +248,96 @@ screens[1] = {
     await expect(titleControl).toBeHidden();
   });
 
+  test('does not restore Dial from another block with the same IDX when saving another device', async ({
+    page,
+  }) => {
+    let blocksRequest = null;
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `
+Object.keys(blocks).forEach(function (key) {
+  if (blocks[key] && parseInt(blocks[key].idx, 10) === 1247) delete blocks[key];
+});
+blocks['offscreen_dial'] = {idx: 1247, type: 'dial', width: 3};
+blocks['device_1247'] = {idx: 1247, width: 3};
+blocks['device_43'] = {idx: 43, width: 3, icon: 'fas fa-bolt'};
+screens[1] = {
+  layout: 'grid', gridColumns: 24, rowHeight: 20, gap: 5,
+  blocks: [
+    {key: 'device_1247', grid: {x: 1, y: 1, w: 8, h: 5}},
+    {key: 'device_43', grid: {x: 10, y: 1, w: 8, h: 5}}
+  ]
+};
+screens[2] = {
+  layout: 'grid', gridColumns: 24, rowHeight: 20, gap: 5,
+  blocks: [{key: 'offscreen_dial', grid: {x: 1, y: 1, w: 8, h: 5}}]
+};
+`,
+      });
+    });
+    await page.route('**/info.php?get=csrf', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'dial-reference-token' }),
+      })
+    );
+    await page.route('**/js/saveblocks.php*', async (route) => {
+      blocksRequest = route.request().postDataJSON();
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          blockKeys: ['device_1247', 'device_43'],
+        }),
+      });
+    });
+    await page.route('**/js/savewidgets.php*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, blockKeys: [] }),
+      })
+    );
+    await page.route('**/js/savegridlayout.php*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      })
+    );
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+    await openDeviceEditorFromScreenEditor(page);
+
+    await page.locator('[data-order-key="device:43"] .de-config-btn').click();
+    await expect(page.locator('#de-config-popup')).toBeVisible();
+    await page.locator('[data-option="icon"]').uncheck();
+    await page.locator('#de-config-ok').click();
+    await expect(page.locator('#deviceeditorpopup')).toBeVisible();
+    await page.locator('#de-save-btn').evaluate((button) => {
+      button.disabled = false;
+    });
+    await page.locator('#de-save-btn').click();
+
+    await expect.poll(() => blocksRequest).not.toBeNull();
+    const normalDevice = blocksRequest.devices.find(
+      (device) => device.key === 'device_1247'
+    );
+    const editedDevice = blocksRequest.devices.find(
+      (device) => device.key === 'device_43'
+    );
+    expect(normalDevice).toBeDefined();
+    expect(normalDevice).not.toHaveProperty('type');
+    expect(editedDevice.icon).toBe('');
+  });
+
   test('persists default icons only for newly added iframe and Sunrise widgets', async ({
     page,
   }) => {

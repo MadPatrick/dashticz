@@ -2517,6 +2517,29 @@ test('Dial checkbox on a multi-value sub-device (e.g. Temp+Humidity) saves the b
   );
 });
 
+test('Device Editor keeps Dial state scoped to the active block reference', () => {
+  // A Domoticz IDX can appear more than once, including on another screen.
+  // Hydrating by the first blocks[...] entry with that IDX lets an old Dial
+  // definition contaminate a normal copy when any later device is saved.
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const lookup = deviceEditor.slice(
+    deviceEditor.indexOf('function _getConfiguredBlockForCk(ck)'),
+    deviceEditor.indexOf('function _getConfiguredWidthForCk(ck)')
+  );
+
+  assert.match(deviceEditor, /var deviceRefs\s*= \{\}/);
+  assert.match(deviceEditor, /deviceRefs\[item\.ck\] = item\.reference/);
+  assert.match(lookup, /var reference = deviceRefs\[ck\]/);
+  assert.match(
+    lookup,
+    /reference &&[\s\S]*?blocks\[reference\] &&[\s\S]*?_toCompositeKey\(blocks\[reference\]\) === ck[\s\S]*?return blocks\[reference\]/
+  );
+  assert.ok(
+    lookup.indexOf('return blocks[reference]') < lookup.indexOf('var keys = Object.keys(blocks)'),
+    'the exact active-screen block must be preferred before the IDX fallback'
+  );
+});
+
 test('Dial face/content area fills more of the dial instead of leaving roomy margins', () => {
   // .dial-container/.dial-center were 90%/85%, leaving a very visible gap
   // before the ring. `.dial.fixed .dial-center` already ships at 95% with no
