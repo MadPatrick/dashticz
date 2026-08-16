@@ -881,7 +881,16 @@ screens[1] = {
     await expect(page.locator('.de-config-option')).toHaveCount(2);
     await expect(page.locator('[data-option="icon"]')).toBeChecked();
     await expect(page.locator('[data-option="show_title"]')).toBeChecked();
+    const separatorIconRow = page.locator('.de-icon-field-row');
+    await expect(separatorIconRow).toBeVisible();
+    await expect(separatorIconRow.locator('.de-custom-field-name')).toHaveValue('icon');
+    await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('fas fa-heading');
     await page.locator('[data-option="icon"]').uncheck();
+    await expect(separatorIconRow).toBeHidden();
+    await page.locator('[data-option="icon"]').check();
+    await expect(separatorIconRow).toBeVisible();
+    await page.locator('[data-option="icon"]').uncheck();
+    await expect(separatorIconRow).toBeHidden();
     await expect(page.locator('.de-custom-field-name').first()).toHaveValue('title');
     await expect(page.locator('.de-custom-field-setting').first()).toHaveValue('Keep me');
     await expect(page.locator('.de-custom-field-name')).toHaveCount(4);
@@ -1030,6 +1039,15 @@ screens[1] = {
     await expect(page.locator('[data-block-option="icon"]')).toHaveCSS('height', '32px');
     await expect(page.locator('.we-custom-field-name').first()).toHaveValue('title');
     await expect(page.locator('.we-custom-field-setting').first()).toHaveValue('Forecast');
+    const widgetIconRow = page.locator('.we-icon-field-row');
+    await expect(widgetIconRow).toBeVisible();
+    await expect(widgetIconRow.locator('.we-custom-field-name')).toHaveValue('icon');
+    await expect(widgetIconRow.locator('.we-custom-field-setting')).toHaveValue('fas fa-cloud');
+    await page.locator('[data-block-option="icon"]').uncheck();
+    await expect(widgetIconRow).toBeHidden();
+    await page.locator('[data-block-option="icon"]').check();
+    await expect(widgetIconRow).toBeVisible();
+    await widgetIconRow.locator('.we-custom-field-setting').fill('fas fa-star');
     expect(
       await page.locator('.we-custom-field-name').evaluateAll((inputs) =>
         inputs.map((input) => input.value)
@@ -1046,7 +1064,7 @@ screens[1] = {
     await expect.poll(() => widgetRequest).not.toBeNull();
     const savedWidget = widgetRequest.widgets[0];
     expect(savedWidget.title).toBe('Forecast changed');
-    expect(savedWidget.icon).toBe('fas fa-cloud');
+    expect(savedWidget.icon).toBe('fas fa-star');
     expect(savedWidget.hide_data).toBe(true);
     expect(savedWidget.last_update).toBe(true);
     expect(savedWidget.custom_fields.c).toBe('legacy-grid');

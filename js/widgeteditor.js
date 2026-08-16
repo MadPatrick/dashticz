@@ -432,6 +432,32 @@ var DashticzWidgetEditor = (function () {
     };
   }
 
+  function _fontIconClass($icon) {
+    if (!$icon || !$icon.length) return '';
+    return String($icon.attr('class') || '')
+      .split(/\s+/)
+      .filter(function (className) {
+        return /^(?:fa[brsld]?|fa-|wi(?:-|$))/.test(className);
+      })
+      .join(' ');
+  }
+
+  function _effectiveWidgetConfigIcon(item, options) {
+    if (options.iconValue) return options.iconValue;
+    var reference = widgetBlockRefs[item.id] || item.blockKey;
+    var referenceText = String(reference || '');
+    var $mount = $('[data-grid-block]').filter(function () {
+      return String($(this).attr('data-grid-block')) === referenceText;
+    }).first();
+    if (!$mount.length) {
+      $mount = $('[data-id]').filter(function () {
+        return String($(this).attr('data-id')) === referenceText;
+      }).first();
+    }
+    return _fontIconClass($mount.find('.col-icon em, .sunrise-header em').first()) ||
+      item.icon || 'fas fa-question';
+  }
+
   function _settingToText(value) {
     if (value !== null && typeof value === 'object') {
       try { return JSON.stringify(value); } catch (ignore) { return ''; }
@@ -517,10 +543,12 @@ var DashticzWidgetEditor = (function () {
       options.customFields.unshift(titleRow);
     }
     titleRow.system = true;
-    if (options.iconValue && !iconRow) {
+    if (!iconRow) {
+      var effectiveIcon = _effectiveWidgetConfigIcon(item, options);
       options.customFields.splice(1, 0, {
         field: 'icon',
-        setting: options.iconValue,
+        setting: effectiveIcon,
+        generated: !options.iconValue,
       });
     }
   }
@@ -1966,7 +1994,10 @@ var DashticzWidgetEditor = (function () {
     if (field.toLowerCase() === 'icon') rowClass += ' we-icon-field-row';
     if (isSystem) rowClass += ' we-system-field-row';
     return (
-      '<div class="' + rowClass + '">' +
+      '<div class="' + rowClass + '"' +
+      (row.generated === true
+        ? ' data-generated-icon="true" data-initial-setting="' + _esc(row.setting || '') + '"'
+        : '') + '>' +
       '<input type="text" class="form-control we-custom-field-name" placeholder="' +
       _esc(_t('field', 'Field')) + '" value="' + _esc(field) + '"' +
       (isSystem ? ' readonly aria-readonly="true"' : '') + '>' +
@@ -2608,6 +2639,19 @@ var DashticzWidgetEditor = (function () {
       $cfgModal.find('.we-icon-field-row').toggle(enabled);
     }
 
+    function ensureIconFieldRow() {
+      if ($cfgModal.find('.we-icon-field-row').length) return;
+      var effectiveIcon = _effectiveWidgetConfigIcon(item, { iconValue: null });
+      var rowHtml = _customFieldRowHtml({
+        field: 'icon',
+        setting: effectiveIcon,
+        generated: true,
+      });
+      var $titleRow = $cfgModal.find('.we-custom-field-row').first();
+      if ($titleRow.length) $titleRow.after(rowHtml);
+      else $cfgModal.find('.we-custom-fields').prepend(rowHtml);
+    }
+
     $cfgModal.on('click', '.we-custom-field-add', function () {
       $(this).closest('.we-custom-field-row').after(_customFieldRowHtml());
       refreshCustomFieldButtons();
@@ -2617,9 +2661,15 @@ var DashticzWidgetEditor = (function () {
     $cfgModal.on('click', '.we-custom-field-remove', function () {
       if ($(this).prop('disabled')) return;
       $(this).closest('.we-custom-field-row').remove();
+      if ($cfgModal.find('[data-block-option="icon"]').is(':checked')) ensureIconFieldRow();
       refreshCustomFieldButtons();
+      refreshIconFieldVisibility();
     });
-    $cfgModal.on('change', '[data-block-option="icon"]', refreshIconFieldVisibility);
+    $cfgModal.on('change', '[data-block-option="icon"]', function () {
+      if ($(this).is(':checked')) ensureIconFieldRow();
+      refreshCustomFieldButtons();
+      refreshIconFieldVisibility();
+    });
     refreshCustomFieldButtons();
     refreshIconFieldVisibility();
 
@@ -2828,6 +2878,14 @@ var DashticzWidgetEditor = (function () {
             $(this).find('.we-custom-field-setting').trigger('focus');
             return;
           }
+          var generatedIcon = $(this).attr('data-generated-icon') === 'true';
+          var initialIcon = String($(this).attr('data-initial-setting') || '');
+          if (
+            generatedIcon &&
+            rawSetting === initialIcon &&
+            !existingBlockOptions.iconValue &&
+            !_usesExplicitEditorDefaultIcon(item)
+          ) return;
           hasIconField = true;
           pendingIconValue = rawSetting;
           return;

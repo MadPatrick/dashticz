@@ -764,6 +764,18 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(deviceEditor, /options\.iconValue/);
   assert.match(deviceEditor, /entry\.icon = options\.iconValue/);
   assert.match(deviceEditor, /specialEntry\.icon = specialOptions\.iconValue/);
+  // Every icon-capable Device/Widget Config gets one editable icon row. When
+  // the icon is a runtime default, merely opening/saving the popup must not
+  // freeze a state-dependent icon (such as a switch's on/off lightbulb) into
+  // CONFIG.js; it becomes explicit only after the user changes the value.
+  assert.match(deviceEditor, /function _effectiveDeviceConfigIcon\(/);
+  assert.match(deviceEditor, /field: 'icon',[\s\S]*generated: true/);
+  assert.match(deviceEditor, /data-generated-icon="true" data-initial-setting=/);
+  assert.match(deviceEditor, /generatedIcon && rawSetting === initialIcon && !options\.iconValue/);
+  assert.match(widgetEditor, /function _effectiveWidgetConfigIcon\(/);
+  assert.match(widgetEditor, /if \(!iconRow\) \{[\s\S]*generated: !options\.iconValue/);
+  assert.match(widgetEditor, /generatedIcon &&[\s\S]*!existingBlockOptions\.iconValue/);
+  assert.match(widgetEditor, /\$cfgModal\.find\('\.we-icon-field-row'\)\.toggle\(enabled\)/);
   assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';/);
   assert.match(deviceEditor, /specialEntry\.icon = titleOptions\.iconValue \|\| SEPARATOR_DEFAULT_ICON;/);
   assert.match(deviceEditor, /kind === 'title' && typeof definition\.icon === 'undefined'[\s\S]*\? SEPARATOR_DEFAULT_ICON/);

@@ -1,4 +1,4 @@
-/* global Domoticz settings columns columns_standby blocks blocktypes screens standby_screen DashticzScreenSwitcher standbyActive language */
+/* global Domoticz settings columns columns_standby blocks blocktypes screens standby_screen DashticzScreenSwitcher standbyActive language getBlockTypesBlock */
 // eslint-disable-next-line no-unused-vars
 var DashticzDeviceEditor = (function () {
   'use strict';
@@ -710,6 +710,68 @@ var DashticzDeviceEditor = (function () {
     return rows;
   }
 
+  function _fontIconClass($icon) {
+    if (!$icon || !$icon.length) return '';
+    return String($icon.attr('class') || '')
+      .split(/\s+/)
+      .filter(function (className) {
+        return /^(?:fa[brsld]?|fa-|wi(?:-|$))/.test(className);
+      })
+      .join(' ');
+  }
+
+  function _renderedIconForReference(reference) {
+    if (!reference) return '';
+    var referenceText = String(reference);
+    var $mount = $('[data-grid-block]').filter(function () {
+      return String($(this).attr('data-grid-block')) === referenceText;
+    }).first();
+    if (!$mount.length) {
+      $mount = $('[data-id]').filter(function () {
+        return String($(this).attr('data-id')) === referenceText;
+      }).first();
+    }
+    return _fontIconClass($mount.find('.col-icon em, .sunrise-header em').first());
+  }
+
+  function _defaultDomoticzIcon(device, subidx, idx) {
+    if (!device || typeof getBlockTypesBlock !== 'function') return 'fas fa-question';
+    try {
+      var proto = getBlockTypesBlock({
+        idx: device.idx || device.ID || device.Idx || idx,
+        subidx: subidx || 0,
+        device: device,
+      }) || {};
+      if (subidx && Array.isArray(proto.values) && proto.values[subidx - 1]) {
+        proto = proto.values[subidx - 1];
+      }
+      var icon = proto.icon || proto.iconOn || proto.iconOff;
+      if (typeof icon === 'function') icon = icon(device);
+      if (typeof icon === 'string' && icon) return icon;
+    } catch (ignore) { /* fall through to the neutral editable fallback */ }
+    return 'fas fa-question';
+  }
+
+  function _effectiveDeviceConfigIcon(ck, special, options) {
+    if (options && options.iconValue) return options.iconValue;
+    var reference = special ? special.reference : deviceRefs[ck];
+    var renderedIcon = _renderedIconForReference(reference);
+    if (renderedIcon) return renderedIcon;
+
+    var parsed = special ? null : _parseCk(ck);
+    var idx = special ? special.idx : parsed.idx;
+    var subidx = special ? 0 : parsed.subidx;
+    var devices = Domoticz.getAllDevices();
+    var device = devices && (devices[String(idx)] || devices[idx]);
+    if (device) return _defaultDomoticzIcon(device, subidx, idx);
+    if (special) {
+      if (special.specialType === 'title') return SEPARATOR_DEFAULT_ICON;
+      if (special.specialType === 'slidebutton') return 'fas fa-home';
+      if (special.specialType === 'custom') return 'fas fa-cube';
+    }
+    return 'fas fa-question';
+  }
+
   function _devicePreservedFieldValues(definition) {
     var preserved = {};
     if (definition && Object.prototype.hasOwnProperty.call(definition, 'c')) {
@@ -1350,7 +1412,10 @@ var DashticzDeviceEditor = (function () {
     var rowClass = 'de-custom-field-row input-group input-group-sm mb-2';
     if (field.toLowerCase() === 'icon') rowClass += ' de-icon-field-row';
     if (isSystem) rowClass += ' de-system-field-row';
-    return '<div class="' + rowClass + '">' +
+    return '<div class="' + rowClass + '"' +
+      (row.generated === true
+        ? ' data-generated-icon="true" data-initial-setting="' + _esc(row.setting || '') + '"'
+        : '') + '>' +
       '<input type="text" class="form-control de-custom-field-name" placeholder="' +
       _esc(t.field) + '" value="' + _esc(field) + '"' +
       (isSystem ? ' readonly aria-readonly="true"' : '') + '>' +
@@ -1928,6 +1993,18 @@ var DashticzDeviceEditor = (function () {
     } else {
       customRows.unshift({ field: 'title', setting: currentTitle, value: currentTitle, system: true });
     }
+    var iconRow = customRows.find(function (row) {
+      return String(row.field || '').toLowerCase() === 'icon';
+    });
+    var effectiveIcon = _effectiveDeviceConfigIcon(ck, special, options);
+    if (!iconRow) {
+      customRows.splice(1, 0, {
+        field: 'icon',
+        setting: effectiveIcon,
+        value: effectiveIcon,
+        generated: true,
+      });
+    }
 
     // A Multi Device's 'values' custom field is JSON produced by the Multi
     // Device popup (or hand-written in the same shape). Editing that as raw
@@ -2035,6 +2112,18 @@ var DashticzDeviceEditor = (function () {
         $popup.find('[data-option="icon"]').is(':checked');
       $popup.find('.de-icon-field-row').toggle(enabled);
     }
+    function ensureIconFieldRow() {
+      if ($popup.find('.de-icon-field-row').length) return;
+      var rowHtml = _customFieldRowHtml({
+        field: 'icon',
+        setting: effectiveIcon,
+        value: effectiveIcon,
+        generated: true,
+      });
+      var $titleRow = $popup.find('.de-custom-field-row').first();
+      if ($titleRow.length) $titleRow.after(rowHtml);
+      else $popup.find('.de-custom-fields').prepend(rowHtml);
+    }
     function refreshDialHint() {
       var enabled = $popup.find('[data-option="dial"]').is(':checked');
       $popup.find('.de-dial-hint').toggleClass('d-none', !enabled);
@@ -2057,9 +2146,15 @@ var DashticzDeviceEditor = (function () {
     $popup.on('click', '.de-custom-field-remove', function () {
       if ($(this).prop('disabled')) return;
       $(this).closest('.de-custom-field-row').remove();
+      if ($popup.find('[data-option="icon"]').is(':checked')) ensureIconFieldRow();
       refreshCustomFieldButtons();
+      refreshIconFieldVisibility();
     });
-    $popup.on('change', '[data-option="icon"]', refreshIconFieldVisibility);
+    $popup.on('change', '[data-option="icon"]', function () {
+      if ($(this).is(':checked')) ensureIconFieldRow();
+      refreshCustomFieldButtons();
+      refreshIconFieldVisibility();
+    });
     $popup.on('change', '[data-option="dial"]', refreshDialOptions);
     function refreshMdValueButtons() {
       var $rows = $popup.find('.md-value-row');
@@ -2151,6 +2246,9 @@ var DashticzDeviceEditor = (function () {
             $(this).find('.de-custom-field-setting').trigger('focus');
             return;
           }
+          var generatedIcon = $(this).attr('data-generated-icon') === 'true';
+          var initialIcon = String($(this).attr('data-initial-setting') || '');
+          if (generatedIcon && rawSetting === initialIcon && !options.iconValue) return;
           hasIconField = true;
           pendingIconValue = rawSetting;
           return;
