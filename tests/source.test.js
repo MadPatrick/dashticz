@@ -776,6 +776,8 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(widgetEditor, /if \(!iconRow\) \{[\s\S]*generated: !options\.iconValue/);
   assert.match(widgetEditor, /generatedIcon &&[\s\S]*!existingBlockOptions\.iconValue/);
   assert.match(widgetEditor, /\$cfgModal\.find\('\.we-icon-field-row'\)\.toggle\(enabled\)/);
+  assert.match(deviceEditor, /removesIcon[\s\S]*\[data-option="icon"\][\s\S]*\.prop\('checked', false\)/);
+  assert.match(widgetEditor, /removesIcon[\s\S]*\[data-block-option="icon"\][\s\S]*\.prop\('checked', false\)/);
   assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';/);
   assert.match(deviceEditor, /specialEntry\.icon = titleOptions\.iconValue \|\| SEPARATOR_DEFAULT_ICON;/);
   assert.match(deviceEditor, /kind === 'title' && typeof definition\.icon === 'undefined'[\s\S]*\? SEPARATOR_DEFAULT_ICON/);

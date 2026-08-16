@@ -2145,8 +2145,12 @@ var DashticzDeviceEditor = (function () {
     });
     $popup.on('click', '.de-custom-field-remove', function () {
       if ($(this).prop('disabled')) return;
-      $(this).closest('.de-custom-field-row').remove();
-      if ($popup.find('[data-option="icon"]').is(':checked')) ensureIconFieldRow();
+      var $row = $(this).closest('.de-custom-field-row');
+      var removesIcon = $row.hasClass('de-icon-field-row');
+      $row.remove();
+      if (removesIcon) {
+        $popup.find('[data-option="icon"]').prop('checked', false);
+      }
       refreshCustomFieldButtons();
       refreshIconFieldVisibility();
     });

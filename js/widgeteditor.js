@@ -2660,8 +2660,12 @@ var DashticzWidgetEditor = (function () {
 
     $cfgModal.on('click', '.we-custom-field-remove', function () {
       if ($(this).prop('disabled')) return;
-      $(this).closest('.we-custom-field-row').remove();
-      if ($cfgModal.find('[data-block-option="icon"]').is(':checked')) ensureIconFieldRow();
+      var $row = $(this).closest('.we-custom-field-row');
+      var removesIcon = $row.hasClass('we-icon-field-row');
+      $row.remove();
+      if (removesIcon) {
+        $cfgModal.find('[data-block-option="icon"]').prop('checked', false);
+      }
       refreshCustomFieldButtons();
       refreshIconFieldVisibility();
     });

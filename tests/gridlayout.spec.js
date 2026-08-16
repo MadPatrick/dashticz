@@ -885,8 +885,9 @@ screens[1] = {
     await expect(separatorIconRow).toBeVisible();
     await expect(separatorIconRow.locator('.de-custom-field-name')).toHaveValue('icon');
     await expect(separatorIconRow.locator('.de-custom-field-setting')).toHaveValue('fas fa-heading');
-    await page.locator('[data-option="icon"]').uncheck();
-    await expect(separatorIconRow).toBeHidden();
+    await separatorIconRow.locator('.de-custom-field-remove').click();
+    await expect(separatorIconRow).toHaveCount(0);
+    await expect(page.locator('[data-option="icon"]')).not.toBeChecked();
     await page.locator('[data-option="icon"]').check();
     await expect(separatorIconRow).toBeVisible();
     await page.locator('[data-option="icon"]').uncheck();
@@ -1043,8 +1044,9 @@ screens[1] = {
     await expect(widgetIconRow).toBeVisible();
     await expect(widgetIconRow.locator('.we-custom-field-name')).toHaveValue('icon');
     await expect(widgetIconRow.locator('.we-custom-field-setting')).toHaveValue('fas fa-cloud');
-    await page.locator('[data-block-option="icon"]').uncheck();
-    await expect(widgetIconRow).toBeHidden();
+    await widgetIconRow.locator('.we-custom-field-remove').click();
+    await expect(widgetIconRow).toHaveCount(0);
+    await expect(page.locator('[data-block-option="icon"]')).not.toBeChecked();
     await page.locator('[data-block-option="icon"]').check();
     await expect(widgetIconRow).toBeVisible();
     await widgetIconRow.locator('.we-custom-field-setting').fill('fas fa-star');
