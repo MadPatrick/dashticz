@@ -863,6 +863,9 @@ screens[1] = {
 
     await page.goto(dashboardUrl);
     await waitForDashboard(page);
+    await expect(
+      page.locator('[data-grid-block="grid_text"] .col-icon .fa-heading')
+    ).toBeVisible();
     await page.locator('.screen1 .layouteditoricon').click();
     await expect(page.locator('body')).toHaveClass(/dle-active/);
     const separatorOverlay = page.locator('[data-grid-block="grid_text"] .dle-overlay');
@@ -875,7 +878,9 @@ screens[1] = {
     await separatorOverlay.locator('.dle-config-button').click();
     await expect(page.locator('#de-config-popup')).toBeVisible();
     await expect(page.locator('#deviceeditorpopup')).toBeHidden();
-    await expect(page.locator('.de-config-option')).toHaveCount(0);
+    await expect(page.locator('.de-config-option')).toHaveCount(2);
+    await expect(page.locator('[data-option="icon"]')).toBeChecked();
+    await expect(page.locator('[data-option="show_title"]')).toBeChecked();
     await expect(page.locator('.de-custom-field-name').first()).toHaveValue('title');
     await expect(page.locator('.de-custom-field-setting').first()).toHaveValue('Keep me');
     await expect(page.locator('.de-custom-field-name')).toHaveCount(4);
@@ -924,6 +929,7 @@ screens[1] = {
         key: 'grid_text',
         title: 'Keep me',
         width: 12,
+        icon: 'fas fa-heading',
         custom_fields: {
           c: { legacy: true },
           layout: 1,

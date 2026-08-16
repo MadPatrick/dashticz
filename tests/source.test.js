@@ -669,6 +669,7 @@ test('device and widget config editors share full widget config and preserve hid
   const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
   const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
   const blocksSource = fs.readFileSync(path.join(root, 'js/blocks.js'), 'utf8');
+  const blockTitle = fs.readFileSync(path.join(root, 'js/components/blocktitle.js'), 'utf8');
   const simpleBlock = fs.readFileSync(path.join(root, 'js/components/simpleblock.js'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
 
@@ -763,6 +764,10 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(deviceEditor, /options\.iconValue/);
   assert.match(deviceEditor, /entry\.icon = options\.iconValue/);
   assert.match(deviceEditor, /specialEntry\.icon = specialOptions\.iconValue/);
+  assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';/);
+  assert.match(deviceEditor, /specialEntry\.icon = titleOptions\.iconValue \|\| SEPARATOR_DEFAULT_ICON;/);
+  assert.match(deviceEditor, /kind === 'title' && typeof definition\.icon === 'undefined'[\s\S]*\? SEPARATOR_DEFAULT_ICON/);
+  assert.match(blockTitle, /defaultCfg:\s*\{[\s\S]*icon: 'fas fa-heading'/);
 
   // Widget gears opened from Device Editor use the complete Widget Editor modal/save model.
   assert.match(deviceEditor, /DashticzWidgetEditor\.openConfig\(widget\.id/);

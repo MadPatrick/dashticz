@@ -31,6 +31,7 @@ var DashticzDeviceEditor = (function () {
   var gridRefs       = {};   // order key -> block reference
   var gridExtras     = [];   // non-device/widget blocks
   var TITLE_GRID_HEIGHT = 2;
+  var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';
 
   function _translations() {
     var configured =
@@ -221,7 +222,13 @@ var DashticzDeviceEditor = (function () {
       width: 12,
       height: 120,
       showTitle: true,
-      options: null,
+      options: {
+        icon: true,
+        iconValue: SEPARATOR_DEFAULT_ICON,
+        hide_data: false,
+        last_update: false,
+        switch: false,
+      },
       customFields: [{ field: 'title', setting: t.separator, value: t.separator, system: true }],
       preservedFields: {},
     };
@@ -460,7 +467,9 @@ var DashticzDeviceEditor = (function () {
         icon: typeof definition.icon === 'undefined' || definition.icon !== '',
         iconValue: typeof definition.icon === 'string' && definition.icon !== ''
           ? definition.icon
-          : null,
+          : (kind === 'title' && typeof definition.icon === 'undefined'
+            ? SEPARATOR_DEFAULT_ICON
+            : null),
         hide_data: definition.hide_data === true,
         last_update: definition.last_update === true,
         switch: definition.switch === true,
@@ -2609,7 +2618,13 @@ var DashticzDeviceEditor = (function () {
           showTitle: true,
           options: specialType === 'dummy'
             ? { icon: true, iconValue: null, hide_data: true, last_update: false, switch: false }
-            : null,
+            : {
+                icon: true,
+                iconValue: SEPARATOR_DEFAULT_ICON,
+                hide_data: false,
+                last_update: false,
+                switch: false,
+              },
           customFields: [{
             field: 'title',
             setting: specialType === 'title'
@@ -2821,8 +2836,11 @@ var DashticzDeviceEditor = (function () {
           var titleOptions = special.options || {};
           if (titleOptions.icon === false) {
             specialEntry.icon = '';
-          } else if (titleOptions.iconValue) {
-            specialEntry.icon = titleOptions.iconValue;
+          } else {
+            // Separators have no Domoticz device type from which the renderer
+            // can derive an icon. Give the enabled Icon option a real default;
+            // an explicitly configured icon still takes precedence.
+            specialEntry.icon = titleOptions.iconValue || SEPARATOR_DEFAULT_ICON;
           }
         }
         if (special.height) specialEntry.height = special.height;
