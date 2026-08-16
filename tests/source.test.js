@@ -1449,6 +1449,23 @@ test('FlipClock width fix, Hayman dot alignment and Miniclock live-resize scalin
     /var availW = \$content\.width\(\) \|\| \$sizeBox\.outerWidth\(\)/
   );
 
+  // .dt_block's flex row centers icon+.dt_content as one group, shifting
+  // the clock face right of the block's true center by about half the
+  // icon's width; .clock-container also wasn't centered within
+  // .dt_content at all (a block-level child left-aligned by default). The
+  // icon is taken out of the flex flow (so .dt_content spans the block's
+  // full width) and .clock-container is explicitly centered within it, so
+  // the face is centered on the block regardless of either.
+  assert.match(haymanCss, /\.haymanclock \{[\s\S]*?position: relative;[\s\S]*?\}/);
+  assert.match(
+    haymanCss,
+    /\.haymanclock \.col-icon \{\s*\n\s*position: absolute;/
+  );
+  assert.match(
+    haymanCss,
+    /\.haymanclock \.clock-container \{[\s\S]*?margin-left: auto;\s*\n\s*margin-right: auto;/
+  );
+
   // Miniclock has no Size/Scale controls; its .weekday/.date/.clock spans
   // must still scale with the block's own resize, the same way the four
   // dedicated clock widgets do.

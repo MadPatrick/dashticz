@@ -25,6 +25,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+/* .dt_block (shared by every widget type, see creative.css) is a flex row
+   of the icon followed by .dt_content, so centering that row centers
+   icon+content as one group - shifting the clock face right of the
+   block's true horizontal center by about half the icon's width. Taking
+   the icon out of the flex flow lets .dt_content (and .clock-container
+   centered inside it below) span and center on the block's full width
+   instead of only the space left over after the icon. Pinned to the top
+   corner, not vertically centered like it was in the flex row, so it
+   doesn't sit behind the now-centered clock face. */
+.haymanclock .col-icon {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  margin-top: 0;
 }
 
 .haymanclock .clock-container {
@@ -32,6 +49,12 @@
   display: -webkit-box;
   display: flex;
   justify-content: space-evenly;
+  /* naturalW*GAP_FACTOR*fitScale (see haymanclock.js) is a width-bound
+     fit, not necessarily an exact match for .dt_content's own width - the
+     margin keeps the face centered on any leftover slack instead of
+     sitting flush left, which is a block-level element's default. */
+  margin-left: auto;
+  margin-right: auto;
 }
 .haymanclock .clock-col {
   text-align: center;
