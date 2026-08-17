@@ -6,6 +6,27 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.44.0 beta (17-8-2026)
+-------------------------
+
+* **Enhancements**
+
+- Added **Group** and **HTML Block** to the Screen Editor's add-item menu,
+  built the same way as **Multi Device**: a dedicated popup for creating one,
+  and afterwards a regular, fully configurable entry in the Device Editor
+  list (draggable, resizable, removable, with its own Device Config gear
+  icon). Group wraps ``js/components/group.js`` (a client-side group/scene
+  aggregate with instant status updates and a longpress popup - not the
+  plain Domoticz Group/Scene device already offered by Add device); HTML
+  Block wraps ``js/components/html.js`` (a static ``custom/*.html`` snippet).
+  Neither offers a Dial option, since it doesn't apply to either block type.
+- Multi Device's own popup, and the new Group/HTML Block popups, now expose
+  Icon, Update and Title checkboxes directly in their own top section -
+  matching the Icon/Data/Update/Dial/Title options every already-placed
+  block gets from Device Config - instead of Multi Device silently hard
+  coding a fixed icon and title visibility with no way to change either
+  before saving.
+
 v3.43.5 beta (16-8-2026)
 -------------------------
 

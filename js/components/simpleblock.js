@@ -458,6 +458,8 @@ var DT_simpleblock = (function () {
       { action: 'widgets', icon: 'fa-puzzle-piece', label: t.title || 'Widgets' },
       { action: 'custom', icon: 'fa-cube', label: t.custom_devices || 'Custom devices' },
       { action: 'multidevice', icon: 'fa-layer-group', label: t.multi_device || 'Multi Device' },
+      { action: 'group', icon: 'fa-object-group', label: t.group_block || 'Group' },
+      { action: 'htmlblock', icon: 'fa-code', label: t.html_block || 'HTML Block' },
       { action: 'slidebutton', icon: 'fa-sliders-h', label: t.slide_button || 'Slide button' },
       { action: 'separator', icon: 'fa-divide', label: t.separator || 'Separator' },
     ];
@@ -505,6 +507,10 @@ var DT_simpleblock = (function () {
             DashticzDeviceEditor.openCustom();
           } else if (selectedAction === 'multidevice') {
             DashticzDeviceEditor.openMultiDevice();
+          } else if (selectedAction === 'group') {
+            DashticzDeviceEditor.openGroup();
+          } else if (selectedAction === 'htmlblock') {
+            DashticzDeviceEditor.openHtmlBlock();
           } else if (selectedAction === 'slidebutton') {
             DashticzDeviceEditor.openSlideButton();
           } else if (selectedAction === 'separator') {
