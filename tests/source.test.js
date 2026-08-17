@@ -798,7 +798,12 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(styles, /\.dt-custom-image-grid \{[\s\S]*grid-template-columns: repeat\(6/);
   assert.match(styles, /\.dt-custom-image-thumb \{[\s\S]*object-fit: contain/);
   assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-divide';/);
-  assert.match(deviceEditor, /specialEntry\.icon = titleOptions\.iconValue \|\| SEPARATOR_DEFAULT_ICON;/);
+  // A separator's default icon only fills in when neither an explicit icon
+  // nor a custom image is configured - getColIcon() (js/dashticz.js) draws
+  // an icon and an image side by side rather than one replacing the other,
+  // so falling back to the default icon while an image is set would show both.
+  assert.match(deviceEditor, /else if \(titleOptions\.iconValue\) \{\s*\n\s*specialEntry\.icon = titleOptions\.iconValue;\s*\n\s*\} else if \(!specialCustomFields\.image\) \{/);
+  assert.match(deviceEditor, /specialEntry\.icon = SEPARATOR_DEFAULT_ICON;/);
   assert.match(deviceEditor, /kind === 'title' && typeof definition\.icon === 'undefined'[\s\S]*\? SEPARATOR_DEFAULT_ICON/);
   assert.match(blockTitle, /defaultCfg:\s*\{[\s\S]*icon: 'fas fa-divide'/);
   assert.match(configWriter, /if \(array_key_exists\('icon', \$block\) && \$block\['icon'\] !== null\) \{\s*\n\s*\$props\['icon'\] = \(string\)\$block\['icon'\];/);

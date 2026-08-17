@@ -26,6 +26,21 @@ v3.45.0 beta (17-8-2026)
   and Device Config, so the three popup families read as one consistent
   design instead of two of them being unlabelled.
 
+* **Fixes**
+
+- Fixed a Separator/title block configured with a custom image also
+  rendering its old default divide icon next to it - the block-saving code
+  fell back to a default icon whenever the Icon option was on, even when
+  the user had switched to Image and had no icon value to fall back from.
+  The renderer draws an icon and an image side by side rather than one
+  replacing the other, so both showed up together.
+- Fixed a Slide button's custom image overflowing its fixed-width icon
+  column and overlapping the title text next to it, in the Modern Dark and
+  both Liquid Glass themes: their generic 65px image size (meant for
+  regular device tiles) had no Slide-button-specific exception the way the
+  Separator block already had one. Also right-aligned Slide button titles
+  so they read away from the icon.
+
 v3.44.2 beta (17-8-2026)
 -------------------------
 

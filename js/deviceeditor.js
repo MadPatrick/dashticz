@@ -3688,11 +3688,16 @@ var DashticzDeviceEditor = (function () {
           var titleOptions = special.options || {};
           if (titleOptions.icon === false) {
             specialEntry.icon = '';
-          } else {
+          } else if (titleOptions.iconValue) {
+            specialEntry.icon = titleOptions.iconValue;
+          } else if (!specialCustomFields.image) {
             // Separators have no Domoticz device type from which the renderer
-            // can derive an icon. Give the enabled Icon option a real default;
-            // an explicitly configured icon still takes precedence.
-            specialEntry.icon = titleOptions.iconValue || SEPARATOR_DEFAULT_ICON;
+            // can derive an icon. Give the enabled Icon option a real default
+            // when nothing else supplies a leading visual - but not when the
+            // user picked a custom image instead, or the renderer draws both
+            // side by side (getColIcon() in dashticz.js renders an icon and
+            // an image independently rather than one replacing the other).
+            specialEntry.icon = SEPARATOR_DEFAULT_ICON;
           }
         }
         if (special.height) specialEntry.height = special.height;
