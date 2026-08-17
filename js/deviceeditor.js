@@ -25,6 +25,11 @@ var DashticzDeviceEditor = (function () {
   var widgetTitleVisible = {}; // widget order key -> title shown/hidden
   var pendingWidgetSettings = {}; // full Widget Config settings edited from Device Editor
   var editorMode     = 'devices'; // devices, dummy or title
+  // Only true when open() (the Add items tile menu's "Add device" tile) is
+  // the current opener - openConfig()/openSpecial() build the same modal
+  // from a different entry point (a tile's own gear icon, no tile menu to
+  // return to), so their Back button must stay off.
+  var openedFromAddMenu = false;
   var gridMode       = false;
   var gridConfig     = null;
   var gridPositions  = {};   // order key -> {x,y,w,h}
@@ -154,6 +159,7 @@ var DashticzDeviceEditor = (function () {
   /* ── public API ─────────────────────────────────────────────── */
   function open() {
     editorMode = 'devices';
+    openedFromAddMenu = true;
     gridMode = _activeScreenDom().hasClass('dt-grid-screen');
     _init();
     _buildAndShowModal();
@@ -161,6 +167,7 @@ var DashticzDeviceEditor = (function () {
 
   function openSpecial(kind) {
     editorMode = kind === 'title' ? 'title' : 'dummy';
+    openedFromAddMenu = false;
     gridMode = _activeScreenDom().hasClass('dt-grid-screen');
     _init();
     _buildAndShowModal();
@@ -170,6 +177,7 @@ var DashticzDeviceEditor = (function () {
    * normal Device Editor as the save parent shown after the config popup closes. */
   function openConfig(reference) {
     editorMode = 'devices';
+    openedFromAddMenu = false;
     gridMode = _activeScreenDom().hasClass('dt-grid-screen');
     _init();
 
@@ -1412,6 +1420,7 @@ var DashticzDeviceEditor = (function () {
 
     $('body').append(_buildModalHtml(available, allDomoticz));
     _attachHandlers(available, allDomoticz);
+    _wireBackButton('deviceeditorpopup');
 
     var el = document.getElementById('deviceeditorpopup');
     if (window.bootstrap && window.bootstrap.Modal) {
@@ -1486,6 +1495,7 @@ var DashticzDeviceEditor = (function () {
       html += 'PHP not available — saving is disabled.';
       html += '</span>';
     }
+    if (openedFromAddMenu) html += _backButtonHtml();
     html += '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' + _esc(t.close) + '</button>';
     html += '<button type="button" class="btn btn-primary" id="de-save-btn"';
     if (typeof _PHP_INSTALLED !== 'undefined' && !_PHP_INSTALLED) {
@@ -1802,17 +1812,23 @@ var DashticzDeviceEditor = (function () {
       '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' + _esc(backLabel) + '</button>';
   }
 
-  /* Call once after appending markup built with _backButtonHtml() above. */
+  /* Call once after appending markup built with _backButtonHtml() above.
+     Tracks the click in a closure variable rather than $popup.data(), since
+     deviceeditorpopup's own cleanup handler (_attachHandlers() below) calls
+     $(this).remove() on hide - which jQuery documents as also clearing any
+     data stored on the element - and can run before this handler depending
+     on registration order. */
   function _wireBackButton(popupId) {
     var popup = document.getElementById(popupId);
     var $popup = $(popup);
+    var backRequested = false;
     $popup.on('click', '.de-back-btn', function () {
-      $popup.data('de-back-requested', true);
+      backRequested = true;
       window.bootstrap.Modal.getInstance(popup).hide();
     });
     $popup.one('hidden.bs.modal', function () {
       if (
-        $popup.data('de-back-requested') &&
+        backRequested &&
         typeof DT_simpleblock !== 'undefined' &&
         typeof DT_simpleblock.openAddMenu === 'function'
       ) {

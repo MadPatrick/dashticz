@@ -20,9 +20,14 @@ v3.44.1 beta (17-8-2026)
   easy-to-miss Field/Setting rows, and there was no way to hide the title
   at creation time at all.
 - Every popup reachable from the Screen Editor's add-item tile menu (Custom
-  device, Multi Device, Group, HTML Block, Slide button) now has a **Back**
-  button to the left of Cancel/Close, styled like the Settings popup's own
-  Back button, that returns to the tile menu instead of just closing.
+  device, Multi Device, Group, HTML Block, Slide button, Add device, and
+  Widgets) now has a **Back** button to the left of Cancel/Close, matching
+  the height of the buttons next to it, that returns to the tile menu
+  instead of just closing.
+- The wand/Screen Editor topbar icon has no function once the Screen Editor
+  is already active (clicking it again does nothing); it's now hidden in
+  favor of the **+** add-item icon in that same topbar slot while editing,
+  and swaps back once editing closes.
 
 v3.44.0 beta (17-8-2026)
 -------------------------

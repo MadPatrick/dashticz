@@ -439,7 +439,13 @@ var DT_simpleblock = (function () {
   }
 
   function _syncScreenEditorAddButton() {
-    $('.screeneditoraddicon').toggleClass('d-none', !$('body').hasClass('dle-active'));
+    // The wand icon has no function once the Screen Editor is already
+    // active (clicking it again is a no-op) - hide it in favor of the +
+    // icon in that same topbar slot while editing, and swap back once
+    // editing closes.
+    var active = $('body').hasClass('dle-active');
+    $('.screeneditoraddicon').toggleClass('d-none', !active);
+    $('.layouteditoricon').toggleClass('d-none', active);
   }
 
   function _registerScreenEditorStateObserver() {
