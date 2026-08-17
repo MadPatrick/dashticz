@@ -193,8 +193,6 @@
             "news": "Nieuws",
             "anwb_apikey": "ANWB API-sleutel",
             "anwb_apikey_help": "API-sleutel voor ANWB verkeersinfo (trafficinfo-widget).",
-            "clock_size": "Grootte (px)",
-            "clock_size_help": "Leeg = past zich aan de tegel aan. Bijv. 120",
             "clock_scale": "Schaal",
             "clock_scale_help": "Relatieve schaalfactor, bijv. 0.75 (standaard 1)",
             "miniclock_note": "Miniclock heeft geen extra weergave-opties."
@@ -394,8 +392,6 @@
             "filter_help": "Kommagescheiden zoektermen, bijvoorbeeld Amsterdam, Utrecht.",
             "clock_type": "Kloktype",
             "station_clock": "Stationsklok",
-            "size_px": "Grootte (px)",
-            "size_help": "Leeg = kolombreedte",
             "scale": "Schaal",
             "scale_help": "Bijvoorbeeld 0.75 (standaard 1)",
             "show_seconds": "Seconden tonen",

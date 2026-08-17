@@ -31,7 +31,7 @@ var DashticzDeviceEditor = (function () {
   var gridRefs       = {};   // order key -> block reference
   var gridExtras     = [];   // non-device/widget blocks
   var TITLE_GRID_HEIGHT = 2;
-  var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';
+  var SEPARATOR_DEFAULT_ICON = 'fas fa-divide';
   var customImageListPromise = null;
 
   function _translations() {
@@ -906,7 +906,6 @@ var DashticzDeviceEditor = (function () {
     } else if (widget.id === 'clock') {
       entry.clockType = definition.type || 'basicclock';
       _copyDefinedWidgetProperties(entry, definition, [
-        'size',
         'scale',
         'showSeconds',
         'clockFace',
@@ -2577,7 +2576,7 @@ var DashticzDeviceEditor = (function () {
       '" draggable="true">';
     html += '<span class="de-drag-handle" title="' + _esc(t.drag_to_reorder) + '"><i class="fas fa-grip-vertical" aria-hidden="true"></i></span>';
     html += '<span class="de-device-idx"><i class="fas ' +
-      (isTitle ? 'fa-heading' : (isSlideButton ? 'fa-sliders-h' : (isMultiDevice ? 'fa-layer-group' : 'fa-cube'))) + ' me-1" aria-hidden="true"></i>' +
+      (isTitle ? 'fa-divide' : (isSlideButton ? 'fa-sliders-h' : (isMultiDevice ? 'fa-layer-group' : 'fa-cube'))) + ' me-1" aria-hidden="true"></i>' +
       _esc(label) + '</span>';
     html += '<span class="de-device-identity de-special-identity">';
     html += '<span class="de-device-name">' + _esc(detail) + '</span></span>';

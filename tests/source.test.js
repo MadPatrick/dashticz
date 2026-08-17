@@ -796,10 +796,10 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(widgetEditor, /class="dt-custom-image-grid"/);
   assert.match(styles, /\.dt-custom-image-grid \{[\s\S]*grid-template-columns: repeat\(6/);
   assert.match(styles, /\.dt-custom-image-thumb \{[\s\S]*object-fit: contain/);
-  assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-heading';/);
+  assert.match(deviceEditor, /var SEPARATOR_DEFAULT_ICON = 'fas fa-divide';/);
   assert.match(deviceEditor, /specialEntry\.icon = titleOptions\.iconValue \|\| SEPARATOR_DEFAULT_ICON;/);
   assert.match(deviceEditor, /kind === 'title' && typeof definition\.icon === 'undefined'[\s\S]*\? SEPARATOR_DEFAULT_ICON/);
-  assert.match(blockTitle, /defaultCfg:\s*\{[\s\S]*icon: 'fas fa-heading'/);
+  assert.match(blockTitle, /defaultCfg:\s*\{[\s\S]*icon: 'fas fa-divide'/);
   assert.match(configWriter, /if \(array_key_exists\('icon', \$block\) && \$block\['icon'\] !== null\) \{\s*\n\s*\$props\['icon'\] = \(string\)\$block\['icon'\];/);
 
   // Widget gears opened from Device Editor use the complete Widget Editor modal/save model.
@@ -1334,7 +1334,12 @@ test('Hayman clock does not depend on Moment locale internals for rendering', ()
   assert.match(source, /var now = new Date\(\)/);
   assert.match(source, /new Intl\.DateTimeFormat/);
   assert.match(source, /\.fromNow\(true\)/);
-  assert.match(source, /updateTime\(\);\s*Dashticz\.setInterval/);
+  // updateTime() is now also called once, early, before the template
+  // renders - so fitSize()'s measurement sees real day/hours/minutes/
+  // seconds digits instead of empty ones - in addition to the interval
+  // that keeps it ticking every second.
+  assert.match(source, /updateTime\(\);\s*\n\s*\n\s*\/\/ Render into \.dt_state/);
+  assert.match(source, /Dashticz\.setInterval\(me, function \(\) \{\s*\n\s*updateTime\(\);/);
   assert.doesNotMatch(source, /moment\(\)\.format\(/);
   assert.doesNotMatch(source, /_relativeTime/);
 });
@@ -1354,16 +1359,218 @@ test('clock components use public date APIs and a valid seconds setting', () => 
     'utf8'
   );
   assert.doesNotMatch(dateTime, /dayjs\.Ls/);
-  assert.match(basicClock, /maxFontSize: 42/);
-  assert.match(basicClock, /Math\.min\(fontSize, me\.block\.maxFontSize\)/);
+  // The clock face always fills the available block space; only the Scale
+  // setting adjusts it further, so no component keeps an independent
+  // px "Size" field or a hard cap unrelated to the block's own size.
+  assert.doesNotMatch(basicClock, /me\.block\.size/);
+  assert.doesNotMatch(basicClock, /maxFontSize/);
+  assert.match(basicClock, /\$block\.css\('font-size', REF \* fitScale \* scale\)/);
   assert.match(stationClock, /function clockFitSize/);
-  assert.match(stationClock, /if \(me\.block\.maxSize\)/);
+  assert.doesNotMatch(stationClock, /me\.block\.size/);
+  assert.doesNotMatch(stationClock, /me\.block\.maxSize/);
   assert.match(stationClock, /var width = clockFitSize\(me, 120\)/);
-  assert.match(flipClock, /minEmSize: 3\.5/);
-  assert.match(flipClock, /maxEmSize: 7/);
+  assert.doesNotMatch(flipClock, /me\.block\.size/);
+  assert.doesNotMatch(flipClock, /minEmSize/);
+  assert.doesNotMatch(flipClock, /maxEmSize/);
+  // The digit row is far wider than tall, so a naive min(availW, availH) -
+  // appropriate for the roughly square station/dial faces - badly
+  // under-fills availW. The natural size per --flipclock-em is computed
+  // analytically from flipclock.css's own fixed multipliers instead.
+  assert.match(flipClock, /naturalWidthPerEm/);
+  assert.match(flipClock, /naturalHeightPerEm/);
+  assert.match(
+    flipClock,
+    /Math\.min\(availW \/ naturalWidthPerEm, availH \/ naturalHeightPerEm\)/
+  );
   assert.match(flipClock, /FlipClock\(\$state, 0,/);
   assert.match(flipClock, /showSeconds: !settings\['hide_seconds'\]/);
   assert.doesNotMatch(flipClock, /showSecoonds/);
+});
+
+test('FlipClock width fix, Hayman dot alignment and Miniclock live-resize scaling', () => {
+  const flipClock = fs.readFileSync(
+    path.join(root, 'js/components/flipclock.js'),
+    'utf8'
+  );
+  const haymanCss = fs.readFileSync(
+    path.join(root, 'js/components/haymanclock.css'),
+    'utf8'
+  );
+  const simpleblock = fs.readFileSync(
+    path.join(root, 'js/components/simpleblock.js'),
+    'utf8'
+  );
+  const haymanClock = fs.readFileSync(
+    path.join(root, 'js/components/haymanclock.js'),
+    'utf8'
+  );
+
+  // .dt_block is display:flex (fixed-width icon column + .dt_content), so
+  // the outer box's own width also counts the icon and .dt_block's own
+  // padding/border. .dt_content's width already excludes all of that and
+  // must be preferred, or the flip cards overflow past the block's edge.
+  assert.match(flipClock, /var availW =\s*\n?\s*\$content\.width\(\) \|\|/);
+  assert.doesNotMatch(flipClock, /console\.log\('FLIP_ANALYTIC'/);
+
+  // .clock-col{flex:1} has no min-width:0, so the 3-letter day-label column
+  // intentionally claims more than an even quarter of the row (its
+  // automatic minimum size) so its text doesn't overflow - a %-based dot
+  // offset therefore landed at a different pixel position next to that
+  // column than next to a 2-digit column. Dots are sized/positioned in em
+  // (the shared .clock-container font-size), consistent regardless of each
+  // column's own width.
+  assert.match(haymanCss, /\.clock-col:not\(:last-child\):before,/);
+  // Doubled from 0.15em so the separator reads at a size proportionate to
+  // the fit-to-block digits next to it, instead of looking tiny compared
+  // to them.
+  assert.match(haymanCss, /width: 0\.3em;/);
+  assert.match(haymanCss, /height: 0\.3em;/);
+  assert.match(haymanCss, /right: var\(--hc-dot-right, -0\.15em\);/);
+  assert.doesNotMatch(haymanCss, /right:\s*-3%/);
+
+  // The dots must sit lower than the column's own vertical center, since
+  // .clock-label below the digit pulls that center down away from the
+  // digit itself.
+  assert.match(haymanCss, /top: 46%;/);
+  assert.match(haymanCss, /top: 61%;/);
+  assert.doesNotMatch(haymanCss, /top:\s*37%/);
+  assert.doesNotMatch(haymanCss, /top:\s*52%/);
+
+  // The 3-4 letter day label ("Sun".."Wed") usually fills far more of its
+  // (equal-width, see GAP_FACTOR) column than a 2-digit hour/minute/second
+  // value fills of its own, so centering every dot on its plain column
+  // boundary (the CSS fallback above) left the day/hour separator sitting
+  // closer to the day text than the hour text. haymanclock.js measures
+  // each column's actual rendered glyph (cloned into a real, temporary
+  // element, since ::before pseudo-elements have no DOM node of their own
+  // to measure) and sets --hc-dot-right per column so every separator -
+  // not just day/hour - centers on the real glyph-to-glyph gap, in
+  // whatever font/locale is actually rendering it.
+  assert.match(haymanClock, /function measureGlyphWidth\(text, refStyle\)/);
+  assert.match(haymanClock, /function centerDots\(\$container, fontSizePx\)/);
+  assert.match(
+    haymanClock,
+    /cols\[i\]\.style\.setProperty\('--hc-dot-right', -0\.15 - offsetEm \+ 'em'\);/
+  );
+  assert.match(haymanClock, /centerDots\(\$container, fontSize\);/);
+
+  // Hayman's natural face is wide and short, so it's almost always
+  // width-bound; a too-small GAP_FACTOR let the digits fill that width
+  // edge-to-edge, reading as oversized with barely any room for the ':'
+  // separators. A bigger GAP_FACTOR reserves more of that same
+  // fit-to-width budget as real, visible gaps between columns instead of
+  // shrinking (and thus wasting) the whole result post-fit.
+  assert.match(haymanClock, /var GAP_FACTOR = 1\.6;/);
+  assert.doesNotMatch(haymanClock, /HAYMAN_SIZE_FACTOR/);
+
+  // .dt_block is display:flex (icon column + .dt_content side by side);
+  // .dt_content's measured width already excludes the icon column, unlike
+  // $sizeBox's (grid item/.dt_block), which still includes it.
+  assert.match(
+    haymanClock,
+    /var availW = \$content\.width\(\) \|\| \$sizeBox\.outerWidth\(\)/
+  );
+
+  // .dt_block's flex row centers icon+.dt_content as one group, shifting
+  // the clock face right of the block's true center by about half the
+  // icon's width; .clock-container also wasn't centered within
+  // .dt_content at all (a block-level child left-aligned by default). The
+  // icon is taken out of the flex flow (so .dt_content spans the block's
+  // full width) and .clock-container is explicitly centered within it, so
+  // the face is centered on the block regardless of either.
+  assert.match(haymanCss, /\.haymanclock \{[\s\S]*?position: relative;[\s\S]*?\}/);
+  assert.match(
+    haymanCss,
+    /\.haymanclock \.col-icon \{\s*\n\s*position: absolute;/
+  );
+  assert.match(
+    haymanCss,
+    /\.haymanclock \.clock-container \{[\s\S]*?margin-left: auto;\s*\n\s*margin-right: auto;/
+  );
+
+  // The custom themes' standby-only Hayman styling pinned the digits'
+  // rendered size with `font-size: 80px !important`, which cannot be
+  // overridden by haymanclock.js's fitSize() (jQuery .css() never beats an
+  // !important rule) - the standby clock stayed one fixed size no matter
+  // how its grid block was resized. Removing the fixed size lets
+  // .clock-timer:before inherit .clock-container's JS-driven font-size
+  // (via the base haymanclock.css's `font-size: 420%`) instead.
+  ['modern-dark', 'liquid-glass-blue', 'liquid-glass-grey'].forEach(function (
+    themeName
+  ) {
+    var themeCss = fs.readFileSync(
+      path.join(root, 'themes/' + themeName + '/' + themeName + '.css'),
+      'utf8'
+    );
+    assert.match(
+      themeCss,
+      /\.standby \.clock-container \.clock-timer:before\s*\{[^}]*margin: 0 !important;/
+    );
+    assert.doesNotMatch(
+      themeCss,
+      /\.standby \.clock-container[\s\S]*?font-size: 80px !important/
+    );
+  });
+
+  // Miniclock has no Size/Scale controls; its .weekday/.date/.clock spans
+  // must still scale with the block's own resize, the same way the four
+  // dedicated clock widgets do.
+  assert.match(simpleblock, /function _fitMiniclockSize\(me\)/);
+  assert.match(simpleblock, /function _initMiniclockFitSize\(me\)/);
+  assert.match(
+    simpleblock,
+    /style\.setProperty\('font-size', \(REF \* fitScale\) \+ 'px', 'important'\)/
+  );
+  assert.match(simpleblock, /me\.miniclockResizeObserver = new ResizeObserver/);
+  assert.match(
+    simpleblock,
+    /if \(me\.miniclockResizeObserver\) \{\s*\n\s*me\.miniclockResizeObserver\.disconnect\(\);/
+  );
+
+  // The topbar's miniclock (".dt-topbar-item") is a fixed 40px strip in the
+  // fixed-height .colbar, not a resizable grid/column block, and isn't
+  // wrapped by .dt-grid-item - so the live fit-to-block sizing above must
+  // not touch it, or its own elastic flex box feeds a runaway
+  // grow-remeasure-grow font-size loop that breaks the whole topbar.
+  assert.match(
+    simpleblock,
+    /function _initMiniclockFitSize\(me\) \{\s*\n\s*var \$mount = me\.\$mountPoint;\s*\n[\s\S]*?if \(\$mount\.hasClass\('dt-topbar-item'\)\) return;/
+  );
+});
+
+test('clock widgets no longer expose a px Size field, only Scale', () => {
+  const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const settingsSource = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
+  const savewidgets = fs.readFileSync(path.join(root, 'js/savewidgets.php'), 'utf8');
+  const haymanClock = fs.readFileSync(
+    path.join(root, 'js/components/haymanclock.js'),
+    'utf8'
+  );
+  const english = JSON.parse(fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8'));
+
+  assert.doesNotMatch(widgetEditor, /'size_px'/);
+  assert.doesNotMatch(widgetEditor, /ccfg\.size/);
+  assert.doesNotMatch(widgetEditor, /entry\.size = /);
+  assert.doesNotMatch(deviceEditor, /'size'/);
+  assert.match(deviceEditor, /_copyDefinedWidgetProperties\(entry, definition, \[\s*\n\s*'scale',/);
+  assert.doesNotMatch(settingsSource, /clock_size/);
+  assert.doesNotMatch(savewidgets, /'clock_size'/);
+  assert.doesNotMatch(savewidgets, /\$widget\['size'\]/);
+  assert.doesNotMatch(savewidgets, /\$props\['size'\]/);
+  assert.equal(typeof english.settings.widgets.clock_size, 'undefined');
+  assert.equal(typeof english.settings.widgeteditor.size_px, 'undefined');
+
+  // Hayman's container width now derives from the same fit-to-block `width`
+  // used for its font size, instead of being capped at `scale * 100%` (which
+  // made Scale > 1 a no-op and Size have no effect on the visible width).
+  assert.match(haymanClock, /me\.block\.clockwidth = Math\.floor\(width\) \+ 'px';/);
+  assert.doesNotMatch(haymanClock, /scale \* 100/);
+
+  // The Clock type dropdown shows a preview image of the selected type.
+  assert.match(widgetEditor, /id="we-cfg-clock-preview"/);
+  assert.match(widgetEditor, /function _clockPreviewSrc/);
+  assert.match(widgetEditor, /'img\/clock-' \+ type/);
 });
 
 test('clock components render into .dt_state so block.title/hide_title survive', () => {
@@ -3161,7 +3368,23 @@ test('Clock widgets (Basic/Station/Flip/Hayman) get a default icon and correctly
 
   assert.match(stationclock, /var \$title = \$mount\.find\('\.dt_title'\)\.first\(\);/);
   assert.match(stationclock, /var \$state = \$mount\.find\('\.dt_state'\)\.first\(\);/);
-  assert.match(stationclock, /var availH = \(\$block\.length \? \$block\.height\(\) : 0\) - titleHeight - stateMarginV;/);
+  // A grid item's own box is a hard, CSS-Grid-track-sized box; .dt_block
+  // only *looks* fixed (height: 100% !important) but a grid item's
+  // automatic minimum size still grows to fit its content unless the item
+  // itself clips overflow, which .dt-grid-item doesn't. Measuring .dt_block
+  // there would read that already-inflated height back, feeding a runaway
+  // grow-remeasure-grow loop with every ResizeObserver tick - so all four
+  // clock components measure the outer mount point instead, in grid mode
+  // (same fix as js/components/dial.js's _dialFitSize()).
+  [basicclock, flipclock, haymanclock].forEach(function (source, i) {
+    var name = ['basicclock', 'flipclock', 'haymanclock'][i];
+    assert.match(source, /me\.\$mountPoint && me\.\$mountPoint\.hasClass\('dt-grid-item'\)/, name);
+  });
+  assert.match(stationclock, /var inGrid = \$mount\.hasClass\('dt-grid-item'\);/);
+  assert.match(
+    stationclock,
+    /var availH =\s*\n\s*\(inGrid \? \$mount\.outerHeight\(\) : \$block\.length \? \$block\.height\(\) : 0\) -/
+  );
 
   // The JS-side subtraction above still isn't a hard guarantee: .dt_block's
   // own min-height: 100% (creative.css, shared by every grid block) is only
