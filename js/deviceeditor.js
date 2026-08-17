@@ -60,6 +60,7 @@ var DashticzDeviceEditor = (function () {
         invalid_title: 'Enter a title.',
         width: 'Width',
         title: 'Title',
+        display_options: 'Display options',
         icon: 'Icon',
         hide_data: 'Hide data',
         last_update: 'Last update',
@@ -741,7 +742,7 @@ var DashticzDeviceEditor = (function () {
 
   var protectedCustomDeviceProperties = {
     type: true, id: true, key: true, kind: true, width: true, height: true,
-    grid: true, idx: true, subidx: true, title: true, icon: true,
+    grid: true, idx: true, subidx: true, title: true, icon: true, image: true,
     hide_data: true, last_update: true, switch: true, hide_title: true,
     text_alignment: true, text_align: true, custom_fields: true, c: true,
     __proto__: true, prototype: true, constructor: true,
@@ -1553,20 +1554,30 @@ var DashticzDeviceEditor = (function () {
       '<i class="fas fa-cog" aria-hidden="true"></i></button>';
   }
 
-  function _customFieldRowHtml(row) {
+  /* opts.hideButtons: renders the icon/image row without the add/remove
+     controls, for a popup with exactly one fixed icon field rather than a
+     repeatable custom-fields list (see _quickOptionsHtml() below). Every
+     icon/image row also carries data-icon-default, the value to restore if
+     the source is switched from Image back to Icon - single-field callers
+     rely on this; the full custom-fields grid's own wiring (_showConfigPopup)
+     tracks its own effective/default icon instead and ignores it. */
+  function _customFieldRowHtml(row, opts) {
     var t = _translations();
     row = row || { field: '', setting: '' };
     var isSystem = row.system === true;
     var field = String(row.field || '');
     var lowerField = field.toLowerCase();
     var isIconSource = lowerField === 'icon' || lowerField === 'image';
+    var hideButtons = !!(opts && opts.hideButtons);
     var rowClass = 'de-custom-field-row input-group input-group-sm mb-2';
     if (isIconSource) rowClass += ' de-icon-field-row';
     if (isSystem) rowClass += ' de-system-field-row';
     return '<div class="' + rowClass + '"' +
       (row.generated === true
         ? ' data-generated-icon="true" data-initial-setting="' + _esc(row.setting || '') + '"'
-        : '') + '>' +
+        : '') +
+      (isIconSource ? ' data-icon-default="' + _esc(lowerField === 'icon' ? (row.setting || '') : '') + '"' : '') +
+      '>' +
       (isIconSource
         ? '<select class="form-select de-custom-field-name de-icon-source" aria-label="' +
           _esc(t.field) + '"><option value="icon"' + (lowerField === 'icon' ? ' selected' : '') +
@@ -1583,11 +1594,12 @@ var DashticzDeviceEditor = (function () {
           _esc(t.custom_images) + '"><div class="dt-custom-image-status"></div>' +
           '<div class="dt-custom-image-grid"></div></div>'
         : '') +
-      '<button type="button" class="btn btn-outline-success de-custom-field-add" title="' +
-      _esc(t.add_field) + '"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
-      '<button type="button" class="btn btn-outline-danger de-custom-field-remove" title="' +
-      _esc(t.remove_field) + '"' + (isSystem ? ' disabled' : '') +
-      '><i class="fas fa-minus" aria-hidden="true"></i></button>' +
+      (hideButtons ? '' :
+        '<button type="button" class="btn btn-outline-success de-custom-field-add" title="' +
+        _esc(t.add_field) + '"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
+        '<button type="button" class="btn btn-outline-danger de-custom-field-remove" title="' +
+        _esc(t.remove_field) + '"' + (isSystem ? ' disabled' : '') +
+        '><i class="fas fa-minus" aria-hidden="true"></i></button>') +
       '</div>';
   }
 
@@ -1647,10 +1659,10 @@ var DashticzDeviceEditor = (function () {
     html += '<button type="button" class="btn btn-primary" id="cd-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
-    _wireQuickOptions('cd');
+    var $popup = $('#customdevicepopup');
+    _wireQuickOptions('cd', $popup);
     _wireBackButton('customdevicepopup');
 
-    var $popup = $('#customdevicepopup');
     function refreshButtons() {
       var $rows = $popup.find('.cd-custom-field-row');
       $rows.find('.cd-custom-field-add').addClass('d-none');
@@ -1737,6 +1749,13 @@ var DashticzDeviceEditor = (function () {
       if (!valid) return;
 
       var quickOptions = _readQuickOptions('cd');
+      // A custom image path is a regular custom field ('image'), not the
+      // dedicated icon slot - matches how Device/Widget Config's own
+      // icon/image row saves the two differently (see _showConfigPopup).
+      var iconIsImage = quickOptions.icon && quickOptions.iconSource === 'image';
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.unshift({ field: 'image', setting: quickOptions.iconValue, value: quickOptions.iconValue });
+      }
       if (title) customRows.unshift({ field: 'title', setting: title, value: title, system: true });
 
       var orderKey = _specialOrderKey(reference);
@@ -1753,7 +1772,7 @@ var DashticzDeviceEditor = (function () {
         showTitle: quickOptions.showTitle,
         options: {
           icon: quickOptions.icon,
-          iconValue: quickOptions.iconValue,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
           hide_data: false,
           last_update: quickOptions.lastUpdate,
           switch: false,
@@ -1797,10 +1816,15 @@ var DashticzDeviceEditor = (function () {
      Group and HTML Block quick-add popups below. It mirrors the same three
      options (minus Data/Dial, which don't apply to a quick-add block) the
      full Device Config popup already exposes for an already-placed block,
-     so a block created here is just as configurable from the start. */
+     so a block created here is just as configurable from the start. The
+     Icon field itself reuses the Device/Widget Config custom-fields grid's
+     own icon/image row (_customFieldRowHtml with hideButtons: true) instead
+     of a plain text input, so a quick-add block can point at a custom image
+     the same way an already-placed block can. */
   function _quickOptionsHtml(prefix, defaults) {
     var t = _translations();
-    var html = '<div class="mb-3 de-config-options de-config-options-three">';
+    var html = '<h6 class="de-section-title">' + _esc(t.display_options) + '</h6>';
+    html += '<div class="mb-3 de-config-options de-config-options-three">';
     html += '<label class="form-check"><input class="form-check-input" type="checkbox" id="' +
       prefix + '-opt-icon"' + (defaults.icon ? ' checked' : '') + '>' +
       '<span class="form-check-label">' + _esc(t.icon) + '</span></label>';
@@ -1812,30 +1836,93 @@ var DashticzDeviceEditor = (function () {
       '<span class="form-check-label">' + _esc(t.show_title) + '</span></label>';
     html += '</div>';
     html += '<div class="mb-3 ' + prefix + '-opt-icon-field' + (defaults.icon ? '' : ' d-none') + '">';
-    html += '<label class="form-label" for="' + prefix + '-opt-icon-value">' + _esc(t.icon) + '</label>';
-    html += '<input type="text" class="form-control" id="' + prefix + '-opt-icon-value" value="' +
-      _esc(defaults.iconValue || '') + '">';
+    html += '<label class="form-label">' + _esc(t.icon) + '</label>';
+    html += _customFieldRowHtml({ field: 'icon', setting: defaults.iconValue || '' }, { hideButtons: true });
     html += '</div>';
     return html;
   }
 
-  /* Call once after appending markup built with _quickOptionsHtml() above. */
-  function _wireQuickOptions(prefix) {
+  /* Call once after appending markup built with _quickOptionsHtml() above,
+     with the popup's own jQuery element (for correctly-scoped, leak-free
+     event delegation - see _wireIconImagePicker()). */
+  function _wireQuickOptions(prefix, $popup) {
     $('#' + prefix + '-opt-icon').on('change', function () {
       $('.' + prefix + '-opt-icon-field').toggleClass('d-none', !$(this).is(':checked'));
     });
+    _wireIconImagePicker($popup);
   }
 
   function _readQuickOptions(prefix) {
     var iconChecked = $('#' + prefix + '-opt-icon').is(':checked');
+    var $iconRow = $('.' + prefix + '-opt-icon-field .de-icon-field-row');
+    var iconSource = $iconRow.find('.de-icon-source').val() === 'image' ? 'image' : 'icon';
+    var rawValue = $.trim(String($iconRow.find('.de-custom-field-setting').val() || ''));
     return {
       icon: iconChecked,
-      iconValue: iconChecked
-        ? ($.trim(String($('#' + prefix + '-opt-icon-value').val() || '')) || null)
-        : null,
+      iconSource: iconSource,
+      iconValue: iconChecked ? (rawValue || null) : null,
       lastUpdate: $('#' + prefix + '-opt-update').is(':checked'),
       showTitle: $('#' + prefix + '-opt-title').is(':checked'),
     };
+  }
+
+  /* Wire the Icon/Image source toggle and custom-image picker for every
+     .de-icon-field-row within $popup - i.e. the single, non-removable icon
+     field _quickOptionsHtml() renders for the Screen Editor's quick-add
+     popups. Delegated on the popup's own element (removed from the DOM,
+     handlers and all, once the popup closes) rather than document, so
+     repeatedly opening/closing a popup never accumulates stale listeners.
+     The full custom-fields grid's own icon row (Device/Widget Config) wires
+     itself instead, since it also has to react to add/remove-field
+     bookkeeping this simpler, single-field case doesn't have. */
+  function _wireIconImagePicker($popup) {
+    if (!$popup || !$popup.length) return;
+    var t = _translations();
+    function closeCustomImagePickers() {
+      $popup.find('.dt-custom-image-picker').removeClass('show');
+      $popup.find('.de-icon-field-row').removeClass('dt-custom-image-picker-open');
+    }
+    function openCustomImagePicker($row) {
+      if ($row.find('.de-icon-source').val() !== 'image') {
+        closeCustomImagePickers();
+        return;
+      }
+      var $picker = $row.find('.dt-custom-image-picker');
+      var selectedPath = String($row.find('.de-custom-field-setting').val() || '');
+      closeCustomImagePickers();
+      $row.addClass('dt-custom-image-picker-open');
+      $picker.addClass('show');
+      $picker.find('.dt-custom-image-status').show().text(t.loading_images);
+      $picker.find('.dt-custom-image-grid').empty();
+      _loadCustomImages()
+        .done(function (images) {
+          _renderCustomImageGrid($picker, images, selectedPath, t.no_custom_images);
+        })
+        .fail(function () {
+          $picker.find('.dt-custom-image-grid').empty();
+          $picker.find('.dt-custom-image-status').show().text(t.custom_images_error);
+        });
+    }
+    $popup.on('change', '.de-icon-source', function () {
+      var $row = $(this).closest('.de-icon-field-row');
+      var useImage = $(this).val() === 'image';
+      $row.find('.de-custom-field-setting')
+        .val(useImage ? '' : String($row.attr('data-icon-default') || ''))
+        .attr('placeholder', useImage ? 'custom/icon.png' : t.setting);
+      closeCustomImagePickers();
+    });
+    $popup.on('click focus', '.de-icon-field-row .de-custom-field-setting', function () {
+      openCustomImagePicker($(this).closest('.de-icon-field-row'));
+    });
+    $popup.on('click', '.dt-custom-image-option', function () {
+      var $row = $(this).closest('.de-icon-field-row');
+      $row.find('.de-custom-field-setting').val(String($(this).attr('data-image-path') || ''));
+      closeCustomImagePickers();
+    });
+    $popup.on('click', function (event) {
+      if ($(event.target).closest('.dt-custom-image-picker, .de-custom-field-setting').length) return;
+      closeCustomImagePickers();
+    });
   }
 
   /* Shared "Back" button for every popup reachable from the Screen Editor's
@@ -1915,10 +2002,10 @@ var DashticzDeviceEditor = (function () {
     html += '<button type="button" class="btn btn-primary" id="md-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
-    _wireQuickOptions('md');
+    var $popup = $('#multidevicepopup');
+    _wireQuickOptions('md', $popup);
     _wireBackButton('multidevicepopup');
 
-    var $popup = $('#multidevicepopup');
     function refreshButtons() {
       var $rows = $popup.find('.md-value-row');
       $rows.find('.md-value-add').addClass('d-none');
@@ -1998,6 +2085,10 @@ var DashticzDeviceEditor = (function () {
       customRows.push({ field: 'values', setting: JSON.stringify(values), value: values });
 
       var quickOptions = _readQuickOptions('md');
+      var iconIsImage = quickOptions.icon && quickOptions.iconSource === 'image';
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.unshift({ field: 'image', setting: quickOptions.iconValue, value: quickOptions.iconValue });
+      }
       var orderKey = _specialOrderKey(reference);
       managedSpecials[orderKey] = {
         kind: 'special',
@@ -2012,7 +2103,7 @@ var DashticzDeviceEditor = (function () {
         showTitle: quickOptions.showTitle,
         options: {
           icon: quickOptions.icon,
-          iconValue: quickOptions.iconValue,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
           hide_data: false,
           last_update: quickOptions.lastUpdate,
           switch: false,
@@ -2071,10 +2162,9 @@ var DashticzDeviceEditor = (function () {
     html += '<button type="button" class="btn btn-primary" id="gb-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
-    _wireQuickOptions('gb');
-    _wireBackButton('groupblockpopup');
-
     var $popup = $('#groupblockpopup');
+    _wireQuickOptions('gb', $popup);
+    _wireBackButton('groupblockpopup');
 
     $('#gb-save-btn').on('click', function () {
       var $message = $popup.find('.cd-custom-message').removeClass('text-danger').text('');
@@ -2127,8 +2217,12 @@ var DashticzDeviceEditor = (function () {
       }
 
       var quickOptions = _readQuickOptions('gb');
+      var iconIsImage = quickOptions.icon && quickOptions.iconSource === 'image';
       var customRows = [];
       if (title) customRows.push({ field: 'title', setting: title, value: title, system: true });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({ field: 'image', setting: quickOptions.iconValue, value: quickOptions.iconValue });
+      }
       if (devices.length) {
         customRows.push({ field: 'devices', setting: JSON.stringify(devices), value: devices });
       }
@@ -2147,7 +2241,7 @@ var DashticzDeviceEditor = (function () {
         showTitle: quickOptions.showTitle,
         options: {
           icon: quickOptions.icon,
-          iconValue: quickOptions.iconValue,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
           last_update: quickOptions.lastUpdate,
         },
         customFields: customRows,
@@ -2201,10 +2295,9 @@ var DashticzDeviceEditor = (function () {
     html += '<button type="button" class="btn btn-primary" id="hb-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
-    _wireQuickOptions('hb');
-    _wireBackButton('htmlblockpopup');
-
     var $popup = $('#htmlblockpopup');
+    _wireQuickOptions('hb', $popup);
+    _wireBackButton('htmlblockpopup');
 
     $('#hb-save-btn').on('click', function () {
       var $message = $popup.find('.cd-custom-message').removeClass('text-danger').text('');
@@ -2229,9 +2322,13 @@ var DashticzDeviceEditor = (function () {
       }
 
       var quickOptions = _readQuickOptions('hb');
+      var iconIsImage = quickOptions.icon && quickOptions.iconSource === 'image';
       var border = $('#hb-device-border').is(':checked');
       var customRows = [];
       if (title) customRows.push({ field: 'title', setting: title, value: title, system: true });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({ field: 'image', setting: quickOptions.iconValue, value: quickOptions.iconValue });
+      }
       customRows.push({ field: 'htmlfile', setting: htmlfile, value: htmlfile });
       if (border) customRows.push({ field: 'border', setting: 'true', value: true });
 
@@ -2249,7 +2346,7 @@ var DashticzDeviceEditor = (function () {
         showTitle: quickOptions.showTitle,
         options: {
           icon: quickOptions.icon,
-          iconValue: quickOptions.iconValue,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
           last_update: quickOptions.lastUpdate,
         },
         customFields: customRows,
@@ -2283,8 +2380,9 @@ var DashticzDeviceEditor = (function () {
     html += '<input type="text" class="form-control" id="sb-button-title" value="Home Screen" autocomplete="off"></div>';
     html += '<div class="mb-3"><label class="form-label" for="sb-button-screen">' + _esc(t.slide_button_screen) + '</label>';
     html += '<input type="number" min="1" step="1" class="form-control" id="sb-button-screen" value="1"></div>';
-    html += '<div class="mb-3"><label class="form-label" for="sb-button-icon">' + _esc(t.slide_button_icon) + '</label>';
-    html += '<input type="text" class="form-control" id="sb-button-icon" value="fas fa-home" autocomplete="off"></div>';
+    html += '<div class="mb-3"><label class="form-label">' + _esc(t.slide_button_icon) + '</label>';
+    html += _customFieldRowHtml({ field: 'icon', setting: 'fas fa-home' }, { hideButtons: true });
+    html += '</div>';
     html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
     html += '<div class="modal-footer">' + _backButtonHtml() +
       '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
@@ -2292,17 +2390,19 @@ var DashticzDeviceEditor = (function () {
     html += '<button type="button" class="btn btn-primary" id="sb-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
+    var $popup = $('#slidebuttonpopup');
+    _wireIconImagePicker($popup);
     _wireBackButton('slidebuttonpopup');
 
     $('#sb-save-btn').on('click', function () {
-      var $popup = $('#slidebuttonpopup');
       var $message = $popup.find('.cd-custom-message').removeClass('text-danger').text('');
       var reference = $.trim(String($('#sb-button-name').val() || ''));
       var buttonKey = $.trim(String($('#sb-button-key').val() || ''));
       var buttonTitle = $.trim(String($('#sb-button-title').val() || ''));
       var rawSlide = $.trim(String($('#sb-button-screen').val() || ''));
       var slideTarget = parseInt(rawSlide, 10);
-      var iconValue = $.trim(String($('#sb-button-icon').val() || ''));
+      var iconSource = $popup.find('.de-icon-source').val() === 'image' ? 'image' : 'icon';
+      var iconValue = $.trim(String($popup.find('.de-icon-field-row .de-custom-field-setting').val() || ''));
       if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
         $message.addClass('text-danger').text(t.invalid_slide_button_name);
         $('#sb-button-name').trigger('focus');
@@ -2321,6 +2421,13 @@ var DashticzDeviceEditor = (function () {
       if (!buttonKey) buttonKey = reference;
       if (!buttonTitle) buttonTitle = buttonKey;
 
+      // A custom image path is a regular custom field ('image'), not the
+      // dedicated icon slot - matches how every other quick-add popup and
+      // Device/Widget Config itself save the two differently.
+      var iconIsImage = iconSource === 'image' && iconValue !== '';
+      var slideButtonDefinition = { title: buttonTitle.slice(0, 100), slide: slideTarget };
+      if (iconIsImage) slideButtonDefinition.image = iconValue.slice(0, 100);
+
       var orderKey = _specialOrderKey(reference);
       managedSpecials[orderKey] = {
         kind: 'special',
@@ -2335,7 +2442,7 @@ var DashticzDeviceEditor = (function () {
         showTitle: true,
         options: {
           icon: iconValue !== '',
-          iconValue: iconValue.slice(0, 100),
+          iconValue: iconIsImage ? '' : iconValue.slice(0, 100),
           hide_data: false,
           last_update: false,
           switch: false,
@@ -2343,7 +2450,7 @@ var DashticzDeviceEditor = (function () {
         buttonKey: buttonKey.slice(0, 100),
         slideTarget: slideTarget,
         customFields: _deviceCustomFieldRows(
-          { title: buttonTitle.slice(0, 100), slide: slideTarget },
+          slideButtonDefinition,
           buttonTitle.slice(0, 100)
         ),
         preservedFields: {},
@@ -2531,6 +2638,7 @@ var DashticzDeviceEditor = (function () {
       : (isGroupBlock || isHtmlBlock)
         ? ['icon', 'last_update', 'show_title']
         : ['icon', 'hide_data', 'last_update', 'dial', 'show_title'];
+    html += '<h6 class="de-section-title">' + _esc(t.display_options) + '</h6>';
     html += '<div class="de-config-options' +
       (isTitle
         ? ''
@@ -2585,7 +2693,7 @@ var DashticzDeviceEditor = (function () {
         _esc(special.idx || '') + '">';
       html += '<div class="form-text">' + _esc(t.group_idx_help) + '</div></div>';
     }
-    html += '<div class="de-custom-fields-section"><h6>' + _esc(t.custom_fields) + '</h6>';
+    html += '<div class="de-custom-fields-section"><h6 class="de-section-title mt-3">' + _esc(t.custom_fields) + '</h6>';
     html += '<p class="form-text">' + _esc(t.custom_fields_help) + '</p>';
     html += '<div class="de-custom-fields">';
     customRows.forEach(function (row) { html += _customFieldRowHtml(row); });

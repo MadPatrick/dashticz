@@ -6,6 +6,26 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.45.0 beta (17-8-2026)
+-------------------------
+
+* **Enhancements**
+
+- Every Screen Editor quick-add popup (Custom device, Multi Device, Group,
+  HTML Block, Slide button) now renders its Icon field with the same
+  Icon/Image row Device Config and Widget Config already use, instead of a
+  plain text input: a source dropdown to switch between a Font Awesome
+  class and a custom image, and - once Image is selected - the same
+  picker grid of files from ``img/custom/``. Multi Device and Slide button
+  previously had no way to point at a custom image at all; picking one
+  through Custom device, Group or HTML Block's old plain icon field would
+  have silently saved the path as an ``icon`` value instead of an
+  ``image`` one.
+- Added the same **Display options** heading above the Icon/Update/Title
+  checkboxes that Widget Config already has, on both every quick-add popup
+  and Device Config, so the three popup families read as one consistent
+  design instead of two of them being unlabelled.
+
 v3.44.2 beta (17-8-2026)
 -------------------------
 
