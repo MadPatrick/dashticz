@@ -6,6 +6,21 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.44.2 beta (17-8-2026)
+-------------------------
+
+* **Fixes**
+
+- Fixed the Layout Editor's per-tile gear icon: configuring a device or
+  separator directly from the grid (not via the add-item tile menu) built
+  and silently surfaced the full Device Editor once its Device Config popup
+  closed, instead of returning to the grid the user was actually editing -
+  closing that unexpected Device Editor then exited the whole editing
+  session. The gear icon's popup now saves the confirmed change by itself
+  (``saveblocks.php`` with ``blocksOnly``) and simply closes, leaving the
+  Layout Editor open and untouched underneath the whole time, the same way
+  a widget tile's gear icon already worked.
+
 v3.44.1 beta (17-8-2026)
 -------------------------
 

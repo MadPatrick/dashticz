@@ -207,6 +207,43 @@ var DashticzDeviceEditor = (function () {
     return true;
   }
 
+  /** Open Device Config directly from the Layout Editor, for one rendered
+   * grid tile. Unlike openConfig() above, this never builds/shows the full
+   * Device Editor as a "parent" to return to - the Layout Editor stays open,
+   * untouched, underneath this popup the whole time, and simply regains
+   * focus once the popup closes. Confirmed changes are persisted right away
+   * via _saveDeviceConfigOnly() (blocksOnly), so nothing depends on the
+   * user later finding a Save button on a screen they never opened. Mirrors
+   * DashticzWidgetEditor.openLayoutConfig(). */
+  function openLayoutConfig(reference) {
+    editorMode = 'devices';
+    openedFromAddMenu = false;
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+
+    var orderKey = '';
+    var special = _specialFromReference(reference);
+    if (special && managedSpecials[special.orderKey]) {
+      orderKey = special.orderKey;
+    } else {
+      var definition =
+        typeof reference === 'string' &&
+        typeof blocks !== 'undefined' &&
+        blocks[reference]
+          ? blocks[reference]
+          : reference;
+      var ck = _toCompositeKey(definition);
+      if (ck && managedOrder.indexOf(_deviceOrderKey(ck)) > -1) {
+        orderKey = _deviceOrderKey(ck);
+      }
+    }
+    if (!orderKey) return false;
+
+    _showConfigPopup(orderKey, null, { persistOnly: true });
+    return true;
+  }
+
   /** Open the dedicated Custom devices popup used by the Screen Editor add menu. */
   function openCustom() {
     editorMode = 'devices';
@@ -2416,8 +2453,9 @@ var DashticzDeviceEditor = (function () {
   /* Build the Device Config popup. Switch visibility is not exposed as a
      checkbox here; title text remains available as a typed field, and its
      visibility is exposed via the Title checkbox below. */
-  function _showConfigPopup(orderKey, editor) {
+  function _showConfigPopup(orderKey, editor, opts) {
     var t = _translations();
+    var persistOnly = !!(opts && opts.persistOnly);
     var isSpecial = orderKey.indexOf('special:') === 0;
     var ck = orderKey.indexOf('device:') === 0 ? orderKey.slice(7) : '';
     var special = isSpecial ? managedSpecials[orderKey] : null;
@@ -2898,6 +2936,26 @@ var DashticzDeviceEditor = (function () {
       }
       $('#de-device-list .de-device-title[data-order-key="' + orderKey + '"]').val(pendingTitle);
       $('#de-device-list .de-device-title[data-ck="' + ck + '"]').val(pendingTitle);
+
+      if (persistOnly) {
+        // Reached via openLayoutConfig(): there is no Device Editor Save
+        // button anywhere in this flow, so persist this confirmed change
+        // immediately instead of leaving it stranded in memory.
+        var $ok = $popup.find('#de-config-ok').prop('disabled', true);
+        $popup.find('.de-config-message').removeClass('text-danger').text(t.saving);
+        _saveDeviceConfigOnly()
+          .done(function () {
+            window.bootstrap.Modal.getInstance(document.getElementById('de-config-popup')).hide();
+          })
+          .fail(function (xhr) {
+            var msg = xhr.responseJSON && xhr.responseJSON.error
+              ? xhr.responseJSON.error
+              : t.save_failed;
+            $popup.find('.de-config-message').addClass('text-danger').text(t.error_prefix + ' ' + msg);
+            $ok.prop('disabled', false);
+          });
+        return;
+      }
       window.bootstrap.Modal.getInstance(document.getElementById('de-config-popup')).hide();
     });
 
@@ -3447,15 +3505,18 @@ var DashticzDeviceEditor = (function () {
   }
 
   /* ── save to CONFIG.js via PHP ──────────────────────────────── */
-  function _save() {
-    var t = _translations();
-    var $btn = $('#de-save-btn').prop('disabled', true).text(t.saving);
-
+  /* Build the full devices[] payload for saveblocks.php from the current
+     in-memory state. Shared by _save() (the full Device Editor save) and
+     _saveDeviceConfigOnly() (the Layout Editor's blocksOnly-only save) -
+     saveblocks.php replaces the whole device section for the screen, so
+     both callers must submit every currently managed device, not just the
+     one that changed. */
+  function _buildDevicePayload() {
     var orderedBlockKeys = managedOrder
       .filter(function (orderKey) {
         return orderKey.indexOf('widget:') !== 0;
       });
-    var devicePayload = orderedBlockKeys.map(function (orderKey) {
+    return orderedBlockKeys.map(function (orderKey) {
       if (orderKey.indexOf('special:') === 0) {
         var special = managedSpecials[orderKey];
         var specialEntry = {
@@ -3571,6 +3632,34 @@ var DashticzDeviceEditor = (function () {
       // Never retain a legacy name-based reference: Domoticz names may change.
       return entry;
     });
+  }
+
+  /* Persist only device block definitions (icon/title/custom fields) via
+     saveblocks.php's blocksOnly mode, without touching widgets or the
+     layout/grid position sections. Used when a device's config is edited
+     from inside the Layout Editor (openLayoutConfig below), so an
+     in-progress drag/resize there is never overwritten by a stale layout
+     snapshot - mirrors DashticzWidgetEditor's _saveConfigOnly(). */
+  function _saveDeviceConfigOnly() {
+    return $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
+      .then(function (data) {
+        return _postEditorData(
+          'js/saveblocks.php',
+          {
+            devices: _buildDevicePayload(),
+            screen: _activeScreenPayload(),
+            blocksOnly: true,
+          },
+          data.token
+        );
+      });
+  }
+
+  function _save() {
+    var t = _translations();
+    var $btn = $('#de-save-btn').prop('disabled', true).text(t.saving);
+
+    var devicePayload = _buildDevicePayload();
 
     var orderedWidgetKeys = managedOrder.filter(function (orderKey) {
       return orderKey.indexOf('widget:') === 0;
@@ -3869,6 +3958,7 @@ var DashticzDeviceEditor = (function () {
   return {
     open: open,
     openConfig: openConfig,
+    openLayoutConfig: openLayoutConfig,
     openSpecial: openSpecial,
     openCustom: openCustom,
     openMultiDevice: openMultiDevice,

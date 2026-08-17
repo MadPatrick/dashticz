@@ -461,9 +461,10 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(editor, /dle-remove-button/);
   assert.match(editor, /dle-config-button/);
   assert.match(editor, /function _openItemConfig/);
-  assert.match(editor, /DashticzDeviceEditor\.openConfig\(item\.reference\)/);
+  assert.match(editor, /DashticzDeviceEditor\.openLayoutConfig\(item\.reference\)/);
   assert.match(editor, /DashticzWidgetEditor\.openLayoutConfig\(item\.widgetId\)/);
   assert.match(deviceEditor, /function openConfig\(reference\)/);
+  assert.match(deviceEditor, /function openLayoutConfig\(reference\)/);
   assert.match(
     domoticzBlock,
     /document\.body\.classList\.contains\('dle-active'\)\) return;/
@@ -839,7 +840,7 @@ test('device and widget config editors share full widget config and preserve hid
   // Existing and newly added separators use the same configuration control.
   assert.match(layoutEditor, /kind: 'separator'/);
   assert.match(layoutEditor, /item\.kind === 'separator'/);
-  assert.match(layoutEditor, /DashticzDeviceEditor\.openConfig\(item\.reference\)/);
+  assert.match(layoutEditor, /DashticzDeviceEditor\.openLayoutConfig\(item\.reference\)/);
 
   // Any successfully loaded custom stylesheet is identified in the Theme panel.
   assert.match(main, /data-dashticz-custom-css/);
