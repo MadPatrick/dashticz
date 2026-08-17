@@ -84,6 +84,7 @@ var DashticzDeviceEditor = (function () {
         invalid_slide_target: 'Enter a valid positive screen number.',
         custom_device_name: 'Device name',
         custom_device_name_help: 'Used as the blocks[...] key in CONFIG.js.',
+        custom_device_title: 'Title',
         custom_device_options: 'Device options',
         custom_device_values_help: 'For arrays or objects, enter valid JSON.',
         invalid_custom_device_name: 'Enter a valid unique device name.',
@@ -1568,30 +1569,39 @@ var DashticzDeviceEditor = (function () {
       _esc(t.custom_devices) + '</h5>';
     html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' + _esc(t.close) + '"></button></div>';
     html += '<div class="modal-body">';
+    // Icon/Update/Title come first, matching the Device Config popup's own
+    // top section (see _quickOptionsHtml()). Last update checked by default:
+    // without this the created device silently saved last_update: false with
+    // no checkbox anywhere to change it until the user separately discovered
+    // the gear-icon Device Config popup - it looked like the Custom Device
+    // block simply had no last-update support.
+    html += _quickOptionsHtml('cd', {
+      icon: false,
+      iconValue: 'fas fa-cube',
+      lastUpdate: true,
+      showTitle: true,
+    });
     html += '<div class="mb-3"><label class="form-label" for="cd-device-name">' + _esc(t.custom_device_name) + '</label>';
     html += '<input type="text" class="form-control" id="cd-device-name" autocomplete="off">';
     html += '<div class="form-text">' + _esc(t.custom_device_name_help) + '</div></div>';
     html += '<div class="mb-3"><label class="form-label" for="cd-device-idx">IDX</label>';
     html += '<input type="number" min="1" step="1" class="form-control" id="cd-device-idx"></div>';
-    // Checked by default: without this the created device silently saved
-    // last_update: false with no checkbox anywhere to change it until the
-    // user separately discovered the gear-icon Device Config popup - it
-    // looked like the Custom Device block simply had no last-update support.
-    html += '<div class="mb-3 form-check"><input class="form-check-input" type="checkbox" id="cd-device-last-update" checked>';
-    html += '<label class="form-check-label" for="cd-device-last-update">' + _esc(t.last_update) + '</label></div>';
+    html += '<div class="mb-3"><label class="form-label" for="cd-device-title">' + _esc(t.custom_device_title) + '</label>';
+    html += '<input type="text" class="form-control" id="cd-device-title" autocomplete="off"></div>';
     html += '<div class="cd-custom-fields-section"><h6>' + _esc(t.custom_device_options) + '</h6>';
     html += '<div class="form-text mb-2">' + _esc(t.custom_device_values_help) + '</div>';
     html += '<div class="cd-custom-fields">';
-    html += _customDeviceFieldRowHtml({ field: 'title', setting: '' });
-    html += _customDeviceFieldRowHtml({ field: 'icon', setting: '' });
     html += _customDeviceFieldRowHtml({ field: 'values', setting: '' });
     html += '</div></div>';
     html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
-    html += '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+    html += '<div class="modal-footer">' + _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
       _esc(t.cancel) + '</button>';
     html += '<button type="button" class="btn btn-primary" id="cd-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
+    _wireQuickOptions('cd');
+    _wireBackButton('customdevicepopup');
 
     var $popup = $('#customdevicepopup');
     function refreshButtons() {
@@ -1633,8 +1643,7 @@ var DashticzDeviceEditor = (function () {
         return;
       }
 
-      var title = '';
-      var iconValue = null;
+      var title = $.trim(String($('#cd-device-title').val() || '')).slice(0, 100);
       var customRows = [];
       var seen = {};
       var valid = true;
@@ -1643,8 +1652,8 @@ var DashticzDeviceEditor = (function () {
         var rawField = $.trim(String($(this).find('.cd-custom-field-name').val() || ''));
         var rawSetting = $.trim(String($(this).find('.cd-custom-field-setting').val() || ''));
         if (!rawField && !rawSetting) return;
-        // Empty predefined option rows are ignored until the user gives them a value.
-        if (rawField && !rawSetting && ['title', 'icon', 'values'].indexOf(rawField.toLowerCase()) > -1) return;
+        // An empty predefined 'values' row is ignored until given a value.
+        if (rawField && !rawSetting && rawField.toLowerCase() === 'values') return;
         var field = _normaliseCustomFieldName(rawField);
         var lowerField = field.toLowerCase();
         if (!field || !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(field) || !rawSetting) {
@@ -1660,16 +1669,9 @@ var DashticzDeviceEditor = (function () {
           return;
         }
         seen[lowerField] = true;
-        if (lowerField === 'title') {
-          title = rawSetting.slice(0, 100);
-          customRows.push({ field: 'title', setting: title, value: title, system: true });
-          return;
-        }
-        if (lowerField === 'icon') {
-          iconValue = rawSetting.slice(0, 100);
-          customRows.push({ field: 'icon', setting: iconValue, value: iconValue });
-          return;
-        }
+        // title/icon are now the dedicated fields above, so a hand-typed
+        // 'title' or 'icon' row here is rejected as reserved, same as every
+        // other protected field name.
         if (protectedCustomDeviceProperties[lowerField]) {
           valid = false;
           $message.addClass('text-danger').text(t.duplicate_field);
@@ -1687,6 +1689,9 @@ var DashticzDeviceEditor = (function () {
       });
       if (!valid) return;
 
+      var quickOptions = _readQuickOptions('cd');
+      if (title) customRows.unshift({ field: 'title', setting: title, value: title, system: true });
+
       var orderKey = _specialOrderKey(reference);
       managedSpecials[orderKey] = {
         kind: 'special',
@@ -1698,16 +1703,12 @@ var DashticzDeviceEditor = (function () {
         title: title,
         width: 3,
         height: null,
-        showTitle: true,
-          options: {
-          icon: true,
-          // Falls back to this popup's own modal-header icon when the user
-          // didn't type an explicit `icon` custom field above - otherwise a
-          // Custom Device (not a real recognised Domoticz device type) has
-          // no icon at all to derive from and renders with none.
-          iconValue: iconValue || 'fas fa-cube',
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: quickOptions.iconValue,
           hide_data: false,
-          last_update: $('#cd-device-last-update').is(':checked'),
+          last_update: quickOptions.lastUpdate,
           switch: false,
         },
         customFields: customRows,
@@ -1790,6 +1791,36 @@ var DashticzDeviceEditor = (function () {
     };
   }
 
+  /* Shared "Back" button for every popup reachable from the Screen Editor's
+     Add items tile menu (js/components/simpleblock.js). Placed left of
+     Cancel/Close in the footer, matching the Settings popup's own back
+     button (js/settings.js). Reuses the existing settings.back translation
+     instead of duplicating it under deviceeditor. */
+  function _backButtonHtml() {
+    var backLabel = (typeof language !== 'undefined' && language.settings && language.settings.back) || 'Back';
+    return '<button type="button" class="btn btn-secondary de-back-btn">' +
+      '<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>' + _esc(backLabel) + '</button>';
+  }
+
+  /* Call once after appending markup built with _backButtonHtml() above. */
+  function _wireBackButton(popupId) {
+    var popup = document.getElementById(popupId);
+    var $popup = $(popup);
+    $popup.on('click', '.de-back-btn', function () {
+      $popup.data('de-back-requested', true);
+      window.bootstrap.Modal.getInstance(popup).hide();
+    });
+    $popup.one('hidden.bs.modal', function () {
+      if (
+        $popup.data('de-back-requested') &&
+        typeof DT_simpleblock !== 'undefined' &&
+        typeof DT_simpleblock.openAddMenu === 'function'
+      ) {
+        DT_simpleblock.openAddMenu();
+      }
+    });
+  }
+
   function _showMultiDevicePopup() {
     var t = _translations();
     $('#multidevicepopup').remove();
@@ -1800,6 +1831,17 @@ var DashticzDeviceEditor = (function () {
       _esc(t.multi_device) + '</h5>';
     html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' + _esc(t.close) + '"></button></div>';
     html += '<div class="modal-body">';
+    // Icon and Last update default on (Last update was previously a lone
+    // always-checked checkbox with no way to turn it off; Icon had no
+    // checkbox at all and always saved the fixed 'fas fa-layer-group' value
+    // below) so an unedited save keeps behaving exactly as before. Placed
+    // first, matching the Device Config popup's own top section.
+    html += _quickOptionsHtml('md', {
+      icon: true,
+      iconValue: 'fas fa-layer-group',
+      lastUpdate: true,
+      showTitle: true,
+    });
     html += '<div class="mb-3"><label class="form-label" for="md-device-name">' + _esc(t.multi_device_name) + '</label>';
     html += '<input type="text" class="form-control" id="md-device-name" autocomplete="off">';
     html += '<div class="form-text">' + _esc(t.multi_device_name_help) + '</div></div>';
@@ -1808,28 +1850,20 @@ var DashticzDeviceEditor = (function () {
     html += '<div class="form-text">' + _esc(t.multi_device_idx_help) + '</div></div>';
     html += '<div class="mb-3"><label class="form-label" for="md-device-title">' + _esc(t.multi_device_title) + '</label>';
     html += '<input type="text" class="form-control" id="md-device-title" autocomplete="off"></div>';
-    // Icon and Last update default on (Last update was previously a lone
-    // always-checked checkbox with no way to turn it off; Icon had no
-    // checkbox at all and always saved the fixed 'fas fa-layer-group' value
-    // below) so an unedited save keeps behaving exactly as before.
-    html += _quickOptionsHtml('md', {
-      icon: true,
-      iconValue: 'fas fa-layer-group',
-      lastUpdate: true,
-      showTitle: true,
-    });
     html += '<div class="md-values-section"><h6>' + _esc(t.multi_device_values) + '</h6>';
     html += '<div class="form-text mb-2">' + _esc(t.multi_device_values_help) + '</div>';
     html += '<div class="md-value-rows">';
     html += _multiDeviceRowHtml({ idx: '', value: '' });
     html += '</div></div>';
     html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
-    html += '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+    html += '<div class="modal-footer">' + _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
       _esc(t.cancel) + '</button>';
     html += '<button type="button" class="btn btn-primary" id="md-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
     _wireQuickOptions('md');
+    _wireBackButton('multidevicepopup');
 
     var $popup = $('#multidevicepopup');
     function refreshButtons() {
@@ -1960,6 +1994,12 @@ var DashticzDeviceEditor = (function () {
       _esc(t.group_block) + '</h5>';
     html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' + _esc(t.close) + '"></button></div>';
     html += '<div class="modal-body">';
+    html += _quickOptionsHtml('gb', {
+      icon: true,
+      iconValue: 'fas fa-object-group',
+      lastUpdate: false,
+      showTitle: true,
+    });
     html += '<div class="mb-3"><label class="form-label" for="gb-device-name">' + _esc(t.group_name) + '</label>';
     html += '<input type="text" class="form-control" id="gb-device-name" autocomplete="off">';
     html += '<div class="form-text">' + _esc(t.group_name_help) + '</div></div>';
@@ -1971,19 +2011,15 @@ var DashticzDeviceEditor = (function () {
     html += '<div class="form-text">' + _esc(t.group_devices_help) + '</div></div>';
     html += '<div class="mb-3"><label class="form-label" for="gb-device-title">' + _esc(t.group_title) + '</label>';
     html += '<input type="text" class="form-control" id="gb-device-title" autocomplete="off"></div>';
-    html += _quickOptionsHtml('gb', {
-      icon: true,
-      iconValue: 'fas fa-object-group',
-      lastUpdate: false,
-      showTitle: true,
-    });
     html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
-    html += '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+    html += '<div class="modal-footer">' + _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
       _esc(t.cancel) + '</button>';
     html += '<button type="button" class="btn btn-primary" id="gb-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
     _wireQuickOptions('gb');
+    _wireBackButton('groupblockpopup');
 
     var $popup = $('#groupblockpopup');
 
@@ -2087,14 +2123,6 @@ var DashticzDeviceEditor = (function () {
       _esc(t.html_block) + '</h5>';
     html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' + _esc(t.close) + '"></button></div>';
     html += '<div class="modal-body">';
-    html += '<div class="mb-3"><label class="form-label" for="hb-device-name">' + _esc(t.html_block_name) + '</label>';
-    html += '<input type="text" class="form-control" id="hb-device-name" autocomplete="off">';
-    html += '<div class="form-text">' + _esc(t.html_block_name_help) + '</div></div>';
-    html += '<div class="mb-3"><label class="form-label" for="hb-device-file">' + _esc(t.html_block_file) + '</label>';
-    html += '<input type="text" class="form-control" id="hb-device-file" placeholder="widget.html" autocomplete="off">';
-    html += '<div class="form-text">' + _esc(t.html_block_file_help) + '</div></div>';
-    html += '<div class="mb-3"><label class="form-label" for="hb-device-title">' + _esc(t.html_block_title) + '</label>';
-    html += '<input type="text" class="form-control" id="hb-device-title" autocomplete="off"></div>';
     // Icon defaults off ("Default no icon" per docs/blocks/specials/html.rst);
     // an arbitrary HTML snippet has no Domoticz device to derive one from.
     html += _quickOptionsHtml('hb', {
@@ -2103,15 +2131,25 @@ var DashticzDeviceEditor = (function () {
       lastUpdate: false,
       showTitle: true,
     });
+    html += '<div class="mb-3"><label class="form-label" for="hb-device-name">' + _esc(t.html_block_name) + '</label>';
+    html += '<input type="text" class="form-control" id="hb-device-name" autocomplete="off">';
+    html += '<div class="form-text">' + _esc(t.html_block_name_help) + '</div></div>';
+    html += '<div class="mb-3"><label class="form-label" for="hb-device-file">' + _esc(t.html_block_file) + '</label>';
+    html += '<input type="text" class="form-control" id="hb-device-file" placeholder="widget.html" autocomplete="off">';
+    html += '<div class="form-text">' + _esc(t.html_block_file_help) + '</div></div>';
+    html += '<div class="mb-3"><label class="form-label" for="hb-device-title">' + _esc(t.html_block_title) + '</label>';
+    html += '<input type="text" class="form-control" id="hb-device-title" autocomplete="off"></div>';
     html += '<div class="mb-3 form-check"><input class="form-check-input" type="checkbox" id="hb-device-border">';
     html += '<label class="form-check-label" for="hb-device-border">' + _esc(t.html_block_border) + '</label></div>';
     html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
-    html += '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+    html += '<div class="modal-footer">' + _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
       _esc(t.cancel) + '</button>';
     html += '<button type="button" class="btn btn-primary" id="hb-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
     _wireQuickOptions('hb');
+    _wireBackButton('htmlblockpopup');
 
     var $popup = $('#htmlblockpopup');
 
@@ -2195,11 +2233,13 @@ var DashticzDeviceEditor = (function () {
     html += '<div class="mb-3"><label class="form-label" for="sb-button-icon">' + _esc(t.slide_button_icon) + '</label>';
     html += '<input type="text" class="form-control" id="sb-button-icon" value="fas fa-home" autocomplete="off"></div>';
     html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
-    html += '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+    html += '<div class="modal-footer">' + _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
       _esc(t.cancel) + '</button>';
     html += '<button type="button" class="btn btn-primary" id="sb-save-btn">' + _esc(t.save) + '</button>';
     html += '</div></div></div></div>';
     $('body').append(html);
+    _wireBackButton('slidebuttonpopup');
 
     $('#sb-save-btn').on('click', function () {
       var $popup = $('#slidebuttonpopup');

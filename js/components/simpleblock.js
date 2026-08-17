@@ -90,6 +90,9 @@ var DT_simpleblock = (function () {
   }
   return {
     name: 'simpleblock',
+    // Exposed so a quick-add popup's own Back button (js/deviceeditor.js)
+    // can reopen this same tile menu instead of just closing outright.
+    openAddMenu: _openScreenEditorAddMenu,
     canHandle: function (block) {
       return block && (!!simpleBlocks[block.type] || findKey(block));
     },

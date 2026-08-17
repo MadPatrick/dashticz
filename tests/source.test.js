@@ -2725,7 +2725,7 @@ test('Multi Device and Custom Device get a sensible default icon when none is co
     deviceEditor.indexOf('function _showMultiDevicePopup(')
   );
   assert.match(multiDevicePopup, /iconValue: 'fas fa-layer-group',/);
-  assert.match(customDevicePopup, /iconValue: iconValue \|\| 'fas fa-cube',/);
+  assert.match(customDevicePopup, /iconValue: 'fas fa-cube',/);
 });
 
 test('Dial sizing falls back sanely instead of silently rendering oversized', () => {

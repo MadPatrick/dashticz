@@ -6,6 +6,24 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.44.1 beta (17-8-2026)
+-------------------------
+
+* **Enhancements**
+
+- The Icon/Update/Title checkbox row on every Screen Editor quick-add popup
+  (Custom device, Multi Device, Group, HTML Block) now sits at the top,
+  right below the header, matching where the equivalent Icon/Data/Update/
+  Dial/Title row already sits on the Device Config popup for an
+  already-placed block. Custom device's popup also gained this row for the
+  first time - Icon and Title were previously only settable as generic,
+  easy-to-miss Field/Setting rows, and there was no way to hide the title
+  at creation time at all.
+- Every popup reachable from the Screen Editor's add-item tile menu (Custom
+  device, Multi Device, Group, HTML Block, Slide button) now has a **Back**
+  button to the left of Cancel/Close, styled like the Settings popup's own
+  Back button, that returns to the tile menu instead of just closing.
+
 v3.44.0 beta (17-8-2026)
 -------------------------
 

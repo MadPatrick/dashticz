@@ -256,6 +256,7 @@
             "error_prefix": "Fout:",
             "custom_device_name": "Device naam",
             "custom_device_name_help": "Wordt gebruikt als de blocks[...] sleutel in CONFIG.js.",
+            "custom_device_title": "Titel",
             "custom_device_options": "Device opties",
             "custom_device_values_help": "Gebruik geldige JSON voor arrays of objecten.",
             "invalid_custom_device_name": "Vul een geldige unieke device naam in.",

@@ -1,8 +1,9 @@
 {
-    "version": "3.44.0",
+    "version": "3.44.1",
     "branch": "beta",
-    "last_changes": "Add Group and HTML Block to the Screen Editor's add-item menu, and give Multi Device's own popup the Icon/Update/Title options every other quick-add popup now shares",
+    "last_changes": "Move the Icon/Update/Title checkboxes to the top of every Screen Editor quick-add popup (Custom device, Multi Device, Group, HTML Block) and add a Back button to return to the add-item tile menu",
     "changelog": {
+        "3.44.1": "Move the Icon/Update/Title checkboxes to the top of every Screen Editor quick-add popup (Custom device, Multi Device, Group, HTML Block) and add a Back button to return to the add-item tile menu",
         "3.44.0": "Add Group and HTML Block to the Screen Editor's add-item menu, and give Multi Device's own popup the Icon/Update/Title options every other quick-add popup now shares",
         "3.43.5": "Fix Hayman clock rendering oversized and its separator dots sitting too high above the digits",
         "3.43.4": "Fix Flip clock leaving empty space below the digits, Hayman clock's separator dots being misaligned/not scaling, and Miniclock's text not resizing with its block",

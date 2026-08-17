@@ -256,6 +256,7 @@
             "error_prefix": "Error:",
             "custom_device_name": "Device name",
             "custom_device_name_help": "Used as the blocks[...] key in CONFIG.js.",
+            "custom_device_title": "Title",
             "custom_device_options": "Device options",
             "custom_device_values_help": "For arrays or objects, enter valid JSON.",
             "invalid_custom_device_name": "Enter a valid unique device name.",
