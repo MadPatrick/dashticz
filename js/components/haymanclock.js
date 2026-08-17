@@ -184,6 +184,64 @@ var DT_haymanclock = {
           width: me.block.clockwidth,
           'font-size': fontSize + 'px',
         });
+
+        centerDots($container, fontSize);
+      }
+
+      // Each ':' separator (see haymanclock.css) is centered on its
+      // column's own right edge by default, which only centers it between
+      // the two neighboring glyphs when both columns' text fills an equal
+      // share of their (equal-width, see GAP_FACTOR above) column - true
+      // for hour/minute/second, which are always 2 digits, but not for the
+      // day column, whose 3-4 letter abbreviation ("Sun".."Wed") usually
+      // fills much more of its column, leaving it far less of its own
+      // padding than a 2-digit neighbor has. That left the day/hour
+      // separator sitting closer to the day text than the hour text.
+      // ':before' pseudo-elements have no DOM node to measure directly, so
+      // each one's actual displayed text is cloned into a real, temporary
+      // element with the same font styling instead - same technique
+      // js/components/basicclock.js and simpleblock.js's Miniclock fit
+      // use - then --hc-dot-right (read by haymanclock.css) is set per
+      // column so every separator, not just the day/hour one, is centered
+      // on the real glyph-to-glyph gap regardless of font or locale.
+      function measureGlyphWidth(text, refStyle) {
+        if (!text) return 0;
+        var probe = document.createElement('span');
+        probe.textContent = text;
+        probe.style.position = 'fixed';
+        probe.style.top = '-9999px';
+        probe.style.left = '-9999px';
+        probe.style.whiteSpace = 'nowrap';
+        probe.style.fontSize = refStyle.fontSize;
+        probe.style.fontFamily = refStyle.fontFamily;
+        probe.style.fontWeight = refStyle.fontWeight;
+        probe.style.textTransform = refStyle.textTransform;
+        document.body.appendChild(probe);
+        var width = probe.getBoundingClientRect().width;
+        probe.remove();
+        return width;
+      }
+
+      function centerDots($container, fontSizePx) {
+        var cols = $container.find('.clock-col').get();
+        if (cols.length < 2 || !fontSizePx) return;
+        var metrics = cols.map(function (col) {
+          var timerEl = col.querySelector('.clock-timer');
+          var before = timerEl && window.getComputedStyle(timerEl, '::before');
+          var text = before
+            ? String(before.content || '').replace(/^["']|["']$/g, '')
+            : '';
+          return {
+            width: col.getBoundingClientRect().width,
+            glyphWidth: before ? measureGlyphWidth(text, before) : 0,
+          };
+        });
+        for (var i = 0; i < metrics.length - 1; i++) {
+          var leftPad = (metrics[i].width - metrics[i].glyphWidth) / 2;
+          var rightPad = (metrics[i + 1].width - metrics[i + 1].glyphWidth) / 2;
+          var offsetEm = (rightPad - leftPad) / 2 / fontSizePx;
+          cols[i].style.setProperty('--hc-dot-right', -0.15 - offsetEm + 'em');
+        }
       }
 
       fitSize();

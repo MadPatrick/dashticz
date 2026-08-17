@@ -1400,6 +1400,10 @@ test('FlipClock width fix, Hayman dot alignment and Miniclock live-resize scalin
     path.join(root, 'js/components/simpleblock.js'),
     'utf8'
   );
+  const haymanClock = fs.readFileSync(
+    path.join(root, 'js/components/haymanclock.js'),
+    'utf8'
+  );
 
   // .dt_block is display:flex (fixed-width icon column + .dt_content), so
   // the outer box's own width also counts the icon and .dt_block's own
@@ -1416,8 +1420,12 @@ test('FlipClock width fix, Hayman dot alignment and Miniclock live-resize scalin
   // (the shared .clock-container font-size), consistent regardless of each
   // column's own width.
   assert.match(haymanCss, /\.clock-col:not\(:last-child\):before,/);
-  assert.match(haymanCss, /width: 0\.15em;/);
-  assert.match(haymanCss, /right: -0\.15em;/);
+  // Doubled from 0.15em so the separator reads at a size proportionate to
+  // the fit-to-block digits next to it, instead of looking tiny compared
+  // to them.
+  assert.match(haymanCss, /width: 0\.3em;/);
+  assert.match(haymanCss, /height: 0\.3em;/);
+  assert.match(haymanCss, /right: var\(--hc-dot-right, -0\.15em\);/);
   assert.doesNotMatch(haymanCss, /right:\s*-3%/);
 
   // The dots must sit lower than the column's own vertical center, since
@@ -1428,16 +1436,30 @@ test('FlipClock width fix, Hayman dot alignment and Miniclock live-resize scalin
   assert.doesNotMatch(haymanCss, /top:\s*37%/);
   assert.doesNotMatch(haymanCss, /top:\s*52%/);
 
+  // The 3-4 letter day label ("Sun".."Wed") usually fills far more of its
+  // (equal-width, see GAP_FACTOR) column than a 2-digit hour/minute/second
+  // value fills of its own, so centering every dot on its plain column
+  // boundary (the CSS fallback above) left the day/hour separator sitting
+  // closer to the day text than the hour text. haymanclock.js measures
+  // each column's actual rendered glyph (cloned into a real, temporary
+  // element, since ::before pseudo-elements have no DOM node of their own
+  // to measure) and sets --hc-dot-right per column so every separator -
+  // not just day/hour - centers on the real glyph-to-glyph gap, in
+  // whatever font/locale is actually rendering it.
+  assert.match(haymanClock, /function measureGlyphWidth\(text, refStyle\)/);
+  assert.match(haymanClock, /function centerDots\(\$container, fontSizePx\)/);
+  assert.match(
+    haymanClock,
+    /cols\[i\]\.style\.setProperty\('--hc-dot-right', -0\.15 - offsetEm \+ 'em'\);/
+  );
+  assert.match(haymanClock, /centerDots\(\$container, fontSize\);/);
+
   // Hayman's natural face is wide and short, so it's almost always
   // width-bound; a too-small GAP_FACTOR let the digits fill that width
   // edge-to-edge, reading as oversized with barely any room for the ':'
   // separators. A bigger GAP_FACTOR reserves more of that same
   // fit-to-width budget as real, visible gaps between columns instead of
   // shrinking (and thus wasting) the whole result post-fit.
-  const haymanClock = fs.readFileSync(
-    path.join(root, 'js/components/haymanclock.js'),
-    'utf8'
-  );
   assert.match(haymanClock, /var GAP_FACTOR = 1\.6;/);
   assert.doesNotMatch(haymanClock, /HAYMAN_SIZE_FACTOR/);
 

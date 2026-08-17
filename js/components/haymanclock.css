@@ -82,13 +82,24 @@
      overflow - which made a %-based dot offset land at a different pixel
      position next to that column than next to a 2-digit hour/minute/second
      column. em (the shared .clock-container font-size) is the one thing
-     consistent across every column regardless of its own width. */
-  height: 0.15em;
-  width: 0.15em;
+     consistent across every column regardless of its own width. Sized at
+     0.3em (up from 0.15em) so the separator reads at a size proportionate
+     to the (much larger, fit-to-block) digits next to it instead of
+     looking tiny in comparison.
+     --hc-dot-right is set per column by haymanclock.js's centerDots(),
+     which measures each column's *actual* rendered glyph (not just its
+     box) - the 3-4 letter day label fills far more of its column than a
+     2-digit hour/minute/second value fills of its own equally-sized
+     column, so a plain boundary-centered dot (the -0.15em fallback, exactly
+     half this element's own width) sits closer to the day text than the
+     hour text. The other separators, between equally-wide 2-digit values,
+     land back on that same boundary-centered fallback anyway. */
+  height: 0.3em;
+  width: 0.3em;
   border-radius: 50%;
   display: block;
   position: absolute;
-  right: -0.15em;
+  right: var(--hc-dot-right, -0.15em);
 }
 /* .clock-col's height also includes .clock-label below the digit, so the
    column's own vertical center (50%) sits lower than the digit's - dots
