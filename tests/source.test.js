@@ -819,6 +819,11 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(widgetEditor, /_t\('widget_config', 'Widget Config'\)/);
   assert.match(widgetEditor, /_widgetConfigDisplayName\(item\)/);
   assert.match(deviceEditor, /_esc\(t\.device_config\) \+ ' — ' \+ _esc\(displayName\)/);
+  // Device Config popup title shows the device's IDX in brackets for identification.
+  assert.match(deviceEditor, /var idxLabel = '';\s*\n\s*if \(!isSpecial && ck\) \{/);
+  assert.match(deviceEditor, /\} else if \(isSpecial && \(isCustom \|\| isGroupBlock\) && special\.idx\) \{\s*\n\s*idxLabel = String\(special\.idx\);/);
+  assert.match(deviceEditor, /\(idxLabel \? ' <span class="de-config-idx-label">\[' \+ _esc\(idxLabel\) \+ '\]<\/span>' : ''\)/);
+  assert.match(styles, /\.de-config-idx-label \{/);
 
   // Existing typed Field/Setting support remains in both editors and server validation stays active.
   assert.match(widgetEditor, /we-custom-field-name/);

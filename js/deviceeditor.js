@@ -2620,11 +2620,29 @@ var DashticzDeviceEditor = (function () {
       : null;
     if (multiDeviceValues) customRows.splice(valuesRowIndex, 1);
 
+    // Shown after the title so a device can be identified unambiguously
+    // even when several rows share the same (possibly hand-edited) title -
+    // omitted for specials with no meaningful IDX of their own (Separator,
+    // HTML Block, Slide button).
+    var idxLabel = '';
+    if (!isSpecial && ck) {
+      if (_isGroupCk(ck)) {
+        idxLabel = ck;
+      } else {
+        var ckParts = _parseCk(ck);
+        idxLabel = ckParts.subidx ? (ckParts.idx + '_' + ckParts.subidx) : String(ckParts.idx);
+      }
+    } else if (isSpecial && (isCustom || isGroupBlock) && special.idx) {
+      idxLabel = String(special.idx);
+    }
+
     $('#de-config-popup').remove();
     var html = '<div class="modal fade de-config-popup" id="de-config-popup" tabindex="-1" aria-hidden="true">';
     html += '<div class="modal-dialog modal-dialog-centered de-config-dialog"><div class="modal-content">';
     html += '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-cog me-2" aria-hidden="true"></i>' +
-      _esc(t.device_config) + ' — ' + _esc(displayName) + '</h5>';
+      _esc(t.device_config) + ' — ' + _esc(displayName) +
+      (idxLabel ? ' <span class="de-config-idx-label">[' + _esc(idxLabel) + ']</span>' : '') +
+      '</h5>';
     html += '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' + _esc(t.close) + '"></button></div>';
     html += '<div class="modal-body">';
     // A separator/title bar has no data value or last-update timestamp of its

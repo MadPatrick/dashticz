@@ -25,6 +25,12 @@ v3.45.0 beta (17-8-2026)
   checkboxes that Widget Config already has, on both every quick-add popup
   and Device Config, so the three popup families read as one consistent
   design instead of two of them being unlabelled.
+- The Device Config popup title now shows the device's IDX in brackets
+  after its name (e.g. ``Device Config — Power [43]``), covering plain
+  devices, sub-devices, Domoticz groups/scenes and Custom/Multi/Group
+  specials, so a device stays identifiable even when several rows share
+  the same (possibly hand-edited) title. Specials with no IDX of their own
+  (Separator, HTML Block, Slide button) omit the bracket.
 
 * **Fixes**
 
