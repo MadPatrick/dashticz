@@ -616,6 +616,7 @@ next css sets the default height of the frame popup
 .settings-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   padding: 10px 12px;
   border-bottom: 1px solid #dee2e6;
@@ -638,6 +639,19 @@ next css sets the default height of the frame popup
   width: 38px;
   height: 38px;
   border-radius: 50%;
+}
+
+.settings-header-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #d9f2d9;
+  border: 1px solid #b7dfb7;
+  color: #2f5f2f;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .settings-tab-content {
@@ -1041,6 +1055,10 @@ next css sets the default height of the frame popup
     gap: 10px;
   }
 
+  .settings-header-current span {
+    display: none;
+  }
+
   .settings-brand span {
     display: none;
   }
@@ -1095,6 +1113,12 @@ next css sets the default height of the frame popup
   background-color: #5cb85c !important;
   padding: 0.5rem 1rem !important;
   border-color: #5cb85c !important;
+}
+
+.btn-save {
+  background-color: #d9f2d9 !important;
+  border-color: #b7dfb7 !important;
+  color: #2f5f2f !important;
 }
 
 .row {

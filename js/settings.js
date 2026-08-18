@@ -1247,6 +1247,10 @@ function loadSettings() {
       html +=
         '<div class="settings-brand"><img src="img/favicon/app-icon-192x192.png" ' +
         'width="38" height="38" alt=""><span>Dashticz</span></div>';
+      html +=
+        '<div class="settings-header-current d-none" id="settings-current-category">' +
+        '<i class="fas fa-cog" aria-hidden="true"></i>' +
+        '<span id="settings-current-category-label"></span></div>';
       html += '</div>';
 
       html += '<div class="settings-tab-content">';
@@ -1273,7 +1277,7 @@ function loadSettings() {
           language.settings.general.logout +
           '</button> ';
       html +=
-        '<button onClick="saveSettings();" type="button" class="btn btn-primary" data-bs-dismiss="modal">' +
+        '<button onClick="saveSettings();" type="button" class="btn btn-primary btn-save" data-bs-dismiss="modal">' +
         language.settings.save +
         '</button></div></div>';
       html += '</div>';
@@ -1770,6 +1774,7 @@ function showSettingsHome() {
     .find('#settings-widget-tiles, .settings-widgets-intro')
     .removeClass('d-none');
   $popup.find('.settings-back').addClass('d-none');
+  $popup.find('#settings-current-category').addClass('d-none');
 }
 
 function showSettingsCategory(id) {
@@ -1784,6 +1789,15 @@ function showSettingsCategory(id) {
     .find('#settings-category-widgets > .settings-panel-title')
     .removeClass('d-none');
   $popup.find('.settings-back').removeClass('d-none');
+  $popup
+    .find('#settings-current-category')
+    .removeClass('d-none')
+    .find('i')
+    .attr('class', (settingsCategoryIcons[id] || 'fas fa-cog') + '')
+    .attr('aria-hidden', 'true');
+  $popup
+    .find('#settings-current-category-label')
+    .text(getSettingsCategoryTitle(id));
 }
 
 function bindSettingsCategoryTiles() {
