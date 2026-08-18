@@ -995,18 +995,39 @@ next css sets the default height of the frame popup
   width: 38px;
   height: 20px;
   margin: 0;
+}
+
+/* Shared look for every on/off switch across the settings screen and the
+   Device/Widget editors: same blue, same knob shadow, wherever it appears. */
+#settingspopup .settings-switch .form-check-input,
+.de-config-options .form-check-input,
+#hb-device-border.form-check-input,
+.we-widget-field.form-check-input,
+#we-cfg-ascending.form-check-input,
+.we-block-option.form-check-input {
   border-color: #adb5bd !important;
   cursor: pointer;
 }
 
-#settingspopup .settings-switch .form-check-input:checked {
-  background-color: #0d6efd !important;
-  border-color: #0d6efd !important;
+#settingspopup .settings-switch .form-check-input:checked,
+.de-config-options .form-check-input:checked,
+#hb-device-border.form-check-input:checked,
+.we-widget-field.form-check-input:checked,
+#we-cfg-ascending.form-check-input:checked,
+.we-block-option.form-check-input:checked {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
 
-#settingspopup .settings-switch .form-check-input:focus {
-  border-color: #86b7fe !important;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+#settingspopup .settings-switch .form-check-input:focus,
+.de-config-options .form-check-input:focus,
+#hb-device-border.form-check-input:focus,
+.we-widget-field.form-check-input:focus,
+#we-cfg-ascending.form-check-input:focus,
+.we-block-option.form-check-input:focus {
+  border-color: #93c5fd !important;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
 }
 
 .settings-help-slot {
@@ -2092,18 +2113,6 @@ body.dle-active {
   width: 38px;
   height: 20px;
   margin: 0;
-  border-color: #adb5bd !important;
-  cursor: pointer;
-}
-
-.de-config-options .form-check-input:checked {
-  background-color: #0d6efd !important;
-  border-color: #0d6efd !important;
-}
-
-.de-config-options .form-check-input:focus {
-  border-color: #86b7fe !important;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
 }
 
 .de-config-options-three {
@@ -2115,18 +2124,6 @@ body.dle-active {
   width: 38px;
   height: 20px;
   margin-top: 0;
-  border-color: #adb5bd !important;
-  cursor: pointer;
-}
-
-#hb-device-border.form-check-input:checked {
-  background-color: #0d6efd !important;
-  border-color: #0d6efd !important;
-}
-
-#hb-device-border.form-check-input:focus {
-  border-color: #86b7fe !important;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
 }
 
 .de-config-options-four {
@@ -2550,8 +2547,6 @@ body.dle-active {
   width: 38px;
   height: 20px;
   margin: 0;
-  border-color: #adb5bd;
-  cursor: pointer;
 }
 
 /* Domoticz log widget: the ascending/descending switch, made 1.5x the
@@ -2567,18 +2562,6 @@ body.dle-active {
   width: 38px;
   height: 20px;
   margin: 0;
-  border-color: #adb5bd !important;
-  cursor: pointer;
-}
-
-.we-block-option.form-check-input:checked {
-  background-color: #0d6efd !important;
-  border-color: #0d6efd !important;
-}
-
-.we-block-option.form-check-input:focus {
-  border-color: #86b7fe !important;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
 }
 
 #we-config-popup .form-check-inline {
