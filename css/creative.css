@@ -995,8 +995,18 @@ next css sets the default height of the frame popup
   width: 38px;
   height: 20px;
   margin: 0;
-  border-color: #adb5bd;
+  border-color: #adb5bd !important;
   cursor: pointer;
+}
+
+#settingspopup .settings-switch .form-check-input:checked {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+}
+
+#settingspopup .settings-switch .form-check-input:focus {
+  border-color: #86b7fe !important;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
 }
 
 .settings-help-slot {
