@@ -1153,12 +1153,14 @@ next css sets the default height of the frame popup
   color: #2f5f2f !important;
 }
 
-#settingspopup .settings-footer .btn-save:hover {
+/* .btn-save marks the confirm/save action in the settings modal and every
+   Device/Widget editor popup, so this hover applies wherever it appears. */
+.btn-save:hover {
   background-color: #c8ecc8 !important;
   border-color: #9ecf9e !important;
 }
 
-#settingspopup .settings-footer .btn-secondary:hover {
+.modal-footer .btn-secondary:hover {
   background-color: #f1f3f5 !important;
   border-color: #adb5bd !important;
 }

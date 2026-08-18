@@ -1796,9 +1796,11 @@ var DashticzWidgetEditor = (function () {
       '<div class="modal-footer">' +
       _backButtonHtml() +
       '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
       _t('close', 'Close') +
       '</button>' +
-      '<button type="button" class="btn btn-primary" id="we-save-btn">' +
+      '<button type="button" class="btn btn-primary btn-save" id="we-save-btn">' +
+      '<i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
       _t('save', 'Save') +
       '</button>' +
       '</div></div></div></div>';
@@ -2699,9 +2701,11 @@ var DashticzWidgetEditor = (function () {
       '</div>' +
       '<div class="modal-footer">' +
       '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
       _t('cancel', 'Cancel') +
       '</button>' +
-      '<button type="button" class="btn btn-primary" id="we-cfg-ok-btn">' +
+      '<button type="button" class="btn btn-primary btn-save" id="we-cfg-ok-btn">' +
+      '<i class="fas fa-check me-1" aria-hidden="true"></i>' +
       _t('ok', 'OK') +
       '</button>' +
       '</div></div></div></div>'
