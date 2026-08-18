@@ -621,6 +621,51 @@ test('Layout Editor stays active across screen switches, editing each screen ind
   );
 });
 
+test('Add items menu grafts new devices/widgets/separators into an open Layout Editor instead of closing it', () => {
+  const editor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
+
+  // The Layout Editor exposes a way to check whether it is open and to add
+  // brand-new tiles into its current session without a server round trip.
+  assert.match(editor, /isActive: function \(\) \{\s*return active;\s*\}/);
+  assert.match(editor, /addPendingItems: addPendingItems/);
+  assert.match(editor, /function addPendingItems\(entries\)/);
+  assert.match(editor, /function _addPendingItem\(entry\)/);
+  assert.match(editor, /Dashticz\.mountNewContainer\(\$canvas\[0\]\)/);
+  assert.match(editor, /isPending: true/);
+
+  // A pending item has no persisted config yet, so its gear-icon config
+  // button must not be offered - only after the Layout Editor's own Save
+  // has actually persisted it.
+  assert.match(editor, /var isConfigurable =\s*!item\.isPending/);
+
+  // Cancel must remove a never-saved pending item outright rather than try
+  // to revert it to a prior state it never had.
+  assert.match(
+    editor,
+    /if \(item\.isPending\) \{[\s\S]*removeChild\(item\.wrapper\)/
+  );
+
+  // Both editors capture a baseline of what was already on the screen when
+  // their popup opened, and only graft when the Layout Editor is active -
+  // otherwise their normal persist-and-reload Save is untouched.
+  [deviceEditor, widgetEditor].forEach((source) => {
+    assert.match(source, /var layoutEditorBaseline = null/);
+    assert.match(source, /function _graftIntoLayoutEditor\(\)/);
+    assert.match(source, /DashticzLayoutEditor\.isActive\(\)/);
+    assert.match(source, /DashticzLayoutEditor\.addPendingItems\(entries\)/);
+    assert.match(source, /if \(layoutEditorBaseline && _graftIntoLayoutEditor\(\)\) return;/);
+  });
+
+  // Grafting is scoped to what the Layout Editor's item model can actually
+  // represent and re-save later (device/widget/separator); anything else
+  // (custom/multi-device/group/HTML block/slide button), or a Save that
+  // also touched pre-existing entries, must fall back to the normal save.
+  assert.match(deviceEditor, /managedSpecials\[orderKey\]\.specialType === 'title'/);
+  assert.match(deviceEditor, /if \(!existingUntouched\) return false;/);
+});
+
 test('screen editor add menu exposes device, widget, custom-device and separator workflows', () => {
   const simpleBlock = fs.readFileSync(path.join(root, 'js/components/simpleblock.js'), 'utf8');
   const screenSwitcher = fs.readFileSync(path.join(root, 'js/screenswitcher.js'), 'utf8');

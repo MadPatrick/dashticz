@@ -1,4 +1,4 @@
-/* global Domoticz settings columns columns_standby blocks myswiper DashticzGridLayout DashticzScreenSwitcher DashticzDeviceEditor DashticzWidgetEditor DT_function isCustomConfigMode standbyActive language */
+/* global Domoticz settings columns columns_standby blocks myswiper Dashticz DashticzGridLayout DashticzScreenSwitcher DashticzDeviceEditor DashticzWidgetEditor DT_function isCustomConfigMode standbyActive language */
 // eslint-disable-next-line no-unused-vars
 var DashticzLayoutEditor = (function () {
   'use strict';
@@ -38,6 +38,10 @@ var DashticzLayoutEditor = (function () {
   // editing round (see _captureSession/_restoreSession/_onScreenNavigated).
   var sessions = {};
   var currentSessionKey = null;
+  // Counter for synthetic reference keys handed to brand-new, not-yet-saved
+  // items (see addPendingItems). Never reset - a monotonic counter across
+  // the page's lifetime can't collide with itself.
+  var pendingKeyCounter = 0;
 
   function _translations() {
     return (
@@ -48,8 +52,8 @@ var DashticzLayoutEditor = (function () {
     );
   }
 
-  function _t(key) {
-    return _translations()[key] || '';
+  function _t(key, fallback) {
+    return _translations()[key] || fallback || '';
   }
 
   function _minimumGridHeight(item) {
@@ -323,6 +327,142 @@ var DashticzLayoutEditor = (function () {
     sessions[targetKey] = _captureSession();
     _attachHandlers();
     return true;
+  }
+
+  /* Grafts brand-new devices/widgets/separators (picked from the topbar's
+     "Add items" menu while this editor is open) straight into the current
+     screen's session, as pending unsaved tiles - instead of the Add
+     popup's own Save persisting them immediately and reloading the page,
+     which used to close this editor and drop whatever was still pending
+     here (moves, resizes, removed tiles). Called by
+     DashticzDeviceEditor/DashticzWidgetEditor's own _save(), only for
+     entries their save payload already fully describes (see
+     _graftIntoLayoutEditor in js/deviceeditor.js and js/widgeteditor.js).
+     Each entry: { kind: 'device', idx, subidx, name, width } |
+     { kind: 'widget', widgetId, name, width } |
+     { kind: 'separator', name, width }. */
+  function addPendingItems(entries) {
+    if (!active || !entries || !entries.length) return;
+    entries.forEach(_addPendingItem);
+    _attachHandlers();
+    if (gridMode) _refreshGridOverlaps();
+  }
+
+  function _addPendingItem(entry) {
+    var mountSelector = Dashticz.mountNewContainer($canvas[0]);
+    var wrapper = document.querySelector(mountSelector);
+    if (!wrapper) return;
+
+    var reference =
+      entry.kind === 'widget'
+        ? 'widget_' + entry.widgetId
+        : entry.kind === 'separator'
+          ? _uniquePendingKey('separator')
+          : '';
+
+    var item = {
+      id: 'dle-' + items.length,
+      wrapper: wrapper,
+      visibleBlocks: null,
+      idx: entry.kind === 'device' ? entry.idx : null,
+      subidx: entry.kind === 'device' ? entry.subidx || 0 : 0,
+      kind: entry.kind,
+      reference: reference,
+      widgetId: entry.kind === 'widget' ? entry.widgetId : null,
+      definition:
+        entry.kind === 'separator' ? { type: 'blocktitle', title: entry.name } : {},
+      name: entry.name || '',
+      height: null,
+      // Cancel removes a pending item outright instead of reverting its
+      // DOM (there is no prior saved state to revert to) - see
+      // _revertScreenDom.
+      isPending: true,
+    };
+
+    wrapper.classList.add('dle-item-wrapper');
+    var width12 = Math.max(1, Math.min(12, parseInt(entry.width, 10) || 3));
+    var minimumHeight = _minimumGridHeight(item);
+
+    if (gridMode) {
+      var gridColumns = gridConfig.gridColumns;
+      var gridWidth =
+        entry.kind === 'separator'
+          ? gridColumns
+          : Math.max(
+              MIN_GRID_WIDTH,
+              Math.min(gridColumns, Math.round((width12 * gridColumns) / 12))
+            );
+      var pixelHeight = entry.kind === 'separator' ? 60 : 120;
+      var gridHeight = Math.max(
+        minimumHeight,
+        Math.ceil(
+          (pixelHeight + gridConfig.gap) / (gridConfig.rowHeight + gridConfig.gap)
+        )
+      );
+      var grid = _firstFreeGridPosition(items, 1, gridWidth, gridHeight, gridColumns);
+      item.grid = grid;
+      item.originalGrid = $.extend({}, grid);
+      item.width = grid.w;
+      DashticzGridLayout.applyGridPosition(wrapper, grid);
+      if (reference) wrapper.setAttribute('data-grid-block', reference);
+      _ensureGridCanvasRows(grid.y + grid.h + 8);
+    } else {
+      item.width = entry.kind === 'separator' ? 12 : width12;
+      wrapper.style.setProperty('--dle-column-span', item.width);
+    }
+
+    var widthClass = gridMode ? '' : 'col-xs-' + item.width;
+    $(wrapper).empty().append(_pendingBlockHtml(entry, widthClass));
+    if (reference) wrapper.setAttribute('data-id', reference);
+
+    var visibleBlock = wrapper.querySelector('.dle-pending-block');
+    item.visibleBlocks = [visibleBlock];
+    item.originalBlocks = [
+      {
+        block: visibleBlock,
+        widthClass: widthClass,
+        height: '',
+        heightPriority: '',
+        fixedHeight: false,
+      },
+    ];
+
+    items.push(item);
+    itemById[item.id] = item;
+    _decorateItem(item);
+  }
+
+  function _pendingBlockHtml(entry, widthClass) {
+    // entry.icon (when set, e.g. from the Widgets catalog) is already a
+    // full Font Awesome class string like "fab fa-spotify" - some widgets
+    // use the "fab" (brands) style rather than "fas", so it must be used
+    // as-is rather than prefixed with "fas" again.
+    var icon =
+      entry.kind === 'widget'
+        ? entry.icon || 'fas fa-puzzle-piece'
+        : entry.kind === 'separator'
+          ? 'fas fa-divide'
+          : 'fas fa-microchip';
+    var classes =
+      'mh dt_block transbg dle-pending-block' + (widthClass ? ' ' + widthClass : '');
+    return (
+      '<div class="' +
+      classes +
+      '"><span class="dle-pending-icon"><i class="' +
+      _escapeHtml(icon) +
+      '" aria-hidden="true"></i></span>' +
+      '<span class="dle-pending-name">' +
+      _escapeHtml(entry.name || '') +
+      '</span>' +
+      '<span class="dle-pending-badge">' +
+      _escapeHtml(_t('pending_new', 'New – not saved yet')) +
+      '</span></div>'
+    );
+  }
+
+  function _uniquePendingKey(prefix) {
+    pendingKeyCounter++;
+    return 'dle_pending_' + prefix + '_' + pendingKeyCounter;
   }
 
   function _activeScreenTarget() {
@@ -1283,54 +1423,61 @@ var DashticzLayoutEditor = (function () {
   }
 
   function _decorateItems() {
-    items.forEach(function (item) {
-      if (!gridMode && item.height !== null) _applyHeight(item, item.height);
+    items.forEach(_decorateItem);
+  }
 
-      item.visibleBlocks.forEach(function (block, index) {
-        var $block = $(block).addClass('dle-block');
-        var removeButton =
-          index === 0
-            ? '<button type="button" class="dle-remove-button" title="' +
-              _escapeHtml(_t('remove_title')) +
-              '" aria-label="' +
-              _escapeHtml(_t('remove_aria')) +
-              ' ' +
-              _escapeHtml(item.name) +
-              '"><i class="fas fa-minus" aria-hidden="true"></i></button>'
-            : '';
-        var resizeHandle =
-          index === item.visibleBlocks.length - 1
-            ? '<span class="dle-resize-handle" title="' +
-              _escapeHtml(_t('resize_title')) +
-              '" aria-hidden="true"></span>'
-            : '';
-        var isConfigurable =
-          item.kind === 'device' ||
+  function _decorateItem(item) {
+    if (!gridMode && item.height !== null) _applyHeight(item, item.height);
+
+    item.visibleBlocks.forEach(function (block, index) {
+      var $block = $(block).addClass('dle-block');
+      var removeButton =
+        index === 0
+          ? '<button type="button" class="dle-remove-button" title="' +
+            _escapeHtml(_t('remove_title')) +
+            '" aria-label="' +
+            _escapeHtml(_t('remove_aria')) +
+            ' ' +
+            _escapeHtml(item.name) +
+            '"><i class="fas fa-minus" aria-hidden="true"></i></button>'
+          : '';
+      var resizeHandle =
+        index === item.visibleBlocks.length - 1
+          ? '<span class="dle-resize-handle" title="' +
+            _escapeHtml(_t('resize_title')) +
+            '" aria-hidden="true"></span>'
+          : '';
+      // A pending (not-yet-saved) item has no persisted config to open -
+      // its own gear-icon config flow would either no-op or bypass this
+      // editor's Save entirely. It gets full drag/resize/remove, just not
+      // configuration, until after the next Layout Editor Save.
+      var isConfigurable =
+        !item.isPending &&
+        (item.kind === 'device' ||
           item.kind === 'widget' ||
-          item.kind === 'separator';
-        var configureLabel = item.kind === 'widget'
-          ? _t('configure_widget')
-          : _t('configure_device');
-        var topLeftControl = isConfigurable
-          ? '<button type="button" class="dle-config-button" title="' +
-            _escapeHtml(configureLabel) +
-            '" aria-label="' + _escapeHtml(configureLabel) + ' ' +
-            _escapeHtml(item.name) + '"><i class="fas fa-cog" aria-hidden="true"></i></button>'
-          : '<span class="dle-drag-icon" aria-hidden="true"><i class="fas fa-arrows-alt"></i></span>';
-        var overlay =
-          '<div class="dle-overlay" data-dle-id="' +
-          item.id +
-          '">' +
-          topLeftControl +
-          '<span class="dle-size-label"></span>' +
-          removeButton +
-          resizeHandle +
-          '</div>';
-        $block.append(overlay);
-      });
-
-      _updateSizeLabel(item);
+          item.kind === 'separator');
+      var configureLabel = item.kind === 'widget'
+        ? _t('configure_widget')
+        : _t('configure_device');
+      var topLeftControl = isConfigurable
+        ? '<button type="button" class="dle-config-button" title="' +
+          _escapeHtml(configureLabel) +
+          '" aria-label="' + _escapeHtml(configureLabel) + ' ' +
+          _escapeHtml(item.name) + '"><i class="fas fa-cog" aria-hidden="true"></i></button>'
+        : '<span class="dle-drag-icon" aria-hidden="true"><i class="fas fa-arrows-alt"></i></span>';
+      var overlay =
+        '<div class="dle-overlay" data-dle-id="' +
+        item.id +
+        '">' +
+        topLeftControl +
+        '<span class="dle-size-label"></span>' +
+        removeButton +
+        resizeHandle +
+        '</div>';
+      $block.append(overlay);
     });
+
+    _updateSizeLabel(item);
   }
 
   function _buildToolbar() {
@@ -2100,6 +2247,16 @@ var DashticzLayoutEditor = (function () {
     }
 
     items.forEach(function (item) {
+      // A pending item (added via the topbar's "Add items" menu while this
+      // editor stayed open - see addPendingItems) was never saved, so
+      // there is nothing to revert it to: drop it outright instead of
+      // restoring pre-edit DOM/classes it never had.
+      if (item.isPending) {
+        if (item.wrapper.parentNode) {
+          item.wrapper.parentNode.removeChild(item.wrapper);
+        }
+        return;
+      }
       $(item.visibleBlocks)
         .children('.dle-overlay')
         .off('.layouteditor')
@@ -2225,6 +2382,10 @@ var DashticzLayoutEditor = (function () {
     open: open,
     convertCurrentScreenToGrid: convertCurrentScreenToGrid,
     replaceBlockReference: replaceBlockReference,
+    isActive: function () {
+      return active;
+    },
+    addPendingItems: addPendingItems,
   };
 })();
 
