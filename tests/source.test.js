@@ -493,7 +493,7 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(editor, /function _firstFreeGridPosition/);
   assert.match(editor, /function _moveGridItem/);
   assert.match(editor, /function _resizeGridItem/);
-  assert.match(editor, /function _saveGrid/);
+  assert.match(editor, /function _saveScreenPayload/);
   assert.match(editor, /--dt-grid-x/);
   assert.match(editor, /--dt-grid-h/);
   assert.match(simpleBlock, /_showConfigModeWarning\(mode, function \(\)/);
@@ -552,6 +552,73 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(blocksSource, /Object\.defineProperty\(block, '_dashticzAutoTitle'/);
   assert.match(blocksSource, /value: typeof block\.title === 'undefined'/);
   assert.match(blocksSource, /Object\.defineProperty\(block, 'title',[\s\S]*value: device\.Name[\s\S]*enumerable: false/);
+});
+
+test('Layout Editor stays active across screen switches, editing each screen independently', () => {
+  const editor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+
+  // Switching screens while the editor is open must not leave the editor
+  // bound only to the screen it was opened on: a session is captured per
+  // screen and swapped back in when that screen is revisited.
+  assert.match(editor, /function _captureSession/);
+  assert.match(editor, /function _restoreSession/);
+  assert.match(editor, /function _switchActiveScreen/);
+  assert.match(editor, /function _initializeScreenSession/);
+  assert.match(editor, /var sessions = \{\}/);
+  assert.match(editor, /var currentSessionKey = null/);
+
+  // Screen navigation must be observed both through Swiper (slideChange /
+  // transitionEnd, used by numbered screens) and through the topbar's S/1/
+  // 2/... buttons directly (used to enter/leave standby, which never fires
+  // a Swiper event).
+  assert.match(editor, /function _bindScreenNavigation/);
+  assert.match(editor, /function _onScreenNavigated/);
+  assert.match(editor, /myswiper\.on\('slideChange', _onScreenNavigated\)/);
+  assert.match(editor, /myswiper\.on\('transitionEnd', _onScreenNavigated\)/);
+  assert.match(
+    editor,
+    /\.on\('click\.layouteditorscreen', '\.dt-screen-btn'/
+  );
+
+  // A screen that would need a full Wizard grid-conversion round trip must
+  // never be pulled into an already-open multi-screen edit: that round
+  // trip reloads the page, which would silently discard any edits already
+  // pending on other screens in the same editing round.
+  assert.match(
+    editor,
+    /_initializeScreenSession[\s\S]*never falls back to the Wizard grid-conversion flow/
+  );
+
+  // Save and Cancel must both walk every session that was actually
+  // prepared during this editing round, not just the one currently on
+  // screen.
+  assert.match(editor, /function _buildSavePayloads/);
+  assert.match(
+    editor,
+    /_buildSavePayloads[\s\S]*Object\.keys\(sessions\)\.map/
+  );
+  assert.match(editor, /function _revertScreenDom/);
+  assert.match(
+    editor,
+    /_cancel[\s\S]*Object\.keys\(sessions\)\.forEach\(function \(key\) \{\s*_restoreSession\(sessions\[key\]\);\s*_revertScreenDom\(\);/
+  );
+
+  // A live Domoticz refresh can replace a device's DOM element on any
+  // screen, not just the one currently active in the editor; the stored
+  // item reference must be updated wherever it lives.
+  assert.match(
+    editor,
+    /replaceBlockReference[\s\S]*Object\.keys\(sessions\)\.forEach/
+  );
+
+  // Re-running the overlay/toolbar bindings must stay idempotent: a new
+  // screen session calls _attachHandlers() again, and without unbinding
+  // the toolbar's previous handlers first, Save/Cancel would fire once per
+  // screen visited instead of once per click.
+  assert.match(
+    editor,
+    /\$toolbar\s*\.off\('\.layouteditor'\)\s*\.on\('click\.layouteditor', '\.dle-cancel'/
+  );
 });
 
 test('screen editor add menu exposes device, widget, custom-device and separator workflows', () => {

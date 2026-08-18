@@ -34,6 +34,10 @@ var DashticzLayoutEditor = (function () {
   var edgeScrollFrame = null;
   var edgeScrollDirection = 0;
   var lastPointerPosition = null;
+  // Multi-screen editing: one session per screen visited during this
+  // editing round (see _captureSession/_restoreSession/_onScreenNavigated).
+  var sessions = {};
+  var currentSessionKey = null;
 
   function _translations() {
     return (
@@ -89,7 +93,7 @@ var DashticzLayoutEditor = (function () {
       _decorateItems();
       _buildToolbar();
       _attachHandlers();
-      _disableSwiper();
+      _finishActivation();
       return;
     }
     if (
@@ -138,7 +142,7 @@ var DashticzLayoutEditor = (function () {
     _decorateItems();
     _buildToolbar();
     _attachHandlers();
-    _disableSwiper();
+    _finishActivation();
   }
 
   function _disableSwiper() {
@@ -146,6 +150,179 @@ var DashticzLayoutEditor = (function () {
       swiperTouchMove = myswiper.allowTouchMove;
       myswiper.allowTouchMove = false;
     }
+  }
+
+  /* Marks the freshly activated screen as this editing round's first
+     session and starts watching for screen navigation, so switching to
+     another screen (topbar S/1/2/... buttons, which keep working while
+     the toolbar is open) brings that screen into the same editing round
+     too, instead of leaving it un-editable underneath the still-open
+     toolbar. See _onScreenNavigated. */
+  function _finishActivation() {
+    _disableSwiper();
+    currentSessionKey = String(editingScreen);
+    sessions[currentSessionKey] = _captureSession();
+    _bindScreenNavigation();
+  }
+
+  function _captureSession() {
+    return {
+      screenNumber: editingScreen,
+      gridMode: gridMode,
+      items: items,
+      itemById: itemById,
+      originalColumns: originalColumns,
+      originalGridWrappers: originalGridWrappers,
+      gridConfig: gridConfig,
+      gridEditorRows: gridEditorRows,
+      $canvas: $canvas,
+      $editingScreen: $editingScreen,
+    };
+  }
+
+  function _restoreSession(session) {
+    editingScreen = session.screenNumber;
+    gridMode = session.gridMode;
+    items = session.items;
+    itemById = session.itemById;
+    originalColumns = session.originalColumns;
+    originalGridWrappers = session.originalGridWrappers;
+    gridConfig = session.gridConfig;
+    gridEditorRows = session.gridEditorRows;
+    $canvas = session.$canvas;
+    $editingScreen = session.$editingScreen;
+  }
+
+  function _bindScreenNavigation() {
+    if (typeof myswiper !== 'undefined' && myswiper) {
+      myswiper.off('slideChange', _onScreenNavigated);
+      myswiper.off('transitionEnd', _onScreenNavigated);
+      myswiper.on('slideChange', _onScreenNavigated);
+      myswiper.on('transitionEnd', _onScreenNavigated);
+    }
+    $(document)
+      .off('click.layouteditorscreen')
+      .on('click.layouteditorscreen', '.dt-screen-btn', function () {
+        var target = String($(this).data('screen') || '');
+        // 'add'/'delete' restructure the screen list itself and already
+        // reload the page on success; nothing to hand off to here.
+        if (target === 'add' || target === 'delete') return;
+        _onScreenNavigated();
+      });
+  }
+
+  function _unbindScreenNavigation() {
+    if (typeof myswiper !== 'undefined' && myswiper) {
+      myswiper.off('slideChange', _onScreenNavigated);
+      myswiper.off('transitionEnd', _onScreenNavigated);
+    }
+    $(document).off('click.layouteditorscreen');
+  }
+
+  function _onScreenNavigated() {
+    if (!active || pointerState) return;
+    var $screen = _activeScreenDom();
+    if (!$screen.length) return;
+    var targetKey = String(_activeScreenPayload());
+    if (targetKey === currentSessionKey) return;
+    _switchActiveScreen(targetKey, $screen);
+  }
+
+  function _switchActiveScreen(targetKey, $screen) {
+    var previousKey = currentSessionKey;
+    sessions[previousKey] = _captureSession();
+
+    var existing = sessions[targetKey];
+    if (existing) {
+      _restoreSession(existing);
+      currentSessionKey = targetKey;
+      _refreshToolbarHelp();
+      return;
+    }
+
+    if (_initializeScreenSession(targetKey, $screen)) {
+      _refreshToolbarHelp();
+      return;
+    }
+
+    /* Screen isn't editable here (see _initializeScreenSession) - stay on
+       the previous screen's session so Save/Cancel keep working; only the
+       toolbar hint reflects the screen currently on display. */
+    _restoreSession(sessions[previousKey]);
+    currentSessionKey = previousKey;
+  }
+
+  function _refreshToolbarHelp() {
+    if (!$toolbar) return;
+    $toolbar
+      .find('.dle-toolbar-help')
+      .text(gridMode ? _t('help_grid') : _t('help_columns'));
+  }
+
+  function _showScreenUnavailable(message) {
+    if ($toolbar) $toolbar.find('.dle-toolbar-help').text(message);
+  }
+
+  /* Collects and decorates a screen visited for the first time in this
+     editing round. Mirrors open()'s own setup, but - unlike open() -
+     never falls back to the Wizard grid-conversion flow
+     (convertCurrentScreenToGrid): that flow needs its own network round
+     trip and a full page reload, which would silently discard any edits
+     already pending on other screens in this round. Such a screen is
+     simply left out of the multi-screen edit; the user can still switch
+     back to any screen that did initialize successfully. */
+  function _initializeScreenSession(targetKey, $screen) {
+    var payload = targetKey === 'standby' ? 'standby' : parseInt(targetKey, 10);
+    editingScreen = payload;
+    $editingScreen = $screen;
+    gridMode = $screen.hasClass('dt-grid-screen');
+
+    if (gridMode) {
+      var $grid = $screen.children('.dt-grid-layout').first();
+      _collectGridItems($grid);
+      if (gridCollectionError) {
+        gridCollectionError = false;
+        _showScreenUnavailable(_t('invalid_grid_blocks'));
+        return false;
+      }
+      _prepareGridCanvas($grid);
+      _decorateItems();
+      currentSessionKey = targetKey;
+      sessions[targetKey] = _captureSession();
+      _attachHandlers();
+      return true;
+    }
+
+    if (typeof isCustomConfigMode === 'function' && !isCustomConfigMode()) {
+      _showScreenUnavailable(_t('no_editable_screen'));
+      return false;
+    }
+
+    var managedColumnRe = /^(de|we|le)_s\d+_col\d+$|^(de|we|le)_col\d+$|^col_\d+$/;
+    var isStandby = targetKey === 'standby';
+    var $managedColumns = $screen.find('[data-colindex]').filter(function () {
+      var key = String($(this).attr('data-colindex'));
+      if (isStandby) return true;
+      return managedColumnRe.test(key);
+    });
+
+    if (!$managedColumns.length) {
+      _showScreenUnavailable(_t('no_editable_screen'));
+      return false;
+    }
+
+    _collectItems($managedColumns);
+    if (!items.length) {
+      _showScreenUnavailable(_t('no_editable_items'));
+      return false;
+    }
+
+    _prepareCanvas($managedColumns);
+    _decorateItems();
+    currentSessionKey = targetKey;
+    sessions[targetKey] = _captureSession();
+    _attachHandlers();
+    return true;
   }
 
   function _activeScreenTarget() {
@@ -1221,6 +1398,7 @@ var DashticzLayoutEditor = (function () {
       });
 
     $toolbar
+      .off('.layouteditor')
       .on('click.layouteditor', '.dle-cancel', _cancel)
       .on('click.layouteditor', '.dle-save', _save);
   }
@@ -1716,66 +1894,22 @@ var DashticzLayoutEditor = (function () {
   }
 
   function _save() {
-    if (gridMode) {
-      _saveGrid();
-      return;
-    }
     var $save = $toolbar.find('.dle-save').prop('disabled', true);
     $toolbar.find('.dle-cancel').prop('disabled', true);
     $toolbar.find('.dle-toolbar-help').text(_t('saving_layout'));
 
-    var ordered = _orderedItems();
-    var devices = [];
-    var widgets = [];
-    ordered.forEach(function (item) {
-      if (item.kind === 'widget') {
-        widgets.push(_widgetPayload(item));
-        return;
-      }
-
-      var deviceEntry = {
-        idx: item.idx,
-        name: item.name,
-        width: item.width,
-      };
-      if (item.subidx) deviceEntry.subidx = item.subidx;
-      if (item.height !== null) deviceEntry.height = item.height;
-      devices.push(deviceEntry);
-    });
-
-    var screenNumber = _activeScreenPayload();
+    var payloads = _buildSavePayloads();
 
     $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
       .then(function (data) {
         var token = data.token;
-        return _postLayoutData(
-          'js/saveblocks.php',
-          { devices: devices, screen: screenNumber },
-          token
-        ).then(function (deviceResult) {
-          return _postLayoutData(
-            'js/savewidgets.php',
-            { widgets: widgets, screen: screenNumber },
-            token
-          ).then(function (widgetResult) {
-            var deviceIndex = 0;
-            var widgetIndex = 0;
-            var layoutItems = ordered.map(function (item) {
-              var ref =
-                item.kind === 'widget'
-                  ? widgetResult.blockKeys[widgetIndex++]
-                  : deviceResult.blockKeys[deviceIndex++];
-              var entry = { ref: ref, width: item.width };
-              if (item.height !== null) entry.height = item.height;
-              return entry;
-            });
-            return _postLayoutData(
-              'js/savelayout.php',
-              { items: layoutItems, screen: screenNumber },
-              token
-            );
+        var chain = $.Deferred().resolve().promise();
+        payloads.forEach(function (screenPayload) {
+          chain = chain.then(function () {
+            return _saveScreenPayload(screenPayload, token);
           });
         });
+        return chain;
       })
       .done(function () {
         $toolbar.find('.dle-toolbar-help').text(_t('saved_reloading'));
@@ -1795,45 +1929,107 @@ var DashticzLayoutEditor = (function () {
       });
   }
 
-  function _saveGrid() {
-    var $save = $toolbar.find('.dle-save').prop('disabled', true);
-    $toolbar.find('.dle-cancel').prop('disabled', true);
-    $toolbar.find('.dle-toolbar-help').text(_t('saving_grid'));
+  /* Builds one save payload per screen touched in this editing round (see
+     _captureSession/_switchActiveScreen). _orderedItems()/_widgetPayload()
+     were written against a single "current" screen's module state, so each
+     session is restored into that state just long enough to read it back
+     out as a plain payload; the screen the user is actually looking at is
+     restored once every session has been read. */
+  function _buildSavePayloads() {
+    var activeKey = currentSessionKey;
+    sessions[activeKey] = _captureSession();
 
-    var payload = {
-      screen: editingScreen,
-      gridColumns: gridConfig.gridColumns,
-      rowHeight: gridConfig.rowHeight,
-      gap: gridConfig.gap,
-      mobileLayout: gridConfig.mobileLayout,
-      items: _orderedItems().map(function (item) {
+    var payloads = Object.keys(sessions).map(function (key) {
+      var session = sessions[key];
+      _restoreSession(session);
+
+      if (session.gridMode) {
         return {
-          ref: item.reference,
-          grid: $.extend({}, item.grid),
+          gridMode: true,
+          screenNumber: session.screenNumber,
+          payload: {
+            screen: session.screenNumber,
+            gridColumns: session.gridConfig.gridColumns,
+            rowHeight: session.gridConfig.rowHeight,
+            gap: session.gridConfig.gap,
+            mobileLayout: session.gridConfig.mobileLayout,
+            items: _orderedItems().map(function (item) {
+              return { ref: item.reference, grid: $.extend({}, item.grid) };
+            }),
+          },
         };
-      }),
-    };
+      }
 
-    $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
-      .then(function (data) {
-        return _postLayoutData('js/savegridlayout.php', payload, data.token);
-      })
-      .done(function () {
-        $toolbar.find('.dle-toolbar-help').text(_t('saved_reloading'));
-        $save.removeClass('btn-primary').addClass('btn-success').text(_t('saved'));
-        setTimeout(function () {
-          window.location.reload();
-        }, 700);
-      })
-      .fail(function (xhr) {
-        var message =
-          xhr.responseJSON && xhr.responseJSON.error
-            ? xhr.responseJSON.error
-            : _t('grid_save_failed');
-        $toolbar.find('.dle-toolbar-help').text(message);
-        $save.prop('disabled', false);
-        $toolbar.find('.dle-cancel').prop('disabled', false);
+      var ordered = _orderedItems();
+      var devices = [];
+      var widgets = [];
+      ordered.forEach(function (item) {
+        if (item.kind === 'widget') {
+          widgets.push(_widgetPayload(item));
+          return;
+        }
+
+        var deviceEntry = {
+          idx: item.idx,
+          name: item.name,
+          width: item.width,
+        };
+        if (item.subidx) deviceEntry.subidx = item.subidx;
+        if (item.height !== null) deviceEntry.height = item.height;
+        devices.push(deviceEntry);
       });
+
+      return {
+        gridMode: false,
+        screenNumber: session.screenNumber,
+        devices: devices,
+        widgets: widgets,
+        ordered: ordered,
+      };
+    });
+
+    _restoreSession(sessions[activeKey]);
+    currentSessionKey = activeKey;
+    return payloads;
+  }
+
+  function _saveScreenPayload(screenPayload, token) {
+    if (screenPayload.gridMode) {
+      return _postLayoutData(
+        'js/savegridlayout.php',
+        screenPayload.payload,
+        token
+      );
+    }
+
+    return _postLayoutData(
+      'js/saveblocks.php',
+      { devices: screenPayload.devices, screen: screenPayload.screenNumber },
+      token
+    ).then(function (deviceResult) {
+      return _postLayoutData(
+        'js/savewidgets.php',
+        { widgets: screenPayload.widgets, screen: screenPayload.screenNumber },
+        token
+      ).then(function (widgetResult) {
+        var deviceIndex = 0;
+        var widgetIndex = 0;
+        var layoutItems = screenPayload.ordered.map(function (item) {
+          var ref =
+            item.kind === 'widget'
+              ? widgetResult.blockKeys[widgetIndex++]
+              : deviceResult.blockKeys[deviceIndex++];
+          var entry = { ref: ref, width: item.width };
+          if (item.height !== null) entry.height = item.height;
+          return entry;
+        });
+        return _postLayoutData(
+          'js/savelayout.php',
+          { items: layoutItems, screen: screenPayload.screenNumber },
+          token
+        );
+      });
+    });
   }
 
   function _postLayoutData(url, payload, token) {
@@ -1852,6 +2048,51 @@ var DashticzLayoutEditor = (function () {
     _finishPointerAction();
 
     $(document).off('.layouteditor');
+    _unbindScreenNavigation();
+
+    sessions[currentSessionKey] = _captureSession();
+    Object.keys(sessions).forEach(function (key) {
+      _restoreSession(sessions[key]);
+      _revertScreenDom();
+    });
+
+    if ($toolbar) $toolbar.remove();
+    $('.dle-drag-ghost').remove();
+    $('body').removeClass('dle-active');
+
+    if (
+      typeof myswiper !== 'undefined' &&
+      myswiper &&
+      swiperTouchMove !== null
+    ) {
+      myswiper.allowTouchMove = swiperTouchMove;
+    }
+
+    active = false;
+    items = [];
+    itemById = {};
+    originalColumns = [];
+    $canvas = null;
+    $toolbar = null;
+    pointerState = null;
+    swiperTouchMove = null;
+    gridMode = false;
+    gridConfig = null;
+    originalGridWrappers = [];
+    gridCollectionError = false;
+    editingScreen = null;
+    $editingScreen = null;
+    gridEditorRows = 0;
+    sessions = {};
+    currentSessionKey = null;
+    _stopEdgeScroll();
+  }
+
+  /* Restores one screen's DOM back to its pre-editing state. Operates on
+     the module state, which the caller has just pointed at the session to
+     revert (see _restoreSession) - mirrors how _buildSavePayloads() reads
+     each session back out through the same single-active-screen helpers. */
+  function _revertScreenDom() {
     if (gridMode && $canvas) {
       originalGridWrappers.forEach(function (wrapper) {
         $canvas[0].appendChild(wrapper);
@@ -1929,39 +2170,25 @@ var DashticzLayoutEditor = (function () {
     if ($canvas) $canvas[0].style.removeProperty('--dle-grid-column-stride');
     if ($canvas) $canvas[0].style.removeProperty('--dle-grid-editor-min-height');
     if ($editingScreen) $editingScreen.removeClass('dle-grid-screen-editing');
-    if ($toolbar) $toolbar.remove();
-    $('.dle-drag-ghost').remove();
-    $('body').removeClass('dle-active');
-
-    if (
-      typeof myswiper !== 'undefined' &&
-      myswiper &&
-      swiperTouchMove !== null
-    ) {
-      myswiper.allowTouchMove = swiperTouchMove;
-    }
-
-    active = false;
-    items = [];
-    itemById = {};
-    originalColumns = [];
-    $canvas = null;
-    $toolbar = null;
-    pointerState = null;
-    swiperTouchMove = null;
-    gridMode = false;
-    gridConfig = null;
-    originalGridWrappers = [];
-    gridCollectionError = false;
-    editingScreen = null;
-    $editingScreen = null;
-    gridEditorRows = 0;
-    _stopEdgeScroll();
   }
 
   function replaceBlockReference(oldBlock, newBlock) {
     if (!active || !oldBlock || !newBlock || oldBlock === newBlock) return;
 
+    var activeKey = currentSessionKey;
+    sessions[activeKey] = _captureSession();
+
+    Object.keys(sessions).forEach(function (key) {
+      _restoreSession(sessions[key]);
+      _replaceBlockReferenceInCurrentSession(oldBlock, newBlock);
+      sessions[key] = _captureSession();
+    });
+
+    _restoreSession(sessions[activeKey]);
+    currentSessionKey = activeKey;
+  }
+
+  function _replaceBlockReferenceInCurrentSession(oldBlock, newBlock) {
     items.forEach(function (item) {
       var replaced = false;
 
