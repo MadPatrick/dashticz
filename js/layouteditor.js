@@ -355,7 +355,7 @@ var DashticzLayoutEditor = (function () {
 
     var reference =
       entry.kind === 'widget'
-        ? 'widget_' + entry.widgetId
+        ? _widgetKeyAndType(entry.widgetId).key
         : entry.kind === 'separator'
           ? _uniquePendingKey('separator')
           : '';
@@ -381,6 +381,11 @@ var DashticzLayoutEditor = (function () {
 
     wrapper.classList.add('dle-item-wrapper');
     var width12 = Math.max(1, Math.min(12, parseInt(entry.width, 10) || 3));
+    // Grid save (savegridlayout.php) needs a plain 1-12 width when it
+    // declares a not-yet-saved item's block for the first time - see
+    // _gridCreateForPendingItem. item.width itself gets overwritten below
+    // with the grid-column-scale width once positioned.
+    item.classicWidth = width12;
     var minimumHeight = _minimumGridHeight(item);
 
     if (gridMode) {
@@ -463,6 +468,79 @@ var DashticzLayoutEditor = (function () {
   function _uniquePendingKey(prefix) {
     pendingKeyCounter++;
     return 'dle_pending_' + prefix + '_' + pendingKeyCounter;
+  }
+
+  // The canonical blocks[key] name and component `type` per widgetId, as
+  // already established by savewidgets.php's own catalog (see the
+  // catalog[].blockKey values in js/widgeteditor.js) and by
+  // _widgetIdFromDefinition's reverse type map above. log/sunrise/radio
+  // are dispatched by Dashticz.mount() matching their block key directly
+  // against a registered component name (js/dashticz.js _mount()), not via
+  // a `type` field, so their key must be exactly that component name.
+  var WIDGET_KEY_TYPE = {
+    weather: { key: 'widget_weather', type: 'weather' },
+    garbage: { key: 'widget_garbage', type: 'garbage' },
+    spotify: { key: 'widget_spotify', type: 'spotify' },
+    sonarr: { key: 'widget_sonarr', type: 'sonarr' },
+    clock: { key: 'widget_clock', type: 'basicclock' },
+    calendar: { key: 'widget_calendar', type: 'calendar' },
+    secpanel: { key: 'widget_secpanel', type: 'secpanel' },
+    publictransport: { key: 'widget_publictransport', type: 'publictransport' },
+    trafficinfo: { key: 'widget_trafficinfo', type: 'trafficinfo' },
+    alarmmeldingen: { key: 'widget_alarmmeldingen', type: 'alarmmeldingen' },
+    camera: { key: 'widget_cameras', type: 'camera' },
+    map: { key: 'widget_map', type: 'map' },
+    longfonds: { key: 'widget_longfonds', type: 'longfonds' },
+    moon: { key: 'widget_moon', type: 'moon' },
+    news: { key: 'widget_news', type: 'news' },
+    iframe: { key: 'widget_iframe', type: 'frame' },
+    xmltvguide: { key: 'widget_xmltvguide', type: 'xmltvguide' },
+    radio: { key: 'streamplayer', type: 'streamplayer' },
+    log: { key: 'log', type: 'log' },
+    sunrise: { key: 'sunrise', type: 'sunrise' },
+    owm: { key: 'widget_owmwidget', type: 'owmwidget' },
+    timegraph: { key: 'widget_timegraph', type: 'timegraph' },
+  };
+
+  function _widgetKeyAndType(widgetId) {
+    return (
+      WIDGET_KEY_TYPE[widgetId] || {
+        key: 'widget_' + widgetId,
+        type: widgetId,
+      }
+    );
+  }
+
+  /* savegridlayout.php rejects a grid item whose ref isn't already a
+     declared blocks[key] (see the "Grid block is not declared" error)
+     unless the request also includes a `create` descriptor telling it what
+     to declare. A pending item (added via addPendingItems) was never
+     declared, so its grid save must always carry one. `kind: 'inline'`
+     (an arbitrary JSON block literal, the same mechanism
+     convertCurrentScreenToGrid's Wizard conversion already relies on -
+     see _gridCreateDefinition) is used uniformly rather than the
+     narrower `kind: 'device'` shape, which coerces idx with PHP's (int)
+     cast and would silently zero out a Domoticz group/scene idx like
+     "s1". */
+  function _gridCreateForPendingItem(item) {
+    var props;
+    if (item.kind === 'device') {
+      if (item.idx === null || typeof item.idx === 'undefined') return null;
+      props = { idx: item.subidx ? item.idx + '_' + item.subidx : item.idx };
+    } else if (item.kind === 'widget') {
+      props = { type: _widgetKeyAndType(item.widgetId).type };
+    } else if (item.kind === 'separator') {
+      props = { type: 'blocktitle' };
+    } else {
+      return null;
+    }
+    if (item.name) props.title = item.name;
+    if (item.classicWidth) props.width = item.classicWidth;
+    return {
+      kind: 'inline',
+      name: item.name || item.kind,
+      propsJson: JSON.stringify(props),
+    };
   }
 
   function _activeScreenTarget() {
@@ -2101,7 +2179,12 @@ var DashticzLayoutEditor = (function () {
             gap: session.gridConfig.gap,
             mobileLayout: session.gridConfig.mobileLayout,
             items: _orderedItems().map(function (item) {
-              return { ref: item.reference, grid: $.extend({}, item.grid) };
+              var entry = { ref: item.reference, grid: $.extend({}, item.grid) };
+              if (item.isPending) {
+                var create = _gridCreateForPendingItem(item);
+                if (create) entry.create = create;
+              }
+              return entry;
             }),
           },
         };

@@ -666,6 +666,54 @@ test('Add items menu grafts new devices/widgets/separators into an open Layout E
   assert.match(deviceEditor, /if \(!existingUntouched\) return false;/);
 });
 
+test('a pending item grafted into a grid screen declares its block instead of failing "not declared" (#161)', () => {
+  const editor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+  const saveGridLayout = fs.readFileSync(
+    path.join(root, 'js/savegridlayout.php'),
+    'utf8'
+  );
+
+  // savegridlayout.php only accepts a ref that is either already declared,
+  // or accompanied by a `create` descriptor - ref alone (what a plain
+  // reposition/resize save always sent, before pending items existed) is
+  // rejected for anything undeclared.
+  assert.match(
+    saveGridLayout,
+    /Grid block is not declared and cannot be created\./
+  );
+  assert.match(saveGridLayout, /isset\(\$entry\['create'\]\)/);
+
+  // A pending grid item's save must carry a `create` descriptor built from
+  // the item itself, not just {ref, grid} - matching what the Wizard's own
+  // grid conversion already sends via _gridCreateDefinition.
+  assert.match(editor, /function _gridCreateForPendingItem\(item\)/);
+  assert.match(
+    editor,
+    /items: _orderedItems\(\)\.map\(function \(item\) \{\s*var entry = \{ ref: item\.reference, grid: \$\.extend\(\{\}, item\.grid\) \};\s*if \(item\.isPending\) \{\s*var create = _gridCreateForPendingItem\(item\);\s*if \(create\) entry\.create = create;/
+  );
+
+  // `kind: 'inline'` is used uniformly (not the narrower `kind: 'device'`,
+  // which PHP-casts idx with (int) and would zero out a Domoticz
+  // group/scene idx like "s1") for every pending kind the Layout Editor
+  // can graft.
+  assert.match(
+    editor,
+    /_gridCreateForPendingItem[\s\S]*kind: 'inline',\s*name: item\.name \|\| item\.kind,\s*propsJson: JSON\.stringify\(props\)/
+  );
+
+  // A widget dispatched by its literal block key (log/sunrise/streamplayer
+  // - see Dashticz.mount in js/dashticz.js) must be declared under exactly
+  // that key, not a synthesized 'widget_<id>' one, or it silently fails to
+  // render after the reload following Save.
+  assert.match(editor, /log: \{ key: 'log', type: 'log' \}/);
+  assert.match(editor, /sunrise: \{ key: 'sunrise', type: 'sunrise' \}/);
+  assert.match(editor, /radio: \{ key: 'streamplayer', type: 'streamplayer' \}/);
+  assert.match(
+    editor,
+    /_widgetKeyAndType\(entry\.widgetId\)\.key/
+  );
+});
+
 test('screen editor add menu exposes device, widget, custom-device and separator workflows', () => {
   const simpleBlock = fs.readFileSync(path.join(root, 'js/components/simpleblock.js'), 'utf8');
   const screenSwitcher = fs.readFileSync(path.join(root, 'js/screenswitcher.js'), 'utf8');
