@@ -2079,11 +2079,14 @@ body.dle-active {
 }
 
 /* Without this, the global .fas { font-size: 30px } rule below inflates
-   the Back button's own line box (icon line-height 30px vs. the button's
-   own ~20px text line-height), making it taller than the Cancel/Save
-   buttons next to it. */
-.de-back-btn .fas,
-.we-back-btn .fas {
+   a button's own line box (icon line-height 30px vs. the button's own
+   ~20px text line-height), making it taller/wider than its neighbours.
+   Covers every footer button icon (Back, Close, Save, OK, Cancel) in the
+   settings modal and every Device/Widget editor popup, so they all stay
+   the same size regardless of which one has an icon. */
+.modal-footer .btn .fas,
+.modal-footer .btn .far,
+.modal-footer .btn .fab {
   font-size: 1em !important;
   line-height: 1;
 }
