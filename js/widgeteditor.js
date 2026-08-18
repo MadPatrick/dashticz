@@ -2133,7 +2133,7 @@ var DashticzWidgetEditor = (function () {
       ['icon', _t('icon', 'Icon'), options.icon],
       ['show_title', _t('show_title', 'Title'), options.show_title],
     ].forEach(function (option) {
-      html += '<label class="form-check form-check-inline mb-2">' +
+      html += '<label class="form-check form-switch form-check-inline mb-2">' +
         '<input class="form-check-input we-block-option" type="checkbox" data-block-option="' +
         option[0] + '"' + (option[2] ? ' checked' : '') + '>' +
         '<span class="form-check-label">' + _esc(option[1]) + '</span></label>';

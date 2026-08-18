@@ -1845,13 +1845,13 @@ var DashticzDeviceEditor = (function () {
     var t = _translations();
     var html = '<h6 class="de-section-title">' + _esc(t.display_options) + '</h6>';
     html += '<div class="mb-3 de-config-options de-config-options-three">';
-    html += '<label class="form-check"><input class="form-check-input" type="checkbox" id="' +
+    html += '<label class="form-check form-switch"><input class="form-check-input" type="checkbox" id="' +
       prefix + '-opt-icon"' + (defaults.icon ? ' checked' : '') + '>' +
       '<span class="form-check-label">' + _esc(t.icon) + '</span></label>';
-    html += '<label class="form-check"><input class="form-check-input" type="checkbox" id="' +
+    html += '<label class="form-check form-switch"><input class="form-check-input" type="checkbox" id="' +
       prefix + '-opt-update"' + (defaults.lastUpdate ? ' checked' : '') + '>' +
       '<span class="form-check-label">' + _esc(t.last_update) + '</span></label>';
-    html += '<label class="form-check"><input class="form-check-input" type="checkbox" id="' +
+    html += '<label class="form-check form-switch"><input class="form-check-input" type="checkbox" id="' +
       prefix + '-opt-title"' + (defaults.showTitle ? ' checked' : '') + '>' +
       '<span class="form-check-label">' + _esc(t.show_title) + '</span></label>';
     html += '</div>';
@@ -2306,7 +2306,7 @@ var DashticzDeviceEditor = (function () {
     html += '<div class="form-text">' + _esc(t.html_block_file_help) + '</div></div>';
     html += '<div class="mb-3"><label class="form-label" for="hb-device-title">' + _esc(t.html_block_title) + '</label>';
     html += '<input type="text" class="form-control" id="hb-device-title" autocomplete="off"></div>';
-    html += '<div class="mb-3 form-check"><input class="form-check-input" type="checkbox" id="hb-device-border">';
+    html += '<div class="mb-3 form-check form-switch"><input class="form-check-input" type="checkbox" id="hb-device-border">';
     html += '<label class="form-check-label" for="hb-device-border">' + _esc(t.html_block_border) + '</label></div>';
     html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
     html += '<div class="modal-footer">' + _backButtonHtml() +
@@ -2685,7 +2685,7 @@ var DashticzDeviceEditor = (function () {
     configOptions.forEach(function (option) {
       var hiddenForDial =
         hasDial && (option === 'icon' || option === 'show_title');
-      html += '<label class="form-check' +
+      html += '<label class="form-check form-switch' +
         (hiddenForDial ? ' de-hide-for-dial' : '') +
         '"><input class="form-check-input de-config-option" type="checkbox" data-option="' + option + '"';
       // The Data checkbox is user-facing: checked means data is visible.
