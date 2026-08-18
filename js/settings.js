@@ -1269,6 +1269,7 @@ function loadSettings() {
         '</button> ';
       html +=
         '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+        '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
         language.settings.close +
         '</button> ';
       if (settings['loginEnabled'] == true)
