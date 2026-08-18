@@ -1278,6 +1278,7 @@ function loadSettings() {
           '</button> ';
       html +=
         '<button onClick="saveSettings();" type="button" class="btn btn-primary btn-save" data-bs-dismiss="modal">' +
+        '<i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
         language.settings.save +
         '</button></div></div>';
       html += '</div>';
