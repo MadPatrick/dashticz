@@ -1380,22 +1380,12 @@ function renderSettingsCategoryHome() {
 
   for (ti = 0; ti < tabs.length; ti++) {
     id = tabs[ti];
-    title = getSettingsCategoryTitle(id);
-    icon = settingsCategoryIcons[id] || 'fas fa-cog';
     html +=
       '<div class="settings-category-panel d-none" id="settings-category-' +
       escapeSettingsHtml(id) +
       '" data-settings-panel="' +
       escapeSettingsHtml(id) +
       '">';
-    html += '<div class="settings-panel-header">';
-    html +=
-      '<h5 class="settings-panel-title"><i class="' +
-      escapeSettingsHtml(icon) +
-      ' me-2" aria-hidden="true"></i>' +
-      escapeSettingsHtml(title) +
-      '</h5>';
-    html += '</div>';
     if (id === 'widgets') {
       html += renderWidgetSettingsTab();
     } else if (id === 'theme') {
