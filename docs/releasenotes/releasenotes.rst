@@ -6,6 +6,19 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.45.1 beta (19-8-2026)
+-------------------------
+
+* **Fixes**
+
+- Fixed the **No background** checkbox in Device Config and Widget Config
+  rendering smaller than, and separately positioned above, the other
+  Display options switches (Icon/Data/Title) - it was injected as its own
+  row outside the switch group and so fell back to Bootstrap's default
+  switch styling instead of the project's larger, blue-styled switches.
+  It now sits inside the same switch row as Icon/Data/Title and matches
+  their size, color and spacing exactly (#170).
+
 v3.45.0 beta (19-8-2026)
 -------------------------
 
