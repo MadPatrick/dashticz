@@ -45,6 +45,16 @@ v3.45.1 beta (19-8-2026)
   behind the now-transparent block. The backdrop-filter is now cleared
   along with the background (#170).
 
+* **Code**
+
+- Updated two ``tests/source.test.js`` assertions that had gone stale after
+  an earlier, unrelated basicclock.js v4 sizing fix (#175): they still
+  pinned its previous ``$block``-scaling/``titleHeight``+``stateMarginV``
+  approach, which that fix had already replaced with scaling ``$state``
+  only and a ``getBoundingClientRect()``-based measurement. No production
+  code changed - the tests now assert basicclock.js's actual current
+  behavior instead of its old one.
+
 v3.45.0 beta (19-8-2026)
 -------------------------
 

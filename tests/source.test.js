@@ -1555,7 +1555,13 @@ test('clock components use public date APIs and a valid seconds setting', () => 
   // px "Size" field or a hard cap unrelated to the block's own size.
   assert.doesNotMatch(basicClock, /me\.block\.size/);
   assert.doesNotMatch(basicClock, /maxFontSize/);
-  assert.match(basicClock, /\$block\.css\('font-size', REF \* fitScale \* scale\)/);
+  // basicclock.js v4 (#175): only .dt_state is scaled, not .dt_block - the
+  // title inherits font-size from .dt_block, and the available-height
+  // calculation above already subtracted the title's *current* height, so
+  // growing the title afterwards would invalidate that calculation. .dt_block
+  // itself is reset instead of ever being sized directly.
+  assert.match(basicClock, /\$block\.css\('font-size', ''\);/);
+  assert.match(basicClock, /\$state\.css\('font-size', REF \* fitScale \* scale \+ 'px'\);/);
   assert.match(stationClock, /function clockFitSize/);
   assert.doesNotMatch(stationClock, /me\.block\.size/);
   assert.doesNotMatch(stationClock, /me\.block\.maxSize/);
@@ -3578,7 +3584,7 @@ test('Clock widgets (Basic/Station/Flip/Hayman) get a default icon and correctly
     assert.match(source, /icon: 'far fa-clock'/);
   });
 
-  // All four size their canvas/face from .dt_block's *content-box* height
+  // Flip/Hayman size their canvas/face from .dt_block's *content-box* height
   // (.height(), not .innerHeight() - the latter also counts .dt_block's own
   // 15px top/bottom padding) minus .dt_title's own height and .dt_state's
   // own 5px/5px vertical margin (creative.css) - the space actually
@@ -3587,7 +3593,6 @@ test('Clock widgets (Basic/Station/Flip/Hayman) get a default icon and correctly
   // .dt_block's own bottom edge, showing a scrollbar unless the block was
   // made oversized to compensate. Same fix as js/components/frame.js.
   [
-    ['basicclock', basicclock],
     ['flipclock', flipclock],
     ['haymanclock', haymanclock],
   ].forEach(function (pair) {
@@ -3607,6 +3612,35 @@ test('Clock widgets (Basic/Station/Flip/Hayman) get a default icon and correctly
     );
     assert.match(source, /- titleHeight - stateMarginV;/, name);
   });
+
+  // basicclock.js v4 (#175) replaced that titleHeight/stateMarginV
+  // subtraction with a getBoundingClientRect()-based measurement instead:
+  // assuming a fixed title height/margin wasn't reliable across themes
+  // (differing title line-height/padding/block spacing, and after Save
+  // those values can settle one layout pass later than the component's
+  // first run()). It measures from .dt_state's actual rendered position to
+  // the bottom/right edge of the owning box, matching whatever the browser
+  // is actually painting regardless of theme - flip/haymanclock haven't
+  // been migrated to this approach (yet).
+  assert.match(basicclock, /var \$title = \$\(me\.mountPoint \+ ' \.dt_title'\);/);
+  assert.match(basicclock, /var \$state = \$\(me\.mountPoint \+ ' \.dt_state'\);/);
+  assert.match(
+    basicclock,
+    /var titleHeight = \$title\.length && \$title\.is\(':visible'\) \? \$title\.outerHeight\(true\) : 0;/
+  );
+  assert.doesNotMatch(basicclock, /stateMarginV/);
+  assert.match(
+    basicclock,
+    /var sizeRect = sizeEl && sizeEl\.getBoundingClientRect \? sizeEl\.getBoundingClientRect\(\) : null;/
+  );
+  assert.match(
+    basicclock,
+    /var stateRect = stateEl && stateEl\.getBoundingClientRect \? stateEl\.getBoundingClientRect\(\) : null;/
+  );
+  assert.match(
+    basicclock,
+    /var availH = sizeRect && stateRect\s*\n\s*\? sizeRect\.bottom - stateRect\.top\s*\n\s*: \(\(\$sizeBox\.outerHeight\(\) \|\| \$\(me\.mountPoint\)\.height\(\) \|\| 0\) - titleHeight\);/
+  );
 
   assert.match(stationclock, /var \$title = \$mount\.find\('\.dt_title'\)\.first\(\);/);
   assert.match(stationclock, /var \$state = \$mount\.find\('\.dt_state'\)\.first\(\);/);
