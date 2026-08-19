@@ -96,11 +96,18 @@ Dashticz.register(DT_button);
     var style = document.createElement('style');
     style.id = styleId;
     style.textContent =
+      /* The Liquid Glass themes' .transbg (every block carries it) applies a
+       * backdrop-filter blur+saturate on top of its background - clearing
+       * just the background still leaves that filter sampling/intensifying
+       * whatever sits behind the block, showing as a soft glow instead of
+       * true transparency, so it needs resetting here too. */
       '.dt-no-background, .dt_block.dt-no-background, .mh.dt-no-background {' +
       'background: transparent !important;' +
       'background-color: transparent !important;' +
       'background-image: none !important;' +
       'box-shadow: none !important;' +
+      '-webkit-backdrop-filter: none !important;' +
+      'backdrop-filter: none !important;' +
       '}' +
       '.dt-button-action-fields.d-none{display:none!important;}';
     document.head.appendChild(style);

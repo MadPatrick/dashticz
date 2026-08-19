@@ -24,7 +24,13 @@ v3.45.1 beta (19-8-2026)
   switches only, so the extra one always overflowed onto a row by itself.
   The row now always auto-fits exactly as many equal columns as there are
   visible switches on a single row, including when the Dial checkbox
-  hides/shows Icon and Title (#170).
+  hides/shows Icon and Title.
+- Fixed enabling **No background** leaving a soft colored glow behind the
+  block on the Liquid Glass Blue/Grey themes instead of true transparency -
+  those themes' backdrop-filter blur/saturate effect on every block was
+  left untouched, so it kept sampling and intensifying whatever sits
+  behind the now-transparent block. The backdrop-filter is now cleared
+  along with the background (#170).
 
 v3.45.0 beta (19-8-2026)
 -------------------------
