@@ -35,6 +35,36 @@ test('xmltv proxy validates remote URLs and keeps cache handling local', () => {
   assert.doesNotMatch(source, /shell_exec|exec\(|passthru|system\(/);
 });
 
+test('LMS backend bridge is same-origin gated, allows LAN access, and never leaks credentials', () => {
+  const source = read('vendor/dashticz/lms/index.php');
+  assert.match(source, /dashticz_require_same_origin\(\)/);
+  // LMS is virtually always a LAN-only server, like Domoticz itself, so the
+  // private/reserved-IP block dashticz_validate_remote_url() applies by
+  // default must be explicitly lifted here (mirrors xmltv.php above).
+  assert.match(source, /dashticz_validate_remote_url\(\s*\n?\s*'http:\/\/' \. \$request\['server'\] \. ':' \. \$request\['port'\] \. '\/jsonrpc\.js',\s*\n\s*true/);
+  // Remote/radio artwork_url is an arbitrary external host, not LMS itself -
+  // that fetch must NOT get the same private-IP allowance (SSRF hygiene).
+  assert.match(source, /dashticz_validate_remote_url\(\$request\['artworkUrl'\], false\)/);
+  // POST-only credentials: a username/password never appears in a URL
+  // (query string, <img src>) where it could end up in logs/browser history.
+  assert.doesNotMatch(source, /\$_GET\[.username.\]|\$_GET\[.password.\]/);
+  assert.match(source, /CURLOPT_USERPWD/);
+  assert.match(source, /CURLAUTH_BASIC/);
+  // Every failure path is a fixed, generic message - never the raw curl
+  // error or response body, which might otherwise echo a password back.
+  assert.doesNotMatch(source, /curl_error\(/);
+  assert.doesNotMatch(source, /\$response\b.*(?:\.|,)\s*getMessage|var_dump|print_r/);
+  assert.match(source, /Unable to connect to Lyrion Music Server\./);
+  assert.match(source, /Authentication failed\./);
+  // No SSL-verification opt-out (unlike the known legacy garbage/index.php
+  // ignoressl option flagged in AGENTS.md - LMS has no such precedent to follow).
+  assert.doesNotMatch(source, /CURLOPT_SSL_VERIFYPEER/);
+  // Cover artwork is returned as a data: URI (base64), never a URL the
+  // browser would fetch directly - so LMS/radio credentials and any LAN-only
+  // hostname never reach the browser's own network requests.
+  assert.match(source, /base64_encode\(\$response\['body'\]\)/);
+});
+
 test('calendar fetching is URL validated and does not expose stack traces', () => {
   const source = read('vendor/dashticz/ical/index.php');
   assert.match(source, /dashticz_fetch_remote\(/);
@@ -158,7 +188,15 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   assert.match(source, /round\(\$height \/ 10\) \* 10/);
   assert.match(writer, /height/);
   /* Device Editor helper blocks are explicitly validated and whitelisted. */
-  assert.match(source, /in_array\(\$entry\['kind'\], \['dummy', 'title', 'custom', 'group', 'html'\], true\)/);
+  assert.match(source, /in_array\(\$entry\['kind'\], \['dummy', 'title', 'custom', 'group', 'html', 'lms'\], true\)/);
+  /* Lyrion Music Server block: server/port/player validated, credentials
+     never echoed back in an error message. */
+  assert.match(source, /kind === 'lms'/);
+  assert.match(source, /Enter the Lyrion Music Server address\./);
+  assert.match(source, /Enter a valid Lyrion Music Server port\./);
+  assert.match(source, /Select a Lyrion Music Server player\./);
+  assert.match(writer, /\$kind === 'lms'/);
+  assert.match(writer, /'type' => 'lms'/);
   assert.match(source, /\^dummyblock_/);
   assert.match(source, /Existing hand-written blocktitle keys remain editable/);
   assert.match(source, /\^\[A-Za-z_\$\]/);
