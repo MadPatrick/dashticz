@@ -176,25 +176,43 @@ function dashticz_lms_request($request)
 /* Resolves the currently playing item's artwork and returns it as a data:
    URI, so the browser never needs a direct (and possibly LAN-only/mixed-
    content-blocked) URL to either LMS or wherever an internet radio station's
-   own artwork happens to be hosted. Local/library artwork (coverid, from the
-   'c' status tag) is fetched from LMS's own artwork endpoint with the same
-   credentials as every other request here; remote/radio artwork (artwork_url,
-   from the 'K' tag) is usually already a public, absolute URL, so it is
-   fetched directly - like any other externally-hosted image Dashticz embeds
-   (see js/components/garbage.js, js/sonarr.js) - without private-IP access
-   or LMS credentials, since it isn't LMS itself. */
+   own artwork happens to be hosted.
+   artwork_url (the 'K' status tag) is preferred whenever LMS provides one:
+   for an internet radio track, LMS assigns a synthetic negative coverid
+   with no real library artwork (its own /music/<id>/cover_*.jpg lookup
+   just returns a generic placeholder), while artwork_url is the actual
+   artwork LMS resolved for the currently playing item - confirmed live via
+   a real radio station: e.g. "/imageproxy/https%3A%2F%2Flastfm.freetls...
+   /image.jpg". That value is LMS-server-relative (LMS's own proxy/cache
+   for externally-hosted art, not a bare external URL as originally assumed)
+   whenever it starts with "/", so it gets the same trust level as coverid
+   below (LMS's own endpoint: allowPrivate, LMS credentials); only a
+   genuinely absolute http(s) artwork_url is fetched as a true external
+   host, like any other externally-hosted image Dashticz embeds (see
+   js/components/garbage.js, js/sonarr.js), without private-IP access or
+   LMS credentials. coverid is the fallback only when LMS gave no
+   artwork_url at all - the normal case for local library tracks. */
 function dashticz_lms_fetch_cover($request)
 {
-    if ($request['coverid'] !== '') {
+    $artworkUrl = $request['artworkUrl'];
+    if ($artworkUrl !== '') {
+        if ($artworkUrl[0] === '/') {
+            $url = dashticz_validate_remote_url(
+                'http://' . $request['server'] . ':' . $request['port'] . $artworkUrl,
+                true
+            );
+            $response = dashticz_lms_curl($url, $request, array());
+        } else {
+            $url = dashticz_validate_remote_url($artworkUrl, false);
+            $response = dashticz_lms_curl($url, array('username' => '', 'password' => ''), array());
+        }
+    } else {
         $url = dashticz_validate_remote_url(
             'http://' . $request['server'] . ':' . $request['port'] .
                 '/music/' . rawurlencode($request['coverid']) . '/cover_200x200_o.jpg',
             true
         );
         $response = dashticz_lms_curl($url, $request, array());
-    } else {
-        $url = dashticz_validate_remote_url($request['artworkUrl'], false);
-        $response = dashticz_lms_curl($url, array('username' => '', 'password' => ''), array());
     }
 
     if ($response['body'] === '') {

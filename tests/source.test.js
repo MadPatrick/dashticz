@@ -3719,6 +3719,13 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   // Track-change-only artwork refetch: never re-fetch while the same track
   // (coverid/artwork_url) is still playing.
   assert.match(lms, /if \(artworkKey === me\.lmsArtworkKey\) return;/);
+  // artwork_url wins over coverid when LMS provides one - a radio track's
+  // synthetic negative coverid has no real library artwork (confirmed live:
+  // its cover lookup just returns a generic placeholder icon).
+  assert.match(
+    lms,
+    /meta\.artworkUrl \? 'u:' \+ meta\.artworkUrl : \(meta\.coverid \? 'c:' \+ meta\.coverid : ''\)/
+  );
   // Read-only: the runtime block only ever issues the "status" poll (never a
   // play/pause/power/volume control command) - DT_lms_api.request() itself
   // is reused by the Wizard's own "serverstatus" discovery call, but that

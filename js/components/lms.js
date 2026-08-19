@@ -176,8 +176,13 @@ var DT_lms_api = {
     }
     $info.html(lines || _line('lms-state-label', _lmsText('lms_player_unavailable', 'Player unavailable')));
 
+    // artwork_url wins when LMS provides one - a radio track's synthetic,
+    // negative coverid has no real library artwork (its own cover lookup
+    // just returns a generic placeholder icon), while artwork_url is what
+    // LMS actually resolved for the currently playing item. See
+    // vendor/dashticz/lms/index.php's dashticz_lms_fetch_cover().
     var artworkKey = meta.state === 'play' || meta.state === 'pause'
-      ? (meta.coverid ? 'c:' + meta.coverid : (meta.artworkUrl ? 'u:' + meta.artworkUrl : ''))
+      ? (meta.artworkUrl ? 'u:' + meta.artworkUrl : (meta.coverid ? 'c:' + meta.coverid : ''))
       : '';
     if (artworkKey === me.lmsArtworkKey) return; // unchanged track: never re-fetch (#9)
     me.lmsArtworkKey = artworkKey;

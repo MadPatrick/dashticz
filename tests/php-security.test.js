@@ -170,9 +170,20 @@ test('LMS backend bridge is same-origin gated, allows LAN access, and never leak
   // private/reserved-IP block dashticz_validate_remote_url() applies by
   // default must be explicitly lifted here (mirrors xmltv.php above).
   assert.match(source, /dashticz_validate_remote_url\(\s*\n?\s*'http:\/\/' \. \$request\['server'\] \. ':' \. \$request\['port'\] \. '\/jsonrpc\.js',\s*\n\s*true/);
-  // Remote/radio artwork_url is an arbitrary external host, not LMS itself -
-  // that fetch must NOT get the same private-IP allowance (SSRF hygiene).
-  assert.match(source, /dashticz_validate_remote_url\(\$request\['artworkUrl'\], false\)/);
+  // artwork_url is LMS-server-relative (its own image proxy/cache, e.g.
+  // "/imageproxy/https%3A%2F%2Flastfm.../image.jpg" for an internet radio
+  // track - confirmed live) whenever it starts with "/", so THAT gets the
+  // same private-IP allowance as LMS's own endpoints; only a genuinely
+  // absolute external artwork_url must NOT get it (SSRF hygiene).
+  assert.match(source, /if \(\$artworkUrl\[0\] === '\/'\) \{/);
+  assert.match(
+    source,
+    /dashticz_validate_remote_url\(\s*\n\s*'http:\/\/' \. \$request\['server'\] \. ':' \. \$request\['port'\] \. \$artworkUrl,\s*\n\s*true/
+  );
+  assert.match(source, /dashticz_validate_remote_url\(\$artworkUrl, false\)/);
+  // artwork_url is preferred over coverid whenever LMS provides one - a
+  // radio track's synthetic negative coverid has no real library artwork.
+  assert.match(source, /if \(\$artworkUrl !== ''\) \{/);
   // POST-only credentials: a username/password never appears in a URL
   // (query string, <img src>) where it could end up in logs/browser history.
   assert.doesNotMatch(source, /\$_GET\[.username.\]|\$_GET\[.password.\]/);
@@ -249,6 +260,92 @@ test('dashticz_lms_connect_error_reason() narrows a curl connect failure to a fi
   assert.equal(lmsConnectErrorReason(28), ': the connection timed out');
   // Any other curl errno falls back to no extra detail rather than guessing.
   assert.equal(lmsConnectErrorReason(99999), '');
+});
+
+/* Runs a real POST to the real vendor/dashticz/lms/index.php's 'cover'
+   action against a mock "LMS" server distinguishing its two artwork
+   endpoints (a 1x1 red PNG under /imageproxy/, a 1x1 blue PNG under
+   /music/), using the exact payload shape a live radio track report sent:
+   both a synthetic negative coverid AND an LMS-relative artwork_url
+   ("/imageproxy/<url-encoded external URL>/image.jpg"). Confirms which one
+   actually got fetched by decoding the returned data: URI and comparing it
+   byte-for-byte against the two known images, rather than just asserting
+   the source contains the right branch. */
+function lmsFetchCover(payload) {
+  const mockDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dashticz-lms-mock-'));
+  const redPng = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+    'base64'
+  );
+  const bluePng = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64'
+  );
+  fs.writeFileSync(
+    path.join(mockDir, 'router.php'),
+    [
+      '<?php',
+      "header('Content-Type: image/png');",
+      "if (strpos($_SERVER['REQUEST_URI'], '/imageproxy/') === 0) {",
+      `  echo base64_decode('${redPng.toString('base64')}');`,
+      '  exit;',
+      '}',
+      "if (strpos($_SERVER['REQUEST_URI'], '/music/') === 0) {",
+      `  echo base64_decode('${bluePng.toString('base64')}');`,
+      '  exit;',
+      '}',
+      'http_response_code(404);',
+    ].join('\n')
+  );
+
+  const mockPort = 21000 + (process.pid % 1000);
+  const dashticzPort = 22000 + (process.pid % 1000);
+  const mockServer = spawn('php', ['-S', `127.0.0.1:${mockPort}`, path.join(mockDir, 'router.php')]);
+  const dashticzServer = spawn('php', ['-S', `127.0.0.1:${dashticzPort}`], { cwd: root });
+  try {
+    const deadline = Date.now() + 3000;
+    while (
+      Date.now() < deadline &&
+      (spawnSync('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', `http://127.0.0.1:${dashticzPort}/`]).stdout.toString().trim() === '000' ||
+        spawnSync('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', `http://127.0.0.1:${mockPort}/`]).stdout.toString().trim() === '000')
+    ) {
+      /* poll until both servers accept connections */
+    }
+    const result = spawnSync(
+      'curl',
+      [
+        '-s',
+        '-X', 'POST',
+        '-H', 'Content-Type: application/json',
+        '-H', `Origin: http://127.0.0.1:${dashticzPort}`,
+        '-H', `Host: 127.0.0.1:${dashticzPort}`,
+        '--data', JSON.stringify(Object.assign({ action: 'cover', server: '127.0.0.1', port: mockPort }, payload)),
+        `http://127.0.0.1:${dashticzPort}/vendor/dashticz/lms/index.php`,
+      ],
+      { encoding: 'utf8' }
+    );
+    const parsed = JSON.parse(result.stdout);
+    const gotBytes = Buffer.from(parsed.dataUrl.split(',')[1], 'base64');
+    return { matchesRed: gotBytes.equals(redPng), matchesBlue: gotBytes.equals(bluePng) };
+  } finally {
+    mockServer.kill();
+    dashticzServer.kill();
+    fs.rmSync(mockDir, { recursive: true, force: true });
+  }
+}
+
+test('LMS cover fetch prefers artwork_url over a synthetic radio coverid', () => {
+  // The exact payload shape reported live for "Radio Veronica" / "Bryan
+  // Adams": a synthetic negative coverid (no real library artwork - LMS's
+  // own /music/<id>/cover_*.jpg lookup just returns a generic placeholder)
+  // alongside an LMS-relative artwork_url (its own image proxy/cache for
+  // the actual, externally-hosted track artwork).
+  const result = lmsFetchCover({
+    coverid: '-94832537157032',
+    artworkUrl: '/imageproxy/https%3A%2F%2Flastfm.example%2Fimage.jpg/image.jpg',
+  });
+  assert.equal(result.matchesRed, true, 'expected the imageproxy (artwork_url) image');
+  assert.equal(result.matchesBlue, false, 'must not fall back to the generic coverid placeholder');
 });
 
 test('LMS backend fails gracefully without the curl extension instead of crashing', () => {
