@@ -3853,3 +3853,48 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   assert.ok(enLang.misc.lms_player_off);
   assert.ok(enLang.misc.lms_server_unavailable);
 });
+
+test('Lyrion Music Server "Hide block when player is off" switch clears both text and artwork', () => {
+  const lms = fs.readFileSync(path.join(root, 'js/components/lms.js'), 'utf8');
+  const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const saveBlocks = fs.readFileSync(path.join(root, 'js/saveblocks.php'), 'utf8');
+  const configWriter = fs.readFileSync(path.join(root, 'js/configwriter.php'), 'utf8');
+  const lmsDocs = fs.readFileSync(path.join(root, 'docs/blocks/specials/lms.rst'), 'utf8');
+  const enLang = JSON.parse(fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8'));
+
+  // Runtime (js/components/lms.js): the player being off is a normal state,
+  // not an error, so this only ever suppresses the "Player off" case - never
+  // "Player unavailable" (unknown/unreachable) or "Nothing is playing" -
+  // and clears both the info text and the cover art placeholder, not just one.
+  assert.match(
+    lms,
+    /var hideWhenOff = me\.block\.hide_when_off === true && meta\.known && !meta\.power;/
+  );
+  assert.match(lms, /if \(hideWhenOff\) \{\s*\n\s*\$info\.empty\(\);/);
+  assert.match(lms, /var \$cover = \$existing\.find\('\.lms-cover'\);\s*\n\s*if \(hideWhenOff\) \{\s*\n\s*\$cover\.empty\(\);\s*\n\s*return;/);
+
+  // Wizard integration (js/deviceeditor.js): a dedicated field alongside
+  // server/port/.../refresh - not a generic custom field (kept out of the
+  // Custom fields grid via protectedCustomDeviceProperties) - read from/
+  // written to the same _lmsFieldsHtml/_readLmsFields shared by both the
+  // quick-add and edit popups (see the LMS wiring test above).
+  assert.match(deviceEditor, /lmsHideWhenOff: kind === 'lms' \? definition\.hide_when_off === true : false,/);
+  assert.match(deviceEditor, /id="' \+\s*\n\s*prefix \+ '-lms-hide-when-off"/);
+  assert.match(deviceEditor, /hideWhenOff: \$popup\.find\('#' \+ prefix \+ '-lms-hide-when-off'\)\.is\(':checked'\),/);
+  assert.match(deviceEditor, /lmsHideWhenOff: lms\.hideWhenOff,/);
+  assert.match(deviceEditor, /special\.lmsHideWhenOff = pendingLms\.hideWhenOff;/);
+  assert.match(deviceEditor, /specialEntry\.hide_when_off = special\.lmsHideWhenOff === true;/);
+  assert.match(deviceEditor, /refresh: true, hide_when_off: true,/);
+
+  // Backend (js/saveblocks.php / js/configwriter.php): defaults to false and
+  // is only written to CONFIG.js when explicitly enabled - configwriter.php
+  // always emits a full blocks[key] replacement, so an omitted default-false
+  // property here simply never appears, same as the 'last_update' pattern
+  // used elsewhere in this same writer.
+  assert.match(saveBlocks, /\$lmsHideWhenOff = !empty\(\$entry\['hide_when_off'\]\);/);
+  assert.match(saveBlocks, /'lms_hide_when_off' => \$lmsHideWhenOff,/);
+  assert.match(configWriter, /if \(!empty\(\$block\['lms_hide_when_off'\]\)\) \{\s*\n\s*\$props\['hide_when_off'\] = true;/);
+
+  assert.equal(enLang.settings.deviceeditor.lms_hide_when_off, 'Hide block when player is off');
+  assert.match(lmsDocs, /hide_when_off\s+``true``/);
+});

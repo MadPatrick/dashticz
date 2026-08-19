@@ -9,6 +9,17 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 v3.45.1 beta (19-8-2026)
 -------------------------
 
+* **Enhancements**
+
+- Added a **Hide block when player is off** switch to the Lyrion Music
+  Server Wizard popup (both the quick-add and edit popups). Enabled, the
+  block shows nothing at all - no icon, no cover art placeholder, no text -
+  instead of the usual "Player off" message while the player is powered
+  down, so it can be combined with a block's own **No background** option
+  to make it disappear entirely until the player turns back on. Only
+  suppresses that specific "off" state; "Player unavailable" and "Nothing
+  is playing" still show their own message as before.
+
 * **Fixes**
 
 - Fixed the **No background** checkbox in Device Config and Widget Config
