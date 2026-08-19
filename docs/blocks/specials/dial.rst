@@ -137,7 +137,7 @@ Block parameters
       | ``'windspeed'``: For wind devices, to show wind speed instead of wind direction as needle position    
       | ``'windgust'``: For wind devices, to show wind gust instead of wind direction as needle position 
       | ``'updown'``: For thermostat and blind devices, to render the dial with up and down buttons. See :ref:`updowndial`
-      | ``'bar'``: For dimmer devices only, to render the dial as a vertical 10-segment bar. See :ref:`dialbar`
+      | ``'bar'``: For Blinds Percentage devices only, to render the dial as a vertical 10-segment bar. See :ref:`dialbar`
       | ``'usage'``: For p1smartmeter and energy devices, to show actual Usage instead of CounterToday values. See :ref:`dialenergy`
   * - sortOrder
     - | Set sort order for selection switches
@@ -483,14 +483,14 @@ By setting the ``steps`` parameter you can adjust the step size. For Thermostats
 
 .. _dialbar :
 
-Bar dimmer
-----------
+Bar (Blinds Percentage)
+------------------------
 
-For dimmer devices only, you can render the dial as a vertical bar of 10 segments by setting ``subtype`` to ``bar``. 0% is at the bottom, 100% at the top. Each segment represents 10% of the dimmer range; tapping a segment sets the dimmer directly to that segment's level (e.g. tapping the 6th segment from the bottom sets the dimmer to 60%). Segments already at or below the current level are shown in green, the rest in grey.
+For Blinds Percentage and Blinds Inverted Percentage devices only, you can render the dial as a vertical bar of 10 segments by setting ``subtype`` to ``bar``. 0% is at the bottom, 100% at the top. Each segment represents 10% of the range; tapping a segment sets the device directly to that segment's level (e.g. tapping the 6th segment from the bottom sets it to 60%). Segments already at or below the current level are shown in green, the rest in grey.
 
-This subtype is ignored for any device that is not a dimmer (e.g. Blinds, Thermostats)::
+This subtype is ignored for any other device (Dimmers, plain Blinds without a percentage, Thermostats, ...)::
 
-    blocks['livingroom_lights'] = {
+    blocks['livingroom_blinds'] = {
         type: 'dial',
         subtype: 'bar',
         idx: 15,

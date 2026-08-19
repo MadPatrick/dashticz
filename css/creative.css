@@ -6377,8 +6377,18 @@ canvas {
   font-size: 90%
 }
 
-/* Vertical 10-segment dimmer bar (dial subtype: 'bar'). 0% at the bottom,
-   100% at the top; each segment sets the dimmer to its own 10% level. */
+/* Vertical 10-segment Blinds Percentage bar (dial subtype: 'bar'). 0% at
+   the bottom, 100% at the top; each segment sets the device to its own 10%
+   level. min-height on .dial-bar/.dial-bar-segment is a deliberate floor,
+   not just a preference: .dt_content has no explicit height of its own on
+   a grid screen (only opts into height:100% via the .fixedheight class,
+   which grid items never get - js/dashticz.js's renderBlock() skips it so
+   the grid row, not a forced pixel height, governs sizing there), so a
+   flex chain relying only on height:100% collapses to 0 and the whole bar
+   silently disappears. The min-height floor guarantees a visible bar in
+   that case while still letting the bar grow to fill a taller block when
+   the ancestor height does resolve (classic layout, or a fixed height).
+*/
 .dial-bar-widget {
   width: 100%;
   height: 100%;
@@ -6408,22 +6418,31 @@ canvas {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: 0.15em;
-  width: 40%;
-  min-width: 1.2em;
-  max-width: 3em;
+  gap: 3px;
+  width: 45%;
+  min-width: 1.4em;
+  max-width: 3.5em;
+  min-height: 160px;
+  padding: 4px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .dial-bar-segment {
   flex: 1 1 0;
-  background-color: rgba(128, 128, 128, 0.35);
-  border-radius: 0.15em;
+  min-height: 12px;
+  background-color: #7a7a7a;
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 40%);
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
 
 .dial-bar-segment.filled {
   background-color: var(--success-green);
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 40%);
 }
 
 .dial-bar-value {

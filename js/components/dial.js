@@ -1382,7 +1382,6 @@ var DT_dial = (function () {
     me.switchMode = capitalizeFirstLetter(me.block.switchMode);
     me.rgbContainer = '.dial-display';
     if(me.block.subtype==='updown') makeUpDownDim(me);
-    if(me.block.subtype==='bar') makeBarDim(me);
     return;
   }
 
@@ -1443,6 +1442,7 @@ var DT_dial = (function () {
       makeUpDownDim(me);
       me.middleToggle = false;
     }
+    if(me.block.subtype==="bar" && me.percentage) makeBarDim(me);
     return;
   }
 
@@ -1476,9 +1476,10 @@ var DT_dial = (function () {
   }
 
   /**
-   * Configures a dimmer to render as a vertical 10-segment bar instead of
-   * the draggable dial. Each segment represents 10% of the dimmer range;
-   * clicking a segment sets the dimmer directly to that segment's level.
+   * Configures a Blinds Percentage device to render as a vertical
+   * 10-segment bar instead of the draggable dial. Each segment represents
+   * 10% of the range; clicking a segment sets the device directly to that
+   * segment's level.
    * @param {object} me  Core component object.
    */
   function makeBarDim(me) {
@@ -1489,6 +1490,7 @@ var DT_dial = (function () {
     me.tap = tapBar;
     me.update = updateBar;
     me.getCurrentValue = getCurrentValueDim;
+    me.decimals = choose(me.block.decimals, 0);
     me.backgroundselector = '.dial-bar-container';
     /* segment thresholds, top (100%) to bottom (10%) */
     me.barSegments = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10];
