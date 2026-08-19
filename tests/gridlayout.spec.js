@@ -2369,6 +2369,8 @@ screens[1] = {
     expect(saved.player).toBe('11:22:33:44:55:66');
     expect(saved.refresh).toBe(5);
     expect(saved.title).toBe('Kitchen Speaker');
+    expect(saved.width).toBe(6);
+    expect(saved.height).toBe(8);
   });
 });
 

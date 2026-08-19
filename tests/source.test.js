@@ -3734,6 +3734,16 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   assert.match(lms, /refresh: function \(me\) \{/);
   assert.match(lms, /defaultCfg: \{[\s\S]*refresh: 5,/);
   assert.doesNotMatch(lms, /defaultCfg: \{[\s\S]*icon:/);
+  // A missing PHP curl extension never resolves itself on the next poll
+  // (unlike a transient network blip), so the block shows that specific,
+  // fixed backend message verbatim instead of the generic "LMS unavailable"
+  // text - the constant here must match vendor/dashticz/lms/index.php's
+  // own fixed string exactly.
+  assert.match(
+    lms,
+    /LMS_CURL_REQUIRED_ERROR = 'The PHP curl extension is required for the Lyrion Music Server block\.'/
+  );
+  assert.match(lms, /serverError === LMS_CURL_REQUIRED_ERROR/);
 
   // Wizard integration (js/deviceeditor.js): a dedicated quick-add/edit
   // popup, following the same multi-instance "special block" pattern as
@@ -3764,6 +3774,13 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   // Icon defaults off - the cover artwork is this block's own visual.
   assert.match(deviceEditor, /_quickOptionsHtml\('lm', \{\s*\n\s*icon: false,\s*\n\s*iconValue: 'fas fa-music',/);
   assert.match(deviceEditor, /if \(special\.specialType === 'lms'\) return 'fas fa-music';/);
+  // Default size for a newly added block: 6 columns wide, and (grid mode
+  // only - this popup is only reachable from the grid-only Widgets catalog)
+  // 8 rows tall, comfortably fitting the 100px cover plus its info lines.
+  // `height` means a grid-row count in grid mode but a literal CSS pixel
+  // height outside it (js/dashticz.js's renderBlock()), so a fixed default
+  // is only ever written for grid mode.
+  assert.match(deviceEditor, /width: 6,\s*\n(?:\s*\/\/[^\n]*\n)*\s*height: gridMode \? 8 : null,/);
 
   // Entry point lives in the Widgets ("wizard") catalog popup (js/widgeteditor.js),
   // next to Spotify/Sonarr, not in the Screen Editor's "Add items" tile grid

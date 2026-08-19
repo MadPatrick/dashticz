@@ -2547,7 +2547,13 @@ var DashticzDeviceEditor = (function () {
         idx: null,
         title: title || lms.playerLabel || '',
         width: 6,
-        height: null,
+        // A block's `height` means two different things depending on mode
+        // (js/dashticz.js's renderBlock(): grid-row count in grid mode vs.
+        // a literal CSS pixel height outside it), so a fixed default is
+        // only meaningful in grid mode - the only mode this popup is
+        // actually reachable from (the Widgets catalog is grid-only).
+        // 8 rows comfortably fits the 100px cover plus its info lines.
+        height: gridMode ? 8 : null,
         showTitle: quickOptions.showTitle,
         options: {
           icon: quickOptions.icon,

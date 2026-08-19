@@ -63,6 +63,9 @@ var DT_lms_api = {
   'use strict';
 
   var STATUS_TAGS = 'tags:aclK'; // artist, album, coverid, artwork_url - see docs/blocks/specials/lms.rst
+  // Must match vendor/dashticz/lms/index.php's fixed message exactly - see
+  // the try block's function_exists('curl_init') check there.
+  var LMS_CURL_REQUIRED_ERROR = 'The PHP curl extension is required for the Lyrion Music Server block.';
 
   function _esc(value) {
     return $('<div>').text(value === null || typeof value === 'undefined' ? '' : String(value)).html();
@@ -220,13 +223,21 @@ var DT_lms_api = {
         .then(function (status) {
           render(me, normalizeStatus(status, me.block.title));
         })
-        .catch(function () {
+        .catch(function (xhr) {
           // Connection/HTTP failure (server unreachable, auth failed, ...):
           // a distinct message from "player unavailable" above, and never
           // logged to the console on every poll (#18's "do not flood").
-          me.$mountPoint.find('.dt_state').html(
-            _line('lms-state-label', _lmsText('lms_server_unavailable', 'LMS unavailable'))
-          );
+          // The one exception is a missing PHP curl extension: unlike a
+          // network blip, that never resolves itself on the next poll, so
+          // it is shown verbatim (the backend's own fixed, safe message -
+          // see vendor/dashticz/lms/index.php) instead of the generic text,
+          // so the block itself explains what to fix without needing the
+          // Wizard's "Test connection" to be reopened.
+          var serverError = xhr && xhr.responseJSON && xhr.responseJSON.error;
+          var text = serverError === LMS_CURL_REQUIRED_ERROR
+            ? serverError
+            : _lmsText('lms_server_unavailable', 'LMS unavailable');
+          me.$mountPoint.find('.dt_state').html(_line('lms-state-label', text));
         });
     },
   };
