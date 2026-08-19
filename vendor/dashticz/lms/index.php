@@ -181,10 +181,16 @@ function dashticz_lms_curl($url, $request, $extraOptions)
     $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $contentType = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
     $failed = ($body === false);
+    $errno = $failed ? curl_errno($ch) : 0;
     curl_close($ch);
 
     if ($failed || $httpCode === 0) {
-        throw new RuntimeException('Unable to connect to Lyrion Music Server.');
+        // A fixed, curl-errno-based reason - never curl's own free-text error
+        // message, which can otherwise echo the target host/path back in the
+        // response. This still narrows down the three most common causes
+        // without leaking anything request-specific.
+        $reason = dashticz_lms_connect_error_reason($errno);
+        throw new RuntimeException('Unable to connect to Lyrion Music Server' . $reason . '.');
     }
     if ($httpCode === 401 || $httpCode === 403) {
         throw new RuntimeException('Authentication failed.');
@@ -197,4 +203,20 @@ function dashticz_lms_curl($url, $request, $extraOptions)
     }
 
     return array('body' => (string) $body, 'contentType' => $contentType);
+}
+
+/* Narrows a curl connect-level failure down to one of the three causes users
+   most often hit (unreachable host/port, DNS, or a slow/unresponsive
+   server) using only curl's numeric error code - never curl's own free-text
+   error message, which can include the request path (and, for a proxied/
+   misconfigured setup, other request details). Only the fixed, enumerated
+   reason below is ever used. */
+function dashticz_lms_connect_error_reason($errno)
+{
+    $reasons = array(
+        CURLE_COULDNT_RESOLVE_HOST => ': the server address could not be resolved',
+        CURLE_COULDNT_CONNECT => ': check the address/port and that the server is reachable on your network',
+        CURLE_OPERATION_TIMEDOUT => ': the connection timed out',
+    );
+    return isset($reasons[$errno]) ? $reasons[$errno] : '';
 }

@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const { spawnSync } = require('node:child_process');
@@ -23,6 +24,30 @@ function normalizeHostInput(value) {
   const result = spawnSync('php', ['-r', script], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   return JSON.parse(result.stdout);
+}
+
+/* vendor/dashticz/lms/index.php's own top level reads php://input and can
+   die() (dashticz_require_same_origin/dashticz_json_error), so it can't be
+   require()'d directly from a CLI one-liner - only the function definitions
+   (everything from dashticz_lms_read_input() onward) are pulled out and
+   required, to call dashticz_lms_connect_error_reason() in isolation. */
+function lmsConnectErrorReason(errno) {
+  const source = read('vendor/dashticz/lms/index.php');
+  const marker = 'function dashticz_lms_read_input';
+  const cut = source.indexOf(marker);
+  assert.ok(cut !== -1, 'dashticz_lms_read_input() not found in lms/index.php');
+  const securityPhp = path.join(root, 'vendor/dashticz/security.php');
+  const funcsFile = path.join(os.tmpdir(), `dashticz-lms-funcs-${process.pid}.php`);
+  fs.writeFileSync(funcsFile, '<?php\n' + source.slice(cut));
+  try {
+    const script =
+      `require '${securityPhp}'; require '${funcsFile}'; echo dashticz_lms_connect_error_reason(${Number(errno)});`;
+    const result = spawnSync('php', ['-r', script], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    return result.stdout;
+  } finally {
+    fs.unlinkSync(funcsFile);
+  }
 }
 
 test('remote proxy endpoints use the validated fetch helper', () => {
@@ -73,10 +98,16 @@ test('LMS backend bridge is same-origin gated, allows LAN access, and never leak
   assert.match(source, /CURLOPT_USERPWD/);
   assert.match(source, /CURLAUTH_BASIC/);
   // Every failure path is a fixed, generic message - never the raw curl
-  // error or response body, which might otherwise echo a password back.
+  // error or response body, which might otherwise echo a password back. The
+  // connect-failure reason is narrowed by curl_errno() alone (a fixed,
+  // enumerated string), never curl_error()'s free-text message.
   assert.doesNotMatch(source, /curl_error\(/);
   assert.doesNotMatch(source, /\$response\b.*(?:\.|,)\s*getMessage|var_dump|print_r/);
-  assert.match(source, /Unable to connect to Lyrion Music Server\./);
+  assert.match(source, /'Unable to connect to Lyrion Music Server' \. \$reason \. '\.'/);
+  assert.match(source, /function dashticz_lms_connect_error_reason\(\$errno\)/);
+  assert.match(source, /CURLE_COULDNT_RESOLVE_HOST/);
+  assert.match(source, /CURLE_COULDNT_CONNECT/);
+  assert.match(source, /CURLE_OPERATION_TIMEDOUT/);
   assert.match(source, /Authentication failed\./);
   // No SSL-verification opt-out (unlike the known legacy garbage/index.php
   // ignoressl option flagged in AGENTS.md - LMS has no such precedent to follow).
@@ -106,6 +137,20 @@ test('dashticz_normalize_host_input() cleans a pasted scheme/path/port from a se
   // "host:port" - not a realistic LMS address, but must not corrupt input.
   assert.equal(normalizeHostInput('[::1]:9000'), '[::1]:9000');
   assert.equal(normalizeHostInput(''), '');
+});
+
+test('dashticz_lms_connect_error_reason() narrows a curl connect failure to a fixed, safe reason', () => {
+  // 7 = CURLE_COULDNT_CONNECT - what a genuinely unreachable/closed
+  // server/port (the follow-up "Unable to connect to Lyrion Music Server"
+  // report, after the address-parsing bug above was fixed) produces.
+  assert.equal(
+    lmsConnectErrorReason(7),
+    ': check the address/port and that the server is reachable on your network'
+  );
+  assert.equal(lmsConnectErrorReason(6), ': the server address could not be resolved');
+  assert.equal(lmsConnectErrorReason(28), ': the connection timed out');
+  // Any other curl errno falls back to no extra detail rather than guessing.
+  assert.equal(lmsConnectErrorReason(99999), '');
 });
 
 test('calendar fetching is URL validated and does not expose stack traces', () => {

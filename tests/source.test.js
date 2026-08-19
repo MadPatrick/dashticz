@@ -3804,7 +3804,7 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   assert.match(lmsBackend, /dashticz_validate_remote_url\(\s*\n?\s*'http:\/\/' \. \$request\['server'\] \. ':' \. \$request\['port'\] \. '\/jsonrpc\.js',\s*\n\s*true/);
   assert.match(lmsBackend, /CURLOPT_USERPWD/);
   assert.match(lmsBackend, /CURLAUTH_BASIC/);
-  assert.match(lmsBackend, /Unable to connect to Lyrion Music Server\./);
+  assert.match(lmsBackend, /'Unable to connect to Lyrion Music Server' \. \$reason \. '\.'/);
   assert.match(lmsBackend, /Authentication failed\./);
   assert.doesNotMatch(lmsBackend, /CURLOPT_SSL_VERIFYPEER/);
   assert.doesNotMatch(lmsBackend, /echo curl_error/);
