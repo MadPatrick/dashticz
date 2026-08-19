@@ -2406,7 +2406,7 @@ var DashticzDeviceEditor = (function () {
         seconds + ' ' + _esc(t.seconds || 'seconds') + '</option>';
     });
     html += '</select></div>';
-    html += '<label class="form-check form-switch mb-3"><input class="form-check-input" type="checkbox" id="' +
+    html += '<label class="form-check form-switch mb-3"><input class="form-check-input de-lms-switch" type="checkbox" id="' +
       prefix + '-lms-hide-when-off"' + (values.hideWhenOff ? ' checked' : '') + '>' +
       '<span class="form-check-label">' + _esc(t.lms_hide_when_off) + '</span></label>';
     return html;

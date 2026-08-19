@@ -18,7 +18,9 @@ v3.45.1 beta (19-8-2026)
   down, so it can be combined with a block's own **No background** option
   to make it disappear entirely until the player turns back on. Only
   suppresses that specific "off" state; "Player unavailable" and "Nothing
-  is playing" still show their own message as before.
+  is playing" still show their own message as before. Sized and styled
+  (via a new ``.de-lms-switch`` class) to match the other Wizard switches
+  rather than falling back to a smaller, unstyled default.
 
 * **Fixes**
 

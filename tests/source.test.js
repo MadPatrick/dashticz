@@ -3861,6 +3861,7 @@ test('Lyrion Music Server "Hide block when player is off" switch clears both tex
   const configWriter = fs.readFileSync(path.join(root, 'js/configwriter.php'), 'utf8');
   const lmsDocs = fs.readFileSync(path.join(root, 'docs/blocks/specials/lms.rst'), 'utf8');
   const enLang = JSON.parse(fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8'));
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
 
   // Runtime (js/components/lms.js): the player being off is a normal state,
   // not an error, so this only ever suppresses the "Player off" case - never
@@ -3894,6 +3895,14 @@ test('Lyrion Music Server "Hide block when player is off" switch clears both tex
   assert.match(saveBlocks, /\$lmsHideWhenOff = !empty\(\$entry\['hide_when_off'\]\);/);
   assert.match(saveBlocks, /'lms_hide_when_off' => \$lmsHideWhenOff,/);
   assert.match(configWriter, /if \(!empty\(\$block\['lms_hide_when_off'\]\)\) \{\s*\n\s*\$props\['hide_when_off'\] = true;/);
+
+  // The switch sits in its own section outside .de-config-options (unlike
+  // Icon/Updated/Title above it), so it needs the .de-lms-switch class to
+  // opt into that same shared blue-switch look and 38x20 size (#170's own
+  // fix applied here too) instead of falling back to Bootstrap's default.
+  assert.match(deviceEditor, /class="form-check-input de-lms-switch" type="checkbox" id="/);
+  assert.match(styles, /\.de-lms-switch\.form-check-input \{[\s\S]*?width: 38px;[\s\S]*?height: 20px;/);
+  assert.match(styles, /\.de-lms-switch\.form-check-input:checked \{[\s\S]*?background-color: #bfdbfe/);
 
   assert.equal(enLang.settings.deviceeditor.lms_hide_when_off, 'Hide block when player is off');
   assert.match(lmsDocs, /hide_when_off\s+``true``/);

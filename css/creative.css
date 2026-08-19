@@ -1005,7 +1005,8 @@ next css sets the default height of the frame popup
 #hb-device-border.form-check-input,
 .we-widget-field.form-check-input,
 #we-cfg-ascending.form-check-input,
-.we-block-option.form-check-input {
+.we-block-option.form-check-input,
+.de-lms-switch.form-check-input {
   border-color: #adb5bd !important;
   cursor: pointer;
 }
@@ -1015,7 +1016,8 @@ next css sets the default height of the frame popup
 #hb-device-border.form-check-input:checked,
 .we-widget-field.form-check-input:checked,
 #we-cfg-ascending.form-check-input:checked,
-.we-block-option.form-check-input:checked {
+.we-block-option.form-check-input:checked,
+.de-lms-switch.form-check-input:checked {
   background-color: #bfdbfe !important;
   border-color: #93c5fd !important;
   background-image: url("data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%27-4 -4 8 8%27%3e%3ccircle r=%273%27 fill=%27%232563eb%27/%3e%3c/svg%3e") !important;
@@ -1026,7 +1028,8 @@ next css sets the default height of the frame popup
 #hb-device-border.form-check-input:focus,
 .we-widget-field.form-check-input:focus,
 #we-cfg-ascending.form-check-input:focus,
-.we-block-option.form-check-input:focus {
+.we-block-option.form-check-input:focus,
+.de-lms-switch.form-check-input:focus {
   border-color: #93c5fd !important;
   box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25) !important;
 }
@@ -2152,7 +2155,8 @@ body.dle-active {
   justify-items: center;
 }
 
-#hb-device-border.form-check-input {
+#hb-device-border.form-check-input,
+.de-lms-switch.form-check-input {
   width: 38px;
   height: 20px;
   margin-top: 0;
