@@ -9,6 +9,11 @@ artwork on the left, artist/title/album (or station/artist/title for
 internet radio) on the right. It never sends any playback command to LMS -
 play/pause/volume controls are intentionally out of scope.
 
+Requires the PHP ``curl`` extension on the server running Dashticz (the
+same one used for most of Dashticz's other remote/proxy requests) - without
+it, "Test connection" and the block itself show
+*"The PHP curl extension is required for the Lyrion Music Server block."*
+
 Wizard
 ------
 

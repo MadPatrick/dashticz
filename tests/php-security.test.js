@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
-const { spawnSync } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
 
@@ -48,6 +48,53 @@ function lmsShutdownFatalOutput() {
     cwd: path.join(root, 'vendor/dashticz/lms'),
   });
   return result.stdout;
+}
+
+/* Runs the real vendor/dashticz/lms/index.php end to end, over a real HTTP
+   request, with the curl extension disabled (`php -n`, confirmed by the
+   test below to actually remove ext-curl in this environment) - exactly
+   like the live PHP-FPM/Apache request that produced "Uncaught Error:
+   Undefined constant \"CURLOPT_POST\"" (an ext-curl-less server built a
+   CURLOPT_* array as part of *calling* dashticz_lms_curl(), before that
+   function's own function_exists('curl_init') guard was ever reached).
+   php://input only ever carries a request body under a web SAPI (Apache/
+   FPM/the CLI dev server) - a direct `php -r`/`php file.php` invocation
+   always sees it as empty, so a real `php -S` server is required here
+   rather than piping into a CLI invocation. Confirms the guard moved into
+   the try block actually prevents the crash, not just that the source
+   contains the check. */
+function lmsRequestWithoutCurl(payload) {
+  const port = 20000 + (process.pid % 10000);
+  const proc = spawn('php', ['-n', '-d', 'display_errors=0', '-S', `127.0.0.1:${port}`], { cwd: root });
+  try {
+    const deadline = Date.now() + 3000;
+    let ready = false;
+    while (Date.now() < deadline && !ready) {
+      const probe = spawnSync('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', `http://127.0.0.1:${port}/`]);
+      if (probe.stdout && probe.stdout.toString().trim() !== '000') ready = true;
+    }
+    const result = spawnSync(
+      'curl',
+      [
+        '-s',
+        '-X',
+        'POST',
+        '-H',
+        'Content-Type: application/json',
+        '-H',
+        `Origin: http://127.0.0.1:${port}`,
+        '-H',
+        `Host: 127.0.0.1:${port}`,
+        '--data',
+        JSON.stringify(payload),
+        `http://127.0.0.1:${port}/vendor/dashticz/lms/index.php`,
+      ],
+      { encoding: 'utf8' }
+    );
+    return { stdout: result.stdout, stderr: result.stderr };
+  } finally {
+    proc.kill();
+  }
 }
 
 /* vendor/dashticz/lms/index.php's own top level reads php://input and can
@@ -109,6 +156,16 @@ test('LMS backend bridge is same-origin gated, allows LAN access, and never leak
   // URL whose host resolves to the literal string "http" and fails with
   // "Remote host could not be resolved."
   assert.match(source, /\$server = isset\(\$input\['server'\]\) \? dashticz_normalize_host_input\(\$input\['server'\]\) : '';/);
+  // dashticz_lms_curl()'s own function_exists('curl_init') guard runs too
+  // late without ext-curl: dashticz_lms_request() builds a CURLOPT_POST/...
+  // array as part of *calling* that function, so PHP resolves those
+  // undefined constants (a PHP 8+ fatal Error) before the guard is ever
+  // reached. The same check must also run in the try block, before either
+  // branch, so it is hit first.
+  assert.match(
+    source,
+    /\$input = dashticz_lms_read_input\(\);\s*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!function_exists\('curl_init'\)\) \{\s*\n\s*throw new RuntimeException\('The PHP curl extension is required for the Lyrion Music Server block\.'\);\s*\n\s*\}\s*\n\s*if \(\$input\['action'\] === 'cover'\)/
+  );
   // LMS is virtually always a LAN-only server, like Domoticz itself, so the
   // private/reserved-IP block dashticz_validate_remote_url() applies by
   // default must be explicitly lifted here (mirrors xmltv.php above).
@@ -192,6 +249,36 @@ test('dashticz_lms_connect_error_reason() narrows a curl connect failure to a fi
   assert.equal(lmsConnectErrorReason(28), ': the connection timed out');
   // Any other curl errno falls back to no extra detail rather than guessing.
   assert.equal(lmsConnectErrorReason(99999), '');
+});
+
+test('LMS backend fails gracefully without the curl extension instead of crashing', () => {
+  // Sanity check that `php -n` (no php.ini) genuinely removes ext-curl in
+  // this environment, so a pass below actually exercises the no-curl path
+  // rather than passing vacuously because curl was loaded anyway.
+  const curlCheck = spawnSync('php', ['-n', '-r', "var_dump(function_exists('curl_init'));"], {
+    encoding: 'utf8',
+  });
+  assert.equal(curlCheck.stdout.trim(), 'bool(false)', 'php -n did not disable ext-curl here');
+
+  const payload = {
+    action: 'rpc',
+    server: '192.168.1.6',
+    port: 9000,
+    username: '',
+    password: '',
+    player: '',
+    params: ['serverstatus', 0, 999],
+  };
+  const result = lmsRequestWithoutCurl(payload);
+  let parsed;
+  assert.doesNotThrow(() => {
+    parsed = JSON.parse(result.stdout);
+  }, `expected valid JSON, got stdout: ${result.stdout}\nstderr: ${result.stderr}`);
+  assert.equal(parsed.error, 'The PHP curl extension is required for the Lyrion Music Server block.');
+  // Not the shutdown handler's fallback - the guard must catch this before
+  // any CURLOPT_*/CURLE_* constant is ever referenced, so no fatal happens
+  // at all (compare the "unexpectedly" test below, which does hit a fatal).
+  assert.equal(parsed.debug, undefined);
 });
 
 test('LMS backend shutdown handler turns an uncaught fatal error into valid JSON', () => {

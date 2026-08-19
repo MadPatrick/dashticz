@@ -68,6 +68,19 @@ register_shutdown_function(function () {
      LMS "status" poll's own credentials do. */
 try {
     $input = dashticz_lms_read_input();
+    // Checked here, before any CURLOPT_*/CURLE_* constant is referenced
+    // anywhere below - dashticz_lms_curl()'s own function_exists('curl_init')
+    // guard runs too late to help: dashticz_lms_request() builds a
+    // CURLOPT_POST/CURLOPT_POSTFIELDS/CURLOPT_HTTPHEADER array as part of
+    // *calling* dashticz_lms_curl(), and PHP evaluates that array (so
+    // resolves those constants) before the call - and thus that guard -
+    // is ever reached. Without ext-curl those constants are undefined, and
+    // on PHP 8+ that is a fatal Error, not a warning: this was silently
+    // producing an empty HTTP 500 (a live report's "Content-Length: 0")
+    // that the Wizard popup's JSON parser couldn't read at all.
+    if (!function_exists('curl_init')) {
+        throw new RuntimeException('The PHP curl extension is required for the Lyrion Music Server block.');
+    }
     if ($input['action'] === 'cover') {
         $cover = dashticz_lms_fetch_cover($input);
         echo json_encode(array('dataUrl' => $cover === null ? null : $cover));
