@@ -24,10 +24,14 @@ if (function_exists('set_time_limit')) {
 /* Guarantees the client always gets parseable JSON - even for a fatal error
    this file's own try/catch can't see (an out-of-memory kill, a disabled
    function, anything unforeseen) - instead of an empty response the AJAX
-   call's dataType: 'json' silently fails to parse. Only a fixed, generic
-   message is used, matching every other failure path here: never
-   error_get_last()'s raw message, which could include a file path or other
-   internal detail. */
+   call's dataType: 'json' silently fails to parse. The user-facing 'error'
+   is always the same fixed string, matching every other failure path here.
+   The 'debug' block is safe to include unconditionally: unlike a curl
+   transport error (which can embed the request URL/host), a PHP engine
+   fatal here (undefined function/class/constant, memory exhaustion, an
+   uncaught Error) only ever describes this file's own code, never LMS
+   response data or request credentials - and only the basename of the file
+   is included, not its full server path. */
 register_shutdown_function(function () {
     $error = error_get_last();
     if (!$error || !in_array($error['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR), true)) {
@@ -37,7 +41,14 @@ register_shutdown_function(function () {
         http_response_code(500);
         header('Content-Type: application/json');
     }
-    echo json_encode(array('error' => 'Lyrion Music Server request failed unexpectedly.'));
+    echo json_encode(array(
+        'error' => 'Lyrion Music Server request failed unexpectedly.',
+        'debug' => array(
+            'message' => $error['message'],
+            'file' => basename($error['file']),
+            'line' => $error['line'],
+        ),
+    ));
 });
 
 /* Single backend bridge for the Lyrion Music Server block (js/components/lms.js)

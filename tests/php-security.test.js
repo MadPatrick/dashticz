@@ -151,7 +151,12 @@ test('LMS backend bridge is same-origin gated, allows LAN access, and never leak
   assert.match(source, /register_shutdown_function\(function \(\) \{/);
   assert.match(source, /error_get_last\(\)/);
   assert.match(source, /E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR/);
-  assert.doesNotMatch(source, /error_get_last\(\)\[.message.\]|\$error\['message'\]\s*\.|echo\s+\$error/);
+  // A PHP engine fatal here only ever describes this file's own code (never
+  // LMS response data or request credentials), so its message/line/basename
+  // are safe to always surface for diagnosis - unlike a curl transport
+  // error, which is still never exposed raw (checked above).
+  assert.match(source, /'message' => \$error\['message'\]/);
+  assert.match(source, /'file' => basename\(\$error\['file'\]\)/);
 });
 
 test('dashticz_normalize_host_input() cleans a pasted scheme/path/port from a server field', () => {
@@ -196,6 +201,16 @@ test('LMS backend shutdown handler turns an uncaught fatal error into valid JSON
     parsed = JSON.parse(output);
   }, `expected valid JSON, got: ${output}`);
   assert.equal(parsed.error, 'Lyrion Music Server request failed unexpectedly.');
+  // The debug block only ever describes this file's own code (an engine
+  // fatal, never LMS/request data), and the file name is a basename only -
+  // no server path - so it is safe to always include for diagnosis.
+  assert.match(parsed.debug.message, /dashticz_lms_test_only_undefined_function_call/);
+  // Run via `php -r` (no real source file), so PHP reports its own
+  // "Command line code" placeholder here rather than index.php's basename -
+  // this only confirms basename() is applied (no directory separator), the
+  // real basename is exercised in production.
+  assert.doesNotMatch(parsed.debug.file, /[/\\]/);
+  assert.equal(typeof parsed.debug.line, 'number');
 });
 
 test('calendar fetching is URL validated and does not expose stack traces', () => {
