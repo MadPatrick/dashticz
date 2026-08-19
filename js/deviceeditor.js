@@ -74,6 +74,7 @@ var DashticzDeviceEditor = (function () {
         dial: 'Dial',
         dial_hint: 'Dial type selected. Set the remaining dial options (color, min/max, subtype, values, etc.) manually via Custom fields below.',
         dial_hint_link: 'Dial documentation',
+        dial_bar: 'Bar',
         show_title: 'Title',
         device_config: 'Device Config',
         widget_config: 'Widget Config',
@@ -2984,6 +2985,40 @@ var DashticzDeviceEditor = (function () {
     // Icon, Update and Title, like every quick-add popup's own top section
     // (see _quickOptionsHtml()).
     var hasDial = !isTitle && !isGroupBlock && !isHtmlBlock && !isLmsBlock;
+    // Dial's subtype: 'bar' (a vertical 10-segment bar, see js/components/dial.js
+    // makeBlinds()) only applies to Blinds Percentage / Blinds Inverted
+    // Percentage devices - offer its switch only when the live Domoticz
+    // device actually is one, instead of always showing a control that
+    // would silently do nothing for every other dial-eligible device.
+    var barDeviceIdx = null;
+    if (hasDial) {
+      if (!isSpecial && ck) {
+        barDeviceIdx = _parseCk(ck).idx;
+      } else if (isSpecial && (isCustom || isGroupBlock) && special.idx) {
+        barDeviceIdx = special.idx;
+      }
+    }
+    var barLiveDevice = barDeviceIdx ? Domoticz.getAllDevices(barDeviceIdx) : null;
+    var isBlindsPercentage = !!(
+      barLiveDevice &&
+      typeof barLiveDevice.SwitchType === 'string' &&
+      barLiveDevice.SwitchType.indexOf('Blinds') === 0 &&
+      barLiveDevice.SwitchType.indexOf('Percentage') !== -1
+    );
+    // A 'subtype':'bar' custom field is fully owned by the switch below
+    // while it applies - drop it from the generic Custom fields list so it
+    // isn't shown (and editable) twice. Any other subtype value (e.g.
+    // 'updown') is left alone and stays a plain custom field.
+    var barChecked = false;
+    if (isBlindsPercentage) {
+      var subtypeRowIndex = customRows.findIndex(function (row) {
+        return String(row.field || '').toLowerCase() === 'subtype';
+      });
+      if (subtypeRowIndex > -1 && String(customRows[subtypeRowIndex].value) === 'bar') {
+        barChecked = true;
+        customRows.splice(subtypeRowIndex, 1);
+      }
+    }
     var configOptions = isTitle
       ? ['icon', 'show_title']
       : (isGroupBlock || isHtmlBlock || isLmsBlock)
@@ -3024,6 +3059,12 @@ var DashticzDeviceEditor = (function () {
       html += '<a href="https://dashticz.readthedocs.io/en/beta/blocks/specials/dial.html" target="_blank" rel="noopener">' +
         _esc(t.dial_hint_link) + '</a>';
       html += '</div>';
+    }
+    if (isBlindsPercentage) {
+      html += '<label class="form-check form-switch de-dial-bar-switch d-none mb-3">';
+      html += '<input class="form-check-input" type="checkbox" id="de-config-bar"' +
+        (barChecked ? ' checked' : '') + '>';
+      html += '<span class="form-check-label">' + _esc(t.dial_bar) + '</span></label>';
     }
     if (isCustom) {
       // A Custom/Multi device's main idx was previously only settable at
@@ -3136,6 +3177,10 @@ var DashticzDeviceEditor = (function () {
       var enabled = $popup.find('[data-option="dial"]').is(':checked');
       $popup.find('.de-dial-hint').toggleClass('d-none', !enabled);
     }
+    function refreshDialBarSwitch() {
+      var enabled = $popup.find('[data-option="dial"]').is(':checked');
+      $popup.find('.de-dial-bar-switch').toggleClass('d-none', !enabled);
+    }
     function refreshDialOptions() {
       var enabled = hasDial && $popup.find('[data-option="dial"]').is(':checked');
       $popup.find('.de-hide-for-dial').toggleClass('d-none', enabled);
@@ -3150,6 +3195,7 @@ var DashticzDeviceEditor = (function () {
       }
       refreshIconFieldVisibility();
       refreshDialHint();
+      refreshDialBarSwitch();
     }
     $popup.on('click', '.de-custom-field-add', function () {
       $(this).closest('.de-custom-field-row').after(_customFieldRowHtml());
@@ -3220,6 +3266,7 @@ var DashticzDeviceEditor = (function () {
     $('#de-config-ok').on('click', function () {
       var updated = {};
       var pendingCustomFields = [];
+      var pendingBarChecked = isBlindsPercentage && $popup.find('#de-config-bar').is(':checked');
       // 'values' is rendered as the dedicated row builder below, not as a
       // generic custom field, so a hand-typed 'values' field name in the
       // generic list must still be rejected as a duplicate.
@@ -3300,6 +3347,11 @@ var DashticzDeviceEditor = (function () {
         }
         customKeys[lowerField] = true;
 
+        if (lowerField === 'subtype' && pendingBarChecked) {
+          // The Bar switch fully owns 'subtype' while checked - drop any
+          // leftover manual row instead of erroring or double-submitting.
+          return;
+        }
         if (lowerField === 'title') {
           pendingTitle = rawSetting;
           return;
@@ -3357,6 +3409,9 @@ var DashticzDeviceEditor = (function () {
         });
       });
       if (!valid) return;
+      if (pendingBarChecked) {
+        pendingCustomFields.push({ field: 'subtype', setting: 'bar', value: 'bar' });
+      }
 
       var pendingValues = null;
       if (multiDeviceValues) {

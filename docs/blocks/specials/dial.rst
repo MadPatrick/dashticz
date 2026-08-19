@@ -486,7 +486,9 @@ By setting the ``steps`` parameter you can adjust the step size. For Thermostats
 Bar (Blinds Percentage)
 ------------------------
 
-For Blinds Percentage and Blinds Inverted Percentage devices only, you can render the dial as a vertical bar of 10 segments by setting ``subtype`` to ``bar``. 0% is at the bottom, 100% at the top. Each segment represents 10% of the range; tapping a segment sets the device directly to that segment's level (e.g. tapping the 6th segment from the bottom sets it to 60%). Segments already at or below the current level are shown in green, the rest in grey.
+For Blinds Percentage and Blinds Inverted Percentage devices only, you can render the dial as a vertical bar of 10 segments by setting ``subtype`` to ``bar``. 0% is at the bottom, 100% at the top. Each segment represents 10% of the range; tapping a segment sets the device directly to that segment's level (e.g. tapping the 6th segment from the bottom sets it to 60%). Segments already at or below the current level are shown in green, the rest in grey. The bar scales with its block's size, both in height and width.
+
+In the Device Config popup (gear icon in the Layout Editor, or the Device Editor), enabling the **Dial** option on a Blinds Percentage device reveals a **Bar** switch to turn this on/off directly - no need to edit ``subtype`` by hand via Custom fields.
 
 This subtype is ignored for any other device (Dimmers, plain Blinds without a percentage, Thermostats, ...)::
 

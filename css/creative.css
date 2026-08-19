@@ -6379,16 +6379,13 @@ canvas {
 
 /* Vertical 10-segment Blinds Percentage bar (dial subtype: 'bar'). 0% at
    the bottom, 100% at the top; each segment sets the device to its own 10%
-   level. min-height on .dial-bar/.dial-bar-segment is a deliberate floor,
-   not just a preference: .dt_content has no explicit height of its own on
-   a grid screen (only opts into height:100% via the .fixedheight class,
-   which grid items never get - js/dashticz.js's renderBlock() skips it so
-   the grid row, not a forced pixel height, governs sizing there), so a
-   flex chain relying only on height:100% collapses to 0 and the whole bar
-   silently disappears. The min-height floor guarantees a visible bar in
-   that case while still letting the bar grow to fill a taller block when
-   the ancestor height does resolve (classic layout, or a fixed height).
-*/
+   level. js/components/dial.js's _dialFitSize() now sets .dt_content's own
+   height explicitly (matching the measured/configured block size) for
+   every dial subtype, so this bar truly scales with the block instead of
+   only the circular dial being reliably sized - .dt_content otherwise only
+   gets height:100% via the .fixedheight class, which grid items never get.
+   The min-height values below are just a defensive floor for the rare case
+   _dialFitSize can't measure a size at all (falls back to me.height=100). */
 .dial-bar-widget {
   width: 100%;
   height: 100%;
@@ -6412,6 +6409,7 @@ canvas {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
+  margin-bottom: 0.6em;
 }
 
 .dial-bar {
@@ -6419,10 +6417,10 @@ canvas {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  width: 45%;
-  min-width: 1.4em;
-  max-width: 3.5em;
-  min-height: 160px;
+  width: var(--dial-bar-width, 45%);
+  min-width: 30px;
+  max-width: 100%;
+  min-height: 80px;
   padding: 4px;
   border-radius: 6px;
   background-color: rgba(0, 0, 0, 0.15);
@@ -6431,7 +6429,7 @@ canvas {
 
 .dial-bar-segment {
   flex: 1 1 0;
-  min-height: 12px;
+  min-height: 6px;
   background-color: #7a7a7a;
   background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 40%);
   border: 1px solid rgba(0, 0, 0, 0.35);

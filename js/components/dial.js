@@ -204,6 +204,18 @@ var DT_dial = (function () {
     } else me.height = height * me.block.scale || me.height;
     me.fontsize = 0.95 * me.height;
     $(me.mountPoint + ' .dt_block').css('height', me.height + 'px');
+    // .dt_content only gets height:100% via the .fixedheight class (see
+    // css/creative.css), which js/dashticz.js's renderBlock() deliberately
+    // skips on a grid screen (the grid row governs height there instead of
+    // a forced pixel height). The classic circular dial never needed
+    // .dt_content's own box - it's absolutely positioned and sized purely
+    // via the font-size set below - but subtypes that lay out in normal
+    // flow (e.g. the bar dial, dial.js makeBarDim()) need a real height to
+    // fill via height:100%, or their flex chain collapses to nothing and
+    // renders invisible. Setting it explicitly here, unconditionally, keeps
+    // every dial subtype's block truly scaling with the measured/configured
+    // size instead of only the circular dial being reliably sized.
+    $(me.mountPoint + ' .dt_content').css('height', me.height + 'px');
     // The template bakes font-size/needle dimensions into inline styles at
     // render time; on a live resize (no re-render) they need patching
     // directly. getContainer() (js/dashticz.js) gives the OUTER .dt_block
@@ -216,6 +228,13 @@ var DT_dial = (function () {
     // the inner circle. Both selectors are simply empty before the first
     // render - a no-op jQuery .css() call, not an error.
     $(me.mountPoint + ' .dt_content .dial').css('font-size', me.fontsize + 'px');
+    // The bar dial (css/creative.css's .dial-bar) is sized by height via the
+    // .dt_content height set above, but its width needs its own scale: it's
+    // not circular like the classic dial (font-size = diameter would make it
+    // far too wide), so it gets its own fraction of me.height as a CSS
+    // variable instead, clamped to the measured container width.
+    var barWidth = Math.max(30, Math.min(me.height * 0.3, measuredWidth || me.height));
+    $(me.mountPoint + ' .dt_content .dial-bar-widget').css('--dial-bar-width', barWidth + 'px');
     $(me.mountPoint + ' .dt_content .dial-needle').css({
       '--needle-length': me.height / 2 + 'px',
       '--needle-width': me.height / 17 + 'px',
