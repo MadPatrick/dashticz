@@ -6,6 +6,40 @@ header('Content-Type: application/json');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 
+/* A genuinely unreachable LMS server can leave curl blocking for several
+   seconds (up to dashticz_lms_curl()'s own CONNECTTIMEOUT+TIMEOUT budget)
+   before its own try/catch below gets a chance to turn that into a clean
+   JSON error. On a host with a shorter max_execution_time than that budget,
+   PHP kills the script first - with the Content-Type header already queued
+   but nothing echoed yet, the client sees an empty HTTP 500 that its JSON
+   parser can't read, which surfaces as a generic client-side fallback
+   message instead of any real explanation. Give this endpoint a time budget
+   comfortably above curl's own worst case so that timeout is handled here,
+   not by the host cutting the script off first; the shutdown handler right
+   below is the last-resort net for every other kind of fatal error. */
+if (function_exists('set_time_limit')) {
+    @set_time_limit(20);
+}
+
+/* Guarantees the client always gets parseable JSON - even for a fatal error
+   this file's own try/catch can't see (an out-of-memory kill, a disabled
+   function, anything unforeseen) - instead of an empty response the AJAX
+   call's dataType: 'json' silently fails to parse. Only a fixed, generic
+   message is used, matching every other failure path here: never
+   error_get_last()'s raw message, which could include a file path or other
+   internal detail. */
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if (!$error || !in_array($error['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR), true)) {
+        return;
+    }
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+    }
+    echo json_encode(array('error' => 'Lyrion Music Server request failed unexpectedly.'));
+});
+
 /* Single backend bridge for the Lyrion Music Server block (js/components/lms.js)
    and its Wizard popup (DashticzDeviceEditor's Lyrion Music Server quick-add/edit
    popup in js/deviceeditor.js). Every LMS server address, port and credential is

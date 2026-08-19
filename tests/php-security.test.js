@@ -26,6 +26,30 @@ function normalizeHostInput(value) {
   return JSON.parse(result.stdout);
 }
 
+/* Runs vendor/dashticz/lms/index.php's header setup + shutdown-handler
+   registration (everything before its own try/catch) followed by a
+   deliberate, uncatchable fatal error, to prove the shutdown handler turns
+   that into the fixed JSON error message instead of the empty/broken
+   response a bare PHP fatal error would otherwise produce (see the
+   "Content-Length: 0" HTTP 500 reported for a live, genuinely unreachable
+   LMS server - a fatal error the try/catch's `catch (RuntimeException)`
+   can't see at all). */
+function lmsShutdownFatalOutput() {
+  const source = read('vendor/dashticz/lms/index.php');
+  const marker = '/* Single backend bridge';
+  const cut = source.indexOf(marker);
+  assert.ok(cut !== -1, 'try/catch marker not found in lms/index.php');
+  const prefix = source.slice(0, cut) + "\ndashticz_lms_test_only_undefined_function_call();\n";
+  // __DIR__ resolves against the process cwd under `php -r`, and the file's
+  // own require_once(__DIR__ . '/../security.php') expects to sit in
+  // vendor/dashticz/lms/, so cwd is pointed there to match.
+  const result = spawnSync('php', ['-r', prefix.replace(/^<\?php\n?/, '')], {
+    encoding: 'utf8',
+    cwd: path.join(root, 'vendor/dashticz/lms'),
+  });
+  return result.stdout;
+}
+
 /* vendor/dashticz/lms/index.php's own top level reads php://input and can
    die() (dashticz_require_same_origin/dashticz_json_error), so it can't be
    require()'d directly from a CLI one-liner - only the function definitions
@@ -116,6 +140,18 @@ test('LMS backend bridge is same-origin gated, allows LAN access, and never leak
   // browser would fetch directly - so LMS/radio credentials and any LAN-only
   // hostname never reach the browser's own network requests.
   assert.match(source, /base64_encode\(\$response\['body'\]\)/);
+  // A genuinely unreachable server can block in curl_exec() long enough for
+  // the host's own max_execution_time to kill the script first - before this
+  // file's own try/catch gets a chance to send a clean JSON error - leaving
+  // the client with an empty HTTP 500 its dataType: 'json' AJAX call can't
+  // parse (reported live as Content-Length: 0). A time budget above curl's
+  // own worst case, plus a shutdown handler as a last-resort net for any
+  // other fatal error, guarantee a parseable JSON body either way.
+  assert.match(source, /set_time_limit\(20\)/);
+  assert.match(source, /register_shutdown_function\(function \(\) \{/);
+  assert.match(source, /error_get_last\(\)/);
+  assert.match(source, /E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR/);
+  assert.doesNotMatch(source, /error_get_last\(\)\[.message.\]|\$error\['message'\]\s*\.|echo\s+\$error/);
 });
 
 test('dashticz_normalize_host_input() cleans a pasted scheme/path/port from a server field', () => {
@@ -151,6 +187,15 @@ test('dashticz_lms_connect_error_reason() narrows a curl connect failure to a fi
   assert.equal(lmsConnectErrorReason(28), ': the connection timed out');
   // Any other curl errno falls back to no extra detail rather than guessing.
   assert.equal(lmsConnectErrorReason(99999), '');
+});
+
+test('LMS backend shutdown handler turns an uncaught fatal error into valid JSON', () => {
+  const output = lmsShutdownFatalOutput();
+  let parsed;
+  assert.doesNotThrow(() => {
+    parsed = JSON.parse(output);
+  }, `expected valid JSON, got: ${output}`);
+  assert.equal(parsed.error, 'Lyrion Music Server request failed unexpectedly.');
 });
 
 test('calendar fetching is URL validated and does not expose stack traces', () => {
