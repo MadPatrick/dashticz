@@ -338,6 +338,7 @@ var DT_dial = (function () {
         fixed: me.fixed,
         onoff: me.onoff,
         options: me.options,
+        barSegments: me.barSegments,
         unitvalue: me.unitvalue,
         info: me.info,
         lastupdate: me.lastupdate,
@@ -1381,6 +1382,7 @@ var DT_dial = (function () {
     me.switchMode = capitalizeFirstLetter(me.block.switchMode);
     me.rgbContainer = '.dial-display';
     if(me.block.subtype==='updown') makeUpDownDim(me);
+    if(me.block.subtype==='bar') makeBarDim(me);
     return;
   }
 
@@ -1471,6 +1473,49 @@ var DT_dial = (function () {
     me.getCurrentValue = getCurrentValueDim;
     me.middleToggle = choose(me.block.middletoggle,true);
     me.rgbContainer = '.middle';
+  }
+
+  /**
+   * Configures a dimmer to render as a vertical 10-segment bar instead of
+   * the draggable dial. Each segment represents 10% of the dimmer range;
+   * clicking a segment sets the dimmer directly to that segment's level.
+   * @param {object} me  Core component object.
+   */
+  function makeBarDim(me) {
+    me.tpl = 'dialbar';
+    me.fixed = true;
+    me.active = false;
+    me.checkNeedlePos = false;
+    me.tap = tapBar;
+    me.update = updateBar;
+    me.getCurrentValue = getCurrentValueDim;
+    me.backgroundselector = '.dial-bar-container';
+    /* segment thresholds, top (100%) to bottom (10%) */
+    me.barSegments = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10];
+    me.$mountPoint.addClass('dialbar');
+    return;
+  }
+
+  function tapBar(me) {
+    me.$segments = me.$mountPoint.find('.dial-bar-segment');
+    me.$segments.on('click', function () {
+      me.value = parseInt($(this).data('level'), 10);
+      update(me);
+    });
+  }
+
+  function updateBar(me) {
+    if (!me.$segments || !me.$segments.length) {
+      me.$segments = me.$mountPoint.find('.dial-bar-segment');
+    }
+    me.value = me.getCurrentValue(me);
+    me.$segments.each(function () {
+      var level = parseInt($(this).data('level'), 10);
+      $(this).toggleClass('filled', me.value >= level);
+    });
+    me.$mountPoint
+      .find('.dial-bar-value')
+      .text(number_format(me.value, me.decimals) + me.unitvalue);
   }
 
   function tapUpDown(me) {

@@ -137,6 +137,7 @@ Block parameters
       | ``'windspeed'``: For wind devices, to show wind speed instead of wind direction as needle position    
       | ``'windgust'``: For wind devices, to show wind gust instead of wind direction as needle position 
       | ``'updown'``: For thermostat and blind devices, to render the dial with up and down buttons. See :ref:`updowndial`
+      | ``'bar'``: For dimmer devices only, to render the dial as a vertical 10-segment bar. See :ref:`dialbar`
       | ``'usage'``: For p1smartmeter and energy devices, to show actual Usage instead of CounterToday values. See :ref:`dialenergy`
   * - sortOrder
     - | Set sort order for selection switches
@@ -479,6 +480,30 @@ This conflicts with the defaults in Domoticz where 0 is open, and 100 is closed.
 For this reason the 'inverted' block parameter by default is set to true for regular Domoticz blinds devices, and set to false for Domoticz Blinds Inverted devices.
 
 By setting the ``steps`` parameter you can adjust the step size. For Thermostats the default step value is 0.5. For Dimmers and Blinds the default step value is 10 (%).
+
+.. _dialbar :
+
+Bar dimmer
+----------
+
+For dimmer devices only, you can render the dial as a vertical bar of 10 segments by setting ``subtype`` to ``bar``. 0% is at the bottom, 100% at the top. Each segment represents 10% of the dimmer range; tapping a segment sets the dimmer directly to that segment's level (e.g. tapping the 6th segment from the bottom sets the dimmer to 60%). Segments already at or below the current level are shown in green, the rest in grey.
+
+This subtype is ignored for any device that is not a dimmer (e.g. Blinds, Thermostats)::
+
+    blocks['livingroom_lights'] = {
+        type: 'dial',
+        subtype: 'bar',
+        idx: 15,
+        grid: { w: 2, h: 14 },  //a narrow, tall block suits the vertical bar best (grid screens only)
+    }
+
+The following CSS classes are used, and can be styled via *custom.css*:
+
+``.dial-bar-widget``: The outer widget
+``.dial-bar-title``: The title
+``.dial-bar``: The container holding the 10 segments
+``.dial-bar-segment``: One segment. Add ``.filled`` to select only the segments that are 'on'
+``.dial-bar-value``: The percentage value shown below the bar
 
 .. _dialvalues :
 
