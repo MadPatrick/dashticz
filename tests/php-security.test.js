@@ -215,7 +215,10 @@ test('LMS backend bridge is same-origin gated, allows LAN access, and never leak
   // parse (reported live as Content-Length: 0). A time budget above curl's
   // own worst case, plus a shutdown handler as a last-resort net for any
   // other fatal error, guarantee a parseable JSON body either way.
-  assert.match(source, /set_time_limit\(20\)/);
+  // Comfortably above the image-proxy cover fetch's own worst case
+  // (CONNECTTIMEOUT 4 + the 20s CURLOPT_TIMEOUT override below).
+  assert.match(source, /set_time_limit\(30\)/);
+  assert.match(source, /CURLOPT_TIMEOUT => 20/);
   assert.match(source, /register_shutdown_function\(function \(\) \{/);
   assert.match(source, /error_get_last\(\)/);
   assert.match(source, /E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR/);

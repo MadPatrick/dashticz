@@ -7,18 +7,19 @@ header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 
 /* A genuinely unreachable LMS server can leave curl blocking for several
-   seconds (up to dashticz_lms_curl()'s own CONNECTTIMEOUT+TIMEOUT budget)
-   before its own try/catch below gets a chance to turn that into a clean
-   JSON error. On a host with a shorter max_execution_time than that budget,
-   PHP kills the script first - with the Content-Type header already queued
-   but nothing echoed yet, the client sees an empty HTTP 500 that its JSON
+   seconds (up to dashticz_lms_curl()'s own CONNECTTIMEOUT+TIMEOUT budget -
+   worst case 4+20=24s, for the image-proxy cover fetch below) before its
+   own try/catch below gets a chance to turn that into a clean JSON error.
+   On a host with a shorter max_execution_time than that budget, PHP kills
+   the script first - with the Content-Type header already queued but
+   nothing echoed yet, the client sees an empty HTTP 500 that its JSON
    parser can't read, which surfaces as a generic client-side fallback
    message instead of any real explanation. Give this endpoint a time budget
    comfortably above curl's own worst case so that timeout is handled here,
    not by the host cutting the script off first; the shutdown handler right
    below is the last-resort net for every other kind of fatal error. */
 if (function_exists('set_time_limit')) {
-    @set_time_limit(20);
+    @set_time_limit(30);
 }
 
 /* Guarantees the client always gets parseable JSON - even for a fatal error
@@ -201,7 +202,13 @@ function dashticz_lms_fetch_cover($request)
                 'http://' . $request['server'] . ':' . $request['port'] . $artworkUrl,
                 true
             );
-            $response = dashticz_lms_curl($url, $request, array());
+            // LMS's own image proxy/cache still has to fetch the externally-
+            // hosted artwork itself (over the internet, from LMS's side)
+            // before it can respond, which can comfortably exceed every
+            // other request here's normal LAN-only timeout budget - give it
+            // more room rather than surfacing a spurious timeout error for
+            // what is otherwise a perfectly reachable LMS server.
+            $response = dashticz_lms_curl($url, $request, array(CURLOPT_TIMEOUT => 20));
         } else {
             $url = dashticz_validate_remote_url($artworkUrl, false);
             $response = dashticz_lms_curl($url, array('username' => '', 'password' => ''), array());
