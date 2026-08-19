@@ -210,13 +210,21 @@ function dashticz_lms_curl($url, $request, $extraOptions)
    server) using only curl's numeric error code - never curl's own free-text
    error message, which can include the request path (and, for a proxied/
    misconfigured setup, other request details). Only the fixed, enumerated
-   reason below is ever used. */
+   reason below is ever used.
+   The keys are curl's own CURLE_* error codes, written as their raw,
+   ABI-stable integers (6/7/28) rather than the symbolic PHP constants: on
+   PHP 8+, referencing an undefined constant is a fatal Error (not a
+   warning), so if some exotic curl build ever left one of those undefined,
+   using the symbolic form here would turn this diagnostic-only helper into
+   an uncaught 500 - silently replacing even the plain, pre-existing
+   "Unable to connect to Lyrion Music Server." message with a broken,
+   non-JSON response the Wizard popup can't parse at all. */
 function dashticz_lms_connect_error_reason($errno)
 {
     $reasons = array(
-        CURLE_COULDNT_RESOLVE_HOST => ': the server address could not be resolved',
-        CURLE_COULDNT_CONNECT => ': check the address/port and that the server is reachable on your network',
-        CURLE_OPERATION_TIMEDOUT => ': the connection timed out',
+        6 => ': the server address could not be resolved', // CURLE_COULDNT_RESOLVE_HOST
+        7 => ': check the address/port and that the server is reachable on your network', // CURLE_COULDNT_CONNECT
+        28 => ': the connection timed out', // CURLE_OPERATION_TIMEDOUT
     );
     return isset($reasons[$errno]) ? $reasons[$errno] : '';
 }
