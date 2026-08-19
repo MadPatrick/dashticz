@@ -26,12 +26,14 @@ v3.45.1 beta (19-8-2026)
   (0% at the bottom, 100% at the top) instead of the draggable dial.
   Tapping a segment sets the device directly to that segment's 10% level;
   segments up to the current level are shown in green, the rest in grey.
-  The bar scales with its block's size, both height and width. A **Bar**
-  switch in the Device Config popup (shown once **Dial** is enabled on a
-  qualifying device) turns it on/off directly, instead of having to set
-  ``subtype`` by hand via Custom fields. Ignored for any other
-  dial-rendered device (Dimmers, plain Blinds without a percentage,
-  Thermostats, ...). See :ref:`dialbar`.
+  The bar scales with its block's size, both height and width, and its
+  title uses the same styling as every other device/widget title instead
+  of a bar-specific size and color. A **Bar** switch in the Device Config
+  popup (shown once **Dial** is enabled on a qualifying device) turns it
+  on/off directly, instead of having to set ``subtype`` by hand via
+  Custom fields. Ignored for any other dial-rendered device (Dimmers,
+  plain Blinds without a percentage, Thermostats, ...). See
+  :ref:`dialbar`.
 
 * **Fixes**
 

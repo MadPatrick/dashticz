@@ -6380,12 +6380,13 @@ canvas {
 /* Vertical 10-segment Blinds Percentage bar (dial subtype: 'bar'). 0% at
    the bottom, 100% at the top; each segment sets the device to its own 10%
    level. js/components/dial.js's _dialFitSize() now sets .dt_content's own
-   height explicitly (matching the measured/configured block size) for
-   every dial subtype, so this bar truly scales with the block instead of
-   only the circular dial being reliably sized - .dt_content otherwise only
-   gets height:100% via the .fixedheight class, which grid items never get.
-   The min-height values below are just a defensive floor for the rare case
-   _dialFitSize can't measure a size at all (falls back to me.height=100). */
+   height explicitly (the grid row's actual measured height, not the
+   circular dial's width-constrained me.height) for every dial subtype, so
+   this bar truly scales with the block instead of only the circular dial
+   being reliably sized - .dt_content otherwise only gets height:100% via
+   the .fixedheight class, which grid items never get. The min-height
+   values below are just a defensive floor for the rare case _dialFitSize
+   can't measure a size at all (falls back to me.height=100). */
 .dial-bar-widget {
   width: 100%;
   height: 100%;
@@ -6399,17 +6400,20 @@ canvas {
   align-items: center;
   height: 100%;
   width: 100%;
+  padding-bottom: 10px;
+  box-sizing: border-box;
 }
 
+/* Font-size/color/margin come from .dt_title (the same class every other
+   device/widget uses for its title, js/dashticz.js's renderTitle()) so the
+   bar's title matches the theme instead of a bar-specific size/color. */
 .dial-bar-title {
   flex: 0 0 auto;
-  font-size: 90%;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 100%;
-  margin-bottom: 0.6em;
 }
 
 .dial-bar {

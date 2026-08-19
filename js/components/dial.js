@@ -212,10 +212,48 @@ var DT_dial = (function () {
     // via the font-size set below - but subtypes that lay out in normal
     // flow (e.g. the bar dial, dial.js makeBarDim()) need a real height to
     // fill via height:100%, or their flex chain collapses to nothing and
-    // renders invisible. Setting it explicitly here, unconditionally, keeps
-    // every dial subtype's block truly scaling with the measured/configured
-    // size instead of only the circular dial being reliably sized.
-    $(me.mountPoint + ' .dt_content').css('height', me.height + 'px');
+    // renders invisible.
+    // me.height is deliberately squared to the smaller of width/height so
+    // the circular dial never overflows - reusing it here would leave
+    // .dt_content far shorter than the actual (typically narrow-and-tall)
+    // bar block, stranding a large empty gap below it. Grid items know
+    // their real height regardless (measuredHeight, the grid row's own
+    // span) - use that directly instead. Classic layout is left alone: its
+    // .dt_content sizes to content already (see the comment on `candidates`
+    // above for why measuredHeight isn't trustworthy there).
+    // Below the mobile-stack breakpoint (.dt-grid-mobile-stack, see
+    // css/creative.css) a grid item's own height switches to content-driven
+    // (flex: 0 0 auto, no fixed row span) instead of the grid's fixed
+    // grid-auto-rows track - unlike a real grid row, it's not bounded
+    // independently of its own content. Forcing .dt_content's height to the
+    // measured value there feeds straight back into that same measurement
+    // (ResizeObserver -> _dialFitSize -> taller .dt_content -> taller grid
+    // item -> ResizeObserver...), an unbounded growth loop the squared
+    // me.height above never hits only because it's capped by width too.
+    // Leave .dt_content's height unset there instead - like every other
+    // dial subtype, it doesn't actually depend on it (the bar's own
+    // min-height in CSS keeps it visible).
+    var $grid = inGrid ? me.$mountPoint.closest('.dt-grid-layout') : null;
+    var isStackedGrid = !!(
+      $grid &&
+      $grid.hasClass('dt-grid-mobile-stack') &&
+      window.matchMedia &&
+      window.matchMedia('(max-width: 767.98px)').matches
+    );
+    // .dt_block's own height comes from CSS (height:100% !important on a
+    // grid screen, see the .dt-grid-item > .dt_block rule - the inline
+    // height set just above is only read on classic layout, where that
+    // !important rule doesn't apply). Measuring .dt_block's *content* height
+    // directly via jQuery's height() (which excludes its own padding/border,
+    // unlike the grid item's outerHeight() used for measuredHeight above)
+    // gives .dt_content exactly the space actually available inside it -
+    // using measuredHeight instead overflowed .dt_block by its padding+
+    // border on both edges (a themed block can carry a visible border).
+    var blockInnerHeight = inGrid
+      ? parseInt($(me.mountPoint + ' .dt_block').height())
+      : NaN;
+    var contentHeight = inGrid && !isStackedGrid && blockInnerHeight > 0 ? blockInnerHeight : 0;
+    $(me.mountPoint + ' .dt_content').css('height', contentHeight ? contentHeight + 'px' : '');
     // The template bakes font-size/needle dimensions into inline styles at
     // render time; on a live resize (no re-render) they need patching
     // directly. getContainer() (js/dashticz.js) gives the OUTER .dt_block
@@ -233,7 +271,8 @@ var DT_dial = (function () {
     // not circular like the classic dial (font-size = diameter would make it
     // far too wide), so it gets its own fraction of me.height as a CSS
     // variable instead, clamped to the measured container width.
-    var barWidth = Math.max(30, Math.min(me.height * 0.3, measuredWidth || me.height));
+    var barHeightBasis = contentHeight || me.height;
+    var barWidth = Math.max(30, Math.min(barHeightBasis * 0.3, measuredWidth || barHeightBasis));
     $(me.mountPoint + ' .dt_content .dial-bar-widget').css('--dial-bar-width', barWidth + 'px');
     $(me.mountPoint + ' .dt_content .dial-needle').css({
       '--needle-length': me.height / 2 + 'px',
