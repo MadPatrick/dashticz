@@ -41,7 +41,7 @@ function dashticz_lms_read_input()
         throw new RuntimeException('Invalid Lyrion Music Server request.');
     }
 
-    $server = isset($input['server']) ? trim((string) $input['server']) : '';
+    $server = isset($input['server']) ? dashticz_normalize_host_input($input['server']) : '';
     if ($server === '') {
         throw new RuntimeException('Enter the Lyrion Music Server address.');
     }

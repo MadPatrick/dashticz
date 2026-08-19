@@ -3690,6 +3690,7 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   const deviceEditor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
   const layoutEditor = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
   const simpleBlock = fs.readFileSync(path.join(root, 'js/components/simpleblock.js'), 'utf8');
+  const widgetEditor = fs.readFileSync(path.join(root, 'js/widgeteditor.js'), 'utf8');
   const lmsBackend = fs.readFileSync(path.join(root, 'vendor/dashticz/lms/index.php'), 'utf8');
   const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
   const enLang = JSON.parse(fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8'));
@@ -3764,9 +3765,21 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   assert.match(deviceEditor, /_quickOptionsHtml\('lm', \{\s*\n\s*icon: false,\s*\n\s*iconValue: 'fas fa-music',/);
   assert.match(deviceEditor, /if \(special\.specialType === 'lms'\) return 'fas fa-music';/);
 
-  // Screen Editor "Add items" menu tile (js/components/simpleblock.js).
-  assert.match(simpleBlock, /\{ action: 'lms', icon: 'fa-music', label: t\.lms_block \|\| 'Lyrion Music Server' \}/);
-  assert.match(simpleBlock, /DashticzDeviceEditor\.openLms\(\);/);
+  // Entry point lives in the Widgets ("wizard") catalog popup (js/widgeteditor.js),
+  // next to Spotify/Sonarr, not in the Screen Editor's "Add items" tile grid
+  // (js/components/simpleblock.js) - the user asked for it to be discoverable
+  // there instead. It is not a plain catalog entry: every catalog widget is a
+  // singleton (one selectedWidgets[id] flag, one fixed blockKey), which is
+  // incompatible with LMS's multi-instance "special block" design, so its card
+  // is marked data-special-widget and always opens the existing multi-instance
+  // quick-add popup (DashticzDeviceEditor.openLms()) instead of toggling a flag.
+  assert.doesNotMatch(simpleBlock, /action: 'lms'/);
+  assert.doesNotMatch(simpleBlock, /DashticzDeviceEditor\.openLms\(\)/);
+  assert.match(widgetEditor, /function _lmsWidgetCardHtml\(\)/);
+  assert.match(widgetEditor, /data-special-widget="lms"/);
+  assert.match(widgetEditor, /function _openLmsFromWidgets\(\)/);
+  assert.match(widgetEditor, /DashticzDeviceEditor\.openLms\(\);/);
+  assert.match(widgetEditor, /if \(\$\(this\)\.data\('special-widget'\) === 'lms'\)/);
 
   // Layout Editor (js/layouteditor.js): same cog-not-drag-icon fix as HTML
   // blocks got for #168, so an LMS tile's settings control is never mistaken
@@ -3804,10 +3817,11 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   assert.match(styles, /\.lms-info > div \{[\s\S]*text-overflow: ellipsis;[\s\S]*white-space: nowrap;/);
 
   // Translations exist for both places the block's name/labels are read from
-  // (js/deviceeditor.js's own popup vs. the Add-items tile in
-  // js/components/simpleblock.js, which reads language.settings.widgeteditor).
+  // (js/deviceeditor.js's own quick-add/edit popup vs. its card in the
+  // Widgets catalog, js/widgeteditor.js, which reads language.settings.widgeteditor).
   assert.equal(enLang.settings.deviceeditor.lms_block, 'Lyrion Music Server');
   assert.equal(enLang.settings.widgeteditor.lms_block, 'Lyrion Music Server');
+  assert.ok(enLang.settings.widgeteditor.lms_description);
   assert.ok(enLang.misc.lms_player_off);
   assert.ok(enLang.misc.lms_server_unavailable);
 });

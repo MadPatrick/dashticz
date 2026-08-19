@@ -2,11 +2,27 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+const { spawnSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), 'utf8');
+}
+
+/* Runs dashticz_normalize_host_input() through the real PHP interpreter
+   (not a regex on the source) so the fix for the exact reported bug -
+   "http://192.168.1.6/" (pasted scheme + trailing slash) producing
+   "Remote host could not be resolved." because it got concatenated into
+   "http://http://192.168.1.6/:9000/jsonrpc.js" - is verified against
+   actual PHP semantics, not just a pattern match. */
+function normalizeHostInput(value) {
+  const securityPhp = path.join(root, 'vendor/dashticz/security.php');
+  const script =
+    `require '${securityPhp}'; echo json_encode(dashticz_normalize_host_input(${JSON.stringify(value)}));`;
+  const result = spawnSync('php', ['-r', script], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout);
 }
 
 test('remote proxy endpoints use the validated fetch helper', () => {
@@ -38,6 +54,12 @@ test('xmltv proxy validates remote URLs and keeps cache handling local', () => {
 test('LMS backend bridge is same-origin gated, allows LAN access, and never leaks credentials', () => {
   const source = read('vendor/dashticz/lms/index.php');
   assert.match(source, /dashticz_require_same_origin\(\)/);
+  // A pasted "http://192.168.1.6/" (scheme + trailing slash) must be
+  // normalized before being concatenated into 'http://' . $server . ':' .
+  // $port . '/jsonrpc.js' below, or it produces a malformed double-scheme
+  // URL whose host resolves to the literal string "http" and fails with
+  // "Remote host could not be resolved."
+  assert.match(source, /\$server = isset\(\$input\['server'\]\) \? dashticz_normalize_host_input\(\$input\['server'\]\) : '';/);
   // LMS is virtually always a LAN-only server, like Domoticz itself, so the
   // private/reserved-IP block dashticz_validate_remote_url() applies by
   // default must be explicitly lifted here (mirrors xmltv.php above).
@@ -63,6 +85,27 @@ test('LMS backend bridge is same-origin gated, allows LAN access, and never leak
   // browser would fetch directly - so LMS/radio credentials and any LAN-only
   // hostname never reach the browser's own network requests.
   assert.match(source, /base64_encode\(\$response\['body'\]\)/);
+});
+
+test('dashticz_normalize_host_input() cleans a pasted scheme/path/port from a server field', () => {
+  // The exact value the user pasted into the "Server / IP" field that
+  // triggered "Remote host could not be resolved.".
+  assert.equal(normalizeHostInput('http://192.168.1.6/'), '192.168.1.6');
+  assert.equal(normalizeHostInput('https://192.168.1.6'), '192.168.1.6');
+  assert.equal(normalizeHostInput('http://lms.local/'), 'lms.local');
+  assert.equal(normalizeHostInput('  192.168.1.6  '), '192.168.1.6');
+  assert.equal(normalizeHostInput('192.168.1.6/'), '192.168.1.6');
+  // A trailing path beyond a bare slash is stripped the same way.
+  assert.equal(normalizeHostInput('http://192.168.1.6/jsonrpc.js'), '192.168.1.6');
+  // An accidentally-included port (the field's own job) is dropped too.
+  assert.equal(normalizeHostInput('192.168.1.6:9000'), '192.168.1.6');
+  // A plain host/IP with nothing to strip is returned unchanged.
+  assert.equal(normalizeHostInput('192.168.1.6'), '192.168.1.6');
+  assert.equal(normalizeHostInput('lms.local'), 'lms.local');
+  // Multi-colon / bracketed values are left alone rather than mis-parsed as
+  // "host:port" - not a realistic LMS address, but must not corrupt input.
+  assert.equal(normalizeHostInput('[::1]:9000'), '[::1]:9000');
+  assert.equal(normalizeHostInput(''), '');
 });
 
 test('calendar fetching is URL validated and does not expose stack traces', () => {

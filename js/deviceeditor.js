@@ -2342,6 +2342,24 @@ var DashticzDeviceEditor = (function () {
    * only has one implementation. currentPlayer/currentPlayerLabel let the
    * edit view show the configured player's last-known friendly name before
    * the user re-tests the connection (see docs/blocks/specials/lms.rst). */
+  /* Mirrors vendor/dashticz/security.php's dashticz_normalize_host_input():
+   * strips a pasted scheme ("http://"/"https://"), any trailing path/query/
+   * fragment, and an accidentally-included ":port" from the "Server / IP"
+   * field, so e.g. "http://192.168.1.6/" resolves instead of producing a
+   * malformed double-scheme URL server-side. Applied both before "Test
+   * connection" and before save, so the field always reflects what gets
+   * persisted. */
+  function _normalizeLmsServer(value) {
+    var host = $.trim(String(value || ''));
+    host = host.replace(/^[a-z][a-z0-9+.-]*:\/\//i, '');
+    host = host.replace(/[/?#].*$/, '');
+    host = $.trim(host);
+    if (host.indexOf('[') === -1 && (host.match(/:/g) || []).length === 1) {
+      host = host.slice(0, host.indexOf(':'));
+    }
+    return host.replace(/\.+$/, '');
+  }
+
   function _lmsFieldsHtml(prefix, values) {
     var t = _translations();
     values = values || {};
@@ -2396,11 +2414,13 @@ var DashticzDeviceEditor = (function () {
       var $btn = $(this);
       var $status = $popup.find('.de-lms-test-status');
       var $player = $popup.find('#' + prefix + '-lms-player');
-      var server = $.trim(String($popup.find('#' + prefix + '-lms-server').val() || ''));
+      var $serverInput = $popup.find('#' + prefix + '-lms-server');
+      var server = _normalizeLmsServer($serverInput.val());
+      $serverInput.val(server);
       var port = parseInt($popup.find('#' + prefix + '-lms-port').val(), 10) || 9000;
       if (!server) {
         $status.removeClass('text-success').addClass('text-danger').text(t.invalid_lms_server);
-        $popup.find('#' + prefix + '-lms-server').trigger('focus');
+        $serverInput.trigger('focus');
         return;
       }
       var previousPlayer = $player.val();
@@ -2447,7 +2467,7 @@ var DashticzDeviceEditor = (function () {
 
   function _readLmsFields(prefix, $popup) {
     return {
-      server: $.trim(String($popup.find('#' + prefix + '-lms-server').val() || '')),
+      server: _normalizeLmsServer($popup.find('#' + prefix + '-lms-server').val()),
       port: parseInt($popup.find('#' + prefix + '-lms-port').val(), 10) || 9000,
       username: $.trim(String($popup.find('#' + prefix + '-lms-username').val() || '')),
       password: String($popup.find('#' + prefix + '-lms-password').val() || ''),

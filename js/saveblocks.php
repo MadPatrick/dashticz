@@ -233,7 +233,7 @@ foreach ($data['devices'] as $entry) {
         $lmsRefresh = null;
         if ($kind === 'lms') {
             $lmsServer = isset($entry['server']) && is_string($entry['server'])
-                ? trim($entry['server'])
+                ? dashticz_normalize_host_input($entry['server'])
                 : '';
             if ($lmsServer === '' || strlen($lmsServer) > 255) {
                 dashticz_json_error(400, 'Enter the Lyrion Music Server address.');

@@ -2280,7 +2280,7 @@ screens[1] = {
     expect(kitchenText).not.toMatch(/undefined|null/);
   });
 
-  test('Lyrion Music Server Wizard popup discovers players and saves the selected one', async ({
+  test('Lyrion Music Server Widgets-catalog entry discovers players and saves the selected one', async ({
     page,
   }) => {
     let blocksRequest = null;
@@ -2340,8 +2340,10 @@ screens[1] = {
     // See the rendering test above: give this test's cold start more room
     // than waitForDashboard()'s normal 15s on a slower runner.
     await page.locator('#loaderHolder').waitFor({ state: 'hidden', timeout: 30000 });
-    await openScreenEditorAddMenu(page);
-    await page.locator('.dt-screeneditor-add-tile[data-add-action="lms"]').click();
+    // The entry point lives in the "Widgets" catalog popup (next to Spotify/
+    // Sonarr), not as its own tile in the Screen Editor's "Add items" grid.
+    await openWidgetEditorFromScreenEditor(page);
+    await page.locator('.we-widget-card[data-special-widget="lms"]').click();
     await expect(page.locator('#lmsblockpopup')).toBeVisible();
 
     await page.locator('#lm-lms-server').fill('192.168.1.6');
@@ -2379,7 +2381,7 @@ async function openScreenEditorAddMenu(page) {
   await expect(addButton).toBeVisible();
   await addButton.click();
   await expect(page.locator('#screeneditoraddpopup')).toBeVisible();
-  await expect(page.locator('.dt-screeneditor-add-tile')).toHaveCount(9);
+  await expect(page.locator('.dt-screeneditor-add-tile')).toHaveCount(8);
 }
 
 async function openDeviceEditorFromScreenEditor(page) {

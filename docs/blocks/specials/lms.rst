@@ -13,11 +13,14 @@ Wizard
 ------
 
 The easiest way to add this block is via the Screen Editor's **Add items**
-menu -> **Lyrion Music Server**. Enter the server address and port (and
-username/password only if LMS authentication is enabled), click
-**Test connection** to discover the players on that server, and pick one
-from the **Player** dropdown. The block's own configuration cog reopens the
-same popup later to change the server, player or refresh interval.
+menu -> **Widgets** -> **Lyrion Music Server** (next to Spotify/Sonarr).
+Enter the server address and port (and username/password only if LMS
+authentication is enabled), click **Test connection** to discover the
+players on that server, and pick one from the **Player** dropdown. The
+block's own configuration cog reopens the same popup later to change the
+server, player or refresh interval. Unlike the other tiles in the Widgets
+catalog, this one can be added more than once, so each LMS player on the
+network can get its own block.
 
 Manual configuration
 ---------------------

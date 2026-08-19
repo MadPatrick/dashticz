@@ -469,7 +469,6 @@ var DT_simpleblock = (function () {
       { action: 'multidevice', icon: 'fa-layer-group', label: t.multi_device || 'Multi Device' },
       { action: 'group', icon: 'fa-object-group', label: t.group_block || 'Group' },
       { action: 'htmlblock', icon: 'fa-code', label: t.html_block || 'HTML Block' },
-      { action: 'lms', icon: 'fa-music', label: t.lms_block || 'Lyrion Music Server' },
       { action: 'slidebutton', icon: 'fa-sliders-h', label: t.slide_button || 'Slide button' },
       { action: 'separator', icon: 'fa-divide', label: t.separator || 'Separator' },
     ];
@@ -521,8 +520,6 @@ var DT_simpleblock = (function () {
             DashticzDeviceEditor.openGroup();
           } else if (selectedAction === 'htmlblock') {
             DashticzDeviceEditor.openHtmlBlock();
-          } else if (selectedAction === 'lms') {
-            DashticzDeviceEditor.openLms();
           } else if (selectedAction === 'slidebutton') {
             DashticzDeviceEditor.openSlideButton();
           } else if (selectedAction === 'separator') {
