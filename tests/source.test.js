@@ -884,9 +884,13 @@ test('device and widget config editors share full widget config and preserve hid
   assert.match(saveWidgets, /if \(!empty\(\$widget\['hide_data'\]\)\)/);
   assert.match(saveWidgets, /if \(!empty\(\$widget\['last_update'\]\)\)/);
   assert.match(deviceEditor, /de-config-options-five/);
-  assert.match(styles, /\.de-config-options-three[\s\S]*grid-template-columns: repeat\(3/);
-  assert.match(styles, /\.de-config-options-four[\s\S]*grid-template-columns: repeat\(4/);
-  assert.match(styles, /\.de-config-options-five[\s\S]*grid-template-columns: repeat\(5/);
+  // Columns are auto-fit rather than a fixed repeat(N,...) so that a switch
+  // toggling visibility (Dial hiding Icon/Title) or an extra one being
+  // appended (button.js's injected No background switch, #170) always ends
+  // up sharing the same single row instead of one being stranded alone on
+  // a row of its own; -three/-four/-five now only add centering.
+  assert.match(styles, /\.de-config-options \{[\s\S]*grid-template-columns: repeat\(auto-fit, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /\.de-config-options-three,\s*\n\s*\.de-config-options-four,\s*\n\s*\.de-config-options-five \{\s*\n\s*justify-items: center;/);
   assert.match(styles, /\.de-config-options \.form-check-input[\s\S]*width: 32px;[\s\S]*height: 32px;/);
   assert.match(deviceEditor, /icon: true, iconValue: null, hide_data: false, last_update: false/);
   assert.match(styles, /\.we-block-option\.form-check-input[\s\S]*width: 32px;[\s\S]*height: 32px;/);

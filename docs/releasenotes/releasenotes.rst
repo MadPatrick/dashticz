@@ -6,6 +6,19 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.45.2 beta (19-8-2026)
+-------------------------
+
+* **Fixes**
+
+- Fixed the **No background** switch landing alone on its own row below the
+  other Display options switches (Icon/Data/Updated/Dial/Title, or
+  Icon/Updated/Title) once it matched their size - the row used a fixed
+  3/5-column grid sized for the original switches only, so the extra one
+  always overflowed onto a row by itself. The row now always auto-fits
+  exactly as many equal columns as there are visible switches on a single
+  row, including when the Dial checkbox hides/shows Icon and Title (#170).
+
 v3.45.1 beta (19-8-2026)
 -------------------------
 
