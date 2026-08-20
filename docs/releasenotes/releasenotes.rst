@@ -112,6 +112,18 @@ v3.45.2 beta (20-8-2026)
   mouse click rarely moves at all. ``js/main.js``'s ``startSwiper()`` now
   raises ``threshold`` to 10 and sets ``preventClicksPropagation: false``.
 
+- Fixed ``js/loader.js``'s ``loadScript()`` (used for ``js/main.js``,
+  ``js/functions.js`` and ``js/polyfills.js``) serving a stale cached copy
+  of those files after any same-day edit, with no visible sign anything
+  was wrong. It busted the cache on the static ``_DASHTICZ_VERSION`` build
+  number, which is only bumped on a real ``dist/bundle.js`` rebuild, so a
+  device that had already loaded the dashboard earlier that day (e.g. a
+  tablet left on) kept serving its old cached ``js/main.js`` indefinitely -
+  silently missing fixes such as the Swiper tuning above. It now busts on
+  a per-page-load timestamp instead, matching how the theme CSS already
+  cache-busts; ``dist/bundle.js`` itself is intentionally left on
+  ``_DASHTICZ_VERSION``, since it's only rebuilt on a real release.
+
 * **Code**
 
 - Updated 4 ``tests/source.test.js`` assertions left stale by the Bar
