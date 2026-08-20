@@ -21,6 +21,13 @@ v3.45.2 beta (20-8-2026)
   dedicated full-block-width image field, instead of leaving users with an
   oversized icon floating in an otherwise-empty block (#171).
 
+- The Bar display mode's number of segments is now configurable via a new
+  ``barsteps`` block parameter (default 10, e.g. ``barsteps: 5`` gives 5
+  segments of 20% each plus the 0% segment) instead of always being fixed.
+  Choosing **Bar** in the Device Config popup's Icon/Dial/Bar selector now
+  reveals a **Steps** number field to set it directly, instead of having
+  to add ``barsteps`` by hand via Custom fields. See :ref:`dialbar`.
+
 * **Fixes**
 
 - Fixed thermostat (and other) dial widgets still rendering off-centre on
