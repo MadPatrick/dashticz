@@ -34,6 +34,15 @@ v3.45.2 beta (20-8-2026)
   they use the same plain, unthemed layout as the default theme, where the
   dial was already correctly centred (#177).
 
+* **Code**
+
+- Updated 4 ``tests/source.test.js`` assertions left stale by the Bar
+  subtype work (#182), which moved the Dial checkbox into a shared
+  Icon/Dial/Bar visual-mode selector without updating the tests pinning
+  its previous single-checkbox shape. No production code changed - the
+  tests now assert ``deviceeditor.js``'s actual current implementation
+  instead of its old one.
+
 v3.45.1 beta (19-8-2026)
 -------------------------
 
