@@ -3080,8 +3080,7 @@ var DashticzDeviceEditor = (function () {
         html += '<button type="button" class="btn btn-outline-secondary de-visual-mode-button' +
           (active ? ' active' : '') + '" data-visual-mode="' + item.mode + '"' +
           (item.enabled ? '' : ' disabled') + ' aria-pressed="' + (active ? 'true' : 'false') + '"' +
-          ' title="' + _esc(item.label) + '" style="min-width:72px;' +
-          (active ? 'color:var(--button-active);border-color:var(--button-active);' : '') + '">' +
+          ' title="' + _esc(item.label) + '" style="min-width:72px;">' +
           '<i class="' + item.icon + '" aria-hidden="true"></i>' +
           '<span class="d-block small">' + _esc(item.label) + '</span></button>';
       });
@@ -3198,11 +3197,7 @@ var DashticzDeviceEditor = (function () {
         var active = String($(this).attr('data-visual-mode')) === mode;
         $(this)
           .toggleClass('active', active)
-          .attr('aria-pressed', active ? 'true' : 'false')
-          .css({
-            color: active ? 'var(--button-active)' : '',
-            'border-color': active ? 'var(--button-active)' : '',
-          });
+          .attr('aria-pressed', active ? 'true' : 'false');
       });
     }
     function refreshIconFieldVisibility() {

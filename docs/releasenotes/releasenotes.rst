@@ -28,6 +28,12 @@ v3.45.2 beta (20-8-2026)
   reveals a **Steps** number field to set it directly, instead of having
   to add ``barsteps`` by hand via Custom fields. See :ref:`dialbar`.
 
+- The selected option in the Device Config popup's Icon/Dial/Bar selector
+  now uses the same light-green "added" look as a selected widget card in
+  the Add items gallery, instead of a plain grey/orange outline - with a
+  blue icon rather than one matching the border color, so the icon stays
+  the one visual cue that changes per mode at a glance.
+
 * **Fixes**
 
 - Fixed thermostat (and other) dial widgets still rendering off-centre on
@@ -74,6 +80,15 @@ v3.45.2 beta (20-8-2026)
   its previous single-checkbox shape. No production code changed - the
   tests now assert ``deviceeditor.js``'s actual current implementation
   instead of its old one.
+
+- Updated 3 more ``tests/source.test.js`` assertions and 3
+  ``tests/php-security.test.js`` assertions left stale by earlier work on
+  the LMS "Now Playing" block's cover-artwork handling: a player-based
+  artwork lookup and change-detection/retry state machine
+  (``js/components/lms.js``), and a broader relative-artwork-path
+  normalization on the backend (``vendor/dashticz/lms/index.php``). No
+  production code changed - the tests now assert the actual current
+  implementation instead of an earlier, simpler shape.
 
 v3.45.1 beta (19-8-2026)
 -------------------------
