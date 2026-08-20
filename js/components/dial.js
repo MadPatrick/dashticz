@@ -15,7 +15,9 @@ var DT_dial = (function () {
      * @param {string} key    identifier used for block selection.
      */
     canHandle: function (block) {
-      return block && block.type === 'dial';
+      // Keep the existing Dial type and accept Bar as a display-only alias.
+      // Both variants continue to use the same device and update logic.
+      return block && (block.type === 'dial' || block.type === 'bar');
     },
 
     /**
@@ -1417,6 +1419,13 @@ var DT_dial = (function () {
     return;
   }
 
+  /** Return true for both supported Bar configuration syntaxes. */
+  function isBarBlock(block) {
+    if (!block) return false;
+    return String(block.type || '').toLowerCase() === 'bar' ||
+      String(block.subtype || '').toLowerCase() === 'bar';
+  }
+
   /**
    * Configures the data for devices of dimmer switchtype.
    * @param {object} me  Core component object.
@@ -1439,7 +1448,9 @@ var DT_dial = (function () {
     me.unitvalue = choose(me.block.unit, '%');
     me.switchMode = capitalizeFirstLetter(me.block.switchMode);
     me.rgbContainer = '.dial-display';
-    if(me.block.subtype==='updown') makeUpDownDim(me);
+    // Bar reuses the Dimmer value/update path; no separate device logic is needed.
+    if (isBarBlock(me.block)) makeBarDim(me);
+    else if(me.block.subtype==='updown') makeUpDownDim(me);
     return;
   }
 
@@ -1496,11 +1507,14 @@ var DT_dial = (function () {
     me.styleStatus = me.block.styleStatus;
     me.backgroundselector='.blinds';
     
-    if(me.block.subtype==="updown") {
+    // Percentage blinds keep their existing Bar behavior, while type:'bar'
+    // is accepted as an equivalent shorthand for type:'dial', subtype:'bar'.
+    if (isBarBlock(me.block) && me.percentage) {
+      makeBarDim(me);
+    } else if(me.block.subtype==="updown") {
       makeUpDownDim(me);
       me.middleToggle = false;
     }
-    if(me.block.subtype==="bar" && me.percentage) makeBarDim(me);
     return;
   }
 
@@ -1534,10 +1548,10 @@ var DT_dial = (function () {
   }
 
   /**
-   * Configures a Blinds Percentage device to render as a vertical
-   * 10-segment bar instead of the draggable dial. Each segment represents
-   * 10% of the range; clicking a segment sets the device directly to that
-   * segment's level.
+   * Configures a Dimmer or Blinds Percentage device to render as a vertical
+   * 11-segment bar instead of the draggable dial. The segments represent
+   * 0%, 10%, 20%, ... 100%; clicking a segment sets the device directly to
+   * that segment's level.
    * @param {object} me  Core component object.
    */
   function makeBarDim(me) {
@@ -1550,8 +1564,10 @@ var DT_dial = (function () {
     me.getCurrentValue = getCurrentValueDim;
     me.decimals = choose(me.block.decimals, 0);
     me.backgroundselector = '.dial-bar-container';
-    /* segment thresholds, top (100%) to bottom (10%) */
-    me.barSegments = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10];
+    // Reverse scale: include an explicit 0% segment at the top, then increase
+    // in 10% steps down to 100%. This keeps zero selectable and visible as
+    // the lightest Text Status segment while preserving the existing steps.
+    me.barSegments = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
     me.$mountPoint.addClass('dialbar');
     return;
   }
@@ -1569,13 +1585,71 @@ var DT_dial = (function () {
       me.$segments = me.$mountPoint.find('.dial-bar-segment');
     }
     me.value = me.getCurrentValue(me);
-    me.$segments.each(function () {
+
+    // The Bar works in 10% steps. If Domoticz reports an intermediate value,
+    // use the last filled step as the selected segment so the value label
+    // always remains inside the visually active part of the Bar.
+    var selectedLevel = Math.max(0, Math.min(100, Math.floor(me.value / 10) * 10));
+    var barValueText = number_format(me.value, me.decimals) + me.unitvalue;
+    var openText = language.switches && language.switches.state_open
+      ? language.switches.state_open
+      : 'OPEN';
+    var closedText = language.switches && language.switches.state_closed
+      ? language.switches.state_closed
+      : 'CLOSED';
+
+    me.$segments.each(function (index) {
       var level = parseInt($(this).data('level'), 10);
-      $(this).toggleClass('filled', me.value >= level);
+      var filled = me.value >= level;
+      var $segment = $(this);
+      var label = '';
+      $segment.toggleClass('filled', filled);
+
+      // Open/Closed come from the configured Dashticz language JSON. For all
+      // intermediate positions, show the current percentage only in the
+      // selected segment instead of below the complete Bar.
+      if (level === 0) {
+        label = openText;
+      } else if (level === 100) {
+        label = closedText;
+      } else if (level === selectedLevel) {
+        label = barValueText;
+      }
+
+      $segment
+        .text(label)
+        .css({
+          display: 'flex',
+          'align-items': 'center',
+          'justify-content': 'center',
+          'font-weight': label ? '600' : '',
+          'line-height': label ? '1' : '',
+          // Keep Bar labels consistent with the normal block title color.
+          color: label ? 'var(--text-title)' : '',
+        });
+
+      // Use the theme's Text Status color for the active bar. Only the
+      // background is blended with transparency, so the labels keep their
+      // own full-strength title color. The 0% segment starts at 40% and the
+      // 100% segment uses the complete Text Status color.
+      if (filled) {
+        var colorStrength = Math.round(40 + (index / (me.barSegments.length - 1)) * 60);
+        var backgroundColor = colorStrength === 100
+          ? 'var(--text-status)'
+          : 'color-mix(in srgb, var(--text-status) ' + colorStrength + '%, transparent)';
+        $segment.css({
+          'background-color': backgroundColor,
+          opacity: '',
+          filter: '',
+        });
+      } else {
+        $segment.css({ 'background-color': '', opacity: '', filter: '' });
+      }
     });
-    me.$mountPoint
-      .find('.dial-bar-value')
-      .text(number_format(me.value, me.decimals) + me.unitvalue);
+
+    // The current value is rendered inside the selected Bar segment now, so
+    // the old value below the Bar must no longer consume visual space.
+    me.$mountPoint.find('.dial-bar-value').text('').hide();
   }
 
   function tapUpDown(me) {
