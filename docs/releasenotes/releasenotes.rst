@@ -34,6 +34,13 @@ v3.45.2 beta (20-8-2026)
   blue icon rather than one matching the border color, so the icon stays
   the one visual cue that changes per mode at a glance.
 
+- Device, Multi Device and Custom device icons are now the same 45px width
+  as every other block type placed on screen (Widget, Separator, Slide
+  button, Group), instead of rendering 5px narrower at 40px. Widget,
+  Separator, Slide button and Group already built their wrapper with the
+  ``dt_block`` class that the wider ``.dt_block .col-icon`` rule targets;
+  plain devices and Multi/Custom device value rows now get that class too.
+
 * **Fixes**
 
 - Fixed thermostat (and other) dial widgets still rendering off-centre on
