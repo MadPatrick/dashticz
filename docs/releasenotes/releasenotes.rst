@@ -102,6 +102,16 @@ v3.45.2 beta (20-8-2026)
   a device's image icon and a Separator's image icon using the same file
   still rendered at two different sizes. All four rules now use 35px.
 
+- Fixed screen navigation - both swiping and tapping a slide button -
+  being unreliable on tablets while working fine on a PC. A touchscreen
+  tap almost always drifts a few pixels, unlike a precise mouse click,
+  and Swiper's default ``threshold`` (5px) misreads that drift as an
+  aborted swipe attempt; while a transition is still animating, Swiper's
+  default ``preventClicksPropagation`` then stops that tap from ever
+  reaching the block's click handler - invisible on desktop, where a
+  mouse click rarely moves at all. ``js/main.js``'s ``startSwiper()`` now
+  raises ``threshold`` to 10 and sets ``preventClicksPropagation: false``.
+
 * **Code**
 
 - Updated 4 ``tests/source.test.js`` assertions left stale by the Bar

@@ -1457,6 +1457,14 @@ function startSwiper() {
         },
         direction: 'horizontal',
         allowTouchMove: settings.swiper_touch_move,
+        // A touchscreen tap almost always drifts a few px, unlike a mouse
+        // click; Swiper's default threshold (5) misreads that drift as a
+        // swipe attempt and, while animating, its default
+        // preventClicksPropagation stops the tap from ever reaching the
+        // block's click handler - invisible on desktop, where a mouse click
+        // rarely moves at all.
+        threshold: 10,
+        preventClicksPropagation: false,
       });
       myswiper.on('transitionStart', function () {
         $('.slide').removeClass('selectedbutton');
