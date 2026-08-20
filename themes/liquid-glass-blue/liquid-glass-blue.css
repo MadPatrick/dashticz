@@ -313,7 +313,7 @@
 }
 
 .blocktitle img {
-  max-width: 34px !important;
+  max-width: 35px !important;
   padding-bottom: 10px !important;
 }
 
@@ -359,11 +359,11 @@
 
 .col-icon img,
 .icon img {
-  max-width: 30px !important;
+  max-width: 35px !important;
 }
 
 .titlegroups .col-icon img.icon {
-  max-width: 34px !important;
+  max-width: 35px !important;
   height: auto !important;
 }
 
@@ -446,8 +446,8 @@
 /* Verklein ALLEEN de afbeeldingen binnen dimmer-/blinds-blokken */
 .mh:has(.slider) .col-icon img,
 .mh:has(.blinds) .col-icon img {
-    max-width: 30px !important;
-    width: 30px !important;
+    max-width: 35px !important;
+    width: 35px !important;
     height: auto !important;
 }
 .standby .screenstandby {

@@ -93,6 +93,15 @@ v3.45.2 beta (20-8-2026)
   image cap is now 30px, matching the default theme and the themes' own
   existing dimmer/blinds-slider carve-out.
 
+- Unified image-icon sizing on the Modern Dark, Liquid Glass Blue and
+  Liquid Glass Grey themes to 35px everywhere. The fix above still left
+  two slightly different sizes in place - 30px for the general
+  ``.col-icon``/``.icon`` image cap and the dimmer/blinds-slider
+  carve-out, 34px for the Separator's dedicated
+  ``.titlegroups .col-icon img.icon`` and ``.blocktitle img`` rules - so
+  a device's image icon and a Separator's image icon using the same file
+  still rendered at two different sizes. All four rules now use 35px.
+
 * **Code**
 
 - Updated 4 ``tests/source.test.js`` assertions left stale by the Bar
