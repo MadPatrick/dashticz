@@ -79,6 +79,20 @@ v3.45.2 beta (20-8-2026)
   already adds to its parent element to tell it apart from the circular
   dial (#182).
 
+- Fixed custom image icons (and inline icons like a thermostat dial's
+  value-row icon) rendering far too large on the Modern Dark, Liquid Glass
+  Blue and Liquid Glass Grey themes. Those themes' blanket
+  ``.icon { font-size: 40px !important; }`` rule matched *any* element
+  carrying the generic ``icon`` class, not just the intended main
+  device/widget icon column, so unrelated inline icons elsewhere in the
+  UI were blown up too. Their ``.col-icon img, .icon img`` rule also
+  capped custom image icons at 65px - more than double the 30px every
+  other theme and block type uses - so a device's image icon rendered
+  visibly larger than a Separator's or Widget's icon using that same
+  file. The font-size rule is now scoped to ``.col-icon .icon`` and the
+  image cap is now 30px, matching the default theme and the themes' own
+  existing dimmer/blinds-slider carve-out.
+
 * **Code**
 
 - Updated 4 ``tests/source.test.js`` assertions left stale by the Bar
