@@ -9,6 +9,18 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 v3.45.2 beta (20-8-2026)
 -------------------------
 
+* **Enhancements**
+
+- Added a **Full-width image** toggle to the Add Button Wizard popup's
+  Icon/Image picker (shown once a custom image is picked). Previously the
+  picker only ever saved a chosen image into the small, fixed-size icon
+  field (``.col-icon``), with no way to reproduce a webcam/radar-style
+  button that fills and scales with the block - reported as a missing
+  ``btnimage`` parameter, distinct from ``image``. Checking the toggle
+  saves the same picked image as ``btnimage`` instead, Dashticz's existing
+  dedicated full-block-width image field, instead of leaving users with an
+  oversized icon floating in an otherwise-empty block (#171).
+
 * **Fixes**
 
 - Fixed thermostat (and other) dial widgets still rendering off-centre on
