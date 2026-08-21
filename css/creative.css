@@ -895,7 +895,8 @@ next css sets the default height of the frame popup
 }
 
 .settings-custom-css-notice {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
+  min-width: 260px;
   margin-top: 0;
   padding: 8px 10px;
   color: #0f5132;

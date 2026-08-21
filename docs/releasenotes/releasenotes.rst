@@ -35,7 +35,10 @@ v3.45.3 beta (21-8-2026)
 
 - The Theme tab's background-image preview swatch and the active custom
   stylesheet notice now sit beside their **Choose background image** /
-  **Path/URL** fields instead of stacking underneath them.
+  **Path/URL** fields instead of stacking underneath them. The notice was
+  also sizing to its own content by default, wrapping its text across 4
+  short lines - it now has a 260px minimum width and grows to fill the
+  row, wrapping across 2 lines instead.
 
 v3.45.2 beta (20-8-2026)
 -------------------------
