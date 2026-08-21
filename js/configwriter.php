@@ -356,6 +356,25 @@ function configwriter_remove_config_key($config, $key)
 }
 
 /**
+ * Remove every screens[N][$property] / standby_screen[$property] override
+ * across the whole config. Used when the dashboard-wide default for that
+ * same property (config[$property], e.g. gridColumns/rowHeight) is being
+ * changed from the Settings UI: without this, a screen that already had
+ * its own explicit value - which every grid screen save wrote until the
+ * pinGridColumns/pinRowHeight fix - would keep shadowing the new default
+ * forever, since a per-screen value always takes priority. Changing the
+ * setting is a deliberate, dashboard-wide action, so it's the one moment
+ * a screen's existing value should also be cleared rather than preserved.
+ */
+function configwriter_remove_grid_default_overrides($config, $property)
+{
+    $pattern = '/^[ \t]*(?:screens\[\s*\d+\s*\]|standby_screen)\[\s*([\'"])'
+        . preg_quote((string)$property, '/')
+        . '\1\s*\]\s*=/m';
+    return configwriter_remove_assignment_statements($config, $pattern);
+}
+
+/**
  * Replace an existing single-line config["key"] = value; assignment in
  * place, keeping its current position in the file. Only handles the common
  * case where the whole assignment sits on one line (true for every scalar

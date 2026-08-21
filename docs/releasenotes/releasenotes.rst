@@ -52,6 +52,11 @@ v3.45.3 beta (21-8-2026)
   default (a genuine per-screen customization) - a plain save otherwise
   keeps that screen following the setting, and it no longer gets frozen
   to whatever was in effect the first time the screen was ever saved.
+  Changing the setting itself also clears any existing per-screen
+  override for that same property on every screen at once, so an
+  install with grid screens saved before this existed - which all had
+  an explicit value pinned - isn't stuck manually editing ``CONFIG.js``
+  to let the dashboard-wide setting reach them.
 
 * **Fixes**
 
