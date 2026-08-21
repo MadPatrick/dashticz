@@ -40,6 +40,24 @@ v3.45.3 beta (21-8-2026)
   short lines - it now has a 260px minimum width and grows to fill the
   row, wrapping across 2 lines instead.
 
+* **Fixes**
+
+- Fixed ``CONFIG.js`` accumulating a growing run of blank lines between
+  editor-managed sections (screens, grid layouts, widgets) every time one
+  was resaved. ``configwriter_remove_section()`` spliced the raw text
+  before the removed section straight onto the raw text after it, but
+  both sides already carried their own leading blank line from
+  ``configwriter_wrap_section()`` - since a section is always removed and
+  re-appended on every save, each save stacked another blank line onto
+  the same spot, compounding without bound. It now trims the whitespace
+  on both sides of the cut and rejoins with exactly one blank line.
+
+- Fixed settings saved from the Settings UI always jumping to the end of
+  the ``config["key"] = value;`` block, scattering an edited setting away
+  from the related settings it was originally grouped near.
+  ``configwriter_upsert_root_config_settings()`` now updates an existing
+  single-line setting in place; only genuinely new keys get appended.
+
 * **Removed**
 
 - The **Media** tile in the settings menu (**switch_horizon**,
