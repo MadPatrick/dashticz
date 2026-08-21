@@ -942,6 +942,35 @@ next css sets the default height of the frame popup
   }
 }
 
+/* Compact 2-column layout for the Font size / Icon size sections - reuses
+   the color grid's row proportions instead of the full-width single-column
+   .settings-row, which left a plain pixel-value input almost 40 characters
+   wide for something like "18px". */
+.settings-theme-compact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+}
+
+.settings-theme-compact-grid .settings-row {
+  grid-template-columns: minmax(130px, 1fr) minmax(0, 110px) 0;
+}
+
+/* The blanket #settingspopup .settings-control .form-control rule fixes
+   inputs at 40ch - far wider than a short value like "35px" needs, and
+   wider than this row's own input column. Outrank it (an ID beats a plain
+   class selector) so the field actually shrinks to fit here. */
+#settingspopup .settings-theme-compact-grid .settings-control .form-control {
+  width: 100%;
+  max-width: 110px;
+}
+
+@media (max-width: 767.98px) {
+  .settings-theme-compact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .topbar-settings-wrap .settings {
   vertical-align: middle;
 }

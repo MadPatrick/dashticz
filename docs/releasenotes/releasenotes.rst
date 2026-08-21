@@ -6,6 +6,27 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.45.3 beta (21-8-2026)
+-------------------------
+
+* **Enhancements**
+
+- The Modern Dark, Liquid Glass Blue and Liquid Glass Grey themes' icon
+  and image size (previously a hardcoded 35px) is now configurable from
+  the settings menu, in a new **Icon size** section next to the existing
+  **Font size** fields on the Theme tab. It's backed by a new
+  ``--icon-image-size`` CSS variable that the theme files' icon-size rules
+  (the Separator, the general device/widget icon, and the dimmer/blinds
+  slider icon) all reference, wired into the same CSS-variable settings
+  panel, save endpoint and ``custom.css`` override mechanism the Colors
+  and Font size sections already use.
+
+- The Font size and new Icon size fields now use a compact 2-column
+  layout, matching the Colors section, instead of a full-width
+  single-column row with the same 40-character-wide input as every other
+  setting - far more than a short pixel value like ``18px`` needs. The
+  input is now capped at 110px.
+
 v3.45.2 beta (20-8-2026)
 -------------------------
 

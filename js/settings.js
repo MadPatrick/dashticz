@@ -1859,6 +1859,10 @@ var _THEME_FONT_VARS = [
   '--font-large',
 ];
 
+var _THEME_ICON_VARS = [
+  '--icon-image-size',
+];
+
 // Labels for CSS variables (fall back to the var name itself).
 function _themeCssVarLabel(varName) {
   var themeLabels = (language.settings.theme && language.settings.theme.vars) || {};
@@ -1896,7 +1900,7 @@ function _getStoredCssVarOverrides() {
       var rule = rules[ri];
       if (rule.type === 1 && rule.selectorText === ':root') {
         var cssText = rule.cssText;
-        var vars = _THEME_COLOR_VARS.concat(_THEME_FONT_VARS);
+        var vars = _THEME_COLOR_VARS.concat(_THEME_FONT_VARS).concat(_THEME_ICON_VARS);
         for (var vi = 0; vi < vars.length; vi++) {
           var v = vars[vi];
           // Use a literal indexOf search to find the var declaration, avoiding
@@ -1963,25 +1967,45 @@ function renderThemeSettingsPanel() {
   });
   html += '</div>';
 
+  // Shared row markup for a plain text cssvar input (font size, icon size, ...).
+  function renderCssVarTextRow(varName) {
+    var inputId = 'setting-cssvar-' + varName.replace(/^--/, '').replace(/-/g, '_');
+    var rowHtml = '<div class="settings-row">';
+    rowHtml += '<label class="settings-label" for="' + escapeSettingsHtml(inputId) + '">' +
+      escapeSettingsHtml(_themeCssVarLabel(varName)) + '</label>';
+    rowHtml += '<div class="settings-control">';
+    rowHtml += '<input type="text" class="form-control settings-cssvar-input" ' +
+      'id="' + escapeSettingsHtml(inputId) + '" ' +
+      'data-cssvar="' + escapeSettingsHtml(varName) + '" ' +
+      'placeholder="' + escapeSettingsHtml(varName) + '" ' +
+      'autocomplete="off">';
+    rowHtml += '</div>';
+    rowHtml += '<div class="settings-help-slot"></div></div>';
+    return rowHtml;
+  }
+
   // Font size section heading.
   html += '<div class="settings-section-heading">' +
     escapeSettingsHtml(fontSectionLabel) + '</div>';
 
   // Font size variable rows.
+  html += '<div class="settings-theme-compact-grid">';
   _THEME_FONT_VARS.forEach(function (varName) {
-    var inputId = 'setting-cssvar-' + varName.replace(/^--/, '').replace(/-/g, '_');
-    html += '<div class="settings-row">';
-    html += '<label class="settings-label" for="' + escapeSettingsHtml(inputId) + '">' +
-      escapeSettingsHtml(_themeCssVarLabel(varName)) + '</label>';
-    html += '<div class="settings-control">';
-    html += '<input type="text" class="form-control settings-cssvar-input" ' +
-      'id="' + escapeSettingsHtml(inputId) + '" ' +
-      'data-cssvar="' + escapeSettingsHtml(varName) + '" ' +
-      'placeholder="' + escapeSettingsHtml(varName) + '" ' +
-      'autocomplete="off">';
-    html += '</div>';
-    html += '<div class="settings-help-slot"></div></div>';
+    html += renderCssVarTextRow(varName);
   });
+  html += '</div>';
+
+  // Icon/image size section heading.
+  var iconSectionLabel = themeL.icons || 'Icon size';
+  html += '<div class="settings-section-heading">' +
+    escapeSettingsHtml(iconSectionLabel) + '</div>';
+
+  // Icon/image size variable rows.
+  html += '<div class="settings-theme-compact-grid">';
+  _THEME_ICON_VARS.forEach(function (varName) {
+    html += renderCssVarTextRow(varName);
+  });
+  html += '</div>';
 
   return html;
 }
