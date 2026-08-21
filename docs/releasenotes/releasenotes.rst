@@ -85,6 +85,14 @@ v3.45.3 beta (21-8-2026)
   repeated edits in the same session instead of re-deriving it from those
   stale globals.
 
+- Fixed finger-swipe screen navigation silently doing nothing on narrow
+  (phone-width) touch devices when **Enable Swiper** was set to ``1``.
+  Per its own settings help text, ``1`` means "Enable on narrow screens",
+  but ``buildSwipingScrolling()`` tested the opposite condition and only
+  ever started Swiper on wide screens - with Swiper never created, the
+  non-swiper screen-switching fallback has no touch/gesture handling at
+  all, so a swipe had nothing listening for it.
+
 * **Removed**
 
 - The **Media** tile in the settings menu (**switch_horizon**,

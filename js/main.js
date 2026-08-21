@@ -1426,9 +1426,19 @@ function buildSwipingScrolling() {
   var enable_swiper = Number(settings['enable_swiper']);
   var vertical_screen = window.innerWidth < 768;
   var multi_screen = $('.dt-container .screen').length > 1;
+  // enable_swiper===1 means "Enable on narrow screens" (see the Screen
+  // settings' help text, lang/*.json's enable_swiper_help) - swiping is
+  // most useful on a narrow phone, where there's no room to show multiple
+  // screens' worth of columns side by side. This used to test
+  // !vertical_screen (i.e. only start Swiper on WIDE screens), the
+  // opposite of what's documented and what the setting name promises -
+  // so anyone who set it to 1 specifically for their phone/narrow tablet
+  // got no swiper at all, and no fallback touch handling either
+  // (screenswitcher.js's non-swiper goToScreen() branch only show()/hide()s
+  // - it has no gesture support, so this made finger-swipe do nothing).
   var start_swiper =
     multi_screen &&
-    (enable_swiper === 2 || (enable_swiper === 1 && !vertical_screen));
+    (enable_swiper === 2 || (enable_swiper === 1 && vertical_screen));
   if (start_swiper) startSwiper();
   var vertical_scroll = Number(settings['vertical_scroll']);
   if (vertical_scroll === 2 || (vertical_scroll === 1 && !start_swiper)) {
