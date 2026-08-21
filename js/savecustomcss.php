@@ -29,7 +29,7 @@ $allowed = [
     '--selector-bg', '--blocktitle',
     '--text-title', '--text-status',
     '--font-small', '--font-large',
-    '--icon-image-size',
+    '--icon-font-size', '--icon-image-size',
 ];
 
 $sanitized = [];

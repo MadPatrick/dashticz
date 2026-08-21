@@ -827,7 +827,8 @@
                 "--text-status": "Tekst status (--text-status)",
                 "--font-small": "Klein lettertype (--font-small)",
                 "--font-large": "Groot lettertype (--font-large)",
-                "--icon-image-size": "Icoon-/afbeeldingsgrootte (--icon-image-size)"
+                "--icon-font-size": "Icoon (--icon-font-size)",
+                "--icon-image-size": "Afbeelding (--icon-image-size)"
             }
         }
     },

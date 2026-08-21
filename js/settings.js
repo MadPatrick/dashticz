@@ -1860,8 +1860,13 @@ var _THEME_FONT_VARS = [
 ];
 
 var _THEME_ICON_VARS = [
+  '--icon-font-size',
   '--icon-image-size',
 ];
+
+// All theme vars whose value is always a bare pixel number - the settings
+// panel shows/accepts just the number and adds "px" itself.
+var _THEME_PX_VARS = _THEME_FONT_VARS.concat(_THEME_ICON_VARS);
 
 // Labels for CSS variables (fall back to the var name itself).
 function _themeCssVarLabel(varName) {
@@ -1968,17 +1973,28 @@ function renderThemeSettingsPanel() {
   html += '</div>';
 
   // Shared row markup for a plain text cssvar input (font size, icon size, ...).
+  // Px vars (_THEME_PX_VARS) render as a bare number with a fixed "px" suffix
+  // instead of a free-text field, since their value is always a pixel size.
   function renderCssVarTextRow(varName) {
     var inputId = 'setting-cssvar-' + varName.replace(/^--/, '').replace(/-/g, '_');
+    var isPx = _THEME_PX_VARS.indexOf(varName) !== -1;
     var rowHtml = '<div class="settings-row">';
     rowHtml += '<label class="settings-label" for="' + escapeSettingsHtml(inputId) + '">' +
       escapeSettingsHtml(_themeCssVarLabel(varName)) + '</label>';
-    rowHtml += '<div class="settings-control">';
-    rowHtml += '<input type="text" class="form-control settings-cssvar-input" ' +
-      'id="' + escapeSettingsHtml(inputId) + '" ' +
-      'data-cssvar="' + escapeSettingsHtml(varName) + '" ' +
-      'placeholder="' + escapeSettingsHtml(varName) + '" ' +
-      'autocomplete="off">';
+    rowHtml += '<div class="settings-control' + (isPx ? ' settings-cssvar-px-control' : '') + '">';
+    if (isPx) {
+      rowHtml += '<input type="number" class="form-control settings-cssvar-input" ' +
+        'id="' + escapeSettingsHtml(inputId) + '" ' +
+        'data-cssvar="' + escapeSettingsHtml(varName) + '" ' +
+        'min="1" step="1" inputmode="numeric" autocomplete="off">';
+      rowHtml += '<span class="settings-cssvar-px-suffix">px</span>';
+    } else {
+      rowHtml += '<input type="text" class="form-control settings-cssvar-input" ' +
+        'id="' + escapeSettingsHtml(inputId) + '" ' +
+        'data-cssvar="' + escapeSettingsHtml(varName) + '" ' +
+        'placeholder="' + escapeSettingsHtml(varName) + '" ' +
+        'autocomplete="off">';
+    }
     rowHtml += '</div>';
     rowHtml += '<div class="settings-help-slot"></div></div>';
     return rowHtml;
@@ -2022,6 +2038,9 @@ function bindThemeCssVarControls() {
     var varName = String($input.data('cssvar') || '');
     if (!varName) return;
     var value = storedOverrides[varName] || _getComputedCssVar(varName);
+    if (_THEME_PX_VARS.indexOf(varName) !== -1) {
+      value = value.replace(/px\s*$/i, '').trim();
+    }
     $input.val(value);
     // Sync swatch if color input is present.
     var $swatch = $popup.find('#' + $.escapeSelector($input.attr('id') + '-swatch'));
@@ -2779,12 +2798,17 @@ function saveSettings() {
     alertSettings += 'config["config_mode"] = ' + _modeValue + ';\n';
   }
 
-  // Collect CSS variable overrides from the theme panel.
+  // Collect CSS variable overrides from the theme panel. Px vars are entered
+  // as a bare number - add the "px" back on here before saving.
   var cssVars = {};
   $('div#settingspopup .settings-cssvar-input').each(function () {
     var varName = $(this).data('cssvar');
     if (varName) {
-      cssVars[varName] = String($(this).val() || '').trim();
+      var varValue = String($(this).val() || '').trim();
+      if (varValue !== '' && _THEME_PX_VARS.indexOf(varName) !== -1 && !/px\s*$/i.test(varValue)) {
+        varValue += 'px';
+      }
+      cssVars[varName] = varValue;
     }
   });
 

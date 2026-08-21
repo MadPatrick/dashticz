@@ -953,16 +953,33 @@ next css sets the default height of the frame popup
 }
 
 .settings-theme-compact-grid .settings-row {
-  grid-template-columns: minmax(130px, 1fr) minmax(0, 110px) 0;
+  grid-template-columns: minmax(130px, 1fr) minmax(0, 130px) 0;
 }
 
 /* The blanket #settingspopup .settings-control .form-control rule fixes
-   inputs at 40ch - far wider than a short value like "35px" needs, and
-   wider than this row's own input column. Outrank it (an ID beats a plain
-   class selector) so the field actually shrinks to fit here. */
+   inputs at 40ch - far wider than a plain number needs, and wider than
+   this row's own input column. Outrank it (an ID beats a plain class
+   selector) so the field actually shrinks to fit here. */
 #settingspopup .settings-theme-compact-grid .settings-control .form-control {
   width: 100%;
-  max-width: 110px;
+  max-width: 130px;
+}
+
+/* Number + "px" suffix pair used by the Font size / Icon size rows - the
+   unit is fixed and shown next to the field instead of being typed. */
+.settings-cssvar-px-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#settingspopup .settings-cssvar-px-control .form-control {
+  max-width: 80px;
+}
+
+.settings-cssvar-px-suffix {
+  color: #6c757d;
+  font-size: 13px;
 }
 
 @media (max-width: 767.98px) {

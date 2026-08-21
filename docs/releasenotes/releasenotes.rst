@@ -14,18 +14,24 @@ v3.45.3 beta (21-8-2026)
 - The Modern Dark, Liquid Glass Blue and Liquid Glass Grey themes' icon
   and image size (previously a hardcoded 35px) is now configurable from
   the settings menu, in a new **Icon size** section next to the existing
-  **Font size** fields on the Theme tab. It's backed by a new
-  ``--icon-image-size`` CSS variable that the theme files' icon-size rules
-  (the Separator, the general device/widget icon, and the dimmer/blinds
-  slider icon) all reference, wired into the same CSS-variable settings
-  panel, save endpoint and ``custom.css`` override mechanism the Colors
-  and Font size sections already use.
+  **Font size** fields on the Theme tab, with separate **Icon** and
+  **Image** fields. It's backed by two new CSS variables - ``--icon-font-size``
+  (the FontAwesome icon column, ``.col-icon .icon``) and
+  ``--icon-image-size`` (actual ``<img>`` icons) - since a device's custom
+  image and a widget's FontAwesome icon are unrelated and were previously
+  forced to the same size. Both are wired into the same CSS-variable
+  settings panel, save endpoint and ``custom.css`` override mechanism the
+  Colors and Font size sections already use.
 
 - The Font size and new Icon size fields now use a compact 2-column
   layout, matching the Colors section, instead of a full-width
   single-column row with the same 40-character-wide input as every other
-  setting - far more than a short pixel value like ``18px`` needs. The
-  input is now capped at 110px.
+  setting - far more than a short pixel value like ``18`` needs.
+
+- The Font size and Icon size fields now take a bare number with a fixed
+  "px" shown next to the field, instead of free text requiring e.g.
+  ``18px`` to be typed - these variables are always a pixel size, so
+  there was never a reason to type or accept a unit.
 
 v3.45.2 beta (20-8-2026)
 -------------------------
