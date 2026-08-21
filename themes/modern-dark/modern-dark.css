@@ -214,6 +214,12 @@
   transition: color .2s ease, background-color .2s ease;
 }
 
+.transbg .selector-buttons {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .transbg .selector-buttons .btn {
   display: inline-flex;
   align-items: center;

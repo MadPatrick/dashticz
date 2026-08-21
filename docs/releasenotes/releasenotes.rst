@@ -58,6 +58,13 @@ v3.45.3 beta (21-8-2026)
   ``configwriter_upsert_root_config_settings()`` now updates an existing
   single-line setting in place; only genuinely new keys get appended.
 
+- Centered a Selector Switch device's option buttons
+  (``.btn-group.selector-buttons``, e.g. Open/Half/Dicht) horizontally
+  within its block on the Modern Dark, Liquid Glass Blue and Liquid Glass
+  Grey themes, instead of hugging the right edge - Bootstrap's
+  ``.btn-group`` is an inline-flex element, so it inherited its position
+  from ``.mh``'s ``text-align: right``.
+
 * **Removed**
 
 - The **Media** tile in the settings menu (**switch_horizon**,
