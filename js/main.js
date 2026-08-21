@@ -1420,6 +1420,28 @@ function buildScreens() {
   }
 
   buildSwipingScrolling();
+
+  // TEMP DEBUG - remove after diagnosing the tablet viewport-size report.
+  $('#dt-temp-viewport-debug').remove();
+  $('<div id="dt-temp-viewport-debug"></div>')
+    .css({
+      position: 'fixed',
+      bottom: '2px',
+      left: '2px',
+      zIndex: 999999,
+      background: 'rgba(255,0,0,0.85)',
+      color: '#fff',
+      font: '12px monospace',
+      padding: '2px 6px',
+      borderRadius: '3px',
+      pointerEvents: 'none',
+    })
+    .text(
+      window.innerWidth + 'x' + window.innerHeight +
+      ' dpr=' + window.devicePixelRatio +
+      ' screen=' + window.screen.width + 'x' + window.screen.height
+    )
+    .appendTo('body');
 }
 
 function buildSwipingScrolling() {
