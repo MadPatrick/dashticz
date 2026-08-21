@@ -845,12 +845,38 @@ next css sets the default height of the frame popup
   white-space: pre-wrap;
 }
 
+/* Background picker / Path row: the preview swatch and the "active custom
+   stylesheet" notice sit beside their select/input on the same row instead
+   of stacking underneath it, so the row's control column needs more room
+   than the standard 40ch a plain field gets. */
+.settings-bg-picker-row,
+.settings-bg-path-row {
+  grid-template-columns: minmax(230px, 320px) minmax(0, 1fr) 26px;
+}
+
+.settings-bg-picker-row .settings-control,
+.settings-bg-path-row .settings-control {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.settings-bg-picker-row .settings-bg-pick {
+  flex: 0 0 auto;
+  width: 260px;
+}
+
+.settings-bg-path-row .settings-bg-path {
+  flex: 0 0 auto;
+}
+
 .settings-standby-bg-preview {
   display: none;
-  width: 100%;
+  flex: 0 0 auto;
+  width: 160px;
   max-width: 40ch;
   height: 72px;
-  margin-top: 8px;
+  margin-top: 0;
   border: 1px solid #ced4da;
   border-radius: 8px;
   background-position: center;
@@ -869,7 +895,8 @@ next css sets the default height of the frame popup
 }
 
 .settings-custom-css-notice {
-  margin-top: 8px;
+  flex: 0 1 auto;
+  margin-top: 0;
   padding: 8px 10px;
   color: #0f5132;
   background: #d1e7dd;

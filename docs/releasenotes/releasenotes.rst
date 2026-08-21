@@ -33,6 +33,10 @@ v3.45.3 beta (21-8-2026)
   ``18px`` to be typed - these variables are always a pixel size, so
   there was never a reason to type or accept a unit.
 
+- The Theme tab's background-image preview swatch and the active custom
+  stylesheet notice now sit beside their **Choose background image** /
+  **Path/URL** fields instead of stacking underneath them.
+
 v3.45.2 beta (20-8-2026)
 -------------------------
 
