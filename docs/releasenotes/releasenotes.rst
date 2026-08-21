@@ -65,6 +65,12 @@ v3.45.3 beta (21-8-2026)
   ``.btn-group`` is an inline-flex element, so it inherited its position
   from ``.mh``'s ``text-align: right``.
 
+- Vertically centered a Selector Switch's option buttons/dropdown below
+  the title, and gave the ``SelectorStyle`` ``1`` dropdown (e.g.
+  Husqvarna, Lyrion) the same full-width treatment the buttons already
+  got - previously the plain ``<select>`` was sized to its own content
+  and left, right-aligned like the buttons used to be.
+
 * **Removed**
 
 - The **Media** tile in the settings menu (**switch_horizon**,

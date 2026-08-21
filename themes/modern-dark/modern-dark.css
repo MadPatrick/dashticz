@@ -214,6 +214,24 @@
   transition: color .2s ease, background-color .2s ease;
 }
 
+/* .selector-buttons and the plain <select> a Selector Switch renders
+   instead (device['SelectorStyle'] === 1) sit below a title line, so
+   the surrounding .col-data needs to be a flex column - scoped with
+   :has() to only devices that actually render one of these, so every
+   other block's plain title/value/lastupdate stacking is untouched. */
+.transbg .col-data:has(.selector-buttons),
+.transbg .col-data:has(> select) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.transbg .col-data .selector-buttons,
+.transbg .col-data > select {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
 .transbg .selector-buttons {
   display: flex;
   justify-content: center;
@@ -253,6 +271,7 @@
 }
 
 .transbg .col-data > select {
+  width: 100%;
   min-height: 44px;
   padding: 10px 14px !important;
   font-size: 18px !important;
