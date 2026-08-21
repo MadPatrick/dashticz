@@ -282,28 +282,6 @@ settingList['localize']['speak_lang']['options']['pl-PL'] =
 settingList['localize']['speak_lang']['options']['ru-RU'] =
   language.settings.localize.ru;
 
-settingList['media'] = {};
-settingList['media']['title'] = language.settings.media.title;
-
-settingList['media']['switch_horizon'] = {};
-settingList['media']['switch_horizon']['title'] =
-  language.settings.media.switch_horizon;
-settingList['media']['switch_horizon']['type'] = 'text';
-settingList['media']['switch_horizon']['help'] =
-  language.settings.media.switch_horizon_help;
-
-settingList['media']['host_nzbget'] = {};
-settingList['media']['host_nzbget']['title'] =
-  language.settings.media.host_nzbget;
-settingList['media']['host_nzbget']['type'] = 'text';
-settingList['media']['host_nzbget']['help'] =
-  language.settings.media.host_nzbget_help;
-
-settingList['media']['hide_mediaplayer'] = {};
-settingList['media']['hide_mediaplayer']['title'] =
-  language.settings.media.hide_mediaplayer;
-settingList['media']['hide_mediaplayer']['type'] = 'checkbox';
-
 /* Widget settings shown as tiles in Custom mode (not Wizard). */
 var weatherIconOptions = {
   line: language.settings.weather.icons_line,
@@ -738,7 +716,6 @@ var settingsCategoryIcons = {
   theme: 'fas fa-paint-brush',
   standby: 'fas fa-moon',
   localize: 'fas fa-globe',
-  media: 'fas fa-film',
   widgets: 'fas fa-puzzle-piece',
   other: 'fas fa-ellipsis-h',
   about: 'fas fa-info-circle',
@@ -1316,7 +1293,6 @@ function getSettingsCategories() {
     'theme',
     'standby',
     'localize',
-    'media',
     'widgets',
     'other',
     'about',

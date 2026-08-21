@@ -40,6 +40,14 @@ v3.45.3 beta (21-8-2026)
   short lines - it now has a 260px minimum width and grows to fill the
   row, wrapping across 2 lines instead.
 
+* **Removed**
+
+- The **Media** tile in the settings menu (**switch_horizon**,
+  **host_nzbget** and **hide_mediaplayer**) - it saw little use as a
+  dedicated settings category. The config keys it edited are still fully
+  functional for anyone who sets them directly in ``CONFIG.js``; only the
+  settings-UI entry point was removed.
+
 v3.45.2 beta (20-8-2026)
 -------------------------
 
