@@ -89,6 +89,10 @@ v3.45.3 beta (21-8-2026)
   got - previously the plain ``<select>`` was sized to its own content
   and left, right-aligned like the buttons used to be.
 
+- Moved that same Selector Switch buttons/dropdown 5px above dead-center,
+  shrinking the gap to the title above by 5px (and growing the gap below
+  by the same amount).
+
 - Fixed editing a device's config from inside the Layout Editor, clicking
   OK, then editing a *different* device and clicking OK, silently
   reverting the first device's change - only the most-recently-edited
