@@ -1450,42 +1450,38 @@ function startSwiper() {
   $('.dt-container').addClass('swiper');
   $('.contents').addClass('swiper-wrapper');
   setTimeout(function () {
-    window.loadSwiper().then(function (Swiper) {
-      myswiper = new Swiper('.swiper', {
-        pagination: {
-          el: '.swiper-pagination',
-          clickable: true,
-        },
-        autoHeight: false,
-        //      speed: 0,
-        loop: false,
-        initialSlide: settings['start_page'] - 1,
-        effect: settings['slide_effect'],
-        keyboard: {
-          enabled: true,
-          onlyInViewport: false,
-        },
-        direction: 'horizontal',
-        allowTouchMove: settings.swiper_touch_move,
-        // A touchscreen tap almost always drifts a few px, unlike a mouse
-        // click; Swiper's default threshold (5) misreads that drift as a
-        // swipe attempt and, while animating, its default
-        // preventClicksPropagation stops the tap from ever reaching the
-        // block's click handler - invisible on desktop, where a mouse click
-        // rarely moves at all.
-        threshold: 10,
-        preventClicksPropagation: false,
-      });
-      myswiper.on('transitionStart', function () {
-        $('.slide').removeClass('selectedbutton');
-      });
-      myswiper.on('transitionEnd', function () {
-        $('.slide' + (1 + this.activeIndex)).addClass('selectedbutton');
-      });
-      $('.slide' + settings['start_page']).addClass('selectedbutton');
-    }).catch(function (err) {
-      console.error('Unable to load Swiper', err);
+    myswiper = new Swiper('.swiper', {
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      autoHeight: false,
+      //      speed: 0,
+      loop: false,
+      initialSlide: settings['start_page'] - 1,
+      effect: settings['slide_effect'],
+      keyboard: {
+        enabled: true,
+        onlyInViewport: false,
+      },
+      direction: 'horizontal',
+      allowTouchMove: settings.swiper_touch_move,
+      // A touchscreen tap almost always drifts a few px, unlike a mouse
+      // click; Swiper's default threshold (5) misreads that drift as a
+      // swipe attempt and, while animating, its default
+      // preventClicksPropagation stops the tap from ever reaching the
+      // block's click handler - invisible on desktop, where a mouse click
+      // rarely moves at all.
+      threshold: 10,
+      preventClicksPropagation: false,
     });
+    myswiper.on('transitionStart', function () {
+      $('.slide').removeClass('selectedbutton');
+    });
+    myswiper.on('transitionEnd', function () {
+      $('.slide' + (1 + this.activeIndex)).addClass('selectedbutton');
+    });
+    $('.slide' + settings['start_page']).addClass('selectedbutton');
   }, 100);
 }
 

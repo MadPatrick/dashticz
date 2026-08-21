@@ -93,6 +93,16 @@ v3.45.3 beta (21-8-2026)
   non-swiper screen-switching fallback has no touch/gesture handling at
   all, so a swipe had nothing listening for it.
 
+- Fixed touch-swipe screen navigation not working at all on at least one
+  real Android tablet, even with **Enable Swiper** left on its default
+  value. Swiper was loaded via a separate lazily-fetched chunk
+  (``window.loadSwiper()``); on that tablet, fetching the chunk at
+  runtime silently failed, so Swiper never initialized and no touch
+  handler was ever listening for a swipe, while the screen-switcher
+  buttons and mouse drag - which don't depend on it - kept working.
+  Swiper is now bundled directly into ``dist/bundle.js`` instead, with no
+  separate runtime fetch to fail.
+
 * **Removed**
 
 - The **Media** tile in the settings menu (**switch_horizon**,
