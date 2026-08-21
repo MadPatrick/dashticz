@@ -93,6 +93,13 @@ v3.45.3 beta (21-8-2026)
   shrinking the gap to the title above by 5px (and growing the gap below
   by the same amount).
 
+- Fixed unreadable white text on the Device Config popup's **Icon** /
+  **Dial** / **Bar** display-mode buttons when selected - Bootstrap's
+  default active-button text color assumes the usual solid dark
+  background, but this component's selected background is a light mint
+  green instead. The selected button's label now uses the same accent
+  blue as its icon.
+
 - Fixed editing a device's config from inside the Layout Editor, clicking
   OK, then editing a *different* device and clicking OK, silently
   reverting the first device's change - only the most-recently-edited
