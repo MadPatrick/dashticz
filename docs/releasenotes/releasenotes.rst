@@ -71,6 +71,20 @@ v3.45.3 beta (21-8-2026)
   got - previously the plain ``<select>`` was sized to its own content
   and left, right-aligned like the buttons used to be.
 
+- Fixed editing a device's config from inside the Layout Editor, clicking
+  OK, then editing a *different* device and clicking OK, silently
+  reverting the first device's change - only the most-recently-edited
+  device's edit actually persisted. Each confirmed change there is saved
+  immediately, resending every currently-placed device's definition, but
+  the in-memory device state was always rebuilt from ``blocks``/
+  ``columns`` on every popup open - and those client-side globals are
+  never patched after a save, only the server's ``CONFIG.js`` is - so the
+  second edit's save resent the first device using its stale pre-edit
+  data, reverting it server-side. Opening a device's config from the
+  Layout Editor now keeps already-known device/special state across
+  repeated edits in the same session instead of re-deriving it from those
+  stale globals.
+
 * **Removed**
 
 - The **Media** tile in the settings menu (**switch_horizon**,
