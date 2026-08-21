@@ -1281,7 +1281,9 @@ function configwriter_build_grid_layout_section(
     $gridColumns,
     $rowHeight,
     $gap,
-    $mobileLayout = 'stack'
+    $mobileLayout = 'stack',
+    $pinGridColumns = true,
+    $pinRowHeight = true
 ) {
     $n = max(0, min(99, (int)$screenNumber));
     $columns = max(1, min(100, (int)$gridColumns));
@@ -1327,8 +1329,19 @@ function configwriter_build_grid_layout_section(
         $target = 'screens[' . $n . ']';
     }
     $section .= $target . "['layout'] = 'grid';\n";
-    $section .= $target . "['gridColumns'] = " . $columns . ";\n";
-    $section .= $target . "['rowHeight'] = " . $row . ";\n";
+    // Only pin an explicit gridColumns/rowHeight onto this screen when the
+    // caller says it actually diverges from the dashboard-wide Settings >
+    // Weergave default (DashticzGridLayout.getGridScreenConfig() falls back
+    // to that setting for any screen without its own value). Every normal
+    // editor save otherwise matches the current default, so omitting these
+    // keeps the screen following it instead of freezing today's value in
+    // place the next time someone changes the setting.
+    if ($pinGridColumns) {
+        $section .= $target . "['gridColumns'] = " . $columns . ";\n";
+    }
+    if ($pinRowHeight) {
+        $section .= $target . "['rowHeight'] = " . $row . ";\n";
+    }
     $section .= $target . "['gap'] = " . $gridGap . ";\n";
     $section .= $target . "['mobileLayout'] = '" . $mobile . "';\n";
     $section .= $target . "['blocks'] = ["

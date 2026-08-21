@@ -46,7 +46,12 @@ v3.45.3 beta (21-8-2026)
   ``CONFIG.js``. Any ``layout: 'grid'`` screen that doesn't set its own
   ``gridColumns``/``rowHeight`` falls back to these settings before the
   hardcoded default, so leaving both untouched keeps every existing
-  install's grid screens exactly as they were.
+  install's grid screens exactly as they were. The Layout/Device/Widget
+  editors' save flows only pin an explicit ``gridColumns``/``rowHeight``
+  onto a screen when it actually diverges from this dashboard-wide
+  default (a genuine per-screen customization) - a plain save otherwise
+  keeps that screen following the setting, and it no longer gets frozen
+  to whatever was in effect the first time the screen was ever saved.
 
 * **Fixes**
 
