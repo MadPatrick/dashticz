@@ -908,7 +908,7 @@ test('layout writer keeps tall blocks on the same full-width grid', () => {
   assert.match(layout, /configwriter_build_layout_section/);
   assert.match(layout, /height/);
   assert.match(styles, /display: contents/);
-  assert.match(styles, /id\^=\"block_\"/);
+  assert.match(styles, /id\^='block_'/);
 });
 
 test('widget writer preserves existing settings when none are posted', () => {
