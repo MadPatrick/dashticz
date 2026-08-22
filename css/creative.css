@@ -3816,7 +3816,7 @@ img.icon {
   flex-direction: row;
   align-items: stretch;
   justify-content: center;
-  gap: 5px;
+  gap: 1px;
   width: 100%;
   flex: 1 1 auto;
   /* Without this, a flex item's default min-height: auto keeps it from
