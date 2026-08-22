@@ -96,9 +96,7 @@ var DT_alarmmeldingen = {
       if (isEmpty) {
         $('<li>')
           .append(
-            $('<strong>').text(
-              language.misc.no_alerts || 'No current alerts.'
-            )
+            $('<strong>').text(language.misc.no_alerts || 'No current alerts.')
           )
           .appendTo($state);
       }

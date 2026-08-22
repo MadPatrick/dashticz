@@ -5,7 +5,12 @@ var templateEngine = TemplateEngine();
 var DT_calendar = {
   name: 'calendar',
   canHandle: function (block, key) {
-    return block && (block.type === 'calendar' || block.icalurl || (block.calendars && block.calendars.length > 0));
+    return (
+      block &&
+      (block.type === 'calendar' ||
+        block.icalurl ||
+        (block.calendars && block.calendars.length > 0))
+    );
   },
   defaultCfg: {
     icon: 'fas fa-calendar-alt',
@@ -15,7 +20,7 @@ var DT_calendar = {
     emptytext: language.misc.no_appointments || 'No appointments.',
     method: 1,
     eventClasses: {},
-    refresh:600,
+    refresh: 600,
     width: 4,
     // No default fixed height for agenda layouts (layout 0/1) — the block
     // auto-expands to show all items.  Users who need a fixed height can set
@@ -24,7 +29,10 @@ var DT_calendar = {
   },
   run: function (me) {
     if (me.block.type === 'calendar') {
-      if (me.block.icalurl || (me.block.calendars && me.block.calendars.length > 0)) {
+      if (
+        me.block.icalurl ||
+        (me.block.calendars && me.block.calendars.length > 0)
+      ) {
         if (
           (me.block.layout === 0 || me.block.layout === 1) &&
           (me.block.url || settings['calendarurl'])
@@ -34,11 +42,12 @@ var DT_calendar = {
             .attr('data-toggle', 'modal')
             .attr('data-target', '#agenda-modal_' + me.key);
         }
-//        prepareCalendar(me, me.key);
+        //        prepareCalendar(me, me.key);
       } else {
         infoMessage(
           '<font color="red">Domoticz error!',
-          (language.misc.calendar_missing || 'Calendar URL is missing.') + '</font>',
+          (language.misc.calendar_missing || 'Calendar URL is missing.') +
+            '</font>',
           0
         );
       }
@@ -59,7 +68,11 @@ function prepareCalendar(me, key) {
   moment.locale(settings['calendarlanguage']);
 
   // Backward compat: convert old 'calendars' array format to new icalurl object format
-  if (!me.block.icalurl && me.block.calendars && me.block.calendars.length > 0) {
+  if (
+    !me.block.icalurl &&
+    me.block.calendars &&
+    me.block.calendars.length > 0
+  ) {
     var legacyIcalurl = {};
     for (var i = 0; i < me.block.calendars.length; i++) {
       var legacyCal = me.block.calendars[i];
@@ -67,11 +80,14 @@ function prepareCalendar(me, key) {
       var legacyName = 'calendar' + i;
       legacyIcalurl[legacyName] = {
         ics: legacyCalDef.icalurl,
-        color: legacyCal.color || 'white'
+        color: legacyCal.color || 'white',
       };
       if (!isDefined(me.block.adjustTZ) && isDefined(legacyCalDef.adjustTZ))
         me.block.adjustTZ = legacyCalDef.adjustTZ;
-      if (!isDefined(me.block.adjustAllDayTZ) && isDefined(legacyCalDef.adjustAllDayTZ))
+      if (
+        !isDefined(me.block.adjustAllDayTZ) &&
+        isDefined(legacyCalDef.adjustAllDayTZ)
+      )
         me.block.adjustAllDayTZ = legacyCalDef.adjustAllDayTZ;
     }
     me.block.icalurl = legacyIcalurl;
@@ -84,14 +100,14 @@ function prepareCalendar(me, key) {
   me.url = isDefined(me.block.url)
     ? me.block.url
     : isDefined(settings['calendarurl']) && settings['calendarurl'].length > 0
-    ? settings['calendarurl']
-    : '';
+      ? settings['calendarurl']
+      : '';
   me.dateFormat = isDefined(me.block.dateFormat)
     ? me.block.dateFormat
     : isDefined(settings['calendarformat']) &&
-      settings['calendarformat'].length > 0
-    ? formatDateTimeToDate(settings['calendarformat'])
-    : 'ddd DD/MM/YY';
+        settings['calendarformat'].length > 0
+      ? formatDateTimeToDate(settings['calendarformat'])
+      : 'ddd DD/MM/YY';
   me.timeFormat = isDefined(me.block.timeFormat)
     ? me.block.timeFormat
     : 'HH:mm';
@@ -101,8 +117,8 @@ function prepareCalendar(me, key) {
   me.maxitems = isDefined(me.block.maxitems)
     ? me.block.maxitems
     : isDefined(settings['calendar_maxitems'])
-    ? settings['calendar_maxitems']
-    : 15;
+      ? settings['calendar_maxitems']
+      : 15;
   // Documentation defines lastweek=false as the default. Keeping true here
   // made stale appointments from the previous week appear even when a block
   // never opted into history (#174). Explicit lastweek:true still behaves as
@@ -119,15 +135,10 @@ function prepareCalendar(me, key) {
   me.history = me.lastweek ? 7 : 0;
   me.update = true;
   me.isnew = true;
-  if(me.layout===2) {
+  if (me.layout === 2) {
     var start = me.isoweek ? 'isoweek' : 'week';
-    me.startMoment = moment()
-    .startOf(start)
-    .subtract(me.history, 'days');
-  }
-  else
-    me.startMoment = moment()
-    .subtract(me.history, 'days');
+    me.startMoment = moment().startOf(start).subtract(me.history, 'days');
+  } else me.startMoment = moment().subtract(me.history, 'days');
   cal[key] = me;
 
   if (isObject(cal[key].icalurl)) {
@@ -156,8 +167,8 @@ function getCalendarData(key, calendars, isnew, ishol) {
     promises.push(
       $.getJSON(url, function (data) {
         for (var e in data) {
-          if(e=="_errors") {
-            if(data[e].length>0) {
+          if (e == '_errors') {
+            if (data[e].length > 0) {
               console.warn('Warnings for calendar: ', calendar.ics);
               console.warn(data[e]);
             }
@@ -173,24 +184,25 @@ function getCalendarData(key, calendars, isnew, ishol) {
 
           ev.start += cal[key].adjustTZ;
           ev.end += cal[key].adjustTZ;
-          ev.multiday = (ev.end-ev.start) > 86400;
+          ev.multiday = ev.end - ev.start > 86400;
           ev.name = name;
           ev.color = calendar.color;
-//          var lowerTitle = ev.title.toLowerCase();
-          if (ev.title) ev.addClass=Object.keys(cal[key].block.eventClasses).filter(function(eventClass) { //filter keys with string match on item
-            return ev.title.match(cal[key].block.eventClasses[eventClass])
-          }).reduce(function(acc, key ) { //only keep unique keys
-            if(!acc.includes(key)) acc.push(key);
-            return acc;
-          },[])
-          .join(' '); //combine them into one string
+          //          var lowerTitle = ev.title.toLowerCase();
+          if (ev.title)
+            ev.addClass = Object.keys(cal[key].block.eventClasses)
+              .filter(function (eventClass) {
+                //filter keys with string match on item
+                return ev.title.match(cal[key].block.eventClasses[eventClass]);
+              })
+              .reduce(function (acc, key) {
+                //only keep unique keys
+                if (!acc.includes(key)) acc.push(key);
+                return acc;
+              }, [])
+              .join(' '); //combine them into one string
 
-          if (
-            parseFloat(enddate) >=
-            cal[key].startMoment.format('X')
-          ) {
-            if (!isDefined(events[ev.start]))
-              events[ev.start] = [];
+          if (parseFloat(enddate) >= cal[key].startMoment.format('X')) {
+            if (!isDefined(events[ev.start])) events[ev.start] = [];
             events[ev.start].push(ev);
           }
         }
@@ -280,8 +292,7 @@ function generateCalendar(key, isnew, ishol) {
       });
 
       $(cal[key].mountPoint + ' td').each(function (i, obj) {
-        var dt = moment(cal[key].startMoment)
-          .add(i, 'days');
+        var dt = moment(cal[key].startMoment).add(i, 'days');
         $(obj).attr('data-id', dt);
         $(obj).find('div').first().html(dt.format('ddd DD MMM'));
         if (dt.isSame(moment(), 'd'))
@@ -320,7 +331,7 @@ function generateCalendar(key, isnew, ishol) {
                       c1: m3.unix() < moment().unix() ? 'historic' : '',
                       c2: item.allDay ? 'allday' : '',
                       c3: ishol ? 'hol' : '',
-                      addClass: item.addClass
+                      addClass: item.addClass,
                     };
 
                     var elem = template(data_object);
@@ -390,11 +401,18 @@ function showInfo(pop) {
         return;
       }
 
-      var $copy = allowed[node.tagName] ? $('<' + node.tagName.toLowerCase() + '>') : $parent;
+      var $copy = allowed[node.tagName]
+        ? $('<' + node.tagName.toLowerCase() + '>')
+        : $parent;
       if (node.tagName === 'A') {
         try {
-          var href = new URL(node.getAttribute('href') || '', window.location.href);
-          if (['http:', 'https:', 'mailto:', 'tel:'].indexOf(href.protocol) !== -1) {
+          var href = new URL(
+            node.getAttribute('href') || '',
+            window.location.href
+          );
+          if (
+            ['http:', 'https:', 'mailto:', 'tel:'].indexOf(href.protocol) !== -1
+          ) {
             $copy.attr({
               href: href.href,
               target: '_blank',
