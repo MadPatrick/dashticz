@@ -281,6 +281,11 @@ v3.45.4 beta (22-8-2026)
   ``font-size`` from a relative ``0.85em`` (9.35px computed, against
   an 11px inherited base) to a flat 11px.
 
+- Renamed the Needle visual-mode button in the Device Config popup to
+  Slider (``lang/*.json``'s ``dial_needle``, and its mention in
+  ``dial_barsteps_help``) - the internal mode/property name
+  (``block.needle``) is unchanged, only the label shown to the user.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 
