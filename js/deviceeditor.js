@@ -3081,10 +3081,14 @@ var DashticzDeviceEditor = (function () {
     // Keep an existing Bar selectable even if the live device is temporarily
     // unavailable. For new choices Bar is limited to Dimmer and percentage blinds.
     var supportsBar = hasDial && (isDimmer || isBlindsPercentage || options.bar === true);
-    // The Steps field also governs the Icon-mode Blinds Percentage slider's
-    // scale (js/switches.js addSlider()), which reads the same block.barsteps.
+    // Needle (js/switches.js renderBlindsSliderBlock(), block.needle) is a
+    // continuous vertical slider - it only makes sense for percentage
+    // blinds, not the generic Dimmer/other devices Bar also supports.
+    var supportsNeedle = hasDial && (isBlindsPercentage || options.needle === true);
+    // The Steps field also governs Needle mode's scale (js/switches.js
+    // addSlider()), which reads the same block.barsteps as the Bar subtype.
     function barStepsApplies(mode) {
-      return mode === 'bar' || (isBlindsPercentage && mode === 'icon');
+      return mode === 'bar' || mode === 'needle';
     }
 
     // subtype:'bar' belongs to the visual mode selector, not Custom fields.
@@ -3095,9 +3099,11 @@ var DashticzDeviceEditor = (function () {
     });
     if (subtypeRowIndex > -1) customRows.splice(subtypeRowIndex, 1);
 
-    var visualMode = options.bar === true
-      ? 'bar'
-      : (options.dial === true ? 'dial' : (options.icon === true ? 'icon' : ''));
+    var visualMode = options.needle === true
+      ? 'needle'
+      : (options.bar === true
+        ? 'bar'
+        : (options.dial === true ? 'dial' : (options.icon === true ? 'icon' : '')));
     var configOptions = isTitle
       ? ['icon', 'show_title']
       : (isGroupBlock || isHtmlBlock || isLmsBlock)
@@ -3114,6 +3120,7 @@ var DashticzDeviceEditor = (function () {
         { mode: 'icon', label: t.icon, icon: 'fas fa-image', enabled: true },
         { mode: 'dial', label: t.dial, icon: 'fas fa-tachometer-alt', enabled: true },
         { mode: 'bar', label: t.dial_bar, icon: 'fas fa-bars', enabled: supportsBar },
+        { mode: 'needle', label: t.dial_needle, icon: 'fas fa-sliders', enabled: supportsNeedle },
       ].forEach(function (item) {
         var active = visualMode === item.mode;
         html += '<button type="button" class="btn btn-outline-secondary de-visual-mode-button' +
@@ -3441,6 +3448,7 @@ var DashticzDeviceEditor = (function () {
         updated.icon = pendingVisualMode === 'icon';
         updated.dial = pendingVisualMode === 'dial';
         updated.bar = pendingVisualMode === 'bar';
+        updated.needle = pendingVisualMode === 'needle';
         var rawBarSteps = $.trim(String($('#de-config-barsteps').val() || ''));
         var parsedBarSteps = parseInt(rawBarSteps, 10);
         if (barStepsApplies(pendingVisualMode)) {
@@ -4259,6 +4267,14 @@ var DashticzDeviceEditor = (function () {
             specialEntry.custom_fields = specialCustomFields;
           } else if (specialOptions.dial === true) {
             specialEntry.type = 'dial';
+          } else if (specialOptions.needle === true) {
+            // Needle stays on the classic (non-dial) rendering path -
+            // js/switches.js getBlindsBlock() reads this flag directly.
+            specialEntry.needle = true;
+            if (specialOptions.barsteps && specialOptions.barsteps !== 10) {
+              specialCustomFields.barsteps = specialOptions.barsteps;
+              specialEntry.custom_fields = specialCustomFields;
+            }
           }
         } else if (special.specialType === 'group' || special.specialType === 'html') {
           // Only Icon and Last update apply here (no Data/Switch/Dial - see
@@ -4353,6 +4369,9 @@ var DashticzDeviceEditor = (function () {
       } else if (p.subidx) {
         entry.subidx = p.subidx;
       }
+      // Needle stays on the classic (non-dial) rendering path - js/switches.js
+      // getBlindsBlock() reads this flag directly, unlike Dial/Bar above.
+      if (options.needle === true) entry.needle = true;
       if (deviceTitleVisible[ck] === false) entry.hide_title = true;
       var customFields = _deviceCustomFieldsObject(
         deviceCustomFields[ck],
@@ -4365,6 +4384,9 @@ var DashticzDeviceEditor = (function () {
         if (options.barsteps && options.barsteps !== 10) {
           customFields.barsteps = options.barsteps;
         }
+      } else if (options.needle === true && options.barsteps && options.barsteps !== 10) {
+        // Only written when it differs from addSlider()'s own default (10).
+        customFields.barsteps = options.barsteps;
       }
       if (Object.keys(customFields).length) entry.custom_fields = customFields;
       if (deviceHeights[ck]) entry.height = deviceHeights[ck];

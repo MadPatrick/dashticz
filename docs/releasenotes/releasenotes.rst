@@ -11,87 +11,58 @@ v3.45.4 beta (22-8-2026)
 
 * **Enhancements**
 
-- The Blinds Percentage device block now renders as a vertical
-  remote-style control instead of the previous thin percentage bar:
-  icon+title header, a compact pill-shaped OPEN action above the
-  slider, the slider itself with a live percentage readout beside the
-  handle and a clickable tick scale down its left edge, then a DICHT
-  action (and STOP, unless ``hide_stop`` is set) below it. Only Blinds
-  Percentage/Blinds Inverted Percentage devices get this layout (a new
-  ``renderBlindsSliderBlock()`` path in ``js/switches.js``) - other
-  percentage sliders (e.g. dimmers) that reuse the same ``addSlider()``
-  helper render exactly as before.
+- Added a new **Needle** visual mode for Blinds Percentage/Blinds
+  Inverted Percentage devices, selectable in the Device Config popup's
+  visual-mode selector alongside the existing Icon/Dial/Bar options
+  (now Icon/Dial/Bar/Needle, ``block.needle`` in CONFIG.js). It renders
+  as a continuous vertical slider - a title, a compact OPEN button
+  above the slider, the slider itself (a wide track with a green
+  gradient fill up to a small round handle, a clickable/typeable
+  percentage readout beside it, and a clickable tick scale down its
+  left edge), then DICHT (and STOP, unless ``hide_stop`` is set) below
+  it - implemented as a new ``renderBlindsSliderBlock()`` in
+  ``js/switches.js``.
 
-- Clicking the live percentage readout turns it into a number input, so
-  an exact value can be typed instead of only dragging or tapping a
-  tick.
+- This is purely additive: Icon mode's own classic thin percentage bar
+  (``getBlindsBlock()``'s ``withPercentage`` branch) is completely
+  unchanged from its original implementation, and the separate Dial
+  widget's existing Dial/Bar modes (``js/components/dial.js``) are
+  untouched.
 
-- The scale's tick count now follows the same ``barsteps`` config field
+- Needle's scale tick count reads the same ``barsteps`` config field
   (default 10) the Bar dial subtype already exposes as its **Steps**
-  field in the Device Config popup - that field is now also shown (and
-  saved) for a percentage blinds device in Icon mode, not only in Bar
-  mode, so both share one config-menu setting. The slider's own drag
-  step still defaults to 1% as before, but a block can override it with
-  a new ``slider_step``/``sliderstep`` config field.
+  field in the Device Config popup - that field is now shown for
+  either mode. Clicking a tick, or the live percentage readout itself,
+  jumps straight to that value (typing an exact number is also
+  supported); dragging the handle works as expected.
 
-- The OPEN/DICHT/STOP action buttons are about 70% of their earlier
-  size. The existing OPEN/DICHT/STOP Domoticz commands are unchanged.
-
-- The block's own fixed 360px minimum height (needed to escape the
-  classic 85px block-height cap every ``.mh`` gets by default) no
-  longer overrides a grid screen's row-driven height, so resizing the
-  tile in the Layout Editor properly grows/shrinks the slider along
-  with it, same as the map/log/clock widgets already do.
-
-- The slider track is now three times as wide (10px to 30px), with the
-  handle, the tick scale and the percentage readout repositioned to
-  match, so the green gradient fill is clearly visible.
-
-- Removed the icon from the slider block's header entirely (just the
-  title remains), and shrunk the OPEN/DICHT/STOP action buttons and
-  the slider's own handle further, for a more compact "small button"
-  look. The classic icon | data | buttons layout (used when a device
-  isn't configured this way) and the separate Dial widget
-  (``js/components/dial.js``, including its own Bar visual mode) are
-  both unaffected.
+- The block escapes the classic 85px default block height (the same
+  way ``multi_line`` blocks like graphs already do) while still
+  properly shrinking/growing with a grid screen's own row-driven
+  height, so resizing the tile in the Layout Editor works as expected.
 
 * **Fixes**
 
-- The slider's green gradient fill never actually appeared: jQuery UI
-  only creates the ``.ui-slider-range`` element that CSS styles for it
-  when the slider's own ``range`` option is set, which the blinds
-  slider never passed. It's now set to ``'min'`` (fill from the track's
-  bottom up to the handle) for the blinds slider specifically, leaving
-  the dimmer slider (which never had a range fill) untouched.
+- The slider is now correctly given jQuery UI's ``orientation:
+  'vertical'`` and ``range: 'min'`` options, so the handle position,
+  drag direction and gradient fill are all actually value-driven,
+  rather than only looking that way via CSS - without ``orientation``,
+  the handle stayed visually static and dragging mapped vertical mouse
+  movement almost randomly to a value; without ``range``, jQuery UI
+  never even created the ``.ui-slider-range`` element the gradient
+  fill CSS targets.
 
-- The slider was missing jQuery UI's ``orientation: 'vertical'`` option:
-  despite looking vertical via CSS, the handle's position wasn't
-  actually value-driven and dragging mapped vertical mouse movement
-  almost randomly to a value, since jQuery UI was still reading only the
-  drag's horizontal position on the (10px-wide) track.
+- Clicking a scale tick or typing an exact value each used to send
+  every command twice, or (when typing) re-open the edit input instead
+  of committing cleanly - both were re-entrancy bugs where
+  programmatically setting the slider's value, or removing a focused
+  input from the DOM, re-triggered the same handler a second time
+  while the first call was still on the stack.
 
-- Clicking a scale tick sent every command twice - it called
-  ``slideDevice()`` directly on top of the command jQuery UI's own
-  ``change`` callback already sends when the slider's value is set
-  programmatically.
-
-- The track's colors could be visually overridden by jQuery UI's own
-  bundled default theme CSS, which styles the same generic
-  ``.ui-slider``/``.ui-widget-header`` classes the widget puts on the
-  track and range by default (e.g. with blue). The track, range and
-  handle colors are now ``!important``.
-
-- Every device/widget block (``.mh``) is capped at the classic 85px
-  block height by default, with taller block types (graphs, dials, ...)
-  escaping it via their own ``multi_line`` config flag; the new slider
-  block now gets the same escape hatch, instead of being silently
-  truncated down to a sliver.
-
-- Typing an exact value and pressing Enter (or Escape) re-opened the
-  edit input a second time instead of committing cleanly: the keydown
-  event bubbled from the (already-removed) input up to the percentage
-  readout's own keydown handler, which reacted to the same Enter/Escape
-  press by starting a fresh edit.
+- The track, range and handle colors are now ``!important``, so
+  jQuery UI's own bundled default theme CSS (which styles the same
+  generic ``.ui-slider``/``.ui-widget-header`` classes, e.g. with
+  blue) can no longer visually override them.
 
 v3.45.3 beta (21-8-2026)
 -------------------------

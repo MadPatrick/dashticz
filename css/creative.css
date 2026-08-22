@@ -3731,16 +3731,19 @@ img.icon {
   margin-right: 3px !important;
 }
 
-/* Percentage blinds: one continuous vertical slider, framed like a small
-   remote - a title header (no icon), an OPEN action above the slider,
-   DICHT (and optionally STOP) below it. Rendered entirely by
-   renderBlindsSliderBlock()/addSlider() in js/switches.js as a single
-   .blinds-slider-block replacing the classic icon | data | buttons row, so
-   only Blinds Percentage/Blinds Inverted Percentage devices are affected -
-   other percentage sliders (e.g. dimmers) reuse the same addSlider() but
-   never get a .blinds-slider-wrap ancestor, so none of this applies to them.
-   The underlying jQuery UI slider and all existing Domoticz commands remain
-   unchanged. */
+/* "Needle" mode (block.needle === true) for Blinds Percentage/Blinds
+   Inverted Percentage devices: one continuous vertical slider, framed like
+   a small remote - a title header (no icon), an OPEN action above the
+   slider, DICHT (and optionally STOP) below it. This is an alternative to,
+   not a replacement for, Icon mode's own classic thin percentage bar
+   (getBlindsBlock()'s withPercentage branch, unchanged) and the separate
+   Dial widget's Dial/Bar modes (js/components/dial.js, also unchanged).
+   Rendered entirely by renderBlindsSliderBlock()/addSlider() in
+   js/switches.js as a single .blinds-slider-block. Other percentage
+   sliders (e.g. dimmers, and Icon mode's own classic bar) reuse the same
+   addSlider() but never get a .blinds-slider-wrap ancestor, so none of
+   this applies to them. The underlying jQuery UI slider and all existing
+   Domoticz commands remain unchanged. */
 .blinds-slider-block {
   display: flex;
   flex-direction: column;

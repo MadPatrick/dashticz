@@ -546,28 +546,28 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
   $.extend(block, parentBlock.protoBlock, parentBlock);
   var device = block.device;
   var withPercentage = choose(block.withPercentage, withPercentageParam, false);
-  // Keep the existing one-percent behaviour by default. A block that already
-  // supplies a slider_step/sliderstep value can use that value instead.
-  var sliderStep = parseFloat(block.slider_step || block.sliderstep || 1);
-  if (!isFinite(sliderStep) || sliderStep <= 0) sliderStep = 1;
   var idx = block.idx;
   var $mountPoint = block.$mountPoint.find('.mh');
+  var html = '';
 
-  var asOn = Domoticz.info.newBlindsBehavior;
-  if (device['SwitchType'].toLowerCase().indexOf('inverted') >= 0) {
-    asOn = !asOn;
-  }
-
-  // Blinds Percentage/Blinds Inverted Percentage devices get a dedicated
-  // full-height vertical-remote layout (icon+title, an OPEN action, the
-  // slider itself, then a DICHT/STOP action) instead of reusing the classic
-  // icon | data | buttons row below.
-  if (withPercentage) {
+  // "Needle" is a separate visual mode (next to Icon/Dial/Bar in the Device
+  // Config popup), opted into via block.needle - it does not change what
+  // Icon mode's own withPercentage renders below, which is the original
+  // classic thin percentage bar.
+  if (block.needle === true) {
+    var asOn = Domoticz.info.newBlindsBehavior;
+    if (device['SwitchType'].toLowerCase().indexOf('inverted') >= 0) {
+      asOn = !asOn;
+    }
+    // Keep the classic bar's fixed one-percent step by default. A block
+    // that already supplies a slider_step/sliderstep value can use that
+    // value instead.
+    var sliderStep = parseFloat(block.slider_step || block.sliderstep || 1);
+    if (!isFinite(sliderStep) || sliderStep <= 0) sliderStep = 1;
     renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, sliderStep);
     return true;
   }
 
-  var html = '';
   var hidestop = false;
   var data_class = 'col-data blinds';
   var button_class;
@@ -589,23 +589,52 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
   html += '<div class="' + data_class + '">';
   var title = getBlockTitle(block);
   var value = '';
-  if (
-    typeof block['hide_data'] == 'undefined' ||
-    block['hide_data'] == false
-  ) {
+  if (withPercentage) {
+    if (
+      typeof block['hide_data'] == 'undefined' ||
+      block['hide_data'] == false
+    ) {
+      title += ' ' + device['Level'] + '%';
+    }
+    value =
+      '<div class="slider slider' +
+      idx +
+      '  swiper-no-swiping" data-light="' +
+      idx +
+      '"></div>';
+  } else {
     if (device['Status'] === 'Closed')
       value =
         '<span class="state">' + (block.textOff || language.switches.state_closed) + '</span>';
     else
       value = '<span class="state">' + (block.textOn || language.switches.state_open) + '</span>';
-  } else {
-    value = '<span class="state"></span>';
+  }
+  if (!withPercentage) {
+    if (
+      typeof block['hide_data'] == 'undefined' ||
+      block['hide_data'] == false
+    ) {
+      if (device['Status'] === 'Closed')
+        value =
+          '<span class="state">' + (block.textOff || language.switches.state_closed) + '</span>';
+      else
+        value =
+          '<span class="state">' + (block.textOn || language.switches.state_open) + '</span>';
+    } else {
+      value = '<span class="state"></span>';
+    }
   }
   html += '<strong class="title">' + title + '</strong><br />';
   html += value;
   html += '</div>';
 
   html += '<div class="' + button_class + '">';
+
+  var asOn = Domoticz.info.newBlindsBehavior;
+
+  if (device['SwitchType'].toLowerCase().indexOf('inverted') >= 0) {
+    asOn = !asOn;
+  }
   html +=
     '<div class="up"><a href="javascript:void(0)" class="btn btn-number plus">';
   html += '<em class="fas fa-chevron-up fa-small"></em>';
@@ -636,6 +665,15 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
     switchBlinds(block, 'Stop');
   });
 
+  if (withPercentage) {
+    addSlider(block, {
+      value: device['Level'],
+      step: 1,
+      min: 1,
+      max: 100,
+      disabled: isProtected(block),
+    });
+  }
   return true;
 }
 
