@@ -277,6 +277,10 @@ v3.45.4 beta (22-8-2026)
 
 - Nudged the button column's gap to the slider from 1px to 3px.
 
+- Made the percentage scale's tick labels 2 sizes bigger, converting
+  ``font-size`` from a relative ``0.85em`` (9.35px computed, against
+  an 11px inherited base) to a flat 11px.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 
