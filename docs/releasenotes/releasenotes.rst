@@ -43,7 +43,18 @@ v3.45.4 beta (22-8-2026)
   tile in the Layout Editor properly grows/shrinks the slider along
   with it, same as the map/log/clock widgets already do.
 
+- The slider track is now three times as wide (10px to 30px), with the
+  handle, the tick scale and the percentage readout repositioned to
+  match, so the green gradient fill is clearly visible.
+
 * **Fixes**
+
+- The slider's green gradient fill never actually appeared: jQuery UI
+  only creates the ``.ui-slider-range`` element that CSS styles for it
+  when the slider's own ``range`` option is set, which the blinds
+  slider never passed. It's now set to ``'min'`` (fill from the track's
+  bottom up to the handle) for the blinds slider specifically, leaving
+  the dimmer slider (which never had a range fill) untouched.
 
 - The slider was missing jQuery UI's ``orientation: 'vertical'`` option:
   despite looking vertical via CSS, the handle's position wasn't

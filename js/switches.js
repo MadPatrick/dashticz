@@ -848,6 +848,12 @@ function addSlider(block, sliderValues) {
     // slider only *looks* vertical via CSS while the handle stays visually
     // static and dragging maps Y-axis movement almost randomly to a value.
     orientation: $wrap.length ? 'vertical' : 'horizontal',
+    // jQuery UI only creates the .ui-slider-range element (the gradient
+    // fill below the handle, styled in css/creative.css) when this is set -
+    // 'min' fills from the track's minimum (the bottom) up to the handle,
+    // matching "how far open" the blinds are. Left off for the dimmer
+    // slider, which never had a range fill before.
+    range: $wrap.length ? 'min' : false,
     start: function () {
       Domoticz.hold(idx); //hold message queue
     },
