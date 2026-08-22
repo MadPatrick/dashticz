@@ -234,6 +234,9 @@ v3.45.4 beta (22-8-2026)
   OPEN/DICHT/STOP text is gone from the visible button entirely, kept
   only as an ``aria-label`` for screen readers.
 
+- Moved the button column closer to the slider (10px gap to 5px) and
+  made the buttons themselves 2px bigger (30px to 32px).
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 
