@@ -206,6 +206,25 @@ v3.45.4 beta (22-8-2026)
 
 - Doubled the slider track's width (30px to 60px).
 
+- Fixed the gradient fill leaving a visibly empty sliver at the top of
+  the track's background, and, symmetrically, the bottom, instead of
+  reaching all the way to its edges. The track's visible background is
+  drawn 8px taller at each end than the coordinate box jQuery UI
+  positions everything against, reserving room for the round handle's
+  own overhang there - but the gradient fill (``.ui-slider-range``) is
+  a jQuery UI-managed element sized purely as a percentage of that
+  *unextended* box, so it always stopped 8px short of the
+  background's actual top, and, for the same reason, never reached
+  down to the handle's own bottom edge at high values either. The
+  fill's anchored top edge is now shifted up 8px to match; its height
+  is topped up by 16px on every value change so its bottom edge always
+  reaches exactly to the handle's own visible bottom edge, at every
+  value - not only the 0%/100% extremes.
+
+- Bumped OPEN/DICHT/STOP's text 2px larger (8px to 10px) - the
+  chevron, sized via ``font-size: inherit``, grows by the same amount
+  automatically.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 

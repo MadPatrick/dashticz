@@ -3822,7 +3822,7 @@ img.icon {
   width: 100%;
   padding: 3px 8px;
   border-radius: 999px;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-decoration: none;
@@ -3935,7 +3935,17 @@ img.icon {
   pointer-events: none;
 }
 
+/* top: jQuery UI's own theme CSS anchors .ui-slider-range-max at the
+   track's own top (range: 'max' - see js/switches.js's addSlider()) - this
+   pulls that anchor up 8px to match ::before's own extended top above, so
+   the fill can reach all the way into that overhang zone instead of
+   leaving it looking empty there at every value. height is left alone here
+   (jQuery UI sets it inline, as a value-driven %) - js/switches.js's
+   extendRangeFill() tops it up by that same 8px on every value change, so
+   the fill's *bottom* edge (which already correctly tracks the handle)
+   isn't dragged upward by this same shift. */
 .blinds-slider-wrap .slider .ui-slider-range {
+  top: -8px !important;
   border-radius: 9px;
   background: linear-gradient(to top, rgba(75, 160, 75, 0.55), rgba(125, 220, 110, 0.95)) !important;
 }

@@ -806,6 +806,30 @@ function addSlider(block, sliderValues) {
     });
   }
 
+  // .ui-slider-range (the gradient fill) is anchored 8px above the track's
+  // own top by the CSS above (matching .slider::before's own extended top,
+  // so the fill can reach into the zone reserved for the handle's overhang
+  // at the 0% extreme - see that CSS for the full picture) - jQuery UI
+  // itself only ever sets this element's height (inline, as a % of the
+  // *unextended* track), so without this the fill's top would stay pinned
+  // 8px below where it now visually starts, leaving a gap there at every
+  // value. +16 (not +8) here: +8 keeps the fill's bottom edge where it
+  // would otherwise land relative to the shifted top, and a further +8
+  // grows it past that point down to the handle's own *bottom* edge (the
+  // handle's center - which is what jQuery UI's own math tracks - sits 8px
+  // above its bottom edge, see the handle's own margin-bottom: -8px
+  // above), so the fill always reaches all the way to the visible edge of
+  // the handle instead of stopping at its middle - including the 100%
+  // extreme, where that's the same 8px overhang zone .slider::before
+  // reserves at the bottom.
+  function extendRangeFill(value) {
+    if (!$wrap.length) return;
+    var $range = $divslider.find('.ui-slider-range');
+    if (!$range.length) return;
+    var fillFraction = (value - min) / (max - min);
+    $range.css('height', fillFraction * $divslider.height() + 16 + 'px');
+  }
+
   // Build a 0-100%-of-range scale, divided into block.barsteps segments -
   // the same Steps config field (default 10) the Bar dial subtype already
   // exposes (js/components/dial.js), so both share one config-menu setting.
@@ -871,7 +895,9 @@ function addSlider(block, sliderValues) {
       Domoticz.hold(idx); //hold message queue
     },
     slide: function (event, ui) {
-      highlightActiveTick(mirror(ui.value));
+      var value = mirror(ui.value);
+      highlightActiveTick(value);
+      extendRangeFill(value);
     },
     change: function (event, ui) {
       var hasPassword = block.password;
@@ -879,6 +905,7 @@ function addSlider(block, sliderValues) {
 
       var value = mirror(ui.value);
       highlightActiveTick(value);
+      extendRangeFill(value);
       slideDevice(block, value);
     },
     stop: function () {
@@ -886,6 +913,7 @@ function addSlider(block, sliderValues) {
       Domoticz.release(idx); //release message queue
     },
   });
+  extendRangeFill(sliderValues.value); //the initial change/slide above never fires for this first render
   $divslider.on('click', function (ev) {
     ev.stopPropagation();
   });
