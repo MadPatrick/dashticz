@@ -237,6 +237,11 @@ v3.45.4 beta (22-8-2026)
 - Moved the button column closer to the slider (10px gap to 5px) and
   made the buttons themselves 2px bigger (30px to 32px).
 
+- Shrunk each tick's dash line by half (20px to 10px) and moved its
+  percentage label in to match, keeping the same small gap between
+  them instead of leaving a floating space where the dash used to
+  reach.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 

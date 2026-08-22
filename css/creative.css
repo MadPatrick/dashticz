@@ -4040,13 +4040,13 @@ img.icon {
   position: absolute;
   right: 0;
   top: 0;
-  width: 20px;
+  width: 10px;
   border-top: 2px solid rgba(255, 255, 255, 0.55);
 }
 
 .slider-tick span {
   position: absolute;
-  right: 26px;
+  right: 16px;
   top: 0;
   transform: translateY(-50%);
   font-size: 0.85em;
