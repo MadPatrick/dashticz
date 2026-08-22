@@ -264,9 +264,18 @@ v3.45.4 beta (22-8-2026)
   staying inside it; ``justify-content: flex-end`` keeps the
   scale+track group hugging the button column with no leftover space
   in between, at any width. The track's own width is no longer a
-  fixed 60px either - it now flexes between 30px and 60px depending on
-  how much room the block actually has, so a narrow block shrinks it
-  instead of overflowing or clipping.
+  fixed 60px either - it now flexes with how much room the block
+  actually has, so a narrow block shrinks it instead of overflowing or
+  clipping.
+
+- Removed the track width's own upper cap (previously 60px) - it had
+  only ever shrunk along with a narrower block, not grown along with
+  a wider one, since ``.slider-scale`` (the only other item sharing
+  the row) never grows, so all of the wrap's own extra width was
+  going unused instead of into the track. A 30px floor is kept so it
+  never disappears on a very narrow block.
+
+- Nudged the button column's gap to the slider from 1px to 3px.
 
 v3.45.3 beta (21-8-2026)
 -------------------------

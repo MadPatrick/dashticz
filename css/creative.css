@@ -3816,7 +3816,7 @@ img.icon {
   flex-direction: row;
   align-items: stretch;
   justify-content: center;
-  gap: 1px;
+  gap: 3px;
   width: 100%;
   flex: 1 1 auto;
   /* Without this, a flex item's default min-height: auto keeps it from
@@ -3931,13 +3931,14 @@ img.icon {
    half its own height past this box's edge at the 0%/100% extremes - stays
    fully inside the visible track instead of poking out above/below it.
    width: a flexible range (not a fixed px) instead, so the track scales
-   down along with a narrower block instead of forcing the block wider
-   than it should be or overflowing it - same 60px it always was as long
-   as there's room, shrinking down to 30px on a tighter one. */
+   with the block's own width in both directions - narrower shrinks it
+   down (to a 30px floor, so it never disappears), wider grows it beyond
+   its old fixed 60px too, since .slider-scale above never grows (flex:
+   0 1 90px) and is the only other flex item sharing this row - all of the
+   wrap's own growth goes into the track. */
 .blinds-slider-wrap .slider {
   position: relative;
   flex: 1 1 60px;
-  max-width: 60px;
   min-width: 30px;
   margin: 6px 0;
   height: auto !important;
