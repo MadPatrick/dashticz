@@ -245,6 +245,9 @@ v3.45.4 beta (22-8-2026)
 - Moved the button column right up against the slider (5px gap to
   1px).
 
+- Gave DICHT the same green colors as OPEN, instead of its own plain
+  grey.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 

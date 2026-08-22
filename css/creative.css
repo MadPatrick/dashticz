@@ -3870,24 +3870,16 @@ img.icon {
   font-size: inherit !important;
 }
 
-.blinds-slider-action-up a {
+.blinds-slider-action-up a,
+.blinds-slider-action-down a {
   color: #eafff0;
   background: linear-gradient(180deg, rgba(94, 176, 92, 0.55), rgba(58, 122, 58, 0.55));
   border: 1px solid rgba(139, 212, 130, 0.6);
 }
 
-.blinds-slider-action-up a:hover {
-  background: linear-gradient(180deg, rgba(110, 196, 108, 0.65), rgba(66, 138, 66, 0.65));
-}
-
-.blinds-slider-action-down a {
-  color: var(--text-light);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-}
-
+.blinds-slider-action-up a:hover,
 .blinds-slider-action-down a:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, rgba(110, 196, 108, 0.65), rgba(66, 138, 66, 0.65));
 }
 
 .blinds-slider-action-stop a {
