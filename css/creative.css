@@ -3845,9 +3845,14 @@ img.icon {
    (the codebase's own .fa-small already opts down to 20px, still too big
    here) would otherwise inflate OPEN/DICHT's chevron past their 8px text
    and drag the whole button back up to that height, defeating the match
-   with STOP above. */
+   with STOP above. !important: the Modern Dark/Liquid Glass Blue/Liquid
+   Glass Grey themes each carry their own `.fas.fa-chevron-up,
+   .fas.fa-chevron-down { font-size: 40px !important; }` (written for the
+   dimmer's up/down buttons); without !important here too, that theme rule
+   wins outright regardless of this selector's higher specificity - !important
+   always beats a plain declaration, no matter how specific. */
 .blinds-slider-action a .fas {
-  font-size: 4.5px;
+  font-size: 4.5px !important;
 }
 
 .blinds-slider-action-up a {
@@ -3931,14 +3936,28 @@ img.icon {
    -.6em) does the same thing for its own default handle size - this isn't
    overriding a quirk, it's the same compensation re-sized for our handle.
 */
+/* top/margin-top !important: the Modern Dark/Liquid Glass Blue/Liquid Glass
+   Grey themes each carry their own `.ui-slider-handle { top: 50% !important;
+   margin-top: -20px !important; ... }`, written to vertically-center the
+   dimmer's horizontal-slider handle within its track. That selector has no
+   idea this handle is inside a *vertical* slider - with nothing here to
+   contest top/margin-top, it applied uncontested, pinning the handle to the
+   track's vertical center via top+height (which, once both top and bottom
+   are specified with an explicit height, wins over jQuery UI's own dynamic
+   "bottom: value%" - the box is over-constrained and bottom is dropped) -
+   so the handle visually never moved off dead-center, regardless of the
+   slider's actual value. Resetting top/margin-top back to auto/0 hands
+   vertical positioning back to jQuery UI's own "bottom" entirely. */
 .blinds-slider-wrap .slider .ui-slider-handle {
   left: 50%;
+  top: auto !important;
   width: 16px !important;
   height: 16px !important;
   margin-left: -8px;
+  margin-top: 0 !important;
   margin-bottom: -8px !important;
   border: 2px solid rgba(255, 255, 255, 0.85) !important;
-  border-radius: 50%;
+  border-radius: 50% !important;
   background: #d9dde2 !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   cursor: grab;

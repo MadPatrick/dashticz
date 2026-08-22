@@ -147,6 +147,34 @@ v3.45.4 beta (22-8-2026)
 - Shrunk OPEN/DICHT's chevron icon to half its previous size (9px to
   4.5px).
 
+- Found the actual cause behind two bugs that kept reappearing:
+  the handle looking stuck near the middle of the track no matter the
+  device's value, and the chevron staying oversized despite the fix
+  above. The Modern Dark, Liquid Glass Blue and Liquid Glass Grey
+  themes each carry their own theme-wide ``.fas.fa-chevron-up,
+  .fas.fa-chevron-down { font-size: 40px !important; }`` and
+  ``.ui-slider-handle { top: 50% !important; margin-top: -20px
+  !important; width: 20px !important; height: 40px !important;
+  border-radius: 14px !important; ... }``, written for the horizontal
+  dimmer slider's own up/down buttons and handle. Needle's chevron
+  rule had no ``!important``, so the theme's won outright regardless
+  of its higher selector specificity; Needle's handle rule never
+  touched ``top``/``margin-top`` at all, so the theme's ``top: 50%``
+  applied uncontested - and once ``top``, ``height`` and jQuery UI's
+  own dynamic ``bottom: value%`` are all specified on the same
+  absolutely-positioned element, the box is over-constrained and
+  ``bottom`` is dropped entirely in favor of ``top``, pinning the
+  handle to the track's vertical center regardless of the actual
+  value. Needle's chevron rule now carries ``!important`` (its higher
+  specificity then correctly wins the tie); its handle rule now resets
+  ``top``/``margin-top`` to ``auto``/``0`` with ``!important``, handing
+  vertical positioning back to jQuery UI's own ``bottom`` entirely, and
+  ``border-radius`` also gained ``!important`` so the theme can no
+  longer square off the handle's shape. Reproduced by loading a theme
+  stylesheet alongside creative.css in a test render - something
+  earlier verification in this release had not done - and confirmed
+  fixed for all three themes.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 
