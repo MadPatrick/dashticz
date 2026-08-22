@@ -88,7 +88,7 @@ blocks['tc13'] 		= {idx: 5001};
 blocks['tc14'] 		= {idx: 993};
 blocks['tc15'] 		= {idx: 266};
 //blocks['tc16'] 		= {idx: 1411, width: 12};
-blocks['tc16'] 		= {idx: 1411};
+blocks['tc16'] 		= {idx: 1411, title: 'blinds test'};
 blocks['tc17 test'] = {idx: 5002};
 blocks['blinds_nostop'] = {
     idx: 1411,

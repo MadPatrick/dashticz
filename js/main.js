@@ -131,6 +131,7 @@ function loadConfig() {
         }
       },
       function (xhr) {
+        var failedFilename = loadingFilename;
         loadingFilename = null;
         if (xhr.status === 404 && !_PARAMS['cfg'] && _CFG.customfolder === 'custom') {
           // CONFIG.js not found in the default folder.
@@ -138,7 +139,7 @@ function loadConfig() {
           firstRunSetupRequired = true;
           return;
         }
-        return $.Deferred().reject(new Error('Load error in ' + loadingFilename));
+        return $.Deferred().reject(new Error('Load error in ' + failedFilename));
       }
     );
 }
@@ -1502,13 +1503,20 @@ function setClassByTime() {
 
   for (var t in screens) {
     for (var s in screens[t]) {
-      if (typeof screens[t][s]['background_' + newClass] !== 'undefined') {
+      var screen = screens[t][s];
+      if (!screen || typeof screen !== 'object') continue;
+      var background = choose(
+        screen['background_' + newClass],
+        screen.background,
+        settings['background_image']
+      );
+      if (background) {
         $('.screen.screen' + s).css(
           'background-image',
-          "url('" +
-            resolveBackgroundImagePath(screens[t][s]['background_' + newClass]) +
-            "')"
+          "url('" + resolveBackgroundImagePath(background) + "')"
         );
+      } else {
+        $('.screen.screen' + s).css('background-image', 'none');
       }
     }
   }

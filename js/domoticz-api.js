@@ -122,6 +122,7 @@ var Domoticz = (function () {
             url: cfg.url + 'json.htm?' + domoticzQuery(query),
             type: 'GET',
             async: true,
+            timeout: cfg.domoticz_timeout,
             beforeSend: setHeader,
             error: function (jqXHR, textStatus) {
               if (typeof textStatus !== 'undefined' && textStatus === 'abort') {

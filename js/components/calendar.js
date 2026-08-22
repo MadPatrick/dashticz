@@ -356,6 +356,67 @@ function showInfo(pop) {
   var color = $(pop).data('color');
   var calurl = cal[key].url;
 
+  function appendSafeCalendarInfo($target, source) {
+    var parsed = new DOMParser().parseFromString(source, 'text/html');
+    var allowed = {
+      A: true,
+      B: true,
+      BR: true,
+      DIV: true,
+      EM: true,
+      I: true,
+      LI: true,
+      OL: true,
+      P: true,
+      SPAN: true,
+      STRONG: true,
+      U: true,
+      UL: true,
+    };
+    var discarded = {
+      IFRAME: true,
+      OBJECT: true,
+      SCRIPT: true,
+      STYLE: true,
+      TEMPLATE: true,
+    };
+
+    function copyNode(node, $parent) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        $parent.append(document.createTextNode(node.nodeValue));
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE || discarded[node.tagName]) {
+        return;
+      }
+
+      var $copy = allowed[node.tagName] ? $('<' + node.tagName.toLowerCase() + '>') : $parent;
+      if (node.tagName === 'A') {
+        try {
+          var href = new URL(node.getAttribute('href') || '', window.location.href);
+          if (['http:', 'https:', 'mailto:', 'tel:'].indexOf(href.protocol) !== -1) {
+            $copy.attr({
+              href: href.href,
+              target: '_blank',
+              rel: 'noopener noreferrer',
+            });
+          }
+        } catch (error) {
+          // Keep the link text, but omit an invalid destination.
+        }
+      }
+      Array.prototype.forEach.call(node.childNodes, function (child) {
+        copyNode(child, $copy);
+      });
+      if ($copy !== $parent) $parent.append($copy);
+    }
+
+    $target.empty().css('white-space', 'pre-wrap');
+    Array.prototype.forEach.call(parsed.body.childNodes, function (node) {
+      copyNode(node, $target);
+    });
+  }
+
   templateEngine.load('calendar_2_modal').then(function (template) {
     var data_object = {
       title: $(pop).data('title'),
@@ -377,7 +438,9 @@ function showInfo(pop) {
       locurl: 'https://www.google.com/maps/search/' + loc,
     };
     $(document.body).append(template(data_object));
-    if (info.length > 0) $('.cal-info').html($.parseHTML(info));
+    // Calendar descriptions originate in remote ICS feeds. Rebuild a small
+    // formatting allowlist instead of inserting their HTML into our origin.
+    if (info.length > 0) appendSafeCalendarInfo($('.cal-info'), info);
     if (color !== 'transparent') $('.cal-modal').css('borderColor', color);
     $(document.body).on('click', '.cal-close', function () {
       $('.cal-modal').remove();
@@ -415,9 +478,11 @@ function makeUrl(key, url) {
     '&history=' +
     cal[key].history +
     '&url=' +
-    url
-      .replace(/webcal?\:\/\//i, 'https://')
-      .replace('https://cors-anywhere.herokuapp.com/', '') +
+    encodeURIComponent(
+      url
+        .replace(/webcal?\:\/\//i, 'https://')
+        .replace('https://cors-anywhere.herokuapp.com/', '')
+    ) +
     '&method=' +
     cal[key].block.method
   );

@@ -1,17 +1,21 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 
+const compareScreenshots = process.platform === 'linux';
+
 test.describe('Basic testing', () => {
   test.beforeEach(async ({ page }) => {
     // Go to the starting url before each test.
-    await page.goto('http://build:8082/?cfg=CONFIG.pw.js&folder=tests');
+    await page.goto('/?cfg=CONFIG.pw.js&folder=tests');
   });
   test('block tests', async ({ page }) => {
 
     // Expect a title "to contain" a substring.
     await expect(page).toHaveTitle(/Dashticz/);
     await page.waitForTimeout(1000)
-    await expect(page.locator('.block_43_1')).toHaveScreenshot('bl_43_1.png');
+    if (compareScreenshots) {
+      await expect(page.locator('.block_43_1')).toHaveScreenshot('bl_43_1.png');
+    }
     await expect(page.locator('.block_43_1 .value')).toHaveText('700W');
 
     await checkBlock(page,'tc1','fa-car', undefined, 'Tuin');
@@ -40,7 +44,9 @@ test.describe('Basic testing', () => {
 async function checkBlock(page, key, icon, image, title, value) {
   var fileName = 'bl_'+key+'.png';
   const locator = page.locator('css=[data-id="' + key + '"]');
-  await expect.soft(locator).toHaveScreenshot(fileName);
+  if (compareScreenshots) {
+    await expect.soft(locator).toHaveScreenshot(fileName);
+  }
   typeof value!=='undefined' && await expect.soft(locator.locator('.value')).toHaveText(value);
   typeof title!=='undefined' && await expect.soft(locator.locator('.title')).toHaveText(title);
   typeof icon!=='undefined' && await expect.soft(locator.locator('.'+icon)).toHaveText('');

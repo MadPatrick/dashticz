@@ -721,7 +721,7 @@ function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, inverted
     '<div class="blinds-slider-wrap swiper-no-swiping" data-light="' +
     idx +
     '">' +
-    '<div class="slider-scale" aria-hidden="true"></div>' +
+    (block.hide_data === true ? '' : '<div class="slider-scale" aria-hidden="true"></div>') +
     '<div class="slider slider' +
     idx +
     '" data-light="' +
@@ -868,12 +868,14 @@ function addSlider(block, sliderValues) {
       $tick.appendTo($scale);
     }
 
-    for (var m = 0; m <= barSteps; m++) {
-      var stepValue = min + ((max - min) * m) / barSteps;
-      addTick(stepValue, Math.round((m / barSteps) * 100));
-    }
+    if ($scale.length) {
+      for (var m = 0; m <= barSteps; m++) {
+        var stepValue = min + ((max - min) * m) / barSteps;
+        addTick(stepValue, Math.round((m / barSteps) * 100));
+      }
 
-    highlightActiveTick(sliderValues.value);
+      highlightActiveTick(sliderValues.value);
+    }
   }
 
   $divslider.slider({

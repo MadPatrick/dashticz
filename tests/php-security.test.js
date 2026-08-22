@@ -405,10 +405,30 @@ test('LMS backend shutdown handler turns an uncaught fatal error into valid JSON
 
 test('calendar fetching is URL validated and does not expose stack traces', () => {
   const source = read('vendor/dashticz/ical/index.php');
+  const legacy = read('vendor/dashticz/ical/ical5/index.php');
+  const security = read('vendor/dashticz/security.php');
   assert.match(source, /dashticz_fetch_remote\(/);
   assert.doesNotMatch(source, /debug_backtrace/);
   assert.doesNotMatch(source, /initUrl\(\$ICS/);
   assert.doesNotMatch(source, /die\(\$e\)/);
+  assert.match(legacy, /dashticz_require_same_origin\(\)/);
+  assert.match(legacy, /dashticz_fetch_remote\(/);
+  assert.doesNotMatch(legacy, /Access-Control-Allow-Origin:\s*\*/);
+  assert.match(security, /function dashticz_resolve_redirect_url/);
+  assert.match(security, /if \(\$location\[0\] === '\?'\)/);
+});
+
+test('editor writes lock the read-modify-write cycle and replace atomically', () => {
+  const security = read('vendor/dashticz/security.php');
+  const writer = read('js/configwriter.php');
+  assert.match(security, /function dashticz_acquire_file_update_lock/);
+  assert.match(security, /flock\(\$lock, LOCK_EX\)/);
+  assert.match(security, /function dashticz_atomic_write_file/);
+  assert.match(security, /tempnam\(/);
+  assert.match(security, /rename\(\$temporary, \$path\)/);
+  assert.match(writer, /configwriter_read_config[\s\S]*dashticz_acquire_file_update_lock/);
+  assert.match(writer, /dashticz_atomic_write_file\(\$configPath/);
+  assert.match(writer, /configwriter_release_config_lock/);
 });
 
 test('settings writes require CSRF and serialize values as JSON', () => {
@@ -629,7 +649,9 @@ test('custom CSS writer only manages theme variables', () => {
   assert.doesNotMatch(source, /deviceAlignments/);
   assert.doesNotMatch(source, /dashticz-device-align/);
   assert.doesNotMatch(source, /text-align/);
-  assert.match(source, /LOCK_EX/);
+  assert.match(source, /dashticz_acquire_file_update_lock\(\$cssPath\)/);
+  assert.match(source, /dashticz_atomic_write_file\(\$cssPath/);
+  assert.match(source, /dashticz_release_file_update_lock\(\$cssLock\)/);
 });
 
 test('layout writer stores safe references in one grouped dashboard section', () => {

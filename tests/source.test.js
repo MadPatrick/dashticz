@@ -1936,8 +1936,37 @@ test('hide_data is respected consistently by themes, switches and the device edi
   assert.match(blockSource, /if \(!block\['hide_data'\]\) \{/);
   assert.doesNotMatch(blockSource, /settings\['theme'\] === 'modern-dark'/);
   assert.doesNotMatch(switchSource, /blocks\['hide_data'\]/);
+  assert.match(switchSource, /block\.hide_data === true \? '' : '<div class="slider-scale"/);
   assert.match(editorSource, /hide_data: configured\.hide_data === true/);
   assert.match(editorSource, /entry\.hide_data = options\.hide_data === true/);
+});
+
+test('remote content and network failures use safe bounded rendering paths', () => {
+  const alarms = fs.readFileSync(
+    path.join(root, 'js/components/alarmmeldingen.js'),
+    'utf8'
+  );
+  const calendar = fs.readFileSync(
+    path.join(root, 'js/components/calendar.js'),
+    'utf8'
+  );
+  const domoticz = fs.readFileSync(
+    path.join(root, 'js/domoticz-api.js'),
+    'utf8'
+  );
+  const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+
+  assert.match(alarms, /function safeExternalUrl/);
+  assert.match(alarms, /rel: 'noopener noreferrer'/);
+  assert.match(alarms, /\.text\(description\)/);
+  assert.doesNotMatch(alarms, /onclick="window\.open/);
+  assert.match(calendar, /function appendSafeCalendarInfo/);
+  assert.match(calendar, /new DOMParser\(\)/);
+  assert.match(calendar, /encodeURIComponent\(/);
+  assert.doesNotMatch(calendar, /\.html\(\$\.parseHTML\(info\)\)/);
+  assert.match(domoticz, /timeout: cfg\.domoticz_timeout/);
+  assert.match(main, /var failedFilename = loadingFilename/);
+  assert.match(main, /screen\['background_' \+ newClass\][\s\S]*screen\.background/);
 });
 
 test('calendar editor behavior is documented without a version bump', () => {
