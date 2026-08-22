@@ -779,10 +779,26 @@ function addSlider(block, sliderValues) {
   var min = Number(sliderValues.min);
   var max = Number(sliderValues.max);
 
+  // The slider's raw value/position (tied to the device's real Level, used
+  // for every .slider('value', x) call and every tick's click target) never
+  // flips - only the NUMBER shown to the user does, for an inverted device
+  // (block.inverse / auto-detected, see renderBlindsSliderBlock() above):
+  // "0%" should read at the top and "100%" at the bottom there, instead of
+  // the other way round, without moving anything's physical position.
+  function valueToDisplayPercent(value) {
+    var percent = ((value - min) / (max - min)) * 100;
+    return Math.round(sliderValues.inverted ? 100 - percent : percent);
+  }
+
+  function displayPercentToValue(displayPercent) {
+    var percent = sliderValues.inverted ? 100 - displayPercent : displayPercent;
+    return Math.round(min + (percent / 100) * (max - min));
+  }
+
   function positionValueBubble(value) {
     if (!$valueBubble.length) return;
     var percent = ((value - min) / (max - min)) * 100;
-    $valueBubble.css('bottom', percent + '%').text(value + '%');
+    $valueBubble.css('bottom', percent + '%').text(valueToDisplayPercent(value) + '%');
   }
 
   // Clicking the live percentage bubble turns it into a number input so an
@@ -795,9 +811,9 @@ function addSlider(block, sliderValues) {
       if ($valueBubble.find('input').length) return; //already editing
       var current = Math.round($divslider.slider('value'));
       var $input = $('<input type="number" class="slider-value-input">')
-        .attr('min', min)
-        .attr('max', max)
-        .val(current)
+        .attr('min', 0)
+        .attr('max', 100)
+        .val(valueToDisplayPercent(current))
         .on('click', function (e) {
           e.stopPropagation();
         })
@@ -823,9 +839,10 @@ function addSlider(block, sliderValues) {
         // call becomes a no-op instead of committing (and re-triggering
         // slideDevice) a second time.
         $input.off('blur');
-        var raw = parseInt($input.val(), 10);
+        var typedDisplayPercent = parseInt($input.val(), 10);
         var hasPassword = block.password;
-        if (isFinite(raw) && DT_function.promptPassword(hasPassword)) {
+        if (isFinite(typedDisplayPercent) && DT_function.promptPassword(hasPassword)) {
+          var raw = displayPercentToValue(typedDisplayPercent);
           $divslider.slider('value', Math.min(max, Math.max(min, raw)));
           //jQuery UI's own "change" callback repositions the bubble
         } else {
@@ -879,7 +896,11 @@ function addSlider(block, sliderValues) {
 
     for (var m = 0; m <= barSteps; m++) {
       var stepValue = min + ((max - min) * m) / barSteps;
-      addTick(stepValue, Math.round((m / barSteps) * 100));
+      var tickPercent = Math.round((m / barSteps) * 100);
+      // Tick stays at its physical position (tied to stepValue, the real
+      // underlying value it jumps to on click) - only the printed label
+      // flips for an inverted device, same as the bubble above.
+      addTick(stepValue, sliderValues.inverted ? 100 - tickPercent : tickPercent);
     }
 
     positionValueBubble(sliderValues.value);

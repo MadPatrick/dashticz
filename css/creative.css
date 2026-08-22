@@ -3820,8 +3820,6 @@ img.icon {
   justify-content: center;
   gap: 4px;
   width: 100%;
-  /* OPEN/DICHT match STOP's own (smaller) height below - all three share
-     this one height instead of OPEN/DICHT being taller. */
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 8px;
@@ -3830,6 +3828,17 @@ img.icon {
   text-decoration: none;
   cursor: pointer;
   box-sizing: border-box;
+}
+
+/* OPEN/DICHT are twice STOP's height - explicit px (not just padding, and
+   !important) so the ratio holds regardless of any other rule's specificity. */
+.blinds-slider-action-stop a {
+  height: 20px !important;
+}
+
+.blinds-slider-action-up a,
+.blinds-slider-action-down a {
+  height: 40px !important;
 }
 
 /* The blanket .fas/.far/.fab { font-size: 30px } rule further up this file
@@ -3910,16 +3919,24 @@ img.icon {
    !important: jQuery UI's own bundled default theme sizes the handle via
    its own em-based rule (.ui-slider .ui-slider-handle), which these two
    already outrank on specificity, but pin them anyway so the handle can
-   never end up non-square. margin-bottom: the theme's vertical-orientation
-   rule (.ui-slider-vertical .ui-slider-handle) sets margin-bottom: -.6em,
-   which this rule never contested (only left/margin-left), so it was still
-   quietly shifting the handle. */
+   never end up non-square. jQuery UI positions the handle with "bottom:
+   value%", which places the handle's *bottom edge* (not its center) at
+   that percentage of the track - so without correction the round handle
+   visually sits half its own height too high compared to the tick marks
+   and the value bubble, which both center on their percentage via
+   transform: translateY(-50%) (see .slider-tick span / .slider-value
+   above). margin-bottom: -8px (half the 16px handle height) shifts the
+   handle back down so its *center* lands on the value's percentage,
+   matching the ticks/bubble. The theme's own default (margin-bottom:
+   -.6em) does the same thing for its own default handle size - this isn't
+   overriding a quirk, it's the same compensation re-sized for our handle.
+*/
 .blinds-slider-wrap .slider .ui-slider-handle {
   left: 50%;
   width: 16px !important;
   height: 16px !important;
   margin-left: -8px;
-  margin-bottom: 0 !important;
+  margin-bottom: -8px !important;
   border: 2px solid rgba(255, 255, 255, 0.85) !important;
   border-radius: 50%;
   background: #d9dde2 !important;

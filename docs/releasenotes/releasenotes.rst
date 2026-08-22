@@ -53,20 +53,29 @@ v3.45.4 beta (22-8-2026)
 
 * **Fixes**
 
-- OPEN/DICHT are now the same (smaller) height as STOP - they were
-  unexpectedly taller because their chevron icon inherited the theme's
-  blanket ``.fas { font-size: 30px }`` rule (the codebase's own
-  ``.fa-small`` opt-out still resolves to 20px, itself too big here),
-  overriding the button's own 8px text size and dragging its height
-  back up regardless of padding. STOP also gets a light red
-  background/border to set it apart from OPEN/DICHT.
+- OPEN/DICHT were unexpectedly taller than STOP because their chevron
+  icon inherited the theme's blanket ``.fas { font-size: 30px }`` rule
+  (the codebase's own ``.fa-small`` opt-out still resolves to 20px,
+  itself too big here), overriding the button's own 8px text size and
+  dragging its height back up regardless of padding; fixed, and
+  OPEN/DICHT now have an explicit height that's exactly twice STOP's,
+  ``!important`` so the ratio holds regardless of any other rule's
+  specificity. STOP also gets a light red background/border to set it
+  apart from OPEN/DICHT.
 
 - Shrunk the slider handle further (20px to 16px) and made its
-  width/height ``!important`` so it can never end up non-square; also
-  found and fixed jQuery UI's own bundled vertical-orientation theme
-  rule (``.ui-slider-vertical .ui-slider-handle``) quietly applying a
-  ``margin-bottom: -.6em`` that nothing had overridden yet, offsetting
-  the handle.
+  width/height ``!important`` so it can never end up non-square. jQuery
+  UI positions the handle by its *bottom edge*, not its center, while
+  the tick labels and value bubble both center on their percentage via
+  ``translateY(-50%)`` - so without correction the handle visually sat
+  about half its own height too high, not matching the tick/bubble it
+  was next to. Restored a negative ``margin-bottom`` sized to half the
+  handle's height so its center lands on the same percentage the
+  ticks/bubble do (an earlier pass in this same release had zeroed this
+  out, mistaking jQuery UI's own equivalent default compensation -
+  ``.ui-slider-vertical .ui-slider-handle``'s ``margin-bottom: -.6em`` -
+  for an unwanted quirk rather than the same fix, sized for the
+  theme's own default handle).
 
 - Selecting Needle and saving didn't actually switch to it: the classic
   bar kept showing instead, and the Needle button lost its highlighted
@@ -99,6 +108,17 @@ v3.45.4 beta (22-8-2026)
   jQuery UI's own bundled default theme CSS (which styles the same
   generic ``.ui-slider``/``.ui-widget-header`` classes, e.g. with
   blue) can no longer visually override them.
+
+- For an inverted device (auto-detected or forced via the **Inverse**
+  switch), the scale's printed numbers - the tick labels, the live
+  percentage readout, and the value it shows/accepts when clicked to
+  type an exact number - now flip too: 0% at the top, 100% at the
+  bottom. Previously only the fill direction flipped, not the
+  displayed numbers, so an inverted device's scale still read 0% at
+  the bottom and 100% at the top even though "how open" now filled the
+  other way. Every tick and the handle itself keep their original
+  physical position on the track, still tied to the device's real
+  Level value - only the label text changes.
 
 v3.45.3 beta (21-8-2026)
 -------------------------
