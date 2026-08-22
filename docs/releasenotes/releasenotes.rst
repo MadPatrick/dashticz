@@ -13,18 +13,35 @@ v3.45.4 beta (22-8-2026)
 
 - The Blinds Percentage device block now renders as a vertical
   remote-style control instead of the previous thin percentage bar:
-  icon+title header, a pill-shaped OPEN action above the slider, the
-  slider itself with a live percentage readout beside the handle and a
-  clickable 0/25/50/75/100% tick scale down its left edge, then a DICHT
+  icon+title header, a compact pill-shaped OPEN action above the
+  slider, the slider itself with a live percentage readout beside the
+  handle and a clickable tick scale down its left edge, then a DICHT
   action (and STOP, unless ``hide_stop`` is set) below it. Only Blinds
   Percentage/Blinds Inverted Percentage devices get this layout (a new
   ``renderBlindsSliderBlock()`` path in ``js/switches.js``) - other
   percentage sliders (e.g. dimmers) that reuse the same ``addSlider()``
   helper render exactly as before.
 
-- The slider's step size still defaults to 1% as before, but a block can
-  now override it with a new ``slider_step``/``sliderstep`` config
-  field. The existing OPEN/DICHT/STOP Domoticz commands are unchanged.
+- Clicking the live percentage readout turns it into a number input, so
+  an exact value can be typed instead of only dragging or tapping a
+  tick.
+
+- The scale's tick count now follows the same ``barsteps`` config field
+  (default 10) the Bar dial subtype already exposes as its **Steps**
+  field in the Device Config popup - that field is now also shown (and
+  saved) for a percentage blinds device in Icon mode, not only in Bar
+  mode, so both share one config-menu setting. The slider's own drag
+  step still defaults to 1% as before, but a block can override it with
+  a new ``slider_step``/``sliderstep`` config field.
+
+- The OPEN/DICHT/STOP action buttons are about 70% of their earlier
+  size. The existing OPEN/DICHT/STOP Domoticz commands are unchanged.
+
+- The block's own fixed 360px minimum height (needed to escape the
+  classic 85px block-height cap every ``.mh`` gets by default) no
+  longer overrides a grid screen's row-driven height, so resizing the
+  tile in the Layout Editor properly grows/shrinks the slider along
+  with it, same as the map/log/clock widgets already do.
 
 * **Fixes**
 
@@ -44,6 +61,12 @@ v3.45.4 beta (22-8-2026)
   escaping it via their own ``multi_line`` config flag; the new slider
   block now gets the same escape hatch, instead of being silently
   truncated down to a sliver.
+
+- Typing an exact value and pressing Enter (or Escape) re-opened the
+  edit input a second time instead of committing cleanly: the keydown
+  event bubbled from the (already-removed) input up to the percentage
+  readout's own keydown handler, which reacted to the same Enter/Escape
+  press by starting a fresh edit.
 
 v3.45.3 beta (21-8-2026)
 -------------------------

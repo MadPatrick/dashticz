@@ -737,49 +737,101 @@ function addSlider(block, sliderValues) {
     $valueBubble.css('bottom', percent + '%').text(value + '%');
   }
 
-  // Build a clean 0/25/50/75/100%-of-range scale (plus a faint midpoint tick
-  // per quarter for texture), independent of the slider's own command step -
-  // each labeled tick jumps straight to its real underlying value. The
-  // slider itself remains draggable everywhere; jQuery UI performs the
-  // snapping to sliderValues.step.
+  // Clicking the live percentage bubble turns it into a number input so an
+  // exact value can be typed instead of only dragging/tapping a tick.
+  if ($valueBubble.length && !sliderValues.disabled) {
+    $valueBubble.addClass('slider-value-editable').attr('tabindex', 0);
+
+    var startEditingValue = function (event) {
+      event.stopPropagation();
+      if ($valueBubble.find('input').length) return; //already editing
+      var current = Math.round($divslider.slider('value'));
+      var $input = $('<input type="number" class="slider-value-input">')
+        .attr('min', min)
+        .attr('max', max)
+        .val(current)
+        .on('click', function (e) {
+          e.stopPropagation();
+        })
+        .on('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation(); //don't also reach $valueBubble's own keydown handler below
+            commitValue();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            $input.off('blur'); //about to remove a focused input - see commitValue()
+            positionValueBubble(current);
+          }
+        })
+        .on('blur', commitValue);
+
+      function commitValue() {
+        // Replacing $valueBubble's content below removes this focused
+        // input from the DOM, which the browser reacts to by blurring it -
+        // re-entrantly firing this same "blur" handler while this first
+        // call is still on the stack. Detach it first so that re-entrant
+        // call becomes a no-op instead of committing (and re-triggering
+        // slideDevice) a second time.
+        $input.off('blur');
+        var raw = parseInt($input.val(), 10);
+        var hasPassword = block.password;
+        if (isFinite(raw) && DT_function.promptPassword(hasPassword)) {
+          $divslider.slider('value', Math.min(max, Math.max(min, raw)));
+          //jQuery UI's own "change" callback repositions the bubble
+        } else {
+          positionValueBubble(current);
+        }
+      }
+
+      $valueBubble.empty().append($input);
+      $input.trigger('focus').trigger('select');
+    };
+
+    $valueBubble.on('click', startEditingValue);
+    $valueBubble.on('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        startEditingValue(event);
+      }
+    });
+  }
+
+  // Build a 0-100%-of-range scale, divided into block.barsteps segments -
+  // the same Steps config field (default 10) the Bar dial subtype already
+  // exposes (js/components/dial.js), so both share one config-menu setting.
+  // Independent of the slider's own command step - each tick jumps straight
+  // to its real underlying value. The slider itself remains draggable
+  // everywhere; jQuery UI performs the snapping to sliderValues.step.
   if ($wrap.length) {
     var $scale = $wrap.find('.slider-scale').empty();
-    var majorSteps = 4;
+    var barSteps = Math.max(1, parseInt(choose(block.barsteps, 10), 10) || 10);
 
-    function addTick(value, isMajor, majorLabel) {
+    function addTick(value, label) {
       var percent = ((value - min) / (max - min)) * 100;
-      var $tick = $('<button type="button"></button>')
-        .addClass('slider-tick')
-        .addClass(isMajor ? 'slider-tick-major' : 'slider-tick-minor')
-        .css('bottom', percent + '%');
-      if (isMajor) {
-        var target = Math.round(value);
-        $tick
-          .append('<span>' + majorLabel + '%</span>')
-          .attr('aria-label', majorLabel + '%');
-        if (!sliderValues.disabled) {
-          // Setting the jQuery UI value option itself triggers the slider's
-          // own "change" callback below (with a null event) - that already
-          // repositions the bubble and calls slideDevice(), so don't repeat
-          // that here or the command would be sent twice.
-          $tick.on('click', function (event) {
-            event.preventDefault();
-            event.stopPropagation();
-            $divslider.slider('value', target);
-          });
-        }
-      } else {
-        $tick.attr('aria-hidden', 'true').prop('tabIndex', -1);
+      var target = Math.round(value);
+      var $tick = $('<button type="button" class="slider-tick"></button>')
+        .css('bottom', percent + '%')
+        .append('<span>' + label + '%</span>')
+        .attr('aria-label', label + '%');
+      if (!sliderValues.disabled) {
+        // Setting the jQuery UI value option itself triggers the slider's
+        // own "change" callback below (with a null event) - that already
+        // repositions the bubble and calls slideDevice(), so don't repeat
+        // that here or the command would be sent twice.
+        $tick.on('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          $divslider.slider('value', target);
+        });
       }
       $tick.appendTo($scale);
     }
 
-    for (var m = 0; m <= majorSteps; m++) {
-      var majorValue = min + ((max - min) * m) / majorSteps;
-      addTick(majorValue, true, Math.round((m / majorSteps) * 100));
-      if (m < majorSteps) {
-        addTick(majorValue + (max - min) / majorSteps / 2, false);
-      }
+    for (var m = 0; m <= barSteps; m++) {
+      var stepValue = min + ((max - min) * m) / barSteps;
+      addTick(stepValue, Math.round((m / barSteps) * 100));
     }
 
     positionValueBubble(sliderValues.value);

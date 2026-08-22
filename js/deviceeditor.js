@@ -3081,6 +3081,11 @@ var DashticzDeviceEditor = (function () {
     // Keep an existing Bar selectable even if the live device is temporarily
     // unavailable. For new choices Bar is limited to Dimmer and percentage blinds.
     var supportsBar = hasDial && (isDimmer || isBlindsPercentage || options.bar === true);
+    // The Steps field also governs the Icon-mode Blinds Percentage slider's
+    // scale (js/switches.js addSlider()), which reads the same block.barsteps.
+    function barStepsApplies(mode) {
+      return mode === 'bar' || (isBlindsPercentage && mode === 'icon');
+    }
 
     // subtype:'bar' belongs to the visual mode selector, not Custom fields.
     // Other subtype values (for example 'updown') remain ordinary custom fields.
@@ -3120,7 +3125,10 @@ var DashticzDeviceEditor = (function () {
       });
       html += '</div></div>';
       var currentBarSteps = parseInt(options.barsteps, 10) > 0 ? parseInt(options.barsteps, 10) : 10;
-      html += '<div class="mb-3 de-bar-steps-row' + (visualMode === 'bar' ? '' : ' d-none') + '">';
+      // The Bar dial subtype's segment count and the Icon-mode Blinds
+      // Percentage slider's scale tick count are the same barsteps config
+      // field, shown for either visual mode on a percentage blinds device.
+      html += '<div class="mb-3 de-bar-steps-row' + (barStepsApplies(visualMode) ? '' : ' d-none') + '">';
       html += '<label class="form-label" for="de-config-barsteps">' + _esc(t.dial_barsteps) + '</label>';
       html += '<input type="number" min="1" step="1" class="form-control" id="de-config-barsteps" value="' +
         _esc(currentBarSteps) + '">';
@@ -3282,7 +3290,7 @@ var DashticzDeviceEditor = (function () {
       $popup.find('.de-dial-hint').toggleClass('d-none', !enabled);
     }
     function refreshBarStepsField() {
-      $popup.find('.de-bar-steps-row').toggleClass('d-none', selectedVisualMode() !== 'bar');
+      $popup.find('.de-bar-steps-row').toggleClass('d-none', !barStepsApplies(selectedVisualMode()));
     }
     function refreshDialOptions() {
       var mode = hasDial ? selectedVisualMode() : '';
@@ -3435,7 +3443,7 @@ var DashticzDeviceEditor = (function () {
         updated.bar = pendingVisualMode === 'bar';
         var rawBarSteps = $.trim(String($('#de-config-barsteps').val() || ''));
         var parsedBarSteps = parseInt(rawBarSteps, 10);
-        if (pendingVisualMode === 'bar') {
+        if (barStepsApplies(pendingVisualMode)) {
           if (!(parsedBarSteps > 0 && String(parsedBarSteps) === rawBarSteps)) {
             valid = false;
             $popup.find('.de-config-message').addClass('text-danger').text(t.invalid_barsteps);
@@ -3444,10 +3452,10 @@ var DashticzDeviceEditor = (function () {
             updated.barsteps = parsedBarSteps;
           }
         } else {
-          // Not in Bar mode: the field is hidden, so don't block saving on
-          // it - keep whatever value was already stored (falling back to
-          // the input's own value, then the default) for if the user
-          // switches back to Bar later without reopening this popup.
+          // Field hidden in this mode: don't block saving on it - keep
+          // whatever value was already stored (falling back to the input's
+          // own value, then the default) for if the user switches back to a
+          // mode where it applies later without reopening this popup.
           updated.barsteps = parsedBarSteps > 0 ? parsedBarSteps : (options.barsteps || 10);
         }
       }
