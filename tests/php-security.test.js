@@ -63,12 +63,25 @@ function lmsShutdownFatalOutput() {
    always sees it as empty, so a real `php -S` server is required here
    rather than piping into a CLI invocation. Confirms the guard moved into
    the try block actually prevents the crash, not just that the source
-   contains the check. */
+   contains the check.
+   `-n` also drops ext-json on PHP < 8 (where it's a loadable module,
+   unlike 8.0+ where it's a permanent core extension) - explicitly
+   reloading it keeps json_decode()/json_encode() (used by both the
+   request parser and the shutdown handler's own fallback) working while
+   curl stays disabled, so this only ever exercises the curl guard. */
 async function lmsRequestWithoutCurl(payload) {
   const port = 20000 + (process.pid % 10000);
   const proc = spawn(
     'php',
-    ['-n', '-d', 'display_errors=0', '-S', `127.0.0.1:${port}`],
+    [
+      '-n',
+      '-d',
+      'extension=json',
+      '-d',
+      'display_errors=0',
+      '-S',
+      `127.0.0.1:${port}`,
+    ],
     { cwd: root }
   );
   let serverStderr = '';
