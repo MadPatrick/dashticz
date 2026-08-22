@@ -109,16 +109,27 @@ v3.45.4 beta (22-8-2026)
   generic ``.ui-slider``/``.ui-widget-header`` classes, e.g. with
   blue) can no longer visually override them.
 
-- For an inverted device (auto-detected or forced via the **Inverse**
-  switch), the scale's printed numbers - the tick labels, the live
-  percentage readout, and the value it shows/accepts when clicked to
-  type an exact number - now flip too: 0% at the top, 100% at the
-  bottom. Previously only the fill direction flipped, not the
-  displayed numbers, so an inverted device's scale still read 0% at
-  the bottom and 100% at the top even though "how open" now filled the
-  other way. Every tick and the handle itself keep their original
-  physical position on the track, still tied to the device's real
-  Level value - only the label text changes.
+- Fixed the scale reading -1% for a fully-closed normal device and
+  101% for a fully-open inverted one. The slider's ``min`` was
+  hardcoded to 1 instead of 0, so the percent-space math behind the
+  tick labels, the value bubble and the click-to-type input landed
+  just past 0%/100% for a raw Level of 0. ``min`` is now 0, the
+  device's real Level range - the same range the Bar dial subtype
+  (``js/components/dial.js``) already uses.
+
+- Reverted an earlier misstep from this same release: the tick
+  labels/bubble/typed value had briefly been made to flip their
+  printed number for an inverted device (0% at the top, 100% at the
+  bottom). The Bar dial subtype never does this - it always shows the
+  device's raw, unconverted Level regardless of an inverted
+  SwitchType - and that plain behavior is what's wanted here too. The
+  gradient fill's direction is likewise no longer conditional on
+  inverted (always ``range: 'min'``), so the slider's printed number,
+  its handle position and its fill all track the device's raw Level
+  directly: transparent at 0%, completely filled at 100%, for every
+  device. An inverted SwitchType now only changes which direction the
+  OPEN/DICHT buttons move the blind, exactly as the classic bar has
+  always treated it.
 
 v3.45.3 beta (21-8-2026)
 -------------------------

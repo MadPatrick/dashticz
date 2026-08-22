@@ -761,13 +761,16 @@ function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, inverted
     switchBlinds(block, 'Stop');
   });
 
+  // 0/100, matching Domoticz's real Level range and the Bar dial subtype's
+  // own segments (js/components/dial.js's makeBarDim()/getCurrentValueDim())
+  // - min: 1 previously made a fully-closed/open device (raw Level 0 or 100)
+  // read as -1%/101% instead of 0%/100%.
   addSlider(block, {
     value: device['Level'],
     step: sliderStep,
-    min: 1,
+    min: 0,
     max: 100,
     disabled: isProtected(block),
-    inverted: inverted,
   });
 }
 
@@ -779,26 +782,10 @@ function addSlider(block, sliderValues) {
   var min = Number(sliderValues.min);
   var max = Number(sliderValues.max);
 
-  // The slider's raw value/position (tied to the device's real Level, used
-  // for every .slider('value', x) call and every tick's click target) never
-  // flips - only the NUMBER shown to the user does, for an inverted device
-  // (block.inverse / auto-detected, see renderBlindsSliderBlock() above):
-  // "0%" should read at the top and "100%" at the bottom there, instead of
-  // the other way round, without moving anything's physical position.
-  function valueToDisplayPercent(value) {
-    var percent = ((value - min) / (max - min)) * 100;
-    return Math.round(sliderValues.inverted ? 100 - percent : percent);
-  }
-
-  function displayPercentToValue(displayPercent) {
-    var percent = sliderValues.inverted ? 100 - displayPercent : displayPercent;
-    return Math.round(min + (percent / 100) * (max - min));
-  }
-
   function positionValueBubble(value) {
     if (!$valueBubble.length) return;
     var percent = ((value - min) / (max - min)) * 100;
-    $valueBubble.css('bottom', percent + '%').text(valueToDisplayPercent(value) + '%');
+    $valueBubble.css('bottom', percent + '%').text(value + '%');
   }
 
   // Clicking the live percentage bubble turns it into a number input so an
@@ -811,9 +798,9 @@ function addSlider(block, sliderValues) {
       if ($valueBubble.find('input').length) return; //already editing
       var current = Math.round($divslider.slider('value'));
       var $input = $('<input type="number" class="slider-value-input">')
-        .attr('min', 0)
-        .attr('max', 100)
-        .val(valueToDisplayPercent(current))
+        .attr('min', min)
+        .attr('max', max)
+        .val(current)
         .on('click', function (e) {
           e.stopPropagation();
         })
@@ -839,10 +826,9 @@ function addSlider(block, sliderValues) {
         // call becomes a no-op instead of committing (and re-triggering
         // slideDevice) a second time.
         $input.off('blur');
-        var typedDisplayPercent = parseInt($input.val(), 10);
+        var raw = parseInt($input.val(), 10);
         var hasPassword = block.password;
-        if (isFinite(typedDisplayPercent) && DT_function.promptPassword(hasPassword)) {
-          var raw = displayPercentToValue(typedDisplayPercent);
+        if (isFinite(raw) && DT_function.promptPassword(hasPassword)) {
           $divslider.slider('value', Math.min(max, Math.max(min, raw)));
           //jQuery UI's own "change" callback repositions the bubble
         } else {
@@ -896,11 +882,7 @@ function addSlider(block, sliderValues) {
 
     for (var m = 0; m <= barSteps; m++) {
       var stepValue = min + ((max - min) * m) / barSteps;
-      var tickPercent = Math.round((m / barSteps) * 100);
-      // Tick stays at its physical position (tied to stepValue, the real
-      // underlying value it jumps to on click) - only the printed label
-      // flips for an inverted device, same as the bubble above.
-      addTick(stepValue, sliderValues.inverted ? 100 - tickPercent : tickPercent);
+      addTick(stepValue, Math.round((m / barSteps) * 100));
     }
 
     positionValueBubble(sliderValues.value);
@@ -919,15 +901,15 @@ function addSlider(block, sliderValues) {
     orientation: $wrap.length ? 'vertical' : 'horizontal',
     // jQuery UI only creates the .ui-slider-range element (the gradient
     // fill below the handle, styled in css/creative.css) when this is set -
-    // 'min' fills from the track's minimum (the bottom) up to the handle,
-    // matching "how far open" the blinds are for a normal device. Domoticz
-    // reports some blinds' percentage scale the other way round (0% fully
-    // open instead of 100%, see sliderValues.inverted in
-    // renderBlindsSliderBlock() above) - for those, 'max' fills from the
-    // handle up to the track's maximum instead, so the fill still always
-    // means "how far open", not "how far towards 100%". Left off for the
-    // dimmer slider, which never had a range fill before.
-    range: !$wrap.length ? false : (sliderValues.inverted ? 'max' : 'min'),
+    // 'min' fills from the track's minimum (the bottom) up to the handle, so
+    // it's transparent at 0% and completely filled at 100%, same as the
+    // number shown in the bubble/ticks (both always the device's raw Level,
+    // 0-100 - the Bar dial subtype (js/components/dial.js) shows the same
+    // raw, unconverted value regardless of an inverted SwitchType, and the
+    // slider now matches it: "inverted" only changes which direction
+    // OPEN/DICHT move the blind, see asOn above). Left off for the dimmer
+    // slider, which never had a range fill before.
+    range: $wrap.length ? 'min' : false,
     start: function () {
       Domoticz.hold(idx); //hold message queue
     },
