@@ -3732,8 +3732,8 @@ img.icon {
 }
 
 /* Percentage blinds: one continuous vertical slider, framed like a small
-   remote - icon+title header, an OPEN action above the slider, DICHT (and
-   optionally STOP) below it. Rendered entirely by
+   remote - a title header (no icon), an OPEN action above the slider,
+   DICHT (and optionally STOP) below it. Rendered entirely by
    renderBlindsSliderBlock()/addSlider() in js/switches.js as a single
    .blinds-slider-block replacing the classic icon | data | buttons row, so
    only Blinds Percentage/Blinds Inverted Percentage devices are affected -
@@ -3799,23 +3799,6 @@ img.icon {
   flex: 0 0 auto;
 }
 
-/* The icon still comes from the shared iconORimage() helper, which always
-   wraps it in a .col-icon column sized/positioned for the classic
-   icon | data | buttons row (45px, float/margin-top:5px, 36px on mobile via
-   its own !important media-query rule). Override with a .mh:has() selector
-   so it outranks those on specificity rather than source order. */
-.mh:has(.blinds-slider-block) .col-icon {
-  position: static;
-  width: 30px !important;
-  max-width: 30px;
-  margin: 0 !important;
-}
-
-.blinds-slider-header .icon {
-  font-size: 26px;
-  text-align: center;
-}
-
 .blinds-slider-header .title {
   font-size: 20px;
   font-weight: 700;
@@ -3825,18 +3808,18 @@ img.icon {
 .blinds-slider-action {
   flex: 0 0 auto;
   width: 100%;
-  max-width: 155px;
+  max-width: 100px;
 }
 
 .blinds-slider-action a {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
-  padding: 7px 11px;
+  padding: 4px 8px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-decoration: none;
@@ -3865,8 +3848,8 @@ img.icon {
 }
 
 .blinds-slider-action-stop a {
-  padding: 4px 10px;
-  font-size: 9px;
+  padding: 3px 8px;
+  font-size: 8px;
   color: rgba(255, 255, 255, 0.75);
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -3884,6 +3867,13 @@ img.icon {
   margin: 2px 0;
 }
 
+/* !important throughout this rule and the two below it: jQuery UI's own
+   bundled theme CSS (src/index.js's require('jquery-ui-dist/jquery-ui.min.css'))
+   styles .ui-slider/.ui-widget-content/.ui-widget-header (the classes the
+   widget puts on the track and range by default) with its own theme colors
+   (including blue) - these three selectors already outrank those on
+   specificity, but !important removes any doubt a theme's own CSS could
+   still win by loading later. */
 .blinds-slider-wrap .slider {
   position: absolute;
   left: 50%;
@@ -3892,26 +3882,27 @@ img.icon {
   width: 30px;
   height: auto !important;
   margin-left: -15px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.14)) !important;
   cursor: pointer;
 }
 
 .blinds-slider-wrap .slider .ui-slider-range {
   border-radius: 9px;
-  background: linear-gradient(to top, rgba(75, 160, 75, 0.55), rgba(125, 220, 110, 0.95));
+  background: linear-gradient(to top, rgba(75, 160, 75, 0.55), rgba(125, 220, 110, 0.95)) !important;
 }
 
+/* A small, plain button - not an oversized draggable circle. */
 .blinds-slider-wrap .slider .ui-slider-handle {
   left: 50%;
-  width: 32px;
-  height: 32px;
-  margin-left: -16px;
-  border: 3px solid rgba(255, 255, 255, 0.85);
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  border: 2px solid rgba(255, 255, 255, 0.85) !important;
   border-radius: 50%;
-  background: #d9dde2;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  background: #d9dde2 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   cursor: grab;
 }
 

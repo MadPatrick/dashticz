@@ -640,8 +640,9 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
 }
 
 /** Renders a Blinds Percentage/Blinds Inverted Percentage device as one
- * continuous vertical slider: icon+title header, an OPEN action above the
- * slider, DICHT (and optionally STOP) below it.
+ * continuous vertical slider: a title header, an OPEN action above the
+ * slider, DICHT (and optionally STOP) below it. No icon, unlike the classic
+ * icon | data | buttons layout below - this control speaks for itself.
  *
  * @param {object} block - The Dashticz block definition
  * @param {object} device - block.device
@@ -661,10 +662,6 @@ function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, sliderSt
 
   var html = '<div class="blinds-slider-block">';
   html += '<div class="blinds-slider-header">';
-  html +=
-    device['Status'] === 'Closed'
-      ? iconORimage(block, '', 'blinds_closed.png', 'off icon', '', 2)
-      : iconORimage(block, '', 'blinds_open.png', 'on icon', '', 2);
   html += '<strong class="title">' + title + '</strong>';
   html += '</div>';
 

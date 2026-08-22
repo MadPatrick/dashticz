@@ -47,6 +47,14 @@ v3.45.4 beta (22-8-2026)
   handle, the tick scale and the percentage readout repositioned to
   match, so the green gradient fill is clearly visible.
 
+- Removed the icon from the slider block's header entirely (just the
+  title remains), and shrunk the OPEN/DICHT/STOP action buttons and
+  the slider's own handle further, for a more compact "small button"
+  look. The classic icon | data | buttons layout (used when a device
+  isn't configured this way) and the separate Dial widget
+  (``js/components/dial.js``, including its own Bar visual mode) are
+  both unaffected.
+
 * **Fixes**
 
 - The slider's green gradient fill never actually appeared: jQuery UI
@@ -66,6 +74,12 @@ v3.45.4 beta (22-8-2026)
   ``slideDevice()`` directly on top of the command jQuery UI's own
   ``change`` callback already sends when the slider's value is set
   programmatically.
+
+- The track's colors could be visually overridden by jQuery UI's own
+  bundled default theme CSS, which styles the same generic
+  ``.ui-slider``/``.ui-widget-header`` classes the widget puts on the
+  track and range by default (e.g. with blue). The track, range and
+  handle colors are now ``!important``.
 
 - Every device/widget block (``.mh``) is capped at the classic 85px
   block height by default, with taller block types (graphs, dials, ...)
