@@ -195,9 +195,16 @@ v3.45.4 beta (22-8-2026)
   25px) and OPEN/DICHT are 5px shorter (40px to 35px).
 
 - The tick in the 0%-100% scale closest to the slider's current value
-  is now highlighted (the same green as the value bubble), alongside
-  the existing bubble rather than instead of it, so the current
-  position stays visible in the list of percentages too.
+  is now highlighted (the same green the value bubble used to use), so
+  the current position stays visible in the list of percentages.
+
+- Removed the value bubble entirely (and, with it, the click-to-type-
+  an-exact-value input it offered), leaving the highlighted tick as
+  the slider's only on-track indicator of the current reading - also
+  made that tick's label bold, not just colored, so it still stands
+  out on its own now that it's the sole indicator.
+
+- Doubled the slider track's width (30px to 60px).
 
 v3.45.3 beta (21-8-2026)
 -------------------------

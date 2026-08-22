@@ -3903,20 +3903,19 @@ img.icon {
    specificity, but !important removes any doubt a theme's own CSS could
    still win by loading later. This element's own box (top/bottom: 6px) is
    left alone since it's what jQuery UI (and this file's own JS) measures
-   0%-100% against for the handle/ticks/bubble - its visible background is
-   drawn by ::before below instead, sized 8px (half the handle's own 16px)
-   taller at each end, so the round handle - which can visually overhang up
-   to half its own height past this box's edge at the 0%/100% extremes -
-   stays fully inside the visible track instead of poking out above/below
-   it. */
+   0%-100% against for the handle/ticks - its visible background is drawn
+   by ::before below instead, sized 8px (half the handle's own 16px) taller
+   at each end, so the round handle - which can visually overhang up to
+   half its own height past this box's edge at the 0%/100% extremes - stays
+   fully inside the visible track instead of poking out above/below it. */
 .blinds-slider-wrap .slider {
   position: absolute;
   left: 50%;
   top: 6px;
   bottom: 6px;
-  width: 30px;
+  width: 60px;
   height: auto !important;
-  margin-left: -15px;
+  margin-left: -30px;
   border: none !important;
   background: transparent !important;
   cursor: pointer;
@@ -3948,14 +3947,14 @@ img.icon {
    never end up non-square. jQuery UI positions the handle with "bottom:
    value%", which places the handle's *bottom edge* (not its center) at
    that percentage of the track - so without correction the round handle
-   visually sits half its own height too high compared to the tick marks
-   and the value bubble, which both center on their percentage via
-   transform: translateY(-50%) (see .slider-tick span / .slider-value
-   above). margin-bottom: -8px (half the 16px handle height) shifts the
-   handle back down so its *center* lands on the value's percentage,
-   matching the ticks/bubble. The theme's own default (margin-bottom:
-   -.6em) does the same thing for its own default handle size - this isn't
-   overriding a quirk, it's the same compensation re-sized for our handle.
+   visually sits half its own height too high compared to the tick marks,
+   which center on their percentage via transform: translateY(-50%) (see
+   .slider-tick span below). margin-bottom: -8px (half the 16px handle
+   height) shifts the handle back down so its *center* lands on the
+   value's percentage, matching the ticks. The theme's own default
+   (margin-bottom: -.6em) does the same thing for its own default handle
+   size - this isn't overriding a quirk, it's the same compensation
+   re-sized for our handle.
 */
 /* top/margin-top !important: the Modern Dark/Liquid Glass Blue/Liquid Glass
    Grey themes each carry their own `.ui-slider-handle { top: 50% !important;
@@ -4037,59 +4036,16 @@ img.icon {
   color: var(--text-light);
 }
 
-/* Marks the tick closest to the slider's current value - same green as
-   .slider-value below, tying the two "current value" indicators together. */
+/* Marks the tick closest to the slider's current value - the only
+   on-slider indicator of the current reading. Bold in addition to the
+   color change so it still stands out on its own. */
 .slider-tick-active::after {
   border-top-color: #9ae58b;
 }
 
 .slider-tick-active span {
   color: #9ae58b;
-}
-
-.slider-value {
-  position: absolute;
-  left: calc(50% + 40px);
-  transform: translateY(-50%);
-  min-width: 52px;
-  padding: 5px 10px;
-  border-radius: 6px;
-  background: rgba(20, 25, 32, 0.92);
-  border: 1px solid rgba(125, 220, 110, 0.5);
-  color: #9ae58b;
-  font-weight: bold;
-  font-size: 13px;
-  text-align: center;
-}
-
-/* Click/tap the value to type an exact percentage instead of only
-   dragging or tapping a tick (js/switches.js addSlider()). */
-.slider-value-editable {
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.slider-value-editable:hover,
-.slider-value-editable:focus-visible {
-  border-color: rgba(125, 220, 110, 0.9);
-  outline: none;
-}
-
-.slider-value-input {
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: center;
-  -moz-appearance: textfield;
-}
-
-.slider-value-input::-webkit-outer-spin-button,
-.slider-value-input::-webkit-inner-spin-button {
-  margin: 0;
-  -webkit-appearance: none;
+  font-weight: 800;
 }
 
 @media (max-width: 975px) {

@@ -703,8 +703,6 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
  */
 function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, inverted, sliderStep) {
   var title = getBlockTitle(block);
-  var showValue =
-    typeof block['hide_data'] == 'undefined' || block['hide_data'] == false;
   var hidestop =
     typeof block['hide_stop'] != 'undefined' && block['hide_stop'] !== false;
   var openLabel = block.textOn || language.switches.state_open;
@@ -730,12 +728,6 @@ function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, inverted
     '" data-light="' +
     idx +
     '"></div>';
-  if (showValue) {
-    html +=
-      '<div class="slider-value" aria-live="polite">' +
-      device['Level'] +
-      '%</div>';
-  }
   html += '</div>';
 
   html +=
@@ -778,7 +770,6 @@ function addSlider(block, sliderValues) {
   var idx = block.idx;
   var $divslider = block.$mountPoint.find('.slider');
   var $wrap = $divslider.closest('.blinds-slider-wrap');
-  var $valueBubble = $wrap.find('.slider-value');
   var min = Number(sliderValues.min);
   var max = Number(sliderValues.max);
 
@@ -802,83 +793,16 @@ function addSlider(block, sliderValues) {
   }
 
   // Marks the scale tick closest to the slider's current value with the
-  // .slider-tick-active class (highlighted in css/creative.css), so the
-  // reading in the 0%-100% list stays visible even without looking at the
-  // bubble. $scale/barSteps are assigned further down, once - both var
-  // declarations, so already in scope here - but this is only ever called
-  // (via positionValueBubble) after that assignment has run.
+  // .slider-tick-active class (highlighted in css/creative.css) - the only
+  // on-slider indicator of the current reading. $scale/barSteps are
+  // assigned further down, once - both var declarations, so already in
+  // scope here - but this is only ever called after that assignment has
+  // run.
   function highlightActiveTick(value) {
     if (!$scale) return;
     var nearestM = Math.round(((value - min) / (max - min)) * barSteps);
     $scale.find('.slider-tick').each(function (i) {
       $(this).toggleClass('slider-tick-active', i === nearestM);
-    });
-  }
-
-  function positionValueBubble(value) {
-    if ($wrap.length) highlightActiveTick(value);
-    if (!$valueBubble.length) return;
-    $valueBubble.css('bottom', percentFromBottom(value) + '%').text(value + '%');
-  }
-
-  // Clicking the live percentage bubble turns it into a number input so an
-  // exact value can be typed instead of only dragging/tapping a tick.
-  if ($valueBubble.length && !sliderValues.disabled) {
-    $valueBubble.addClass('slider-value-editable').attr('tabindex', 0);
-
-    var startEditingValue = function (event) {
-      event.stopPropagation();
-      if ($valueBubble.find('input').length) return; //already editing
-      var current = Math.round(mirror($divslider.slider('value')));
-      var $input = $('<input type="number" class="slider-value-input">')
-        .attr('min', min)
-        .attr('max', max)
-        .val(current)
-        .on('click', function (e) {
-          e.stopPropagation();
-        })
-        .on('keydown', function (e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            e.stopPropagation(); //don't also reach $valueBubble's own keydown handler below
-            commitValue();
-          } else if (e.key === 'Escape') {
-            e.preventDefault();
-            e.stopPropagation();
-            $input.off('blur'); //about to remove a focused input - see commitValue()
-            positionValueBubble(current);
-          }
-        })
-        .on('blur', commitValue);
-
-      function commitValue() {
-        // Replacing $valueBubble's content below removes this focused
-        // input from the DOM, which the browser reacts to by blurring it -
-        // re-entrantly firing this same "blur" handler while this first
-        // call is still on the stack. Detach it first so that re-entrant
-        // call becomes a no-op instead of committing (and re-triggering
-        // slideDevice) a second time.
-        $input.off('blur');
-        var raw = parseInt($input.val(), 10);
-        var hasPassword = block.password;
-        if (isFinite(raw) && DT_function.promptPassword(hasPassword)) {
-          $divslider.slider('value', mirror(Math.min(max, Math.max(min, raw))));
-          //jQuery UI's own "change" callback repositions the bubble
-        } else {
-          positionValueBubble(current);
-        }
-      }
-
-      $valueBubble.empty().append($input);
-      $input.trigger('focus').trigger('select');
-    };
-
-    $valueBubble.on('click', startEditingValue);
-    $valueBubble.on('keydown', function (event) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        startEditingValue(event);
-      }
     });
   }
 
@@ -901,8 +825,8 @@ function addSlider(block, sliderValues) {
       if (!sliderValues.disabled) {
         // Setting the jQuery UI value option itself triggers the slider's
         // own "change" callback below (with a null event) - that already
-        // repositions the bubble and calls slideDevice(), so don't repeat
-        // that here or the command would be sent twice.
+        // re-highlights the active tick and calls slideDevice(), so don't
+        // repeat that here or the command would be sent twice.
         $tick.on('click', function (event) {
           event.preventDefault();
           event.stopPropagation();
@@ -917,7 +841,7 @@ function addSlider(block, sliderValues) {
       addTick(stepValue, Math.round((m / barSteps) * 100));
     }
 
-    positionValueBubble(sliderValues.value);
+    highlightActiveTick(sliderValues.value);
   }
 
   $divslider.slider({
@@ -936,25 +860,25 @@ function addSlider(block, sliderValues) {
     // Combined with the mirrored value above, 'max' (fill from the handle up
     // to jQuery UI's own internal maximum) is what ends up transparent at
     // 0% and completely filled at 100% here - matching the number shown in
-    // the bubble/ticks, which is always the device's raw Level, 0-100 (the
-    // Bar dial subtype, js/components/dial.js, shows that same raw,
-    // unconverted value regardless of an inverted SwitchType - "inverted"
-    // only changes which direction OPEN/DICHT move the blind, see asOn
-    // above). Left off for the dimmer slider, which never had a range fill
-    // before and keeps jQuery UI's own unmirrored min-at-bottom layout.
+    // the ticks, which is always the device's raw Level, 0-100 (the Bar
+    // dial subtype, js/components/dial.js, shows that same raw, unconverted
+    // value regardless of an inverted SwitchType - "inverted" only changes
+    // which direction OPEN/DICHT move the blind, see asOn above). Left off
+    // for the dimmer slider, which never had a range fill before and keeps
+    // jQuery UI's own unmirrored min-at-bottom layout.
     range: $wrap.length ? 'max' : false,
     start: function () {
       Domoticz.hold(idx); //hold message queue
     },
     slide: function (event, ui) {
-      positionValueBubble(mirror(ui.value));
+      highlightActiveTick(mirror(ui.value));
     },
     change: function (event, ui) {
       var hasPassword = block.password;
       if (!DT_function.promptPassword(hasPassword)) return;
 
       var value = mirror(ui.value);
-      positionValueBubble(value);
+      highlightActiveTick(value);
       slideDevice(block, value);
     },
     stop: function () {
