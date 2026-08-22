@@ -4037,6 +4037,16 @@ img.icon {
   color: var(--text-light);
 }
 
+/* Marks the tick closest to the slider's current value - same green as
+   .slider-value below, tying the two "current value" indicators together. */
+.slider-tick-active::after {
+  border-top-color: #9ae58b;
+}
+
+.slider-tick-active span {
+  color: #9ae58b;
+}
+
 .slider-value {
   position: absolute;
   left: calc(50% + 40px);

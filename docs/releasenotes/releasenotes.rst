@@ -194,6 +194,11 @@ v3.45.4 beta (22-8-2026)
 - Adjusted OPEN/DICHT/STOP's heights: STOP is 5px taller (20px to
   25px) and OPEN/DICHT are 5px shorter (40px to 35px).
 
+- The tick in the 0%-100% scale closest to the slider's current value
+  is now highlighted (the same green as the value bubble), alongside
+  the existing bubble rather than instead of it, so the current
+  position stays visible in the list of percentages too.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 

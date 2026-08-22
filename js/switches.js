@@ -801,7 +801,22 @@ function addSlider(block, sliderValues) {
     return $wrap.length ? 100 - percent : percent;
   }
 
+  // Marks the scale tick closest to the slider's current value with the
+  // .slider-tick-active class (highlighted in css/creative.css), so the
+  // reading in the 0%-100% list stays visible even without looking at the
+  // bubble. $scale/barSteps are assigned further down, once - both var
+  // declarations, so already in scope here - but this is only ever called
+  // (via positionValueBubble) after that assignment has run.
+  function highlightActiveTick(value) {
+    if (!$scale) return;
+    var nearestM = Math.round(((value - min) / (max - min)) * barSteps);
+    $scale.find('.slider-tick').each(function (i) {
+      $(this).toggleClass('slider-tick-active', i === nearestM);
+    });
+  }
+
   function positionValueBubble(value) {
+    if ($wrap.length) highlightActiveTick(value);
     if (!$valueBubble.length) return;
     $valueBubble.css('bottom', percentFromBottom(value) + '%').text(value + '%');
   }
