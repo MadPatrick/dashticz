@@ -100,6 +100,10 @@ v3.45.3 beta (21-8-2026)
   green instead. The selected button's label now uses the same accent
   blue as its icon.
 
+- Shifted a section title block's (``type: 'blocktitle'``, e.g.
+  "Lichtschakelaars") title text 10px to the right of its icon, on the
+  Modern Dark, Liquid Glass Blue and Liquid Glass Grey themes.
+
 - Fixed editing a device's config from inside the Layout Editor, clicking
   OK, then editing a *different* device and clicking OK, silently
   reverting the first device's change - only the most-recently-edited

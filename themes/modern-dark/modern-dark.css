@@ -323,6 +323,7 @@
   color: var(--text-light);
   font-size: var(--font-large);
   text-shadow: 4px 4px 4px #000;
+  transform: translateX(10px);
 }
 
 .blocktitle img {
