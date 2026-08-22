@@ -3820,14 +3820,25 @@ img.icon {
   justify-content: center;
   gap: 4px;
   width: 100%;
-  padding: 4px 8px;
+  /* OPEN/DICHT match STOP's own (smaller) height below - all three share
+     this one height instead of OPEN/DICHT being taller. */
+  padding: 3px 8px;
   border-radius: 999px;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-decoration: none;
   cursor: pointer;
   box-sizing: border-box;
+}
+
+/* The blanket .fas/.far/.fab { font-size: 30px } rule further up this file
+   (the codebase's own .fa-small already opts down to 20px, still too big
+   here) would otherwise inflate OPEN/DICHT's chevron past their 8px text
+   and drag the whole button back up to that height, defeating the match
+   with STOP above. */
+.blinds-slider-action a .fas {
+  font-size: 9px;
 }
 
 .blinds-slider-action-up a {
@@ -3851,16 +3862,15 @@ img.icon {
 }
 
 .blinds-slider-action-stop a {
-  padding: 3px 8px;
-  font-size: 8px;
-  color: rgba(255, 255, 255, 0.75);
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(220, 53, 69, 0.22);
+  border: 1px solid rgba(220, 53, 69, 0.5);
 }
 
 .blinds-slider-action-stop a:hover {
   color: var(--text-light);
-  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(220, 53, 69, 0.32);
+  border-color: rgba(220, 53, 69, 0.65);
 }
 
 .blinds-slider-wrap {
@@ -3896,12 +3906,20 @@ img.icon {
   background: linear-gradient(to top, rgba(75, 160, 75, 0.55), rgba(125, 220, 110, 0.95)) !important;
 }
 
-/* A small, plain button - not an oversized draggable circle. */
+/* A small, plain button - not an oversized draggable circle. Width/height
+   !important: jQuery UI's own bundled default theme sizes the handle via
+   its own em-based rule (.ui-slider .ui-slider-handle), which these two
+   already outrank on specificity, but pin them anyway so the handle can
+   never end up non-square. margin-bottom: the theme's vertical-orientation
+   rule (.ui-slider-vertical .ui-slider-handle) sets margin-bottom: -.6em,
+   which this rule never contested (only left/margin-left), so it was still
+   quietly shifting the handle. */
 .blinds-slider-wrap .slider .ui-slider-handle {
   left: 50%;
-  width: 20px;
-  height: 20px;
-  margin-left: -10px;
+  width: 16px !important;
+  height: 16px !important;
+  margin-left: -8px;
+  margin-bottom: 0 !important;
   border: 2px solid rgba(255, 255, 255, 0.85) !important;
   border-radius: 50%;
   background: #d9dde2 !important;

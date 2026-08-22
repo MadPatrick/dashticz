@@ -43,6 +43,21 @@ v3.45.4 beta (22-8-2026)
 
 * **Fixes**
 
+- OPEN/DICHT are now the same (smaller) height as STOP - they were
+  unexpectedly taller because their chevron icon inherited the theme's
+  blanket ``.fas { font-size: 30px }`` rule (the codebase's own
+  ``.fa-small`` opt-out still resolves to 20px, itself too big here),
+  overriding the button's own 8px text size and dragging its height
+  back up regardless of padding. STOP also gets a light red
+  background/border to set it apart from OPEN/DICHT.
+
+- Shrunk the slider handle further (20px to 16px) and made its
+  width/height ``!important`` so it can never end up non-square; also
+  found and fixed jQuery UI's own bundled vertical-orientation theme
+  rule (``.ui-slider-vertical .ui-slider-handle``) quietly applying a
+  ``margin-bottom: -.6em`` that nothing had overridden yet, offsetting
+  the handle.
+
 - Selecting Needle and saving didn't actually switch to it: the classic
   bar kept showing instead, and the Needle button lost its highlighted
   state on reopening the Device Config popup.
