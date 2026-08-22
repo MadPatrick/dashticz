@@ -248,6 +248,26 @@ v3.45.4 beta (22-8-2026)
 - Gave DICHT the same green colors as OPEN, instead of its own plain
   grey.
 
+- Fixed the percentage scale's ticks (and the track itself) being
+  able to render partly outside a narrower block, and the gap to the
+  button column still looking large even at 1px. Both
+  ``.slider-scale`` (the ticks) and ``.slider`` (the track) used to
+  center themselves independently within ``.blinds-slider-wrap`` via
+  ``position: absolute`` plus a fixed negative ``margin-left`` each -
+  correct only for the exact wrap width those margins were tuned
+  against, so a narrower block (or the track's own width changing, see
+  below) could push the ticks partly outside the visible block, and a
+  wide wrap left a lot of empty, un-styled space between the visible
+  track and the button column that the wrap's own tiny gap never
+  accounted for. Both are now plain flex children of
+  ``.blinds-slider-wrap`` (now itself a flex row) instead, always
+  staying inside it; ``justify-content: flex-end`` keeps the
+  scale+track group hugging the button column with no leftover space
+  in between, at any width. The track's own width is no longer a
+  fixed 60px either - it now flexes between 30px and 60px depending on
+  how much room the block actually has, so a narrow block shrinks it
+  instead of overflowing or clipping.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 

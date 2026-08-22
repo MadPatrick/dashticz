@@ -3894,11 +3894,27 @@ img.icon {
   border-color: rgba(220, 53, 69, 0.65);
 }
 
+/* .slider-scale and .slider used to be centered independently within this
+   wrap via position: absolute + a fixed negative margin-left each - fine
+   while the wrap was always the same width, but the fixed margins didn't
+   know about a narrower block, an increased track width (see .slider
+   below), or the button column now sitting right up against it: the scale
+   (and its percentage labels) could end up positioned partly outside the
+   block, and the empty leftover space in a wide wrap read as a big gap to
+   the buttons even though .blinds-slider-body's own gap is tiny. Both are
+   now plain flex children instead, always staying inside this row -
+   justify-content: flex-end keeps them (and so the visible track) hugging
+   the button column with no leftover space in between, at any width. */
 .blinds-slider-wrap {
   position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-end;
   flex: 1 1 auto;
   min-width: 0;
   margin: 2px 0;
+  gap: 6px;
 }
 
 /* !important throughout this rule and the two below it: jQuery UI's own
@@ -3913,15 +3929,18 @@ img.icon {
    by ::before below instead, sized 8px (half the handle's own 16px) taller
    at each end, so the round handle - which can visually overhang up to
    half its own height past this box's edge at the 0%/100% extremes - stays
-   fully inside the visible track instead of poking out above/below it. */
+   fully inside the visible track instead of poking out above/below it.
+   width: a flexible range (not a fixed px) instead, so the track scales
+   down along with a narrower block instead of forcing the block wider
+   than it should be or overflowing it - same 60px it always was as long
+   as there's room, shrinking down to 30px on a tighter one. */
 .blinds-slider-wrap .slider {
-  position: absolute;
-  left: 50%;
-  top: 6px;
-  bottom: 6px;
-  width: 60px;
+  position: relative;
+  flex: 1 1 60px;
+  max-width: 60px;
+  min-width: 30px;
+  margin: 6px 0;
   height: auto !important;
-  margin-left: -30px;
   border: none !important;
   background: transparent !important;
   cursor: pointer;
@@ -4004,13 +4023,17 @@ img.icon {
   outline-offset: 2px;
 }
 
+/* flex-shrink: 1 (not 0) - its own ticks are position: absolute, so this
+   still needs an explicit width for them to measure their right/width
+   percentages against (an absolutely-positioned child can't contribute to
+   its own parent's intrinsic sizing), but letting it shrink below that on
+   a narrow block keeps it inside the block instead of pushing .slider (or
+   the block itself) wider than available. */
 .slider-scale {
-  position: absolute;
-  left: 50%;
-  top: 6px;
-  bottom: 6px;
-  width: 90px;
-  margin-left: -122px;
+  position: relative;
+  flex: 0 1 90px;
+  min-width: 0;
+  margin: 6px 0;
   pointer-events: none;
 }
 
