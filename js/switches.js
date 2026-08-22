@@ -555,8 +555,19 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
   // Icon mode's own withPercentage renders below, which is the original
   // classic thin percentage bar.
   if (block.needle === true) {
+    // Domoticz already tells us when a blind's percentage scale runs the
+    // other way round: SwitchType contains "Inverted" for those devices
+    // (the same check the classic bar below also uses for asOn). Prefer
+    // that; a block.inverse config field (Inverse switch in the Device
+    // Config popup) overrides it for the rare device that doesn't expose
+    // this correctly - once set, it takes over both the OPEN/DICHT command
+    // direction and the scale/fill direction together, since a manual
+    // override exists specifically because Domoticz's own answer was wrong
+    // for this device.
+    var autoInverted = device['SwitchType'].toLowerCase().indexOf('inverted') >= 0;
+    var inverted = choose(block.inverse, autoInverted);
     var asOn = Domoticz.info.newBlindsBehavior;
-    if (device['SwitchType'].toLowerCase().indexOf('inverted') >= 0) {
+    if (inverted) {
       asOn = !asOn;
     }
     // Keep the classic bar's fixed one-percent step by default. A block
@@ -564,7 +575,7 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
     // value instead.
     var sliderStep = parseFloat(block.slider_step || block.sliderstep || 1);
     if (!isFinite(sliderStep) || sliderStep <= 0) sliderStep = 1;
-    renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, sliderStep);
+    renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, inverted, sliderStep);
     return true;
   }
 
@@ -687,9 +698,10 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
  * @param {string} idx - block.idx
  * @param {jQuery} $mountPoint - the block's .mh mount point
  * @param {boolean} asOn - whether the "up" action maps to Domoticz On (SwitchType-dependent)
+ * @param {boolean} inverted - whether 0% (not 100%) is the device's fully-open end
  * @param {number} sliderStep - the slider's drag/command step size
  */
-function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, sliderStep) {
+function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, inverted, sliderStep) {
   var title = getBlockTitle(block);
   var showValue =
     typeof block['hide_data'] == 'undefined' || block['hide_data'] == false;
@@ -755,6 +767,7 @@ function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, sliderSt
     min: 1,
     max: 100,
     disabled: isProtected(block),
+    inverted: inverted,
   });
 }
 
@@ -886,9 +899,14 @@ function addSlider(block, sliderValues) {
     // jQuery UI only creates the .ui-slider-range element (the gradient
     // fill below the handle, styled in css/creative.css) when this is set -
     // 'min' fills from the track's minimum (the bottom) up to the handle,
-    // matching "how far open" the blinds are. Left off for the dimmer
-    // slider, which never had a range fill before.
-    range: $wrap.length ? 'min' : false,
+    // matching "how far open" the blinds are for a normal device. Domoticz
+    // reports some blinds' percentage scale the other way round (0% fully
+    // open instead of 100%, see sliderValues.inverted in
+    // renderBlindsSliderBlock() above) - for those, 'max' fills from the
+    // handle up to the track's maximum instead, so the fill still always
+    // means "how far open", not "how far towards 100%". Left off for the
+    // dimmer slider, which never had a range fill before.
+    range: !$wrap.length ? false : (sliderValues.inverted ? 'max' : 'min'),
     start: function () {
       Domoticz.hold(idx); //hold message queue
     },

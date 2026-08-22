@@ -41,6 +41,16 @@ v3.45.4 beta (22-8-2026)
   properly shrinking/growing with a grid screen's own row-driven
   height, so resizing the tile in the Layout Editor works as expected.
 
+- Handled Domoticz's inverted blinds percentage scale (0% fully open
+  instead of 100%) for Needle mode: auto-detected from the device's
+  SwitchType (the same "Inverted" check already used for the
+  OPEN/DICHT command direction), so the green fill and the OPEN/DICHT
+  command direction both flip together for those devices with no
+  configuration needed. A new **Inverse** switch in the Device Config
+  popup (shown only in Needle mode, pre-checked to match the
+  auto-detected value) can override it for the rare device that
+  doesn't expose this correctly through Domoticz.
+
 * **Fixes**
 
 - OPEN/DICHT are now the same (smaller) height as STOP - they were
