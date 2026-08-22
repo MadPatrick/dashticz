@@ -43,6 +43,17 @@ v3.45.4 beta (22-8-2026)
 
 * **Fixes**
 
+- Selecting Needle and saving didn't actually switch to it: the classic
+  bar kept showing instead, and the Needle button lost its highlighted
+  state on reopening the Device Config popup.
+  ``saveblocks.php``/``configwriter.php`` only recognize a fixed set of
+  top-level device properties (unlike Dial/Bar's existing
+  ``type: 'dial'``), so a plain ``needle: true`` on the saved entry was
+  silently dropped - the same way Bar's own ``subtype: 'bar'`` and
+  ``barsteps`` already have to ride through ``custom_fields`` instead.
+  ``needle`` now does the same, and the popup also hydrates
+  ``options.needle`` from the live config when reopening.
+
 - The slider is now correctly given jQuery UI's ``orientation:
   'vertical'`` and ``range: 'min'`` options, so the handle position,
   drag direction and gradient fill are all actually value-driven,

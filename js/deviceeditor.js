@@ -688,6 +688,7 @@ var DashticzDeviceEditor = (function () {
         switch: definition.switch === true,
         dial: definition.type === 'dial' && !barMode,
         bar: barMode,
+        needle: definition.needle === true,
         barsteps: parseInt(definition.barsteps, 10) > 0 ? parseInt(definition.barsteps, 10) : 10,
       },
       buttonKey: String(definition.key || ''),
@@ -1576,6 +1577,7 @@ var DashticzDeviceEditor = (function () {
         switch: configured.switch === true,
         dial: configured.type === 'dial' && !barMode,
         bar: barMode,
+        needle: configured.needle === true,
         barsteps: parseInt(configured.barsteps, 10) > 0 ? parseInt(configured.barsteps, 10) : 10,
       };
       deviceTitleVisible[ck] = configured.hide_title !== true;
@@ -3091,13 +3093,20 @@ var DashticzDeviceEditor = (function () {
       return mode === 'bar' || mode === 'needle';
     }
 
-    // subtype:'bar' belongs to the visual mode selector, not Custom fields.
-    // Other subtype values (for example 'updown') remain ordinary custom fields.
+    // subtype:'bar' and needle:true both belong to the visual mode selector,
+    // not Custom fields (barsteps, also read by both modes, is left visible
+    // there - unlike subtype/needle it has a value a user may actually want
+    // to see/edit directly). Other subtype values (for example 'updown')
+    // remain ordinary custom fields.
     var subtypeRowIndex = customRows.findIndex(function (row) {
       return String(row.field || '').toLowerCase() === 'subtype' &&
         String(row.value || '').toLowerCase() === 'bar';
     });
     if (subtypeRowIndex > -1) customRows.splice(subtypeRowIndex, 1);
+    var needleRowIndex = customRows.findIndex(function (row) {
+      return String(row.field || '').toLowerCase() === 'needle';
+    });
+    if (needleRowIndex > -1) customRows.splice(needleRowIndex, 1);
 
     var visualMode = options.needle === true
       ? 'needle'
@@ -4084,7 +4093,7 @@ var DashticzDeviceEditor = (function () {
       deviceRefs[ck] = _stableDeviceReference(ck);
       deviceOptions[ck] = {
         icon: true, iconValue: null, hide_data: false, last_update: false, switch: false,
-        dial: false, bar: false,
+        dial: false, bar: false, needle: false,
       };
       deviceTitleVisible[ck] = true;
       deviceCustomFields[ck] = [
@@ -4269,12 +4278,17 @@ var DashticzDeviceEditor = (function () {
             specialEntry.type = 'dial';
           } else if (specialOptions.needle === true) {
             // Needle stays on the classic (non-dial) rendering path -
-            // js/switches.js getBlindsBlock() reads this flag directly.
-            specialEntry.needle = true;
+            // js/switches.js getBlindsBlock() reads block.needle directly,
+            // not block.type - saveblocks.php only recognizes a fixed set
+            // of top-level props (unlike Dial/Bar's existing type:'dial'),
+            // so this rides through custom_fields like barsteps already
+            // does, rather than as a top-level entry property that would
+            // be silently dropped on save.
+            specialCustomFields.needle = true;
             if (specialOptions.barsteps && specialOptions.barsteps !== 10) {
               specialCustomFields.barsteps = specialOptions.barsteps;
-              specialEntry.custom_fields = specialCustomFields;
             }
+            specialEntry.custom_fields = specialCustomFields;
           }
         } else if (special.specialType === 'group' || special.specialType === 'html') {
           // Only Icon and Last update apply here (no Data/Switch/Dial - see
@@ -4369,9 +4383,6 @@ var DashticzDeviceEditor = (function () {
       } else if (p.subidx) {
         entry.subidx = p.subidx;
       }
-      // Needle stays on the classic (non-dial) rendering path - js/switches.js
-      // getBlindsBlock() reads this flag directly, unlike Dial/Bar above.
-      if (options.needle === true) entry.needle = true;
       if (deviceTitleVisible[ck] === false) entry.hide_title = true;
       var customFields = _deviceCustomFieldsObject(
         deviceCustomFields[ck],
@@ -4384,9 +4395,19 @@ var DashticzDeviceEditor = (function () {
         if (options.barsteps && options.barsteps !== 10) {
           customFields.barsteps = options.barsteps;
         }
-      } else if (options.needle === true && options.barsteps && options.barsteps !== 10) {
+      } else if (options.needle === true) {
+        // Needle stays on the classic (non-dial) rendering path -
+        // js/switches.js getBlindsBlock() reads block.needle directly, not
+        // block.type - saveblocks.php/configwriter.php only recognize a
+        // fixed set of top-level device props (unlike Dial/Bar's existing
+        // type:'dial'), so this rides through custom_fields like barsteps
+        // already does, rather than as a top-level entry property that
+        // would be silently dropped on save.
+        customFields.needle = true;
         // Only written when it differs from addSlider()'s own default (10).
-        customFields.barsteps = options.barsteps;
+        if (options.barsteps && options.barsteps !== 10) {
+          customFields.barsteps = options.barsteps;
+        }
       }
       if (Object.keys(customFields).length) entry.custom_fields = customFields;
       if (deviceHeights[ck]) entry.height = deviceHeights[ck];
