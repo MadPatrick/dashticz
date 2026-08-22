@@ -221,9 +221,18 @@ v3.45.4 beta (22-8-2026)
   reaches exactly to the handle's own visible bottom edge, at every
   value - not only the 0%/100% extremes.
 
-- Bumped OPEN/DICHT/STOP's text 2px larger (8px to 10px) - the
-  chevron, sized via ``font-size: inherit``, grows by the same amount
-  automatically.
+- Moved OPEN/STOP/DICHT off their own row above/below the slider and
+  onto a column beside it instead - OPEN top, STOP middle, DICHT
+  bottom, all within the slider's own height (a plain flex column
+  with ``justify-content: space-between``, stretched to match the
+  slider via the new row container's ``align-items: stretch``) -
+  freeing up the vertical room they used to take for the slider and
+  its percentage scale instead. The buttons are now small round
+  icon-only buttons (OPEN/DICHT's existing chevrons, plus a new
+  ``fa-stop-circle`` icon for STOP, the same icon already used for a
+  media player's own Stop button elsewhere in this codebase) - their
+  OPEN/DICHT/STOP text is gone from the visible button entirely, kept
+  only as an ``aria-label`` for screen readers.
 
 v3.45.3 beta (21-8-2026)
 -------------------------

@@ -3733,8 +3733,8 @@ img.icon {
 
 /* "Needle" mode (block.needle === true) for Blinds Percentage/Blinds
    Inverted Percentage devices: one continuous vertical slider, framed like
-   a small remote - a title header (no icon), an OPEN action above the
-   slider, DICHT (and optionally STOP) below it. This is an alternative to,
+   a small remote - a title header (no icon), then the slider beside a
+   column of icon-only OPEN/STOP/DICHT buttons. This is an alternative to,
    not a replacement for, Icon mode's own classic thin percentage bar
    (getBlindsBlock()'s withPercentage branch, unchanged) and the separate
    Dial widget's Dial/Bar modes (js/components/dial.js, also unchanged).
@@ -3808,46 +3808,60 @@ img.icon {
   text-align: center;
 }
 
+/* The slider and its OPEN/STOP/DICHT buttons sit side by side - the wrap
+   (js/switches.js's renderBlindsSliderBlock()) takes the remaining width,
+   the button column stays a fixed, content-sized width next to it. */
+.blinds-slider-body {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  flex: 1 1 auto;
+  /* Without this, a flex item's default min-height: auto keeps it from
+     ever shrinking below its content's own size - harmless for the fixed-
+     size button column, but it would stop .blinds-slider-wrap below from
+     actually shrinking on a short grid row instead of overflowing it. */
+  min-height: 0;
+}
+
+/* OPEN top, STOP middle, DICHT bottom (or just OPEN/DICHT top/bottom with
+   hide_stop) - justify-content: space-between spreads them across the
+   column's own height, which stretches to match the slider via
+   .blinds-slider-body's align-items: stretch above, keeping every button
+   within the slider's own height as asked. */
+.blinds-slider-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
 .blinds-slider-action {
   flex: 0 0 auto;
-  width: 100%;
-  max-width: 100px;
 }
 
 .blinds-slider-action a {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  width: 100%;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 12px;
   text-decoration: none;
   cursor: pointer;
   box-sizing: border-box;
 }
 
-/* Explicit px (not just padding, and !important) so these hold regardless
-   of any other rule's specificity. */
-.blinds-slider-action-stop a {
-  height: 25px !important;
-}
-
-.blinds-slider-action-up a,
-.blinds-slider-action-down a {
-  height: 35px !important;
-}
-
 /* The blanket .fas/.far/.fab { font-size: 30px } rule further up this file
    (the codebase's own .fa-small already opts down to 20px, still too big
-   here) would otherwise inflate OPEN/DICHT's chevron way past its
-   surrounding text and drag the whole button back up in height. inherit
-   keeps the chevron exactly as tall as that text (currently 8px) without
-   duplicating the number here. !important: the Modern Dark/Liquid Glass
-   Blue/Liquid Glass Grey themes each carry their own `.fas.fa-chevron-up,
+   here) would otherwise inflate the icon way past this button's own
+   12px. inherit keeps the icon tied to that size without duplicating the
+   number here. !important: the Modern Dark/Liquid Glass Blue/Liquid Glass
+   Grey themes each carry their own `.fas.fa-chevron-up,
    .fas.fa-chevron-down { font-size: 40px !important; }` (written for the
    dimmer's up/down buttons); without !important here too, that theme rule
    wins outright regardless of this selector's higher specificity - !important
@@ -3891,7 +3905,7 @@ img.icon {
 .blinds-slider-wrap {
   position: relative;
   flex: 1 1 auto;
-  width: 100%;
+  min-width: 0;
   margin: 2px 0;
 }
 

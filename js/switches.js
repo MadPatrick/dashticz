@@ -689,9 +689,11 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
 }
 
 /** Renders a Blinds Percentage/Blinds Inverted Percentage device as one
- * continuous vertical slider: a title header, an OPEN action above the
- * slider, DICHT (and optionally STOP) below it. No icon, unlike the classic
- * icon | data | buttons layout below - this control speaks for itself.
+ * continuous vertical slider: a title header, then the slider beside a
+ * column of icon-only OPEN/STOP/DICHT buttons (OPEN top, STOP middle, DICHT
+ * bottom - all within the slider's own height, via justify-content:
+ * space-between). No icon, unlike the classic icon | data | buttons layout
+ * below - this control speaks for itself.
  *
  * @param {object} block - The Dashticz block definition
  * @param {object} device - block.device
@@ -713,10 +715,7 @@ function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, inverted
   html += '<strong class="title">' + title + '</strong>';
   html += '</div>';
 
-  html +=
-    '<div class="blinds-slider-action blinds-slider-action-up"><a href="javascript:void(0)" class="btn-blinds btn-blinds-up">' +
-    openLabel +
-    ' <em class="fas fa-chevron-up"></em></a></div>';
+  html += '<div class="blinds-slider-body">';
 
   html +=
     '<div class="blinds-slider-wrap swiper-no-swiping" data-light="' +
@@ -730,17 +729,26 @@ function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, inverted
     '"></div>';
   html += '</div>';
 
+  html += '<div class="blinds-slider-actions">';
+
   html +=
-    '<div class="blinds-slider-action blinds-slider-action-down"><a href="javascript:void(0)" class="btn-blinds btn-blinds-down">' +
-    closeLabel +
-    ' <em class="fas fa-chevron-down"></em></a></div>';
+    '<div class="blinds-slider-action blinds-slider-action-up"><a href="javascript:void(0)" class="btn-blinds btn-blinds-up" aria-label="' +
+    openLabel +
+    '"><em class="fas fa-chevron-up"></em></a></div>';
 
   if (!hidestop) {
     html +=
-      '<div class="blinds-slider-action blinds-slider-action-stop"><a href="javascript:void(0)" class="btn-blinds btn-blinds-stop">STOP</a></div>';
+      '<div class="blinds-slider-action blinds-slider-action-stop"><a href="javascript:void(0)" class="btn-blinds btn-blinds-stop" aria-label="Stop"><em class="fas fa-stop-circle"></em></a></div>';
   }
 
-  html += '</div>';
+  html +=
+    '<div class="blinds-slider-action blinds-slider-action-down"><a href="javascript:void(0)" class="btn-blinds btn-blinds-down" aria-label="' +
+    closeLabel +
+    '"><em class="fas fa-chevron-down"></em></a></div>';
+
+  html += '</div>'; // .blinds-slider-actions
+  html += '</div>'; // .blinds-slider-body
+  html += '</div>'; // .blinds-slider-block
 
   $mountPoint.html(html);
   $mountPoint.find('.btn-blinds-up').click(function () {
