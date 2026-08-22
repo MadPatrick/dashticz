@@ -14,18 +14,20 @@ test.describe('optional screen grid layout', () => {
     await expect(page.locator('.screen1 .dt-grid-layout')).toHaveCount(0);
   });
 
-  test('uses the shared background on later screens when optional backgrounds are empty', async ({
+  test('applies a saved shared background to screen 2 despite its legacy background', async ({
     page,
   }) => {
+    let savedBackground = 'img/bg1.jpg';
     await page.route('**/tests/CONFIG.pw.js*', async (route) => {
       const response = await route.fetch();
       await route.fulfill({
         response,
         body:
           (await response.text()) +
-          `
-config['background_image'] = 'img/bg2.jpg';
-screens[2]['background'] = '';
+          '\nconfig[\'background_image\'] = ' +
+          JSON.stringify(savedBackground) +
+          `;
+screens[2]['background'] = 'bg1.jpg';
 screens[2]['background_morning'] = '';
 screens[2]['background_noon'] = '';
 screens[2]['background_afternoon'] = '';
@@ -33,10 +35,48 @@ screens[2]['background_night'] = '';
 `,
       });
     });
+    await page.route('**/info.php?get=csrf*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'background-save-token' }),
+      })
+    );
+    await page.route('**/js/savecustomcss.php*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      })
+    );
+    await page.route('**/js/savesettings.php*', (route) => {
+      const fields = new URLSearchParams(route.request().postData() || '');
+      savedBackground = JSON.parse(fields.get('background_image') || 'null');
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
 
     await page.goto(dashboardUrl);
     await waitForDashboard(page);
+    await page.mouse.move(10, 10);
+    await page.getByRole('button', { name: 'Open settings' }).first().click();
+    await expect(page.locator('#settingspopup')).toBeVisible();
+    await page.locator('[data-settings-category="theme"]').click();
+    await page.locator('#setting-background_image').fill('img/bg2.jpg');
 
+    const reloaded = page.waitForEvent('framenavigated', {
+      predicate: (frame) => frame === page.mainFrame(),
+    });
+    await page.locator('#settingspopup .btn-save').click();
+    await reloaded;
+    await waitForDashboard(page);
+
+    expect(savedBackground).toBe('img/bg2.jpg');
+    await page.locator('.dt-screen-btn[data-screen="2"]').first().click();
+    await expect(page.locator('.screen2')).toBeVisible();
     await expect
       .poll(() =>
         page

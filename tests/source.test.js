@@ -1968,8 +1968,9 @@ test('remote content and network failures use safe bounded rendering paths', () 
   assert.match(main, /var failedFilename = loadingFilename/);
   assert.match(
     main,
-    /screen\['background_' \+ newClass\]\s*\|\|[\s\S]*screen\.background\s*\|\|[\s\S]*settings\['background_image'\]/
+    /screen\['background_' \+ newClass\]\s*\|\|[\s\S]*settings\['background_image'\]/
   );
+  assert.doesNotMatch(main, /screen\['background_' \+ newClass\][\s\S]{0,100}screen\.background/);
 });
 
 test('calendar editor behavior is documented without a version bump', () => {

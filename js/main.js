@@ -1505,12 +1505,12 @@ function setClassByTime() {
     for (var s in screens[t]) {
       var screen = screens[t][s];
       if (!screen || typeof screen !== 'object') continue;
-      // Empty values are written for unset optional backgrounds by some
-      // configurations. `choose()` only skips undefined, so an empty value
-      // would suppress the shared background on screens such as screen 2.
+      // Regular screens share the setting-level background. Keep supporting
+      // an explicitly configured time-of-day override, but do not let a
+      // legacy screens[n].background value pin later screens to an old image
+      // after the shared background is changed in Settings.
       var background =
         screen['background_' + newClass] ||
-        screen.background ||
         settings['background_image'];
       if (background) {
         $('.screen.screen' + s).css(
