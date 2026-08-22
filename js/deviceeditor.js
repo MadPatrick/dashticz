@@ -3181,7 +3181,10 @@ var DashticzDeviceEditor = (function () {
       );
       var inverseChecked = typeof options.inverse === 'boolean' ? options.inverse : autoInverted;
       html += '<div class="mb-3 de-inverse-row' + (inverseApplies(visualMode) ? '' : ' d-none') + '">';
-      html += '<label class="form-check form-switch"><input class="form-check-input" type="checkbox" id="de-config-inverse"' +
+      // de-switch: standard size/color for a standalone Device Config
+      // switch (css/creative.css) - any future one-off switch here should
+      // use it too, instead of a new per-switch CSS rule.
+      html += '<label class="form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="de-config-inverse"' +
         (inverseChecked ? ' checked' : '') + '>' +
         '<span class="form-check-label">' + _esc(t.dial_inverse) + '</span></label>';
       html += '<div class="form-text">' + _esc(t.dial_inverse_help) + '</div></div>';

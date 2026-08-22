@@ -286,6 +286,19 @@ v3.45.4 beta (22-8-2026)
   ``dial_barsteps_help``) - the internal mode/property name
   (``block.needle``) is unchanged, only the label shown to the user.
 
+- Fixed the Inverse switch (Device Config popup, Slider mode)
+  rendering noticeably smaller than the Data/Update switches next to
+  it - it fell outside ``.de-config-options``, the container the
+  Data/Update switches' own bigger size (38x20px instead of
+  Bootstrap's default) is scoped to. Rather than adding yet another
+  one-off selector to that already-long list (``css/creative.css``
+  already lists five: ``.de-config-options``, ``#hb-device-border``,
+  ``.we-widget-field``, ``#we-cfg-ascending``, ``.we-block-option``,
+  ``.de-lms-switch``), added a new shared ``.de-switch`` class
+  carrying the same size/color and applied it to the Inverse checkbox
+  - any future standalone Device Config switch can just add this
+  class instead of needing its own new CSS rule.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 

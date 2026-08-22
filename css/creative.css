@@ -1073,13 +1073,19 @@ next css sets the default height of the frame popup
 
 /* Shared look for every on/off switch across the settings screen and the
    Device/Widget editors: light-blue track with a solid blue knob (instead
-   of Bootstrap's default white knob), wherever it appears. */
+   of Bootstrap's default white knob), wherever it appears. .de-switch: the
+   standard class for any new standalone switch added to the Device Config
+   popup outside of .de-config-options's own grid (e.g. Inverse) - add it
+   to the <input> instead of registering yet another one-off selector here,
+   so it automatically gets this same color and size (below) without
+   needing a CSS change of its own. */
 #settingspopup .settings-switch .form-check-input,
 .de-config-options .form-check-input,
 #hb-device-border.form-check-input,
 .we-widget-field.form-check-input,
 #we-cfg-ascending.form-check-input,
 .we-block-option.form-check-input,
+.de-switch,
 .de-lms-switch.form-check-input {
   border-color: #adb5bd !important;
   cursor: pointer;
@@ -1091,6 +1097,7 @@ next css sets the default height of the frame popup
 .we-widget-field.form-check-input:checked,
 #we-cfg-ascending.form-check-input:checked,
 .we-block-option.form-check-input:checked,
+.de-switch:checked,
 .de-lms-switch.form-check-input:checked {
   background-color: #bfdbfe !important;
   border-color: #93c5fd !important;
@@ -1103,9 +1110,26 @@ next css sets the default height of the frame popup
 .we-widget-field.form-check-input:focus,
 #we-cfg-ascending.form-check-input:focus,
 .we-block-option.form-check-input:focus,
+.de-switch:focus,
 .de-lms-switch.form-check-input:focus {
   border-color: #93c5fd !important;
   box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25) !important;
+}
+
+/* Same width/height every other Device Config switch (.de-config-options
+   .form-check-input below) already uses - kept as its own rule (rather
+   than folded into the color one above) since a future switch that wants
+   this same size but a different color still only needs this class.
+   !important: Bootstrap's own .form-switch .form-check-input rule (2
+   classes) outranks a single .de-switch class on specificity alone, so
+   without it Bootstrap's own (smaller, em-based) width/height would win
+   regardless of source order. */
+.de-switch {
+  flex: 0 0 auto !important;
+  float: none !important;
+  width: 38px !important;
+  height: 20px !important;
+  margin: 0 !important;
 }
 
 .settings-help-slot {
