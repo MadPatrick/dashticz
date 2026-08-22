@@ -782,10 +782,28 @@ function addSlider(block, sliderValues) {
   var min = Number(sliderValues.min);
   var max = Number(sliderValues.max);
 
+  // Needle's scale reads top-to-bottom as 0%-100% - the opposite of a plain
+  // vertical slider's own min-at-bottom/max-at-top convention, but the same
+  // fixed layout the Bar dial subtype always uses (js/components/dial.js's
+  // dialbar.tpl lists its 0%, then increasing, segments top-to-bottom in
+  // plain DOM/flex order), regardless of an inverted SwitchType. jQuery UI
+  // itself has no such "flip" option, so every value handed to or read from
+  // the widget is mirrored around the midpoint of [min, max] instead -
+  // that's self-inverse, so the same function converts both directions. A
+  // no-op (identity) for the plain (non-Needle) dimmer slider below, which
+  // keeps its normal min-at-bottom layout.
+  function mirror(value) {
+    return $wrap.length ? min + max - value : value;
+  }
+
+  function percentFromBottom(value) {
+    var percent = ((value - min) / (max - min)) * 100;
+    return $wrap.length ? 100 - percent : percent;
+  }
+
   function positionValueBubble(value) {
     if (!$valueBubble.length) return;
-    var percent = ((value - min) / (max - min)) * 100;
-    $valueBubble.css('bottom', percent + '%').text(value + '%');
+    $valueBubble.css('bottom', percentFromBottom(value) + '%').text(value + '%');
   }
 
   // Clicking the live percentage bubble turns it into a number input so an
@@ -796,7 +814,7 @@ function addSlider(block, sliderValues) {
     var startEditingValue = function (event) {
       event.stopPropagation();
       if ($valueBubble.find('input').length) return; //already editing
-      var current = Math.round($divslider.slider('value'));
+      var current = Math.round(mirror($divslider.slider('value')));
       var $input = $('<input type="number" class="slider-value-input">')
         .attr('min', min)
         .attr('max', max)
@@ -829,7 +847,7 @@ function addSlider(block, sliderValues) {
         var raw = parseInt($input.val(), 10);
         var hasPassword = block.password;
         if (isFinite(raw) && DT_function.promptPassword(hasPassword)) {
-          $divslider.slider('value', Math.min(max, Math.max(min, raw)));
+          $divslider.slider('value', mirror(Math.min(max, Math.max(min, raw))));
           //jQuery UI's own "change" callback repositions the bubble
         } else {
           positionValueBubble(current);
@@ -860,10 +878,9 @@ function addSlider(block, sliderValues) {
     var barSteps = Math.max(1, parseInt(choose(block.barsteps, 10), 10) || 10);
 
     function addTick(value, label) {
-      var percent = ((value - min) / (max - min)) * 100;
       var target = Math.round(value);
       var $tick = $('<button type="button" class="slider-tick"></button>')
-        .css('bottom', percent + '%')
+        .css('bottom', percentFromBottom(value) + '%')
         .append('<span>' + label + '%</span>')
         .attr('aria-label', label + '%');
       if (!sliderValues.disabled) {
@@ -874,7 +891,7 @@ function addSlider(block, sliderValues) {
         $tick.on('click', function (event) {
           event.preventDefault();
           event.stopPropagation();
-          $divslider.slider('value', target);
+          $divslider.slider('value', mirror(target));
         });
       }
       $tick.appendTo($scale);
@@ -889,7 +906,7 @@ function addSlider(block, sliderValues) {
   }
 
   $divslider.slider({
-    value: sliderValues.value,
+    value: mirror(sliderValues.value),
     step: sliderValues.step,
     min: sliderValues.min,
     max: sliderValues.max,
@@ -900,28 +917,30 @@ function addSlider(block, sliderValues) {
     // static and dragging maps Y-axis movement almost randomly to a value.
     orientation: $wrap.length ? 'vertical' : 'horizontal',
     // jQuery UI only creates the .ui-slider-range element (the gradient
-    // fill below the handle, styled in css/creative.css) when this is set -
-    // 'min' fills from the track's minimum (the bottom) up to the handle, so
-    // it's transparent at 0% and completely filled at 100%, same as the
-    // number shown in the bubble/ticks (both always the device's raw Level,
-    // 0-100 - the Bar dial subtype (js/components/dial.js) shows the same
-    // raw, unconverted value regardless of an inverted SwitchType, and the
-    // slider now matches it: "inverted" only changes which direction
-    // OPEN/DICHT move the blind, see asOn above). Left off for the dimmer
-    // slider, which never had a range fill before.
-    range: $wrap.length ? 'min' : false,
+    // fill below the handle, styled in css/creative.css) when this is set.
+    // Combined with the mirrored value above, 'max' (fill from the handle up
+    // to jQuery UI's own internal maximum) is what ends up transparent at
+    // 0% and completely filled at 100% here - matching the number shown in
+    // the bubble/ticks, which is always the device's raw Level, 0-100 (the
+    // Bar dial subtype, js/components/dial.js, shows that same raw,
+    // unconverted value regardless of an inverted SwitchType - "inverted"
+    // only changes which direction OPEN/DICHT move the blind, see asOn
+    // above). Left off for the dimmer slider, which never had a range fill
+    // before and keeps jQuery UI's own unmirrored min-at-bottom layout.
+    range: $wrap.length ? 'max' : false,
     start: function () {
       Domoticz.hold(idx); //hold message queue
     },
     slide: function (event, ui) {
-      positionValueBubble(ui.value);
+      positionValueBubble(mirror(ui.value));
     },
     change: function (event, ui) {
       var hasPassword = block.password;
       if (!DT_function.promptPassword(hasPassword)) return;
 
-      positionValueBubble(ui.value);
-      slideDevice(block, ui.value);
+      var value = mirror(ui.value);
+      positionValueBubble(value);
+      slideDevice(block, value);
     },
     stop: function () {
       //stop is called before change

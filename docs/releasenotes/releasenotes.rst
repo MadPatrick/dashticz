@@ -122,14 +122,30 @@ v3.45.4 beta (22-8-2026)
   printed number for an inverted device (0% at the top, 100% at the
   bottom). The Bar dial subtype never does this - it always shows the
   device's raw, unconverted Level regardless of an inverted
-  SwitchType - and that plain behavior is what's wanted here too. The
-  gradient fill's direction is likewise no longer conditional on
-  inverted (always ``range: 'min'``), so the slider's printed number,
-  its handle position and its fill all track the device's raw Level
-  directly: transparent at 0%, completely filled at 100%, for every
-  device. An inverted SwitchType now only changes which direction the
-  OPEN/DICHT buttons move the blind, exactly as the classic bar has
-  always treated it.
+  SwitchType - and that plain behavior is what's wanted here too. An
+  inverted SwitchType now only changes which direction the OPEN/DICHT
+  buttons move the blind, exactly as the classic bar has always
+  treated it.
+
+- Checking the Bar dial subtype's actual template
+  (``tpl/dialbar.tpl``) and CSS showed its segments are always laid
+  out top-to-bottom as 0%, then increasing to 100% - a plain flex
+  column with no reversal - for every device, not only inverted ones.
+  Needle's scale now matches that same fixed layout (0% at the top,
+  100% at the bottom), the opposite of a plain vertical slider's own
+  min-at-bottom/max-at-top convention. jQuery UI has no built-in option
+  to flip a vertical slider, so every value handed to or read from the
+  widget is now mirrored around the midpoint of its 0-100 range before
+  reaching it and un-mirrored on the way back out, while every
+  displayed number (tick labels, the value bubble, the click-to-type
+  input) stays in plain raw-value space throughout - a tick's printed
+  label always matches the raw value it jumps to when clicked. The
+  gradient fill direction (``range: 'max'`` instead of ``'min'``) was
+  adjusted to match, keeping transparent-at-0%/filled-at-100%
+  consistent with the new physical layout.
+
+- Shrunk OPEN/DICHT's chevron icon to half its previous size (9px to
+  4.5px).
 
 v3.45.3 beta (21-8-2026)
 -------------------------
