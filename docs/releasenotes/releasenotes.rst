@@ -175,6 +175,22 @@ v3.45.4 beta (22-8-2026)
   earlier verification in this release had not done - and confirmed
   fixed for all three themes.
 
+- OPEN/DICHT's chevron is now exactly as tall as its own surrounding
+  text (``font-size: inherit``, instead of a hardcoded pixel value).
+
+- Fixed the round slider handle visually poking out above/below the
+  slider track's own background at the 0%/100% extremes. The handle
+  can overhang up to half its own height past the track's logical
+  0%/100% edge - needed so its center still lands exactly on the
+  value's position, matching the ticks/bubble - but the track's own
+  visible background previously stopped exactly at that edge, cutting
+  the handle off there. The track element's own box (what jQuery UI
+  and this file's own tick/bubble math measure 0%-100% against) is now
+  left completely alone and made transparent/borderless, with its
+  actual visible background moved onto a ``::before`` pseudo-element
+  sized 8px (half the handle's 16px) taller at both ends, so the
+  handle now always renders fully inside the visible track.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 

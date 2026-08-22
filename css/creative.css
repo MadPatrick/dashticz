@@ -3843,16 +3843,17 @@ img.icon {
 
 /* The blanket .fas/.far/.fab { font-size: 30px } rule further up this file
    (the codebase's own .fa-small already opts down to 20px, still too big
-   here) would otherwise inflate OPEN/DICHT's chevron past their 8px text
-   and drag the whole button back up to that height, defeating the match
-   with STOP above. !important: the Modern Dark/Liquid Glass Blue/Liquid
-   Glass Grey themes each carry their own `.fas.fa-chevron-up,
+   here) would otherwise inflate OPEN/DICHT's chevron way past its
+   surrounding text and drag the whole button back up in height. inherit
+   keeps the chevron exactly as tall as that text (currently 8px) without
+   duplicating the number here. !important: the Modern Dark/Liquid Glass
+   Blue/Liquid Glass Grey themes each carry their own `.fas.fa-chevron-up,
    .fas.fa-chevron-down { font-size: 40px !important; }` (written for the
    dimmer's up/down buttons); without !important here too, that theme rule
    wins outright regardless of this selector's higher specificity - !important
    always beats a plain declaration, no matter how specific. */
 .blinds-slider-action a .fas {
-  font-size: 4.5px !important;
+  font-size: inherit !important;
 }
 
 .blinds-slider-action-up a {
@@ -3900,7 +3901,14 @@ img.icon {
    widget puts on the track and range by default) with its own theme colors
    (including blue) - these three selectors already outrank those on
    specificity, but !important removes any doubt a theme's own CSS could
-   still win by loading later. */
+   still win by loading later. This element's own box (top/bottom: 6px) is
+   left alone since it's what jQuery UI (and this file's own JS) measures
+   0%-100% against for the handle/ticks/bubble - its visible background is
+   drawn by ::before below instead, sized 8px (half the handle's own 16px)
+   taller at each end, so the round handle - which can visually overhang up
+   to half its own height past this box's edge at the 0%/100% extremes -
+   stays fully inside the visible track instead of poking out above/below
+   it. */
 .blinds-slider-wrap .slider {
   position: absolute;
   left: 50%;
@@ -3909,10 +3917,23 @@ img.icon {
   width: 30px;
   height: auto !important;
   margin-left: -15px;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  border-radius: 10px;
-  background: linear-gradient(to top, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.14)) !important;
+  border: none !important;
+  background: transparent !important;
   cursor: pointer;
+}
+
+.blinds-slider-wrap .slider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  bottom: -8px;
+  z-index: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.14));
+  pointer-events: none;
 }
 
 .blinds-slider-wrap .slider .ui-slider-range {
