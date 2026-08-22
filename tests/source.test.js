@@ -355,7 +355,13 @@ test('package and runtime versions remain synchronized', () => {
   const runtimeVersion = JSON.parse(
     fs.readFileSync(path.join(root, 'version.txt'), 'utf8')
   ).version;
+  const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const descriptionVersion = index.match(
+    /content="Dashticz ([^"]+) - a customizable dashboard for Domoticz"/
+  );
   assert.equal(runtimeVersion, packageVersion);
+  assert.ok(descriptionVersion);
+  assert.equal(descriptionVersion[1], packageVersion);
 });
 
 test('JavaScript and stylesheet bundles use the same cache version', () => {
