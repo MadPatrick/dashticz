@@ -3830,15 +3830,15 @@ img.icon {
   box-sizing: border-box;
 }
 
-/* OPEN/DICHT are twice STOP's height - explicit px (not just padding, and
-   !important) so the ratio holds regardless of any other rule's specificity. */
+/* Explicit px (not just padding, and !important) so these hold regardless
+   of any other rule's specificity. */
 .blinds-slider-action-stop a {
-  height: 20px !important;
+  height: 25px !important;
 }
 
 .blinds-slider-action-up a,
 .blinds-slider-action-down a {
-  height: 40px !important;
+  height: 35px !important;
 }
 
 /* The blanket .fas/.far/.fab { font-size: 30px } rule further up this file

@@ -191,6 +191,9 @@ v3.45.4 beta (22-8-2026)
   sized 8px (half the handle's 16px) taller at both ends, so the
   handle now always renders fully inside the visible track.
 
+- Adjusted OPEN/DICHT/STOP's heights: STOP is 5px taller (20px to
+  25px) and OPEN/DICHT are 5px shorter (40px to 35px).
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 
