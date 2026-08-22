@@ -546,6 +546,10 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
   $.extend(block, parentBlock.protoBlock, parentBlock);
   var device = block.device;
   var withPercentage = choose(block.withPercentage, withPercentageParam, false);
+  // Keep the existing one-percent behaviour by default. A block that already
+  // supplies a slider_step/sliderstep value can use that value instead.
+  var sliderStep = parseFloat(block.slider_step || block.sliderstep || 1);
+  if (!isFinite(sliderStep) || sliderStep <= 0) sliderStep = 1;
   var idx = block.idx;
   var $mountPoint = block.$mountPoint.find('.mh');
   var html = '';
@@ -564,6 +568,9 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
     data_class += ' right1col';
     button_class = 'col-button1';
   }
+  if (withPercentage) {
+    data_class += ' blinds-percentage';
+  }
 
   if (device['Status'] === 'Closed')
     html += iconORimage(block, '', 'blinds_closed.png', 'off icon', '', 2);
@@ -579,11 +586,19 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
       title += ' ' + device['Level'] + '%';
     }
     value =
+      '<div class="blinds-slider-wrap swiper-no-swiping" data-light="' +
+      idx +
+      '">' +
+      '<div class="slider-scale" aria-hidden="true"></div>' +
       '<div class="slider slider' +
       idx +
-      '  swiper-no-swiping" data-light="' +
+      '" data-light="' +
       idx +
-      '"></div>';
+      '"></div>' +
+      '<div class="slider-value" aria-live="polite">' +
+      device['Level'] +
+      '%</div>' +
+      '</div>';
   } else {
     if (device['Status'] === 'Closed')
       value =
@@ -650,7 +665,7 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
   if (withPercentage) {
     addSlider(block, {
       value: device['Level'],
-      step: 1,
+      step: sliderStep,
       min: 1,
       max: 100,
       disabled: isProtected(block),
@@ -662,6 +677,40 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
 function addSlider(block, sliderValues) {
   var idx = block.idx;
   var $divslider = block.$mountPoint.find('.slider');
+  var $wrap = $divslider.closest('.blinds-slider-wrap');
+
+  // Build the visible scale from the actual slider range and step. The slider
+  // itself remains clickable everywhere; jQuery UI performs the snapping.
+  if ($wrap.length) {
+    var $scale = $wrap.find('.slider-scale').empty();
+    var min = Number(sliderValues.min);
+    var max = Number(sliderValues.max);
+    var step = Number(sliderValues.step) || 1;
+    var values = [];
+    for (var value = min; value <= max; value += step) {
+      values.push(Math.min(value, max));
+    }
+    if (values[values.length - 1] !== max) values.push(max);
+
+    // With very small command steps, show a readable scale while retaining
+    // every underlying clickable value.
+    var labelEvery = values.length > 21 ? Math.ceil(values.length / 11) : 1;
+    values.forEach(function (value, position) {
+      var percent = ((value - min) / (max - min)) * 100;
+      var label = position % labelEvery === 0 || value === max ? value + '%' : '';
+      $('<button type="button" class="slider-tick"></button>')
+        .css('bottom', percent + '%')
+        .attr('data-value', value)
+        .attr('aria-label', value + '%')
+        .append('<span>' + label + '</span>')
+        .on('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          $divslider.slider('value', Number($(this).attr('data-value')));
+        })
+        .appendTo($scale);
+    });
+  }
 
   $divslider.slider({
     value: sliderValues.value,
@@ -676,6 +725,7 @@ function addSlider(block, sliderValues) {
       var hasPassword = block.password;
       if (!DT_function.promptPassword(hasPassword)) return;
 
+      $wrap.find('.slider-value').text(ui.value + '%');
       slideDevice(block, ui.value);
     },
     stop: function () {

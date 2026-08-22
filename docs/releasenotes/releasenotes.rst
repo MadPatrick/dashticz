@@ -6,6 +6,29 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.45.4 beta (22-8-2026)
+-------------------------
+
+* **Enhancements**
+
+- The Blinds Percentage device block now renders as one continuous
+  vertical slider (``getBlindsBlock()`` in ``js/switches.js``), instead
+  of the previous thin percentage bar. It shows a live percentage
+  readout beside the handle and a tick-mark scale down its left edge,
+  with each tick directly clickable to jump the blinds to that value.
+  Only Blinds Percentage/Blinds Inverted Percentage devices get this
+  styling (via a new ``blinds-percentage`` class on the block) - other
+  percentage sliders (e.g. dimmers) that reuse the same generic
+  ``addSlider()`` helper are unaffected.
+
+- The slider's step size still defaults to 1% as before, but a block can
+  now override it with a new ``slider_step``/``sliderstep`` config field;
+  the tick scale reflects that same min/max/step range and automatically
+  thins its labels once a small step would otherwise produce more than
+  about 20 ticks. The existing OPEN/UP/STOP button row, Domoticz
+  commands and the non-percentage (open/closed state) rendering path are
+  unchanged.
+
 v3.45.3 beta (21-8-2026)
 -------------------------
 
