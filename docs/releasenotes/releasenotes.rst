@@ -11,23 +11,39 @@ v3.45.4 beta (22-8-2026)
 
 * **Enhancements**
 
-- The Blinds Percentage device block now renders as one continuous
-  vertical slider (``getBlindsBlock()`` in ``js/switches.js``), instead
-  of the previous thin percentage bar. It shows a live percentage
-  readout beside the handle and a tick-mark scale down its left edge,
-  with each tick directly clickable to jump the blinds to that value.
-  Only Blinds Percentage/Blinds Inverted Percentage devices get this
-  styling (via a new ``blinds-percentage`` class on the block) - other
-  percentage sliders (e.g. dimmers) that reuse the same generic
-  ``addSlider()`` helper are unaffected.
+- The Blinds Percentage device block now renders as a vertical
+  remote-style control instead of the previous thin percentage bar:
+  icon+title header, a pill-shaped OPEN action above the slider, the
+  slider itself with a live percentage readout beside the handle and a
+  clickable 0/25/50/75/100% tick scale down its left edge, then a DICHT
+  action (and STOP, unless ``hide_stop`` is set) below it. Only Blinds
+  Percentage/Blinds Inverted Percentage devices get this layout (a new
+  ``renderBlindsSliderBlock()`` path in ``js/switches.js``) - other
+  percentage sliders (e.g. dimmers) that reuse the same ``addSlider()``
+  helper render exactly as before.
 
 - The slider's step size still defaults to 1% as before, but a block can
-  now override it with a new ``slider_step``/``sliderstep`` config field;
-  the tick scale reflects that same min/max/step range and automatically
-  thins its labels once a small step would otherwise produce more than
-  about 20 ticks. The existing OPEN/UP/STOP button row, Domoticz
-  commands and the non-percentage (open/closed state) rendering path are
-  unchanged.
+  now override it with a new ``slider_step``/``sliderstep`` config
+  field. The existing OPEN/DICHT/STOP Domoticz commands are unchanged.
+
+* **Fixes**
+
+- The slider was missing jQuery UI's ``orientation: 'vertical'`` option:
+  despite looking vertical via CSS, the handle's position wasn't
+  actually value-driven and dragging mapped vertical mouse movement
+  almost randomly to a value, since jQuery UI was still reading only the
+  drag's horizontal position on the (10px-wide) track.
+
+- Clicking a scale tick sent every command twice - it called
+  ``slideDevice()`` directly on top of the command jQuery UI's own
+  ``change`` callback already sends when the slider's value is set
+  programmatically.
+
+- Every device/widget block (``.mh``) is capped at the classic 85px
+  block height by default, with taller block types (graphs, dials, ...)
+  escaping it via their own ``multi_line`` config flag; the new slider
+  block now gets the same escape hatch, instead of being silently
+  truncated down to a sliver.
 
 v3.45.3 beta (21-8-2026)
 -------------------------

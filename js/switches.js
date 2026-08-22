@@ -552,8 +552,22 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
   if (!isFinite(sliderStep) || sliderStep <= 0) sliderStep = 1;
   var idx = block.idx;
   var $mountPoint = block.$mountPoint.find('.mh');
-  var html = '';
 
+  var asOn = Domoticz.info.newBlindsBehavior;
+  if (device['SwitchType'].toLowerCase().indexOf('inverted') >= 0) {
+    asOn = !asOn;
+  }
+
+  // Blinds Percentage/Blinds Inverted Percentage devices get a dedicated
+  // full-height vertical-remote layout (icon+title, an OPEN action, the
+  // slider itself, then a DICHT/STOP action) instead of reusing the classic
+  // icon | data | buttons row below.
+  if (withPercentage) {
+    renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, sliderStep);
+    return true;
+  }
+
+  var html = '';
   var hidestop = false;
   var data_class = 'col-data blinds';
   var button_class;
@@ -568,9 +582,6 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
     data_class += ' right1col';
     button_class = 'col-button1';
   }
-  if (withPercentage) {
-    data_class += ' blinds-percentage';
-  }
 
   if (device['Status'] === 'Closed')
     html += iconORimage(block, '', 'blinds_closed.png', 'off icon', '', 2);
@@ -578,60 +589,23 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
   html += '<div class="' + data_class + '">';
   var title = getBlockTitle(block);
   var value = '';
-  if (withPercentage) {
-    if (
-      typeof block['hide_data'] == 'undefined' ||
-      block['hide_data'] == false
-    ) {
-      title += ' ' + device['Level'] + '%';
-    }
-    value =
-      '<div class="blinds-slider-wrap swiper-no-swiping" data-light="' +
-      idx +
-      '">' +
-      '<div class="slider-scale" aria-hidden="true"></div>' +
-      '<div class="slider slider' +
-      idx +
-      '" data-light="' +
-      idx +
-      '"></div>' +
-      '<div class="slider-value" aria-live="polite">' +
-      device['Level'] +
-      '%</div>' +
-      '</div>';
-  } else {
+  if (
+    typeof block['hide_data'] == 'undefined' ||
+    block['hide_data'] == false
+  ) {
     if (device['Status'] === 'Closed')
       value =
         '<span class="state">' + (block.textOff || language.switches.state_closed) + '</span>';
     else
       value = '<span class="state">' + (block.textOn || language.switches.state_open) + '</span>';
-  }
-  if (!withPercentage) {
-    if (
-      typeof block['hide_data'] == 'undefined' ||
-      block['hide_data'] == false
-    ) {
-      if (device['Status'] === 'Closed')
-        value =
-          '<span class="state">' + (block.textOff || language.switches.state_closed) + '</span>';
-      else
-        value =
-          '<span class="state">' + (block.textOn || language.switches.state_open) + '</span>';
-    } else {
-      value = '<span class="state"></span>';
-    }
+  } else {
+    value = '<span class="state"></span>';
   }
   html += '<strong class="title">' + title + '</strong><br />';
   html += value;
   html += '</div>';
 
   html += '<div class="' + button_class + '">';
-
-  var asOn = Domoticz.info.newBlindsBehavior;
-
-  if (device['SwitchType'].toLowerCase().indexOf('inverted') >= 0) {
-    asOn = !asOn;
-  }
   html +=
     '<div class="up"><a href="javascript:void(0)" class="btn btn-number plus">';
   html += '<em class="fas fa-chevron-up fa-small"></em>';
@@ -662,54 +636,153 @@ function getBlindsBlock(parentBlock, withPercentageParam) {
     switchBlinds(block, 'Stop');
   });
 
-  if (withPercentage) {
-    addSlider(block, {
-      value: device['Level'],
-      step: sliderStep,
-      min: 1,
-      max: 100,
-      disabled: isProtected(block),
-    });
-  }
   return true;
+}
+
+/** Renders a Blinds Percentage/Blinds Inverted Percentage device as one
+ * continuous vertical slider: icon+title header, an OPEN action above the
+ * slider, DICHT (and optionally STOP) below it.
+ *
+ * @param {object} block - The Dashticz block definition
+ * @param {object} device - block.device
+ * @param {string} idx - block.idx
+ * @param {jQuery} $mountPoint - the block's .mh mount point
+ * @param {boolean} asOn - whether the "up" action maps to Domoticz On (SwitchType-dependent)
+ * @param {number} sliderStep - the slider's drag/command step size
+ */
+function renderBlindsSliderBlock(block, device, idx, $mountPoint, asOn, sliderStep) {
+  var title = getBlockTitle(block);
+  var showValue =
+    typeof block['hide_data'] == 'undefined' || block['hide_data'] == false;
+  var hidestop =
+    typeof block['hide_stop'] != 'undefined' && block['hide_stop'] !== false;
+  var openLabel = block.textOn || language.switches.state_open;
+  var closeLabel = block.textOff || language.switches.state_closed;
+
+  var html = '<div class="blinds-slider-block">';
+  html += '<div class="blinds-slider-header">';
+  html +=
+    device['Status'] === 'Closed'
+      ? iconORimage(block, '', 'blinds_closed.png', 'off icon', '', 2)
+      : iconORimage(block, '', 'blinds_open.png', 'on icon', '', 2);
+  html += '<strong class="title">' + title + '</strong>';
+  html += '</div>';
+
+  html +=
+    '<div class="blinds-slider-action blinds-slider-action-up"><a href="javascript:void(0)" class="btn-blinds btn-blinds-up">' +
+    openLabel +
+    ' <em class="fas fa-chevron-up"></em></a></div>';
+
+  html +=
+    '<div class="blinds-slider-wrap swiper-no-swiping" data-light="' +
+    idx +
+    '">' +
+    '<div class="slider-scale" aria-hidden="true"></div>' +
+    '<div class="slider slider' +
+    idx +
+    '" data-light="' +
+    idx +
+    '"></div>';
+  if (showValue) {
+    html +=
+      '<div class="slider-value" aria-live="polite">' +
+      device['Level'] +
+      '%</div>';
+  }
+  html += '</div>';
+
+  html +=
+    '<div class="blinds-slider-action blinds-slider-action-down"><a href="javascript:void(0)" class="btn-blinds btn-blinds-down">' +
+    closeLabel +
+    ' <em class="fas fa-chevron-down"></em></a></div>';
+
+  if (!hidestop) {
+    html +=
+      '<div class="blinds-slider-action blinds-slider-action-stop"><a href="javascript:void(0)" class="btn-blinds btn-blinds-stop">STOP</a></div>';
+  }
+
+  html += '</div>';
+
+  $mountPoint.html(html);
+  $mountPoint.find('.btn-blinds-up').click(function () {
+    switchBlinds(block, asOn ? 'On' : 'Off');
+  });
+  $mountPoint.find('.btn-blinds-down').click(function () {
+    switchBlinds(block, asOn ? 'Off' : 'On');
+  });
+  $mountPoint.find('.btn-blinds-stop').click(function () {
+    switchBlinds(block, 'Stop');
+  });
+
+  addSlider(block, {
+    value: device['Level'],
+    step: sliderStep,
+    min: 1,
+    max: 100,
+    disabled: isProtected(block),
+  });
 }
 
 function addSlider(block, sliderValues) {
   var idx = block.idx;
   var $divslider = block.$mountPoint.find('.slider');
   var $wrap = $divslider.closest('.blinds-slider-wrap');
+  var $valueBubble = $wrap.find('.slider-value');
+  var min = Number(sliderValues.min);
+  var max = Number(sliderValues.max);
 
-  // Build the visible scale from the actual slider range and step. The slider
-  // itself remains clickable everywhere; jQuery UI performs the snapping.
+  function positionValueBubble(value) {
+    if (!$valueBubble.length) return;
+    var percent = ((value - min) / (max - min)) * 100;
+    $valueBubble.css('bottom', percent + '%').text(value + '%');
+  }
+
+  // Build a clean 0/25/50/75/100%-of-range scale (plus a faint midpoint tick
+  // per quarter for texture), independent of the slider's own command step -
+  // each labeled tick jumps straight to its real underlying value. The
+  // slider itself remains draggable everywhere; jQuery UI performs the
+  // snapping to sliderValues.step.
   if ($wrap.length) {
     var $scale = $wrap.find('.slider-scale').empty();
-    var min = Number(sliderValues.min);
-    var max = Number(sliderValues.max);
-    var step = Number(sliderValues.step) || 1;
-    var values = [];
-    for (var value = min; value <= max; value += step) {
-      values.push(Math.min(value, max));
-    }
-    if (values[values.length - 1] !== max) values.push(max);
+    var majorSteps = 4;
 
-    // With very small command steps, show a readable scale while retaining
-    // every underlying clickable value.
-    var labelEvery = values.length > 21 ? Math.ceil(values.length / 11) : 1;
-    values.forEach(function (value, position) {
+    function addTick(value, isMajor, majorLabel) {
       var percent = ((value - min) / (max - min)) * 100;
-      var label = position % labelEvery === 0 || value === max ? value + '%' : '';
-      $('<button type="button" class="slider-tick"></button>')
-        .css('bottom', percent + '%')
-        .attr('data-value', value)
-        .attr('aria-label', value + '%')
-        .append('<span>' + label + '</span>')
-        .on('click', function (event) {
-          event.preventDefault();
-          event.stopPropagation();
-          $divslider.slider('value', Number($(this).attr('data-value')));
-        })
-        .appendTo($scale);
-    });
+      var $tick = $('<button type="button"></button>')
+        .addClass('slider-tick')
+        .addClass(isMajor ? 'slider-tick-major' : 'slider-tick-minor')
+        .css('bottom', percent + '%');
+      if (isMajor) {
+        var target = Math.round(value);
+        $tick
+          .append('<span>' + majorLabel + '%</span>')
+          .attr('aria-label', majorLabel + '%');
+        if (!sliderValues.disabled) {
+          // Setting the jQuery UI value option itself triggers the slider's
+          // own "change" callback below (with a null event) - that already
+          // repositions the bubble and calls slideDevice(), so don't repeat
+          // that here or the command would be sent twice.
+          $tick.on('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            $divslider.slider('value', target);
+          });
+        }
+      } else {
+        $tick.attr('aria-hidden', 'true').prop('tabIndex', -1);
+      }
+      $tick.appendTo($scale);
+    }
+
+    for (var m = 0; m <= majorSteps; m++) {
+      var majorValue = min + ((max - min) * m) / majorSteps;
+      addTick(majorValue, true, Math.round((m / majorSteps) * 100));
+      if (m < majorSteps) {
+        addTick(majorValue + (max - min) / majorSteps / 2, false);
+      }
+    }
+
+    positionValueBubble(sliderValues.value);
   }
 
   $divslider.slider({
@@ -718,14 +791,22 @@ function addSlider(block, sliderValues) {
     min: sliderValues.min,
     max: sliderValues.max,
     disabled: sliderValues.disabled,
+    // jQuery UI defaults to a horizontal slider (handle position and drag
+    // math both driven by the mouse's X-axis) - without this, the blinds
+    // slider only *looks* vertical via CSS while the handle stays visually
+    // static and dragging maps Y-axis movement almost randomly to a value.
+    orientation: $wrap.length ? 'vertical' : 'horizontal',
     start: function () {
       Domoticz.hold(idx); //hold message queue
+    },
+    slide: function (event, ui) {
+      positionValueBubble(ui.value);
     },
     change: function (event, ui) {
       var hasPassword = block.password;
       if (!DT_function.promptPassword(hasPassword)) return;
 
-      $wrap.find('.slider-value').text(ui.value + '%');
+      positionValueBubble(ui.value);
       slideDevice(block, ui.value);
     },
     stop: function () {
