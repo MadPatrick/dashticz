@@ -1966,7 +1966,10 @@ test('remote content and network failures use safe bounded rendering paths', () 
   assert.doesNotMatch(calendar, /\.html\(\$\.parseHTML\(info\)\)/);
   assert.match(domoticz, /timeout: cfg\.domoticz_timeout/);
   assert.match(main, /var failedFilename = loadingFilename/);
-  assert.match(main, /screen\['background_' \+ newClass\][\s\S]*screen\.background/);
+  assert.match(
+    main,
+    /screen\['background_' \+ newClass\]\s*\|\|[\s\S]*screen\.background\s*\|\|[\s\S]*settings\['background_image'\]/
+  );
 });
 
 test('calendar editor behavior is documented without a version bump', () => {

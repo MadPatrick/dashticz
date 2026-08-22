@@ -1505,11 +1505,13 @@ function setClassByTime() {
     for (var s in screens[t]) {
       var screen = screens[t][s];
       if (!screen || typeof screen !== 'object') continue;
-      var background = choose(
-        screen['background_' + newClass],
-        screen.background,
-        settings['background_image']
-      );
+      // Empty values are written for unset optional backgrounds by some
+      // configurations. `choose()` only skips undefined, so an empty value
+      // would suppress the shared background on screens such as screen 2.
+      var background =
+        screen['background_' + newClass] ||
+        screen.background ||
+        settings['background_image'];
       if (background) {
         $('.screen.screen' + s).css(
           'background-image',

@@ -14,6 +14,38 @@ test.describe('optional screen grid layout', () => {
     await expect(page.locator('.screen1 .dt-grid-layout')).toHaveCount(0);
   });
 
+  test('uses the shared background on later screens when optional backgrounds are empty', async ({
+    page,
+  }) => {
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `
+config['background_image'] = 'img/bg2.jpg';
+screens[2]['background'] = '';
+screens[2]['background_morning'] = '';
+screens[2]['background_noon'] = '';
+screens[2]['background_afternoon'] = '';
+screens[2]['background_night'] = '';
+`,
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+
+    await expect
+      .poll(() =>
+        page
+          .locator('.screen2')
+          .evaluate((screen) => getComputedStyle(screen).backgroundImage)
+      )
+      .toContain('img/bg2.jpg');
+  });
+
   test('keeps legacy widgets iconless and lets a classic dial fill its column', async ({
     page,
   }) => {
