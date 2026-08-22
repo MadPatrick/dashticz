@@ -64,19 +64,24 @@ function lmsShutdownFatalOutput() {
    rather than piping into a CLI invocation. Confirms the guard moved into
    the try block actually prevents the crash, not just that the source
    contains the check. */
-function lmsRequestWithoutCurl(payload) {
+async function lmsRequestWithoutCurl(payload) {
   const port = 20000 + (process.pid % 10000);
   const proc = spawn(
     'php',
     ['-n', '-d', 'display_errors=0', '-S', `127.0.0.1:${port}`],
     { cwd: root }
   );
+  let serverStderr = '';
+  proc.stderr.on('data', (chunk) => {
+    serverStderr += chunk;
+  });
   try {
     const deadline = Date.now() + 3000;
     let ready = false;
     while (Date.now() < deadline && !ready) {
       const probe = spawnSync('curl', [
         '-s',
+        '-S',
         '-o',
         '/dev/null',
         '-w',
@@ -90,6 +95,7 @@ function lmsRequestWithoutCurl(payload) {
       'curl',
       [
         '-s',
+        '-S',
         '-X',
         'POST',
         '-H',
@@ -104,7 +110,17 @@ function lmsRequestWithoutCurl(payload) {
       ],
       { encoding: 'utf8' }
     );
-    return { stdout: result.stdout, stderr: result.stderr };
+    // A brief settle so the server's own stderr (its per-request access log
+    // line, or a fatal error) has actually been flushed and read before it
+    // gets attached to the diagnostics below.
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    return {
+      stdout: result.stdout,
+      stderr: result.stderr,
+      curlStatus: result.status,
+      curlError: result.error ? result.error.message : null,
+      serverStderr,
+    };
   } finally {
     proc.kill();
   }
@@ -442,7 +458,7 @@ test('LMS cover fetch prefers artwork_url over a synthetic radio coverid', () =>
   );
 });
 
-test('LMS backend fails gracefully without the curl extension instead of crashing', () => {
+test('LMS backend fails gracefully without the curl extension instead of crashing', async () => {
   // Sanity check that `php -n` (no php.ini) genuinely removes ext-curl in
   // this environment, so a pass below actually exercises the no-curl path
   // rather than passing vacuously because curl was loaded anyway.
@@ -468,11 +484,11 @@ test('LMS backend fails gracefully without the curl extension instead of crashin
     player: '',
     params: ['serverstatus', 0, 999],
   };
-  const result = lmsRequestWithoutCurl(payload);
+  const result = await lmsRequestWithoutCurl(payload);
   let parsed;
   assert.doesNotThrow(() => {
     parsed = JSON.parse(result.stdout);
-  }, `expected valid JSON, got stdout: ${result.stdout}\nstderr: ${result.stderr}`);
+  }, `expected valid JSON, got stdout: ${result.stdout}\nstderr: ${result.stderr}\ncurl exit status: ${result.curlStatus}\ncurl spawn error: ${result.curlError}\nphp -S server stderr: ${result.serverStderr}`);
   assert.equal(
     parsed.error,
     'The PHP curl extension is required for the Lyrion Music Server block.'
