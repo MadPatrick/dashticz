@@ -3049,7 +3049,7 @@ test('topbar and layout editor keep controls usable', () => {
   // flex-start only when a header is actually rendered (see below).
   assert.match(
     styles,
-    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.sunriseholder\s*\{[^}]*min-height:\s*100%;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;/s
+    /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.sunriseholder\s*\{[^}]*height:\s*100% !important;[^}]*min-height:\s*0 !important;[^}]*overflow:\s*hidden !important;[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*justify-content:\s*center;/s
   );
 });
 
