@@ -2610,6 +2610,12 @@ test('hide_data is respected consistently by themes, switches and the device edi
   assert.match(editorSource, /entry\.hide_data = options\.hide_data === true/);
 });
 
+test('vertical slider percentage labels use the larger 12px size', () => {
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  assert.match(styles, /\.slider-tick span \{[\s\S]*?font-size: 12px;/);
+});
+
 test('remote content and network failures use safe bounded rendering paths', () => {
   const alarms = fs.readFileSync(
     path.join(root, 'js/components/alarmmeldingen.js'),
