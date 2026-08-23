@@ -9,6 +9,25 @@ For Dashticz's **master** version Release Notes go to: https://dashticz.readthed
 v3.45.5 beta (23-8-2026)
 -------------------------
 
+* **Enhancements**
+
+- The Layout Editor's per-tile **-** (remove) button now asks
+  "Remove this tile from the layout?" before deleting a block or
+  widget, for every block type and widget the button appears on.
+  Uses the same ``window.confirm()`` pattern already used for screen
+  deletion and Wizard grid conversion.
+
+* **Fixes**
+
+- Fixed the Sunrise/Sunset widget showing a real, clickable scrollbar
+  instead of clipping its content on a grid row too short for its
+  icon/title header plus the sunrise/sunset line. ``.sunriseholder``
+  only had ``min-height: 100%`` (a floor, not a ceiling), unlike every
+  sibling grid-aware block (``.frame``, ``.waqi``, ``.log``,
+  ``.basicclock``, ``.stationclock``, ``.flipclock``, ``.haymanclock``,
+  ``.map``, ``.trash``), which already clamp to ``height: 100%`` plus
+  ``overflow: hidden``. It now gets the same treatment.
+
 * **Code**
 
 - Updated ``dayjs`` (1.11.21 to 1.11.23) and ``sass`` (1.101.0 to

@@ -601,6 +601,14 @@ test('visual layout editor handles generated devices and widgets on a 10px heigh
   assert.match(editor, /function _moveDraggedItem/);
   assert.match(editor, /function _removeItem/);
   assert.match(editor, /dle-remove-button/);
+  // Removing a tile is destructive enough (and the "-" button small enough
+  // to mis-click) to ask for confirmation first, matching the existing
+  // window.confirm() pattern used for screen deletion (screenswitcher.js)
+  // and the Wizard grid conversion (convertCurrentScreenToGrid() above).
+  assert.match(
+    editor,
+    /window\.confirm\(_t\('remove_confirm'\)\)\)\s*_removeItem\(item\)/
+  );
   assert.match(editor, /dle-config-button/);
   assert.match(editor, /function _openItemConfig/);
   assert.match(
