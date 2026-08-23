@@ -2498,6 +2498,19 @@ screens[1] = {
         .locator('.lms-info > div')
         .evaluateAll((lines) => lines.map((line) => line.className))
     ).toEqual(['lms-title', 'lms-artist', 'lms-album']);
+    const textSizes = await living.evaluate((block) => ({
+      title: parseFloat(
+        getComputedStyle(block.querySelector('.lms-title')).fontSize
+      ),
+      artist: parseFloat(
+        getComputedStyle(block.querySelector('.lms-artist')).fontSize
+      ),
+      album: parseFloat(
+        getComputedStyle(block.querySelector('.lms-album')).fontSize
+      ),
+    }));
+    expect(textSizes.title).toBe(textSizes.artist);
+    expect(textSizes.album).toBe(textSizes.artist - 2);
     await expect(living.locator('.lms-cover-img')).toHaveAttribute(
       'src',
       TINY_PNG

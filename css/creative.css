@@ -7586,14 +7586,13 @@ canvas {
 }
 
 .lms-title {
-  /* The most prominent line, per spec's Artist/Title/Album hierarchy. */
-  font-size: 1.15em;
-  font-weight: 700;
+  /* Match the artist typography while retaining the distinct title color. */
+  font-size: var(--font-small);
   color: var(--text-title);
 }
 
 .lms-album {
-  font-size: var(--font-small);
+  font-size: calc(var(--font-small) - 2px);
   color: var(--text-muted);
 }
 

@@ -5118,6 +5118,15 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
     styles,
     /\.lms-info > div \{[\s\S]*text-overflow: ellipsis;[\s\S]*white-space: nowrap;/
   );
+  assert.match(
+    styles,
+    /\.lms-title \{[\s\S]*font-size: var\(--font-small\);[\s\S]*color: var\(--text-title\);/
+  );
+  assert.doesNotMatch(styles, /\.lms-title \{[\s\S]{0,150}font-weight:/);
+  assert.match(
+    styles,
+    /\.lms-album \{[\s\S]*font-size: calc\(var\(--font-small\) - 2px\);[\s\S]*color: var\(--text-muted\);/
+  );
 
   // Translations exist for both places the block's name/labels are read from
   // (js/deviceeditor.js's own quick-add/edit popup vs. its card in the
