@@ -283,10 +283,10 @@ var DT_lms_api = {
           )
         );
       } else {
-        lines += _line('lms-station', meta.station);
-        lines += _line('lms-artist', meta.artist);
         lines += _line('lms-title', meta.title);
+        lines += _line('lms-artist', meta.artist);
         lines += _line('lms-album', meta.album);
+        lines += _line('lms-station', meta.station);
         if (meta.state === 'pause') {
           lines += _line(
             'lms-state-label lms-paused',

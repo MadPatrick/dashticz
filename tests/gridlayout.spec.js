@@ -2488,23 +2488,33 @@ screens[1] = {
     const living = page.locator('[data-grid-block="lms_living"]');
     const kitchen = page.locator('[data-grid-block="lms_kitchen"]');
 
-    // Local track: artist/title/album, cover art loaded, no station line.
+    // Local track: title/artist/album, cover art loaded, no station line.
     await expect(living.locator('.lms-artist')).toHaveText('Dire Straits');
     await expect(living.locator('.lms-title')).toHaveText('Brothers in Arms');
     await expect(living.locator('.lms-album')).toHaveText('Brothers in Arms');
     await expect(living.locator('.lms-station')).toHaveCount(0);
+    expect(
+      await living
+        .locator('.lms-info > div')
+        .evaluateAll((lines) => lines.map((line) => line.className))
+    ).toEqual(['lms-title', 'lms-artist', 'lms-album']);
     await expect(living.locator('.lms-cover-img')).toHaveAttribute(
       'src',
       TINY_PNG
     );
     await expect(living.locator('.lms-cover-placeholder')).toHaveCount(0);
 
-    // Internet radio: station/artist/title, no album line (LMS supplied none),
+    // Internet radio: title/artist/station, no album line (LMS supplied none),
     // and never any of the Living Room block's own metadata (#22).
     await expect(kitchen.locator('.lms-station')).toHaveText('Radio 538');
     await expect(kitchen.locator('.lms-artist')).toHaveText('Some DJ');
     await expect(kitchen.locator('.lms-title')).toHaveText('Live Set');
     await expect(kitchen.locator('.lms-album')).toHaveCount(0);
+    expect(
+      await kitchen
+        .locator('.lms-info > div')
+        .evaluateAll((lines) => lines.map((line) => line.className))
+    ).toEqual(['lms-title', 'lms-artist', 'lms-station']);
     await expect(kitchen.locator('.lms-artist')).not.toHaveText('Dire Straits');
     await expect(kitchen.locator('.lms-title')).not.toHaveText(
       'Brothers in Arms'
