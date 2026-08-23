@@ -6,6 +6,18 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.45.5 beta (23-8-2026)
+-------------------------
+
+* **Code**
+
+- Updated ``dayjs`` (1.11.21 to 1.11.23) and ``sass`` (1.101.0 to
+  1.103.1) to their latest patch releases, per the technical audit's
+  dependency-update recommendation. Verified with a clean ``npm ci``,
+  a production build (no new Sass deprecation warnings, entrypoint
+  size unchanged within budget), the full ``node --test`` suite,
+  Prettier's format check, and the Playwright suite.
+
 v3.45.4 beta (22-8-2026)
 -------------------------
 
