@@ -67,6 +67,7 @@
     ['background-border', 'Background + border'],
     ['background-text', 'Background + text'],
     ['background-border-text', 'Background + border + text'],
+    ['banner', 'Floating banner'],
   ];
 
   var borderStyles = ['solid', 'dashed', 'dotted', 'double'];
@@ -95,6 +96,9 @@
     borderWidth: 'Randdikte',
     borderStyle: 'Randstijl',
     borderColor: 'Randkleur',
+    bannerText: 'Bannertekst',
+    bannerTop: 'Afstand vanaf boven (px)',
+    fontSize: 'Lettergrootte (px)',
     remove: 'Verwijderen',
     addRule: 'Regel toevoegen',
     noRules: 'Nog geen regels ingesteld.',
@@ -108,6 +112,8 @@
       'Automation: vul voor iedere ingeschakelde regel Eigenschap, Doelblok en CSS-class in.',
     invalidTextRule:
       'Automation: vul voor iedere ingeschakelde tekst-regel Eigenschap en Doelblok in.',
+    invalidBannerText:
+      'Automation: vul een bannertekst in, en gebruik geen aanhalingstekens of backslashes.',
     invalidValue: 'Automation: vul een waarde in voor deze voorwaarde.',
     invalidClass:
       'Automation: voor automatisch gegenereerde styling moet CSS-class uit één geldige classnaam bestaan (letters/cijfers/_/-).',
@@ -143,6 +149,9 @@
     borderWidth: 'Border width',
     borderStyle: 'Border style',
     borderColor: 'Border color',
+    bannerText: 'Banner text',
+    bannerTop: 'Distance from top (px)',
+    fontSize: 'Font size (px)',
     remove: 'Remove',
     addRule: 'Add rule',
     noRules: 'No rules configured yet.',
@@ -156,6 +165,8 @@
       'Automation: fill Property, Target block and CSS class for every enabled rule.',
     invalidTextRule:
       'Automation: fill Property and Target block for every enabled text rule.',
+    invalidBannerText:
+      'Automation: enter banner text, without quote or backslash characters.',
     invalidValue: 'Automation: enter a value for this condition.',
     invalidClass:
       'Automation: generated styling requires one valid CSS class name (letters/numbers/_/-).',
@@ -218,7 +229,22 @@
       borderStyle: 'solid',
       borderColor: '#ff4040',
       textColor: '#ffffff',
+      bannerText: '',
+      bannerTop: 40,
+      fontSize: 20,
     };
+  }
+
+  // The banner text is written verbatim into a CSS content: value on save,
+  // so it may not contain characters that could break out of that CSS
+  // string literal. Rejecting them here (rather than escaping) keeps the
+  // client-side check identical to the server-side one in
+  // savedevicerules.php - it must reject exactly what the server rejects,
+  // so unsupported input is never silently truncated or mangled.
+  function safeBannerText(value) {
+    var text = String(value == null ? '' : value);
+    if (text.indexOf('"') !== -1 || text.indexOf('\\') !== -1) return '';
+    return text.slice(0, 200);
   }
 
   function normaliseStyle(style, legacyRule) {
@@ -255,6 +281,13 @@
         : result.borderStyle;
     result.borderColor = validHexColor(style.borderColor, result.borderColor);
     result.textColor = validHexColor(style.textColor, result.textColor);
+    result.bannerText = safeBannerText(style.bannerText);
+    result.bannerTop = Math.round(
+      clampNumber(style.bannerTop, 0, 2000, result.bannerTop)
+    );
+    result.fontSize = Math.round(
+      clampNumber(style.fontSize, 10, 60, result.fontSize)
+    );
     return result;
   }
 
@@ -1070,6 +1103,24 @@
       '" title="' +
       escapeHtml(t.textColor) +
       '"></div>' +
+      '<div class="col-12 dr-banner-controls">' +
+      '<div class="row g-2">' +
+      '<div class="col-12"><label class="form-label small mb-1">' +
+      escapeHtml(t.bannerText) +
+      '</label><input type="text" class="form-control form-control-sm dr-banner-text" value="' +
+      escapeHtml(rule.style.bannerText) +
+      '" placeholder="Party Mode"></div>' +
+      '<div class="col-12 col-md-6"><label class="form-label small mb-1">' +
+      escapeHtml(t.bannerTop) +
+      '</label><input type="number" min="0" max="2000" class="form-control form-control-sm dr-banner-top" value="' +
+      escapeHtml(rule.style.bannerTop) +
+      '"></div>' +
+      '<div class="col-12 col-md-6"><label class="form-label small mb-1">' +
+      escapeHtml(t.fontSize) +
+      '</label><input type="number" min="10" max="60" class="form-control form-control-sm dr-banner-fontsize" value="' +
+      escapeHtml(rule.style.fontSize) +
+      '"></div>' +
+      '</div></div>' +
       '</div></div>' +
       '</div></div>' +
       '<div class="col-12 dr-text-action-group">' +
@@ -1103,6 +1154,9 @@
         borderStyle: String($row.find('.dr-border-style').val() || 'solid'),
         borderColor: String($row.find('.dr-border-color').val() || '#ff4040'),
         textColor: String($row.find('.dr-text-color').val() || '#ffffff'),
+        bannerText: String($row.find('.dr-banner-text').val() || ''),
+        bannerTop: Number($row.find('.dr-banner-top').val() || 40),
+        fontSize: Number($row.find('.dr-banner-fontsize').val() || 20),
       },
       false
     );
@@ -1151,16 +1205,18 @@
   function updateStyleState($row) {
     var mode = String($row.find('.dr-style-mode').val() || 'existing');
     var generated = mode !== 'existing';
+    var isBanner = mode === 'banner';
     $row.find('.dr-style-controls').toggleClass('d-none', !generated);
     $row
       .find('.dr-background-controls')
-      .toggleClass('d-none', !modeUses(mode, 'background'));
+      .toggleClass('d-none', !(isBanner || modeUses(mode, 'background')));
     $row
       .find('.dr-border-controls')
-      .toggleClass('d-none', !modeUses(mode, 'border'));
+      .toggleClass('d-none', !(isBanner || modeUses(mode, 'border')));
     $row
       .find('.dr-text-controls')
-      .toggleClass('d-none', !modeUses(mode, 'text'));
+      .toggleClass('d-none', !(isBanner || modeUses(mode, 'text')));
+    $row.find('.dr-banner-controls').toggleClass('d-none', !isBanner);
   }
 
   function updateActionState($row) {
@@ -1209,6 +1265,14 @@
       ) {
         valid = false;
         message = t.invalidClass;
+        return;
+      }
+      if (action === 'class' && styleMode === 'banner') {
+        var bannerText = String($row.find('.dr-banner-text').val() || '');
+        if (!bannerText || bannerText.indexOf('"') !== -1 || bannerText.indexOf('\\') !== -1) {
+          valid = false;
+          message = t.invalidBannerText;
+        }
       }
     });
 
@@ -1237,9 +1301,54 @@
     return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha.toFixed(2) + ')';
   }
 
+  function generatedBannerCss(className, style) {
+    style = normaliseStyle(style, false);
+    if (!style.bannerText) return '';
+    return (
+      '.' +
+      className +
+      ' { visibility: visible; }\n\n.' +
+      className +
+      ':before {\n' +
+      '  content: "' +
+      style.bannerText.replace(/"/g, '') +
+      '";\n' +
+      '  background: ' +
+      hexToRgba(style.backgroundColor, style.backgroundOpacity) +
+      ' !important;\n' +
+      '  background-clip: border-box;\n' +
+      '  border: ' +
+      style.borderWidth +
+      'px ' +
+      style.borderStyle +
+      ' ' +
+      style.borderColor +
+      ' !important;\n' +
+      '  border-radius: 15px !important;\n' +
+      '  font-size: ' +
+      style.fontSize +
+      'px !important;\n' +
+      '  font-weight: bold;\n' +
+      '  color: ' +
+      style.textColor +
+      ' !important;\n' +
+      '  visibility: visible;\n' +
+      '  position: fixed;\n' +
+      '  top: ' +
+      style.bannerTop +
+      'px;\n' +
+      '  left: 50%;\n' +
+      '  transform: translateX(-50%);\n' +
+      '  padding: 10px;\n' +
+      '  text-align: center;\n' +
+      '  z-index: 9999;\n' +
+      '}'
+    );
+  }
+
   function generatedDeclarations(style) {
     style = normaliseStyle(style, false);
-    if (style.mode === 'existing') return [];
+    if (style.mode === 'existing' || style.mode === 'banner') return [];
     var declarations = [];
     if (modeUses(style.mode, 'background')) {
       declarations.push(
@@ -1271,6 +1380,11 @@
     rules.forEach(function (rule) {
       if (!rule || !rule.style || rule.style.mode === 'existing') return;
       if (!/^[A-Za-z_][A-Za-z0-9_-]*$/.test(rule.className)) return;
+      if (rule.style.mode === 'banner') {
+        var bannerCss = generatedBannerCss(rule.className, rule.style);
+        if (bannerCss) seen[rule.className] = bannerCss;
+        return;
+      }
       var declarations = generatedDeclarations(rule.style);
       if (!declarations.length) return;
       // Last rule with a duplicate class wins, matching the server behaviour.
@@ -1467,7 +1581,7 @@
 
     $popup.on(
       'change.deviceRules input.deviceRules',
-      '.dr-enabled,.dr-property,.dr-operator,.dr-value,.dr-target,.dr-action,.dr-class,.dr-style-mode,.dr-background-color,.dr-background-opacity,.dr-border-width,.dr-border-style,.dr-border-color,.dr-text-color,.dr-text-on,.dr-text-off,.dr-handler',
+      '.dr-enabled,.dr-property,.dr-operator,.dr-value,.dr-target,.dr-action,.dr-class,.dr-style-mode,.dr-background-color,.dr-background-opacity,.dr-border-width,.dr-border-style,.dr-border-color,.dr-text-color,.dr-banner-text,.dr-banner-top,.dr-banner-fontsize,.dr-text-on,.dr-text-off,.dr-handler',
       function () {
         var $field = $(this);
         var $rule = $field.closest('.dt-device-rule');
@@ -1642,6 +1756,7 @@
     enhancePopup: enhancePopup,
     tryWrap: tryWrapGetCustomFunction,
     generatedDeclarations: generatedDeclarations,
+    generatedBannerCss: generatedBannerCss,
     generatedCssForRules: generatedCssForRules,
     sourceFromOrderKey: sourceFromOrderKey,
     configForSource: configForSource,

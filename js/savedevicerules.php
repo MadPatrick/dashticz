@@ -50,6 +50,7 @@ $allowedActions = array('class', 'text');
 $allowedModes = array(
     'existing', 'background', 'border', 'text',
     'background-border', 'background-text', 'background-border-text',
+    'banner',
 );
 $allowedBorderStyles = array('solid', 'dashed', 'dotted', 'double');
 
@@ -112,6 +113,21 @@ function device_rules_safe_text($value)
     return $value;
 }
 
+function device_rules_safe_banner_text($value)
+{
+    $value = (string) $value;
+    if (
+        $value === '' ||
+        strlen($value) > 200 ||
+        preg_match('/[\x00-\x1F\x7F]/', $value) ||
+        strpos($value, '"') !== false ||
+        strpos($value, '\\') !== false
+    ) {
+        return null;
+    }
+    return $value;
+}
+
 function device_rules_mode_uses($mode, $part)
 {
     return in_array($part, explode('-', $mode), true);
@@ -169,6 +185,24 @@ function device_rules_normalize_style($style)
         return array(null, 'Invalid Device Rules text styling.');
     }
 
+    $bannerText = '';
+    $bannerTop = isset($style['bannerTop']) ? (int) $style['bannerTop'] : 40;
+    $fontSize = isset($style['fontSize']) ? (int) $style['fontSize'] : 20;
+    if ($mode === 'banner') {
+        $bannerText = device_rules_safe_banner_text(
+            isset($style['bannerText']) ? $style['bannerText'] : ''
+        );
+        if ($bannerText === null) {
+            return array(null, 'Invalid Device Rules banner text.');
+        }
+        if ($bannerTop < 0 || $bannerTop > 2000) {
+            return array(null, 'Invalid Device Rules banner position.');
+        }
+        if ($fontSize < 10 || $fontSize > 60) {
+            return array(null, 'Invalid Device Rules banner font size.');
+        }
+    }
+
     return array(array(
         'mode' => $mode,
         'backgroundColor' => $backgroundColor,
@@ -177,6 +211,9 @@ function device_rules_normalize_style($style)
         'borderStyle' => $borderStyle,
         'borderColor' => $borderColor,
         'textColor' => $textColor,
+        'bannerText' => $bannerText,
+        'bannerTop' => $bannerTop,
+        'fontSize' => $fontSize,
     ), null);
 }
 
@@ -236,6 +273,32 @@ function device_rules_css_for_rules($rules)
         $className = $rule['className'];
         if (!preg_match('/^[A-Za-z_][A-Za-z0-9_-]*$/', $className)) {
             // Disabled/incomplete draft rules do not get generated CSS.
+            continue;
+        }
+        if ($mode === 'banner') {
+            if ($style['bannerText'] === '') {
+                continue;
+            }
+            // Last rule using the same class within this source wins.
+            $classes[$className] = '.' . $className . " {\n  visibility: visible;\n}\n\n"
+                . '.' . $className . ":before {\n"
+                . '  content: "' . $style['bannerText'] . "\";\n"
+                . '  background: ' . device_rules_rgba($style['backgroundColor'], $style['backgroundOpacity']) . " !important;\n"
+                . "  background-clip: border-box;\n"
+                . '  border: ' . $style['borderWidth'] . 'px ' . $style['borderStyle'] . ' ' . $style['borderColor'] . " !important;\n"
+                . "  border-radius: 15px !important;\n"
+                . '  font-size: ' . $style['fontSize'] . "px !important;\n"
+                . "  font-weight: bold;\n"
+                . '  color: ' . $style['textColor'] . " !important;\n"
+                . "  visibility: visible;\n"
+                . "  position: fixed;\n"
+                . '  top: ' . $style['bannerTop'] . "px;\n"
+                . "  left: 50%;\n"
+                . "  transform: translateX(-50%);\n"
+                . "  padding: 10px;\n"
+                . "  text-align: center;\n"
+                . "  z-index: 9999;\n"
+                . '}';
             continue;
         }
         $declarations = array();
