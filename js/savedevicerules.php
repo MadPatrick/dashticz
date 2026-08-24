@@ -8,7 +8,11 @@ if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST')
     dashticz_json_error(405, 'Only POST requests are allowed.');
 }
 
-$customDir = __DIR__ . '/../custom';
+$customFolder = isset($_POST['custom_folder']) ? trim((string) $_POST['custom_folder']) : 'custom';
+if (!preg_match('/^[A-Za-z0-9_-]+$/', $customFolder)) {
+    dashticz_json_error(400, 'Invalid custom folder.');
+}
+$customDir = __DIR__ . '/../' . $customFolder;
 $customJsPath = $customDir . '/custom.js';
 $source = isset($_POST['source']) ? trim((string) $_POST['source']) : '';
 $rulesJson = isset($_POST['rules']) ? (string) $_POST['rules'] : '[]';

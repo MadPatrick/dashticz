@@ -1196,6 +1196,14 @@
     };
   }
 
+  function activeCustomFolder() {
+    var folder =
+      window._CFG && window._CFG.customfolder
+        ? String(window._CFG.customfolder)
+        : 'custom';
+    return folder.replace(/\/$/, '') || 'custom';
+  }
+
   function saveDeviceRules($popup) {
     var source = popupSource($popup[0]);
     var rules = readRuleRows($popup);
@@ -1217,17 +1225,14 @@
           rules: JSON.stringify(rules),
           custom_js_handler: handler,
           css_file: cssFile,
+          custom_folder: activeCustomFolder(),
         },
       });
     });
   }
 
   function refreshActiveCustomCss(cssFile) {
-    var folder =
-      window._CFG && window._CFG.customfolder
-        ? String(window._CFG.customfolder)
-        : 'custom';
-    var path = folder.replace(/\/$/, '') + '/' + cssFile;
+    var path = activeCustomFolder() + '/' + cssFile;
     return $.ajax({
       url: path + '?v=' + Date.now(),
       cache: false,
@@ -1365,24 +1370,39 @@
           return;
         }
 
+        if (popup._dashticzDeviceRulesSaveBypass) {
+          popup._dashticzDeviceRulesSaveBypass = false;
+          return;
+        }
+
+        var rulesToSave = readRuleRows($popup);
+        var handlerToSave = String(
+          $popup.find('.dr-handler').val() || ''
+        ).trim();
+
+        // Nothing configured now and nothing stored before: there is
+        // nothing for this feature to persist or clear, so let Device
+        // Editor's own OK handler run immediately instead of round-tripping
+        // to savedevicerules.php on every Device Config save - including
+        // the vast majority that never touch Automation at all.
+        if (
+          !rulesToSave.length &&
+          !handlerToSave &&
+          !rules.length &&
+          !handler
+        ) {
+          return;
+        }
+
         if (!validatePopup($popup)) {
           event.preventDefault();
           event.stopPropagation();
           return;
         }
 
-        if (popup._dashticzDeviceRulesSaveBypass) {
-          popup._dashticzDeviceRulesSaveBypass = false;
-          return;
-        }
-
         event.preventDefault();
         event.stopPropagation();
 
-        var rulesToSave = readRuleRows($popup);
-        var handlerToSave = String(
-          $popup.find('.dr-handler').val() || ''
-        ).trim();
         var $ok = $popup.find('#de-config-ok').prop('disabled', true);
         $popup
           .find('.de-config-message')
