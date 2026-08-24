@@ -23,6 +23,7 @@
   var editorApiTimer = null;
   var pendingPopupSource = '';
   var classStates = {};
+  var textStates = {};
   var sourceStateIds = {};
 
   var propertySuggestions = [
@@ -78,6 +79,11 @@
     condition: 'Voorwaarde',
     value: 'Waarde',
     target: 'Doelblok',
+    action: 'Actie',
+    actionClass: 'CSS-class toevoegen',
+    actionText: 'Tekst instellen',
+    textOn: 'Tekst indien waar',
+    textOff: 'Tekst indien onwaar',
     cssClass: 'CSS-class',
     styling: 'Styling',
     existingCss: 'Bestaande CSS / alleen class',
@@ -100,6 +106,8 @@
       'Bij een gekozen styling wordt deze CSS-class automatisch in custom.css beheerd. Kies Bestaande CSS als je de class zelf in custom.css onderhoudt.',
     invalidRule:
       'Automation: vul voor iedere ingeschakelde regel Eigenschap, Doelblok en CSS-class in.',
+    invalidTextRule:
+      'Automation: vul voor iedere ingeschakelde tekst-regel Eigenschap en Doelblok in.',
     invalidValue: 'Automation: vul een waarde in voor deze voorwaarde.',
     invalidClass:
       'Automation: voor automatisch gegenereerde styling moet CSS-class uit één geldige classnaam bestaan (letters/cijfers/_/-).',
@@ -119,6 +127,11 @@
     condition: 'Condition',
     value: 'Value',
     target: 'Target block',
+    action: 'Action',
+    actionClass: 'Add CSS class',
+    actionText: 'Set text',
+    textOn: 'Text when true',
+    textOff: 'Text when false',
     cssClass: 'CSS class',
     styling: 'Styling',
     existingCss: 'Existing CSS / class only',
@@ -141,6 +154,8 @@
       'When styling is selected this CSS class is managed automatically in custom.css. Choose Existing CSS if you maintain the class yourself.',
     invalidRule:
       'Automation: fill Property, Target block and CSS class for every enabled rule.',
+    invalidTextRule:
+      'Automation: fill Property and Target block for every enabled text rule.',
     invalidValue: 'Automation: enter a value for this condition.',
     invalidClass:
       'Automation: generated styling requires one valid CSS class name (letters/numbers/_/-).',
@@ -259,10 +274,16 @@
             typeof rule.value === 'undefined' || rule.value === null
               ? ''
               : String(rule.value),
-          action: 'class',
+          action: rule.action === 'text' ? 'text' : 'class',
           target: String(rule.target || ''),
           className: String(rule.className || rule.class || ''),
           style: normaliseStyle(rule.style, !rule.style),
+          textOn: String(
+            typeof rule.textOn === 'undefined' ? '' : rule.textOn
+          ),
+          textOff: String(
+            typeof rule.textOff === 'undefined' ? '' : rule.textOff
+          ),
         };
       });
   }
@@ -397,17 +418,55 @@
     if (!Object.keys(classStates[target]).length) delete classStates[target];
   }
 
-  function cleanupSourceStates(sourceKey, currentIds) {
+  // Text rules work like class rules (one state entry per source rule, kept
+  // per target block) but instead of merging classnames, the last rule
+  // registered for a target simply wins - there is no meaningful way to
+  // "combine" two different title strings the way multiple CSS classes can
+  // coexist on one element.
+  function recomputeTextTarget(target) {
+    if (!target) return;
+    var targetStates = textStates[target] || {};
+    var ids = Object.keys(targetStates);
+    var last = ids.length ? targetStates[ids[ids.length - 1]] : null;
+    var value = last ? (last.active ? last.textOn : last.textOff) : '';
+
+    if (window.Dashticz && typeof window.Dashticz.setBlock === 'function') {
+      window.Dashticz.setBlock(target, { title: value });
+    } else if (window.blocks && window.blocks[target]) {
+      window.blocks[target].title = value;
+    }
+  }
+
+  function setRuleTextState(target, id, textOn, textOff, active) {
+    if (!target || !id) return;
+    if (!textStates[target]) textStates[target] = {};
+    textStates[target][id] = {
+      textOn: textOn || '',
+      textOff: textOff || '',
+      active: !!active,
+    };
+    recomputeTextTarget(target);
+  }
+
+  function removeRuleTextState(target, id) {
+    if (!target || !textStates[target] || !textStates[target][id]) return;
+    delete textStates[target][id];
+    if (!Object.keys(textStates[target]).length) delete textStates[target];
+    recomputeTextTarget(target);
+  }
+
+  function cleanupSourceStates(sourceKey, currentEntries) {
+    var currentIds = currentEntries.map(function (entry) {
+      return entry.id;
+    });
     var previous = sourceStateIds[sourceKey] || [];
     previous.forEach(function (entry) {
       if (currentIds.indexOf(entry.id) === -1) {
-        removeRuleClassState(entry.target, entry.id);
+        if (entry.action === 'text') removeRuleTextState(entry.target, entry.id);
+        else removeRuleClassState(entry.target, entry.id);
       }
     });
-    sourceStateIds[sourceKey] = currentIds.map(function (id) {
-      var parts = id.split('|');
-      return { id: id, target: parts[1] || '' };
-    });
+    sourceStateIds[sourceKey] = currentEntries;
   }
 
   function ruleStore() {
@@ -459,19 +518,26 @@
     var sourceKey = String(
       resolved.source || block.key || block.idx || 'device'
     );
-    var currentIds = [];
+    var currentEntries = [];
 
     rules.forEach(function (rule, index) {
       if (rule.enabled === false) return;
-      if (!rule.property || !rule.target || !rule.className) return;
+      if (!rule.property || !rule.target) return;
       var actual = readPath(block.device, rule.property);
       var active = compare(actual, rule.operator, rule.value);
       var id = sourceKey + '|' + rule.target + '|' + index;
-      currentIds.push(id);
-      setRuleClassState(rule.target, id, rule.className, active);
+
+      if (rule.action === 'text') {
+        currentEntries.push({ id: id, target: rule.target, action: 'text' });
+        setRuleTextState(rule.target, id, rule.textOn, rule.textOff, active);
+      } else {
+        if (!rule.className) return;
+        currentEntries.push({ id: id, target: rule.target, action: 'class' });
+        setRuleClassState(rule.target, id, rule.className, active);
+      }
     });
 
-    cleanupSourceStates(sourceKey, currentIds);
+    cleanupSourceStates(sourceKey, currentEntries);
   }
 
   function callLinkedCustomHandler(block, afterupdate, resolved) {
@@ -782,6 +848,26 @@
     return html;
   }
 
+  function actionOptions(selected) {
+    var t = text();
+    var actions = [
+      ['class', t.actionClass],
+      ['text', t.actionText],
+    ];
+    var html = '';
+    actions.forEach(function (entry) {
+      html +=
+        '<option value="' +
+        entry[0] +
+        '"' +
+        (entry[0] === selected ? ' selected' : '') +
+        '>' +
+        escapeHtml(entry[1]) +
+        '</option>';
+    });
+    return html;
+  }
+
   function translatedStyleLabel(mode, fallback) {
     var t = text();
     var labels = {
@@ -870,10 +956,14 @@
       operator: 'eq',
       value: 'On',
       target: '',
+      action: 'class',
       className: '',
       style: defaultStyle('background-border-text'),
+      textOn: '',
+      textOff: '',
     };
     rule.style = normaliseStyle(rule.style, false);
+    var action = rule.action === 'text' ? 'text' : 'class';
     var noValue = rule.operator === 'empty' || rule.operator === 'notempty';
     return (
       '<div class="dt-device-rule border rounded p-2 mb-2">' +
@@ -913,6 +1003,13 @@
       targetOptions(rule.target) +
       '</select></div>' +
       '<div class="col-12 col-md-6"><label class="form-label small mb-1">' +
+      escapeHtml(t.action) +
+      '</label><select class="form-select form-select-sm dr-action">' +
+      actionOptions(action) +
+      '</select></div>' +
+      '<div class="col-12 dr-class-action-group">' +
+      '<div class="row g-2">' +
+      '<div class="col-12"><label class="form-label small mb-1">' +
       escapeHtml(t.cssClass) +
       '</label><input type="text" class="form-control form-control-sm dr-class" value="' +
       escapeHtml(rule.className) +
@@ -974,6 +1071,20 @@
       escapeHtml(t.textColor) +
       '"></div>' +
       '</div></div>' +
+      '</div></div>' +
+      '<div class="col-12 dr-text-action-group">' +
+      '<div class="row g-2">' +
+      '<div class="col-12 col-md-6"><label class="form-label small mb-1">' +
+      escapeHtml(t.textOn) +
+      '</label><input type="text" class="form-control form-control-sm dr-text-on" value="' +
+      escapeHtml(rule.textOn) +
+      '" placeholder="Party mode actief!"></div>' +
+      '<div class="col-12 col-md-6"><label class="form-label small mb-1">' +
+      escapeHtml(t.textOff) +
+      '</label><input type="text" class="form-control form-control-sm dr-text-off" value="' +
+      escapeHtml(rule.textOff) +
+      '"></div>' +
+      '</div></div>' +
       '</div></div>'
     );
   }
@@ -1006,10 +1117,12 @@
         property: String($row.find('.dr-property').val() || '').trim(),
         operator: String($row.find('.dr-operator').val() || 'eq'),
         value: String($row.find('.dr-value').val() || ''),
-        action: 'class',
+        action: $row.find('.dr-action').val() === 'text' ? 'text' : 'class',
         target: String($row.find('.dr-target').val() || '').trim(),
         className: String($row.find('.dr-class').val() || '').trim(),
         style: readStyleRow($row),
+        textOn: String($row.find('.dr-text-on').val() || ''),
+        textOff: String($row.find('.dr-text-off').val() || ''),
       });
     });
     return rules;
@@ -1050,6 +1163,12 @@
       .toggleClass('d-none', !modeUses(mode, 'text'));
   }
 
+  function updateActionState($row) {
+    var action = $row.find('.dr-action').val() === 'text' ? 'text' : 'class';
+    $row.find('.dr-class-action-group').toggleClass('d-none', action !== 'class');
+    $row.find('.dr-text-action-group').toggleClass('d-none', action !== 'text');
+  }
+
   function validatePopup($popup) {
     var t = text();
     var valid = true;
@@ -1063,9 +1182,17 @@
       var operator = String($row.find('.dr-operator').val() || 'eq');
       var value = String($row.find('.dr-value').val() || '').trim();
       var target = String($row.find('.dr-target').val() || '').trim();
+      var action = $row.find('.dr-action').val() === 'text' ? 'text' : 'class';
       var className = String($row.find('.dr-class').val() || '').trim();
       var styleMode = String($row.find('.dr-style-mode').val() || 'existing');
-      if (!property || !target || !className) {
+
+      if (action === 'text') {
+        if (!property || !target) {
+          valid = false;
+          message = t.invalidTextRule;
+          return;
+        }
+      } else if (!property || !target || !className) {
         valid = false;
         message = t.invalidRule;
         return;
@@ -1076,6 +1203,7 @@
         return;
       }
       if (
+        action === 'class' &&
         styleMode !== 'existing' &&
         !/^[A-Za-z_][A-Za-z0-9_-]*$/.test(className)
       ) {
@@ -1318,6 +1446,7 @@
     $popup.find('.dt-device-rule').each(function () {
       updateValueState($(this));
       updateStyleState($(this));
+      updateActionState($(this));
     });
     updateEmptyMessage($popup);
 
@@ -1326,6 +1455,7 @@
       var $newRule = $rules.find('.dt-device-rule').last();
       updateValueState($newRule);
       updateStyleState($newRule);
+      updateActionState($newRule);
       updateEmptyMessage($popup);
       $newRule.find('.dr-property').trigger('focus');
     });
@@ -1337,12 +1467,13 @@
 
     $popup.on(
       'change.deviceRules input.deviceRules',
-      '.dr-enabled,.dr-property,.dr-operator,.dr-value,.dr-target,.dr-class,.dr-style-mode,.dr-background-color,.dr-background-opacity,.dr-border-width,.dr-border-style,.dr-border-color,.dr-text-color,.dr-handler',
+      '.dr-enabled,.dr-property,.dr-operator,.dr-value,.dr-target,.dr-action,.dr-class,.dr-style-mode,.dr-background-color,.dr-background-opacity,.dr-border-width,.dr-border-style,.dr-border-color,.dr-text-color,.dr-text-on,.dr-text-off,.dr-handler',
       function () {
         var $field = $(this);
         var $rule = $field.closest('.dt-device-rule');
         if ($field.hasClass('dr-operator')) updateValueState($rule);
         if ($field.hasClass('dr-style-mode')) updateStyleState($rule);
+        if ($field.hasClass('dr-action')) updateActionState($rule);
       }
     );
 

@@ -46,6 +46,7 @@ $allowedOperators = array(
     'eq', 'ne', 'lt', 'lte', 'gt', 'gte',
     'contains', 'notcontains', 'empty', 'notempty',
 );
+$allowedActions = array('class', 'text');
 $allowedModes = array(
     'existing', 'background', 'border', 'text',
     'background-border', 'background-text', 'background-border-text',
@@ -100,6 +101,15 @@ function device_rules_safe_class_list($value)
         }
     }
     return implode(' ', $classes);
+}
+
+function device_rules_safe_text($value)
+{
+    $value = (string) $value;
+    if (strlen($value) > 200 || preg_match('/[\x00-\x1F\x7F]/', $value)) {
+        return null;
+    }
+    return $value;
 }
 
 function device_rules_mode_uses($mode, $part)
@@ -215,6 +225,9 @@ function device_rules_css_for_rules($rules)
 {
     $classes = array();
     foreach ($rules as $rule) {
+        if ($rule['action'] !== 'class') {
+            continue;
+        }
         $style = $rule['style'];
         $mode = $style['mode'];
         if ($mode === 'existing') {
@@ -278,6 +291,8 @@ foreach ($decodedRules as $index => $rule) {
         dashticz_json_error(400, 'Invalid Device Rule at index ' . $index . '.');
     }
     $enabled = !isset($rule['enabled']) || $rule['enabled'] !== false;
+    $actionRaw = isset($rule['action']) ? (string) $rule['action'] : 'class';
+    $action = in_array($actionRaw, $allowedActions, true) ? $actionRaw : 'class';
     $propertyRaw = isset($rule['property']) ? trim((string) $rule['property']) : '';
     $property = $propertyRaw === '' ? '' : device_rules_safe_property($propertyRaw);
     $operator = isset($rule['operator']) ? (string) $rule['operator'] : 'eq';
@@ -288,6 +303,8 @@ foreach ($decodedRules as $index => $rule) {
         ? trim((string) $rule['className'])
         : (isset($rule['class']) ? trim((string) $rule['class']) : '');
     $className = $classRaw === '' ? '' : device_rules_safe_class_list($classRaw);
+    $textOn = device_rules_safe_text(isset($rule['textOn']) ? $rule['textOn'] : '');
+    $textOff = device_rules_safe_text(isset($rule['textOff']) ? $rule['textOff'] : '');
 
     if ($propertyRaw !== '' && $property === null) {
         dashticz_json_error(400, 'Invalid Device Rule property at index ' . $index . '.');
@@ -301,8 +318,11 @@ foreach ($decodedRules as $index => $rule) {
     if ($targetRaw !== '' && $target === null) {
         dashticz_json_error(400, 'Invalid Device Rule target at index ' . $index . '.');
     }
-    if ($classRaw !== '' && $className === null) {
+    if ($action === 'class' && $classRaw !== '' && $className === null) {
         dashticz_json_error(400, 'Invalid Device Rule CSS class at index ' . $index . '.');
+    }
+    if ($textOn === null || $textOff === null) {
+        dashticz_json_error(400, 'Invalid Device Rule text at index ' . $index . '.');
     }
 
     list($style, $styleError) = device_rules_normalize_style(
@@ -313,14 +333,22 @@ foreach ($decodedRules as $index => $rule) {
     }
 
     if ($enabled) {
-        if ($property === '' || $target === '' || $className === '') {
-            dashticz_json_error(400, 'Enabled Device Rules require property, target and CSS class.');
+        if ($property === '' || $target === '') {
+            dashticz_json_error(400, 'Enabled Device Rules require property and target.');
+        }
+        if ($action === 'class' && $className === '') {
+            dashticz_json_error(400, 'Enabled Device Rules require a CSS class.');
         }
         if ($operator !== 'empty' && $operator !== 'notempty' && trim($value) === '') {
             dashticz_json_error(400, 'Enabled Device Rules require a comparison value.');
         }
     }
-    if ($style['mode'] !== 'existing' && $className !== '' && strpos($className, ' ') !== false) {
+    if (
+        $action === 'class' &&
+        $style['mode'] !== 'existing' &&
+        $className !== '' &&
+        strpos($className, ' ') !== false
+    ) {
         dashticz_json_error(400, 'Generated styling requires exactly one CSS class name.');
     }
 
@@ -329,10 +357,12 @@ foreach ($decodedRules as $index => $rule) {
         'property' => $property,
         'operator' => $operator,
         'value' => $value,
-        'action' => 'class',
+        'action' => $action,
         'target' => $target,
         'className' => $className,
         'style' => $style,
+        'textOn' => $textOn,
+        'textOff' => $textOff,
     );
 }
 
