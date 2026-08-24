@@ -755,7 +755,9 @@ function iconORimage(
     // always present (fixed offsets, sibling selectors), and dropping it
     // entirely would silently break that layout the first time this
     // toggle is turned off - see the "icon in de tekst" report.
-    return '<div class="col-xs-' + colwidth + ' col-icon" ' + attrcol + '></div>';
+    return (
+      '<div class="col-xs-' + colwidth + ' col-icon" ' + attrcol + '></div>'
+    );
   }
   var mIcon = defaulticon;
   var mImage = defaultimage;
