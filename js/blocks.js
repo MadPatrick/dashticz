@@ -729,6 +729,9 @@ function iconORimage(
   colwidth,
   attrcol
 ) {
+  if (typeof colwidth === 'undefined') colwidth = 4;
+  if (typeof attrcol === 'undefined') attrcol = '';
+  if (typeof attr === 'undefined') attr = '';
   if (
     typeof block !== 'undefined' &&
     block['icon'] === '' &&
@@ -747,7 +750,12 @@ function iconORimage(
     // block.image) to fall back on - a device type whose own visual *is*
     // an image (blinds, motion sensor, kodi, ...) keeps showing it; the
     // Icon toggle only ever governs the font-icon slot.
-    return '';
+    // Keep the (now empty) .col-icon wrapper rather than omitting it:
+    // custom CSS can target/position around this column assuming it's
+    // always present (fixed offsets, sibling selectors), and dropping it
+    // entirely would silently break that layout the first time this
+    // toggle is turned off - see the "icon in de tekst" report.
+    return '<div class="col-xs-' + colwidth + ' col-icon" ' + attrcol + '></div>';
   }
   var mIcon = defaulticon;
   var mImage = defaultimage;
@@ -803,9 +811,6 @@ function iconORimage(
   mIcon = isOn ? iconOn : iconOff;
   mImage = isOn ? imageOn : imageOff;
 
-  if (typeof colwidth === 'undefined') colwidth = 4;
-  if (typeof attrcol === 'undefined') attrcol = '';
-  if (typeof attr === 'undefined') attr = '';
   var icon = '<div class="col-xs-' + colwidth + ' col-icon" ' + attrcol + '>';
   if (useImage) {
     icon +=
