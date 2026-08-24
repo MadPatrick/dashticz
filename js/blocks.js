@@ -582,9 +582,16 @@ function getStatusBlock(block) {
   if (block.textOff && getIconStatusClass(device.Status) === 'off')
     value = block.textOff;
 
-  if (!titleAndValueSwitch(block)) {
+  // hide_data hides the device's live value, not the (user-configured)
+  // title, so it also cancels the title/value swap below - matching
+  // getBlockData() (js/blocks.js), the equivalent switch-block renderer.
+  if (!titleAndValueSwitch(block) || block['hide_data']) {
     if (hideTitle(block)) {
-      stateBlock += '<span class="value">' + value + '</span>';
+      if (!block['hide_data']) {
+        stateBlock += '<span class="value">' + value + '</span>';
+      }
+    } else if (block['hide_data']) {
+      stateBlock += '<strong class="title">' + title + '</strong>';
     } else {
       stateBlock += '<strong class="title">' + title + '</strong><br />';
       stateBlock += '<span class="value">' + value + '</span>';
