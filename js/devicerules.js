@@ -93,11 +93,13 @@
     condition: 'Voorwaarde',
     value: 'Waarde',
     cssAction: 'Add CSS aan huidig device',
-    cssActionHelp: 'De gegenereerde class wordt automatisch toegevoegd aan en verwijderd van het device waarvan dit configuratiemenu geopend is.',
+    cssActionHelp:
+      'De gegenereerde class wordt automatisch toegevoegd aan en verwijderd van het device waarvan dit configuratiemenu geopend is.',
     currentDevice: 'Huidig device',
     textAction: 'Tekst in ander device plaatsen',
     textTarget: 'Doeldevice voor tekstactie',
-    targetHelp: 'De pulldown toont beschikbare geconfigureerde devices met naam, IDX en block-key. Text-devices worden bovenaan getoond.',
+    targetHelp:
+      'De pulldown toont beschikbare geconfigureerde devices met naam, IDX en block-key. Text-devices worden bovenaan getoond.',
     textOn: 'Tekst indien waar',
     textOff: 'Tekst indien onwaar',
     cssClass: 'CSS-class',
@@ -115,7 +117,8 @@
     bannerTop: 'Afstand vanaf boven (px)',
     fontSize: 'Lettergrootte (px)',
     legacyTarget: 'Bestaand CSS-doel (compatibiliteit)',
-    legacyTargetHelp: 'Deze oudere regel wijst naar een ander block. Laat dit ongewijzigd om het bestaande gedrag te behouden, of kies Dit device.',
+    legacyTargetHelp:
+      'Deze oudere regel wijst naar een ander block. Laat dit ongewijzigd om het bestaande gedrag te behouden, of kies Dit device.',
     selfTarget: 'Dit device',
     advancedCss: 'Geavanceerde CSS-opties',
     remove: 'Verwijderen',
@@ -123,16 +126,22 @@
     noRules: 'Nog geen automations ingesteld.',
     advanced: 'Geavanceerd',
     handler: 'Custom JS handler',
-    handlerHelp: 'Optioneel: koppel dit device aan getStatus_<naam>(block, afterupdate) in custom.js.',
-    invalidTrigger: 'Automation: vul Status/eigenschap, Voorwaarde en Waarde van de trigger in.',
+    handlerHelp:
+      'Optioneel: koppel dit device aan getStatus_<naam>(block, afterupdate) in custom.js.',
+    invalidTrigger:
+      'Automation: vul Status/eigenschap, Voorwaarde en Waarde van de trigger in.',
     invalidActions: 'Automation: schakel minimaal één actie in.',
     invalidTextRule: 'Automation: selecteer een doeldevice voor de tekstactie.',
     invalidTextValue: 'Automation: vul tekst in voor waar en/of onwaar.',
-    invalidBannerText: 'Automation: vul een bannertekst in en gebruik geen aanhalingstekens of backslashes.',
-    invalidClass: 'Automation: gebruik een geldige CSS-class (letters, cijfers, _ en -).',
-    invalidHandler: 'Automation: Custom JS handler mag alleen letters, cijfers, _ en $ bevatten en mag niet met een cijfer beginnen.',
+    invalidBannerText:
+      'Automation: vul een bannertekst in en gebruik geen aanhalingstekens of backslashes.',
+    invalidClass:
+      'Automation: gebruik een geldige CSS-class (letters, cijfers, _ en -).',
+    invalidHandler:
+      'Automation: Custom JS handler mag alleen letters, cijfers, _ en $ bevatten en mag niet met een cijfer beginnen.',
     cssSaving: 'Automation opslaan in custom.js / custom.css...',
-    cssSaveFailed: 'Automation: custom.js / custom.css kon niet worden bijgewerkt.',
+    cssSaveFailed:
+      'Automation: custom.js / custom.css kon niet worden bijgewerkt.',
     source: 'Bronblock',
     textDevices: 'Text-devices',
     otherBlocks: 'Overige beschikbare devices',
@@ -149,11 +158,13 @@
     condition: 'Condition',
     value: 'Value',
     cssAction: 'Add CSS to current device',
-    cssActionHelp: 'The generated class is automatically added to and removed from the device whose configuration popup is open.',
+    cssActionHelp:
+      'The generated class is automatically added to and removed from the device whose configuration popup is open.',
     currentDevice: 'Current device',
     textAction: 'Put text in another device',
     textTarget: 'Text action target device',
-    targetHelp: 'The dropdown lists available configured devices by name, IDX and block key. Text devices are listed first.',
+    targetHelp:
+      'The dropdown lists available configured devices by name, IDX and block key. Text devices are listed first.',
     textOn: 'Text when true',
     textOff: 'Text when false',
     cssClass: 'CSS class',
@@ -171,7 +182,8 @@
     bannerTop: 'Distance from top (px)',
     fontSize: 'Font size (px)',
     legacyTarget: 'Existing CSS target (compatibility)',
-    legacyTargetHelp: 'This older rule points to another block. Keep it unchanged to preserve the old behavior, or select This device.',
+    legacyTargetHelp:
+      'This older rule points to another block. Keep it unchanged to preserve the old behavior, or select This device.',
     selfTarget: 'This device',
     advancedCss: 'Advanced CSS options',
     remove: 'Remove',
@@ -179,14 +191,20 @@
     noRules: 'No automations configured yet.',
     advanced: 'Advanced',
     handler: 'Custom JS handler',
-    handlerHelp: 'Optional: link this device to getStatus_<name>(block, afterupdate) in custom.js.',
-    invalidTrigger: 'Automation: fill Status/property, Condition and Value for the trigger.',
+    handlerHelp:
+      'Optional: link this device to getStatus_<name>(block, afterupdate) in custom.js.',
+    invalidTrigger:
+      'Automation: fill Status/property, Condition and Value for the trigger.',
     invalidActions: 'Automation: enable at least one action.',
     invalidTextRule: 'Automation: select a target device for the text action.',
-    invalidTextValue: 'Automation: enter text for the true and/or false result.',
-    invalidBannerText: 'Automation: enter banner text without quote or backslash characters.',
-    invalidClass: 'Automation: use a valid CSS class (letters, numbers, _ and -).',
-    invalidHandler: 'Automation: Custom JS handler may contain letters, numbers, _ and $ and may not start with a number.',
+    invalidTextValue:
+      'Automation: enter text for the true and/or false result.',
+    invalidBannerText:
+      'Automation: enter banner text without quote or backslash characters.',
+    invalidClass:
+      'Automation: use a valid CSS class (letters, numbers, _ and -).',
+    invalidHandler:
+      'Automation: Custom JS handler may contain letters, numbers, _ and $ and may not start with a number.',
     cssSaving: 'Saving automation to custom.js / custom.css...',
     cssSaveFailed: 'Automation: custom.js / custom.css could not be updated.',
     source: 'Source block',
@@ -198,7 +216,8 @@
   function text() {
     var lang = '';
     try {
-      if (window.config && window.config.language) lang = window.config.language;
+      if (window.config && window.config.language)
+        lang = window.config.language;
     } catch (ignore) {
       lang = '';
     }
@@ -231,7 +250,9 @@
   }
 
   function validHexColor(value, fallback) {
-    var color = String(value || '').trim().toLowerCase();
+    var color = String(value || '')
+      .trim()
+      .toLowerCase();
     return /^#[0-9a-f]{6}$/.test(color) ? color : fallback;
   }
 
@@ -241,11 +262,7 @@
     for (var i = 0; i < string.length; i += 1) {
       hash ^= string.charCodeAt(i);
       hash +=
-        (hash << 1) +
-        (hash << 4) +
-        (hash << 7) +
-        (hash << 8) +
-        (hash << 24);
+        (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
     }
     return (hash >>> 0).toString(36);
   }
@@ -561,7 +578,9 @@
   }
 
   function configuredBlock(target) {
-    return window.blocks && window.blocks[target] ? window.blocks[target] : null;
+    return window.blocks && window.blocks[target]
+      ? window.blocks[target]
+      : null;
   }
 
   function collectRenderedTargets(target) {
@@ -672,8 +691,7 @@
     var definition = configuredBlock(target);
     textBaseValues[target] = {
       hadOwn: !!(
-        definition &&
-        Object.prototype.hasOwnProperty.call(definition, 'title')
+        definition && Object.prototype.hasOwnProperty.call(definition, 'title')
       ),
       value: definition ? definition.title : undefined,
     };
@@ -854,7 +872,10 @@
     // a named key. CSS target `self` must always refer to the actual rendered
     // block, not necessarily the key used to look up the stored automation.
     var selfTarget = String(block.key || sourceKey || block.idx || 'device');
-    var rules = normaliseRules(resolved.entry && resolved.entry.rules, sourceKey);
+    var rules = normaliseRules(
+      resolved.entry && resolved.entry.rules,
+      sourceKey
+    );
 
     // Keep a runtime copy of the normalized generated CSS. Besides making a
     // newly saved rule visible immediately, this upgrades managed CSS written
@@ -867,11 +888,7 @@
     rules.forEach(function (rule) {
       if (rule.enabled === false || !rule.trigger.property) return;
       var actual = readPath(block.device, rule.trigger.property);
-      var active = compare(
-        actual,
-        rule.trigger.operator,
-        rule.trigger.value
-      );
+      var active = compare(actual, rule.trigger.operator, rule.trigger.value);
 
       var cssAction = rule.actions.css;
       if (cssAction.enabled && cssAction.className) {
@@ -885,12 +902,7 @@
           target: cssTarget,
           action: 'class',
         });
-        setRuleClassState(
-          cssTarget,
-          cssId,
-          cssAction.className,
-          active
-        );
+        setRuleClassState(cssTarget, cssId, cssAction.className, active);
       }
 
       var textAction = rule.actions.text;
@@ -931,7 +943,10 @@
         ? resolved.entry.customJsHandler
         : ''
     ).trim();
-    if (!handler || !/^(?:getStatus_)?[A-Za-z_$][A-Za-z0-9_$]*$/.test(handler)) {
+    if (
+      !handler ||
+      !/^(?:getStatus_)?[A-Za-z_$][A-Za-z0-9_$]*$/.test(handler)
+    ) {
       return;
     }
 
@@ -1241,7 +1256,9 @@
         if (!definition || typeof definition !== 'object') return;
         var liveDevice = liveDeviceForDefinition(definition);
         var idx = definition.idx == null ? '' : String(definition.idx);
-        var keyLooksLikeDevice = /^(?:device_)?\d+(?:_\d+)?$/.test(String(key)) || /^(?:s|v)\d+$/.test(String(key));
+        var keyLooksLikeDevice =
+          /^(?:device_)?\d+(?:_\d+)?$/.test(String(key)) ||
+          /^(?:s|v)\d+$/.test(String(key));
         // The text action deliberately lists devices, not every widget or
         // special block in window.blocks. Named custom devices remain
         // available because they carry an IDX. Numeric/scene/variable keys
@@ -1452,8 +1469,7 @@
     var cssAction = rule.actions.css;
     var textAction = rule.actions.text;
     var noValue =
-      rule.trigger.operator === 'empty' ||
-      rule.trigger.operator === 'notempty';
+      rule.trigger.operator === 'empty' || rule.trigger.operator === 'notempty';
     var sourceLabel = friendlyBlockName(source);
     if (sourceLabel !== source) sourceLabel += ' — ' + source;
 
@@ -1700,9 +1716,7 @@
     var mode = String($row.find('.dr-style-mode').val() || 'existing');
     var generated = mode !== 'existing';
     var isBanner = mode === 'banner';
-    $row
-      .find('.dr-generated-style-controls')
-      .toggleClass('d-none', !generated);
+    $row.find('.dr-generated-style-controls').toggleClass('d-none', !generated);
     $row
       .find('.dr-background-controls')
       .toggleClass('d-none', !(isBanner || modeUses(mode, 'background')));
@@ -1759,9 +1773,7 @@
 
       if (cssEnabled) {
         var className = String($row.find('.dr-class').val() || '').trim();
-        var styleMode = String(
-          $row.find('.dr-style-mode').val() || 'existing'
-        );
+        var styleMode = String($row.find('.dr-style-mode').val() || 'existing');
         var classPattern =
           styleMode === 'existing'
             ? /^(?:[A-Za-z_][A-Za-z0-9_-]*)(?:\s+[A-Za-z_][A-Za-z0-9_-]*)*$/
@@ -1822,15 +1834,7 @@
     var blue = parseInt(value.substring(4, 6), 16);
     var alpha = clampNumber(opacity, 0.05, 1, 1);
     return (
-      'rgba(' +
-      red +
-      ', ' +
-      green +
-      ', ' +
-      blue +
-      ', ' +
-      alpha.toFixed(2) +
-      ')'
+      'rgba(' + red + ', ' + green + ', ' + blue + ', ' + alpha.toFixed(2) + ')'
     );
   }
 
@@ -2068,9 +2072,7 @@
       cache: false,
     }).done(function (data) {
       var selector =
-        'style[data-dashticz-custom-css="' +
-        path.replace(/"/g, '\\"') +
-        '"]';
+        'style[data-dashticz-custom-css="' + path.replace(/"/g, '\\"') + '"]';
       var $style = $(selector);
       if (!$style.length) {
         $style = $('<style></style>')

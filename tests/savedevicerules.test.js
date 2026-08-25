@@ -9,11 +9,16 @@ const root = path.resolve(__dirname, '..');
 const endpointSource = path.join(root, 'js', 'savedevicerules.php');
 
 function makeFixture() {
-  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'dashticz-device-rules-'));
+  const fixture = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'dashticz-device-rules-')
+  );
   fs.mkdirSync(path.join(fixture, 'js'), { recursive: true });
   fs.mkdirSync(path.join(fixture, 'vendor', 'dashticz'), { recursive: true });
   fs.mkdirSync(path.join(fixture, 'custom'), { recursive: true });
-  fs.copyFileSync(endpointSource, path.join(fixture, 'js', 'savedevicerules.php'));
+  fs.copyFileSync(
+    endpointSource,
+    path.join(fixture, 'js', 'savedevicerules.php')
+  );
 
   fs.writeFileSync(
     path.join(fixture, 'vendor', 'dashticz', 'security.php'),
@@ -197,7 +202,10 @@ test('legacy flat text rules are converted without losing their behavior', () =>
       'utf8'
     );
     assert.match(customJs, /"trigger": \{/);
-    assert.match(customJs, /"enabled": true,\s*\n\s*"target": "legacy_message"/);
+    assert.match(
+      customJs,
+      /"enabled": true,\s*\n\s*"target": "legacy_message"/
+    );
     assert.match(customJs, /"textOn": "Active"/);
     assert.match(customJs, /"textOff": "Inactive"/);
   } finally {

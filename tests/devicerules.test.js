@@ -19,10 +19,7 @@ function normalizeRuleWithPhp(rule, sourceKey = 'source') {
   assert.notEqual(definitionsStart, -1);
   assert.notEqual(requestHandlerStart, -1);
 
-  const definitions = serverSource.slice(
-    definitionsStart,
-    requestHandlerStart
-  );
+  const definitions = serverSource.slice(definitionsStart, requestHandlerStart);
   const ruleBase64 = Buffer.from(JSON.stringify(rule)).toString('base64');
   const sourceBase64 = Buffer.from(String(sourceKey)).toString('base64');
   const script = `${definitions}
@@ -37,10 +34,7 @@ echo json_encode(array('rule' => $normalized, 'error' => $error));`;
 function phpManagedClass(sourceKey, ruleId) {
   const definitionsStart = serverSource.indexOf('$allowedOperators = array(');
   const requestHandlerStart = serverSource.indexOf('\n$rules = array();');
-  const definitions = serverSource.slice(
-    definitionsStart,
-    requestHandlerStart
-  );
+  const definitions = serverSource.slice(definitionsStart, requestHandlerStart);
   const sourceBase64 = Buffer.from(String(sourceKey)).toString('base64');
   const idBase64 = Buffer.from(String(ruleId)).toString('base64');
   const script = `${definitions}
@@ -476,10 +470,7 @@ test('generated block selectors override important theme panel rules', () => {
   const { api } = createRuntime();
   const selectors = api.generatedBlockSelectors('automation-active');
 
-  assert.match(
-    selectors,
-    /html body \.dt_block\.transbg\.automation-active/
-  );
+  assert.match(selectors, /html body \.dt_block\.transbg\.automation-active/);
   assert.match(selectors, /html body \.mh\.transbg\.automation-active/);
   assert.match(selectors, /html body \.transbg\.automation-active/);
 });
@@ -540,7 +531,10 @@ test('text target dropdown data shows friendly names, IDX and text devices first
   assert.match(rows[0].label, /message/);
   assert.equal(rows[1].key, 'custom_note');
   assert.equal(rows.find((row) => row.key === 'lamp').textDevice, false);
-  assert.equal(rows.find((row) => row.key === 'missing_target').unavailable, true);
+  assert.equal(
+    rows.find((row) => row.key === 'missing_target').unavailable,
+    true
+  );
 });
 
 test('text target control renders a real device pulldown with the saved target selected', () => {
@@ -634,4 +628,3 @@ test('PHP writer accepts schema v2, preserves legacy rules and matches generated
   assert.equal(legacy.rule.actions.text.enabled, true);
   assert.equal(legacy.rule.actions.text.target, 'legacy_message');
 });
-
