@@ -458,7 +458,12 @@
               ? rule.className || rule.class || ''
               : '')
         ).trim();
-        if (cssEnabled && !className) {
+        // Always keep a valid class name pre-filled, even while the action
+        // is currently off - not just when re-enabling it, so a rule saved
+        // (or loaded) before this action was ever turned on still renders a
+        // usable value in the popup the moment the user flips it on, rather
+        // than an empty field that fails validation on save.
+        if (!className) {
           className = managedClassName(source, id);
         }
 
@@ -478,7 +483,7 @@
         var textCssClassName = String(
           textCssSource.className || textCssSource.class || ''
         ).trim();
-        if (textCssEnabled && !textCssClassName) {
+        if (!textCssClassName) {
           textCssClassName = managedClassName(source, id + '_text');
         }
 

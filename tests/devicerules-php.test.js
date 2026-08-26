@@ -215,6 +215,26 @@ echo device_rules_css_for_rules(array($rule));
   assert.equal(disabledOutput, '');
 });
 
+test('a disabled action always normalises to a non-empty class name server-side too', () => {
+  const result = normalize({
+    id: 'legacy_rule',
+    enabled: true,
+    trigger: { property: 'Data', operator: 'gt', value: '2' },
+    actions: {
+      css: { enabled: false, target: 'self' },
+      text: { enabled: true, target: 'message', textOn: 'Alarm' },
+    },
+  });
+
+  assert.equal(result.error, null);
+  assert.ok(result.rule.actions.css.className);
+  assert.ok(result.rule.actions.text.css.className);
+  assert.notEqual(
+    result.rule.actions.css.className,
+    result.rule.actions.text.css.className
+  );
+});
+
 test('server normalises the text action’s own CSS and auto-generates a class distinct from the CSS action’s', () => {
   const result = normalize({
     id: 'bordered_text',

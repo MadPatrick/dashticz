@@ -82,6 +82,17 @@ v3.45.8 beta (26-8-2026)
   already standard for every other Device Config switch, instead of
   a plain unstyled checkbox.
 
+- Fixed a validation bug introduced by the new text-action CSS
+  toggle above: ``normaliseRules()`` (and the matching PHP
+  normaliser) only auto-generated a fallback CSS class name for a
+  *disabled* action, so a rule saved before that action's CSS toggle
+  existed - or before it was ever turned on - rendered the "CSS
+  class" field empty. Enabling the toggle and saving then failed with
+  "Automation: gebruik een geldige CSS-class", even though saving
+  itself would have auto-filled a valid name. Both normalisers now
+  always keep a valid class name pre-filled, matching how a
+  brand-new rule already behaved.
+
 * **Code**
 
 - Every one of the five is implemented by extending the same
@@ -141,10 +152,11 @@ v3.45.8 beta (26-8-2026)
   machinery already used for the current-device CSS action, extended
   to also track a second, independent ``{id, target, action}`` entry
   per rule instead of a new state system. Verified with the full node
-  --test suite (190 tests, including new coverage for the text
-  action's own CSS applying/clearing with its trigger and for the PHP
-  writer's matching normalisation and CSS generation) and Prettier's
-  format check.
+  --test suite (192 tests, including new coverage for the text
+  action's own CSS applying/clearing with its trigger, for the PHP
+  writer's matching normalisation and CSS generation, and for a
+  disabled action always normalising to a non-empty class name both
+  client- and server-side) and Prettier's format check.
 
 v3.45.7 beta (25-8-2026)
 -------------------------

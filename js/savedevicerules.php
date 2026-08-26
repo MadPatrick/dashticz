@@ -336,7 +336,10 @@ function device_rules_normalize_rule($rule, $index, $source)
                     ? trim((string) $rule['className'])
                     : (isset($rule['class']) ? trim((string) $rule['class']) : ''))
                 : ''));
-    if ($cssEnabled && $classRaw === '') {
+    // Always keep a valid class name pre-filled, even while the action is
+    // currently off, matching the client normaliser - so a rule saved before
+    // this action was ever turned on still has a usable class name.
+    if ($classRaw === '') {
         $classRaw = device_rules_managed_class_name($source, $id);
     }
     $className = $classRaw === '' ? '' : device_rules_safe_class_list($classRaw);
@@ -393,7 +396,7 @@ function device_rules_normalize_rule($rule, $index, $source)
     $textCssClassRaw = isset($textCssRaw['className'])
         ? trim((string) $textCssRaw['className'])
         : (isset($textCssRaw['class']) ? trim((string) $textCssRaw['class']) : '');
-    if ($textCssEnabled && $textCssClassRaw === '') {
+    if ($textCssClassRaw === '') {
         $textCssClassRaw = device_rules_managed_class_name($source, $id . '_text');
     }
     $textCssClassName = $textCssClassRaw === '' ? '' : device_rules_safe_class_list($textCssClassRaw);

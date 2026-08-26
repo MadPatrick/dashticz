@@ -273,6 +273,34 @@ test('normalises schema v2 with one trigger and two independent actions', () => 
   assert.equal(rules[0].actions.text.target, 'message');
 });
 
+test('a disabled action always normalises to a non-empty class name so re-enabling it in the popup does not fail validation on an empty field', () => {
+  const { api } = createRuntime();
+  // Simulates a rule saved before the text action's own CSS toggle existed:
+  // actions.text has no css sub-object at all, and the top CSS action was
+  // never enabled either, so neither ever got a class name persisted.
+  const rules = api.normaliseRules(
+    [
+      {
+        id: 'legacy_rule',
+        enabled: true,
+        trigger: { property: 'Data', operator: 'gt', value: '2' },
+        actions: {
+          css: { enabled: false, target: 'self' },
+          text: { enabled: true, target: 'message', textOn: 'Alarm' },
+        },
+      },
+    ],
+    'source'
+  );
+
+  assert.ok(rules[0].actions.css.className);
+  assert.ok(rules[0].actions.text.css.className);
+  assert.notEqual(
+    rules[0].actions.css.className,
+    rules[0].actions.text.css.className
+  );
+});
+
 test('keeps previous flat CSS and text rules backwards compatible', () => {
   const { api } = createRuntime();
   const rules = api.normaliseRules(
