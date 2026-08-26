@@ -346,6 +346,16 @@ var DashticzDeviceEditor = (function () {
     _showCalendarPopup();
   }
 
+  /** Open the dedicated Public transport popup used by the Screen Editor
+   * add menu. */
+  function openPublicTransport() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showPublicTransportPopup();
+  }
+
   /** Open the dedicated Lyrion Music Server popup used by the Screen Editor
    * add menu. */
   function openLms() {
@@ -714,6 +724,23 @@ var DashticzDeviceEditor = (function () {
       kind = 'calendar';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      reference !== 'widget_publictransport' &&
+      !definition.type &&
+      ((typeof definition.station === 'string' && definition.station !== '') ||
+        (typeof definition.tpc === 'string' && definition.tpc !== ''))
+    ) {
+      // Repeatable Public transport block, added via the Screen Editor's
+      // own "Add items" -> Public transport quick-add popup
+      // (_showPublicTransportPopup() above) rather than the Widgets
+      // catalog's singleton 'publictransport' entry. Matches
+      // js/components/publictransport.js's own canHandle(): dispatched on
+      // a truthy station or tpc, no `type` of its own. The fixed
+      // 'widget_publictransport' key is excluded so that singleton keeps
+      // going through DashticzWidgetEditor's own (unrelated) config path
+      // unchanged.
+      kind = 'publictransport';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       String(definition.type || '').toLowerCase() === 'lms'
     ) {
       // Lyrion Music Server "Now Playing" block (js/components/lms.js),
@@ -737,6 +764,7 @@ var DashticzDeviceEditor = (function () {
         kind === 'html' ||
         kind === 'iframe' ||
         kind === 'calendar' ||
+        kind === 'publictransport' ||
         kind === 'lms'
           ? null
           : kind === 'group'
@@ -750,6 +778,7 @@ var DashticzDeviceEditor = (function () {
         kind === 'html' ||
         kind === 'iframe' ||
         kind === 'calendar' ||
+        kind === 'publictransport' ||
         kind === 'lms'
           ? String(definition.title || '')
           : String(
@@ -1214,6 +1243,7 @@ var DashticzDeviceEditor = (function () {
       if (special.specialType === 'html') return 'fas fa-code';
       if (special.specialType === 'iframe') return 'fas fa-window-maximize';
       if (special.specialType === 'calendar') return 'fas fa-calendar-alt';
+      if (special.specialType === 'publictransport') return 'fas fa-train';
       if (special.specialType === 'lms') return 'fas fa-music';
     }
     return 'fas fa-question';
@@ -4129,6 +4159,261 @@ var DashticzDeviceEditor = (function () {
     ).show();
   }
 
+  /* Repeatable Public transport block - same managedSpecials mechanism as
+     iFrame/Calendar/HTML Block above (kind:'special',
+     specialType:'publictransport'), so any number of independently-
+     configured departure boards can be placed, unlike the Widgets
+     catalog's singleton 'publictransport' entry (always the fixed
+     'widget_publictransport' key). js/components/publictransport.js
+     dispatches on a truthy station or tpc - see
+     _specialFromReference()'s matching branch, which excludes the legacy
+     'widget_publictransport' key. Provider list/labels match the existing
+     singleton widget's own Wizard config (js/widgeteditor.js's
+     '_ptOption()' calls) for consistency. */
+  function _showPublicTransportPopup() {
+    var t = _translations();
+    $('#publictransportblockpopup').remove();
+
+    var providerOptions = [
+      ['treinen', t.publictransport_block_provider_treinen],
+      ['ovapi', t.publictransport_block_provider_ovapi],
+      ['drgl', t.publictransport_block_provider_drgl],
+      ['irailbe', t.publictransport_block_provider_irailbe],
+      ['delijnbe', t.publictransport_block_provider_delijnbe],
+    ];
+
+    var html =
+      '<div class="modal fade" id="publictransportblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-train me-2" aria-hidden="true"></i>' +
+      _esc(t.publictransport_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    html += _quickOptionsHtml('pt', {
+      icon: true,
+      iconValue: 'fas fa-train',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="pt-device-name">' +
+      _esc(t.publictransport_block_name) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="pt-device-name" autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.publictransport_block_name_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="pt-device-title">' +
+      _esc(t.html_block_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="pt-device-title" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="pt-device-provider">' +
+      _esc(t.publictransport_block_provider) +
+      '</label>';
+    html += '<select class="form-select" id="pt-device-provider">';
+    providerOptions.forEach(function (option) {
+      html +=
+        '<option value="' +
+        _esc(option[0]) +
+        '">' +
+        _esc(option[1]) +
+        '</option>';
+    });
+    html += '</select></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="pt-device-station">' +
+      _esc(t.publictransport_block_station) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="pt-device-station" autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.publictransport_block_station_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="pt-device-tpc">' +
+      _esc(t.publictransport_block_tpc) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="pt-device-tpc" autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.publictransport_block_tpc_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="pt-device-direction">' +
+      _esc(t.publictransport_block_direction) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="pt-device-direction" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="pt-device-results">' +
+      _esc(t.publictransport_block_results) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="pt-device-results" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="pt-device-showvia" checked>';
+    html +=
+      '<label class="form-check-label" for="pt-device-showvia">' +
+      _esc(t.publictransport_block_showvia) +
+      '</label></div>';
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="pt-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#publictransportblockpopup');
+    _wireQuickOptions('pt', $popup);
+    _wireBackButton('publictransportblockpopup');
+
+    $('#pt-save-btn').on('click', function () {
+      var $message = $popup
+        .find('.cd-custom-message')
+        .removeClass('text-danger')
+        .text('');
+      var reference = $.trim(String($('#pt-device-name').val() || ''));
+      var title = $.trim(String($('#pt-device-title').val() || ''));
+      if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
+        $message
+          .addClass('text-danger')
+          .text(t.invalid_publictransport_block_name);
+        $('#pt-device-name').trigger('focus');
+        return;
+      }
+      if (
+        (typeof blocks !== 'undefined' && blocks[reference]) ||
+        managedSpecials[_specialOrderKey(reference)]
+      ) {
+        $message
+          .addClass('text-danger')
+          .text(t.invalid_publictransport_block_name);
+        $('#pt-device-name').trigger('focus');
+        return;
+      }
+
+      var station = $.trim(String($('#pt-device-station').val() || ''));
+      var tpc = $.trim(String($('#pt-device-tpc').val() || ''));
+      if (!station && !tpc) {
+        $message
+          .addClass('text-danger')
+          .text(t.invalid_publictransport_block_station);
+        $('#pt-device-station').trigger('focus');
+        return;
+      }
+
+      var quickOptions = _readQuickOptions('pt');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+      var provider = String($('#pt-device-provider').val() || 'treinen');
+      var direction = $.trim(String($('#pt-device-direction').val() || ''));
+      var results = $.trim(String($('#pt-device-results').val() || ''));
+      var showVia = $('#pt-device-showvia').is(':checked');
+
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      customRows.push({
+        field: 'provider',
+        setting: provider,
+        value: provider,
+      });
+      if (station) {
+        customRows.push({ field: 'station', setting: station, value: station });
+      }
+      if (tpc) {
+        customRows.push({ field: 'tpc', setting: tpc, value: tpc });
+      }
+      if (direction) {
+        customRows.push({
+          field: 'direction',
+          setting: direction,
+          value: direction,
+        });
+      }
+      if (results) {
+        var resultsInt = parseInt(results, 10) || 0;
+        if (resultsInt > 0) {
+          customRows.push({
+            field: 'results',
+            setting: String(resultsInt),
+            value: resultsInt,
+          });
+        }
+      }
+      customRows.push({
+        field: 'show_via',
+        setting: showVia ? 'true' : 'false',
+        value: showVia,
+      });
+
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'publictransport',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: null,
+        title: title,
+        width: 3,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      window.bootstrap.Modal.getInstance(
+        document.getElementById('publictransportblockpopup')
+      ).hide();
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('publictransportblockpopup')
+    ).show();
+  }
+
   function _showSlideButtonPopup() {
     var t = _translations();
     $('#slidebuttonpopup').remove();
@@ -4458,6 +4743,8 @@ var DashticzDeviceEditor = (function () {
     var isHtmlBlock = special && special.specialType === 'html';
     var isIframeBlock = special && special.specialType === 'iframe';
     var isCalendarBlock = special && special.specialType === 'calendar';
+    var isPublicTransportBlock =
+      special && special.specialType === 'publictransport';
     var isLmsBlock = special && special.specialType === 'lms';
     var options = isSpecial ? special.options || {} : deviceOptions[ck] || {};
     var customRows = isSpecial ? special.customFields : deviceCustomFields[ck];
@@ -4568,6 +4855,7 @@ var DashticzDeviceEditor = (function () {
       !isHtmlBlock &&
       !isIframeBlock &&
       !isCalendarBlock &&
+      !isPublicTransportBlock &&
       !isLmsBlock;
     var barDeviceIdx = null;
     if (hasDial) {
@@ -4649,6 +4937,7 @@ var DashticzDeviceEditor = (function () {
           isHtmlBlock ||
           isIframeBlock ||
           isCalendarBlock ||
+          isPublicTransportBlock ||
           isLmsBlock
         ? ['icon', 'last_update', 'show_title']
         : ['icon', 'hide_data', 'last_update', 'show_title'];
@@ -5665,6 +5954,7 @@ var DashticzDeviceEditor = (function () {
     var isHtmlBlock = special.specialType === 'html';
     var isIframeBlock = special.specialType === 'iframe';
     var isCalendarBlock = special.specialType === 'calendar';
+    var isPublicTransportBlock = special.specialType === 'publictransport';
     var isLmsBlock = special.specialType === 'lms';
     // A Multi Device is a Custom device whose 'values' custom field was filled
     // in via the dedicated Multi Device popup (see openMultiDevice() above);
@@ -5688,6 +5978,7 @@ var DashticzDeviceEditor = (function () {
     else if (isHtmlBlock) label = t.html_block;
     else if (isIframeBlock) label = t.iframe_block;
     else if (isCalendarBlock) label = t.calendar_block;
+    else if (isPublicTransportBlock) label = t.publictransport_block;
     else if (isLmsBlock) label = t.lms_block;
     var htmlFileRow =
       isHtmlBlock && special.customFields
@@ -5711,6 +6002,13 @@ var DashticzDeviceEditor = (function () {
             return String((row && row.field) || '').toLowerCase() === 'icalurl';
           })
         : null;
+    var stationRow =
+      isPublicTransportBlock && special.customFields
+        ? special.customFields.find(function (row) {
+            var field = String((row && row.field) || '').toLowerCase();
+            return field === 'station' || field === 'tpc';
+          })
+        : null;
     var detail = isTitle
       ? special.title
       : isSlideButton
@@ -5729,13 +6027,15 @@ var DashticzDeviceEditor = (function () {
               ? (frameurlRow && frameurlRow.setting) || special.reference
               : isCalendarBlock
                 ? (icalurlRow && icalurlRow.setting) || special.reference
-                : isLmsBlock
-                  ? special.lmsPlayerLabel ||
-                    special.lmsPlayer ||
-                    special.reference
-                  : isCustom
-                    ? special.reference + ' · IDX\u00a0' + special.idx
-                    : 'IDX\u00a0' + special.idx;
+                : isPublicTransportBlock
+                  ? (stationRow && stationRow.setting) || special.reference
+                  : isLmsBlock
+                    ? special.lmsPlayerLabel ||
+                      special.lmsPlayer ||
+                      special.reference
+                    : isCustom
+                      ? special.reference + ' · IDX\u00a0' + special.idx
+                      : 'IDX\u00a0' + special.idx;
     var specialIconClass = isTitle
       ? 'fa-divide'
       : isSlideButton
@@ -5747,6 +6047,7 @@ var DashticzDeviceEditor = (function () {
     else if (isHtmlBlock) specialIconClass = 'fa-code';
     else if (isIframeBlock) specialIconClass = 'fa-window-maximize';
     else if (isCalendarBlock) specialIconClass = 'fa-calendar-alt';
+    else if (isPublicTransportBlock) specialIconClass = 'fa-train';
     else if (isLmsBlock) specialIconClass = 'fa-music';
     var html =
       '<div class="de-device-item de-special-item" data-special-key="' +
@@ -6355,6 +6656,7 @@ var DashticzDeviceEditor = (function () {
           special.specialType === 'html' ||
           special.specialType === 'iframe' ||
           special.specialType === 'calendar' ||
+          special.specialType === 'publictransport' ||
           special.specialType === 'lms';
         if (!titleOptionalKind || String(special.title || '').trim()) {
           specialEntry.title = special.title;
@@ -6415,7 +6717,8 @@ var DashticzDeviceEditor = (function () {
           special.specialType === 'group' ||
           special.specialType === 'html' ||
           special.specialType === 'iframe' ||
-          special.specialType === 'calendar'
+          special.specialType === 'calendar' ||
+          special.specialType === 'publictransport'
         ) {
           // Only Icon and Last update apply here (no Data/Switch/Dial - see
           // _quickOptionsHtml()); idx is optional and only meaningful for a
@@ -6993,6 +7296,7 @@ var DashticzDeviceEditor = (function () {
     openHtmlBlock: openHtmlBlock,
     openIframe: openIframe,
     openCalendar: openCalendar,
+    openPublicTransport: openPublicTransport,
     openLms: openLms,
     openSlideButton: openSlideButton,
     addSeparator: addSeparator,

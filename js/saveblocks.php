@@ -109,7 +109,7 @@ foreach ($data['devices'] as $entry) {
     if (is_array($entry)
         && isset($entry['kind'])
         && (
-            in_array($entry['kind'], ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'lms'], true)
+            in_array($entry['kind'], ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'lms'], true)
             || $entry['kind'] === 'slidebutton'
         )
     ) {
@@ -134,7 +134,7 @@ foreach ($data['devices'] as $entry) {
         $title = isset($entry['title']) && is_string($entry['title'])
             ? substr(trim($entry['title']), 0, 100)
             : '';
-        if ($title === '' && !in_array($kind, ['custom', 'slidebutton', 'group', 'html', 'iframe', 'calendar', 'lms'], true)) {
+        if ($title === '' && !in_array($kind, ['custom', 'slidebutton', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'lms'], true)) {
             dashticz_json_error(400, 'A special block title is required.');
         }
         $defaultWidth = 3;
@@ -182,8 +182,8 @@ foreach ($data['devices'] as $entry) {
             $icon = array_key_exists('icon', $entry) && is_string($entry['icon'])
                 ? substr($entry['icon'], 0, 100)
                 : null;
-        } elseif ($kind === 'group' || $kind === 'html' || $kind === 'iframe' || $kind === 'calendar') {
-            // Only Icon and Last update apply to these four (no Data/Switch/
+        } elseif ($kind === 'group' || $kind === 'html' || $kind === 'iframe' || $kind === 'calendar' || $kind === 'publictransport') {
+            // Only Icon and Last update apply to these five (no Data/Switch/
             // Dial - see js/deviceeditor.js's _quickOptionsHtml()).
             $icon = array_key_exists('icon', $entry) && is_string($entry['icon'])
                 ? substr($entry['icon'], 0, 100)
@@ -231,7 +231,7 @@ foreach ($data['devices'] as $entry) {
                 ) {
                     dashticz_json_error(400, 'Enter a valid iFrame URL.');
                 }
-            } else {
+            } elseif ($kind === 'calendar') {
                 // icalurl is otherwise just another custom field (see
                 // _normalise_custom_device_fields() above), but this block
                 // renders nothing at all without one, so it is required here -
@@ -243,6 +243,21 @@ foreach ($data['devices'] as $entry) {
                     || strlen($customFields['icalurl']) > 2048
                 ) {
                     dashticz_json_error(400, 'Enter a valid calendar (ICS) URL.');
+                }
+            } else {
+                // station/tpc are otherwise just other custom fields (see
+                // _normalise_custom_device_fields() above), but this block
+                // renders nothing at all without at least one of them, so
+                // at least one is required here - same reasoning as html's
+                // htmlfile requirement above.
+                $hasStation = isset($customFields['station'])
+                    && is_string($customFields['station'])
+                    && trim($customFields['station']) !== '';
+                $hasTpc = isset($customFields['tpc'])
+                    && is_string($customFields['tpc'])
+                    && trim($customFields['tpc']) !== '';
+                if (!$hasStation && !$hasTpc) {
+                    dashticz_json_error(400, 'Enter a station or a tpc code.');
                 }
             }
         } elseif ($kind === 'lms') {

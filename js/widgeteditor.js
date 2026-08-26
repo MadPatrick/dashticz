@@ -2032,11 +2032,17 @@ var DashticzWidgetEditor = (function () {
       // own config path, width/height/description metadata, etc.), only
       // its card is special-cased here, the same way LMS's card is
       // appended below.
-      if (item.id === 'iframe' || item.id === 'calendar') return;
+      if (
+        item.id === 'iframe' ||
+        item.id === 'calendar' ||
+        item.id === 'publictransport'
+      )
+        return;
       html += _widgetCardHtml(item);
     });
     html += _iframeWidgetCardHtml();
     html += _calendarWidgetCardHtml();
+    html += _publicTransportWidgetCardHtml();
     html += _lmsWidgetCardHtml();
 
     html +=
@@ -2245,6 +2251,45 @@ var DashticzWidgetEditor = (function () {
     _closeModalWithoutSaving();
     DT_function.loadDTScript('js/deviceeditor.js').then(function () {
       DashticzDeviceEditor.openCalendar();
+    });
+  }
+
+  /* Public transport is a `catalog` entry, same reasoning as iFrame/
+     Calendar above: kept there so an existing install's singleton
+     'widget_publictransport' block keeps working unchanged - only the
+     card shown *here* is replaced with a repeatable one, opening the new
+     Public transport quick-add popup
+     (DashticzDeviceEditor.openPublicTransport()) instead of toggling
+     selectedWidgets.publictransport. */
+  function _publicTransportWidgetCardHtml() {
+    var item = catalog.filter(function (candidate) {
+      return candidate.id === 'publictransport';
+    })[0];
+    if (!item) return '';
+    var itemTitle = _widgetTitle(item);
+    return (
+      '<div class="we-widget-card we-widget-card-publictransport" data-special-widget="publictransport" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="' +
+      item.icon +
+      '" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _widgetDescription(item) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openPublicTransportFromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openPublicTransport();
     });
   }
 
@@ -4568,6 +4613,10 @@ var DashticzWidgetEditor = (function () {
         _openCalendarFromWidgets();
         return;
       }
+      if ($(this).data('special-widget') === 'publictransport') {
+        _openPublicTransportFromWidgets();
+        return;
+      }
       _toggleWidget(String($(this).data('widget-id')));
     });
 
@@ -4585,6 +4634,10 @@ var DashticzWidgetEditor = (function () {
       }
       if ($(this).data('special-widget') === 'calendar') {
         _openCalendarFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'publictransport') {
+        _openPublicTransportFromWidgets();
         return;
       }
       _toggleWidget(String($(this).data('widget-id')));
