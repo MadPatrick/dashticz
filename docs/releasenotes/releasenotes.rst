@@ -6,6 +6,65 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.45.8 beta (26-8-2026)
+-------------------------
+
+* **Enhancements**
+
+- Added repeatable iFrame, Calendar, Public transport, Timegraph and
+  TV Guide (XMLTV) blocks (Screen Editor's Widgets catalog, each card
+  now behaving like LMS's own): each can now be placed any number of
+  times on a dashboard, with fully independent settings per instance -
+  previously each was a singleton in the catalog (one fixed widget_*
+  block, one shared config for every added instance), addressing
+  `issue #201 <https://github.com/MadPatrick/dashticz/issues/201>`_'s
+  request for per-instance widget settings similar to LMS.
+
+* **Code**
+
+- Every one of the five is implemented by extending the same
+  managedSpecials mechanism already used for Group/HTML Block/LMS
+  rather than the catalog's singleton selectedWidgets/blockKey
+  pattern, each with its own quick-add popup
+  (js/deviceeditor.js). iFrame/Calendar/Public transport/TV Guide are
+  recognized by their own component's existing field-shape dispatch
+  (frameurl/icalurl/station-or-tpc/xmltvurl, no explicit type,
+  mirroring HTML Block's htmlfile); Timegraph, whose component
+  requires an explicit type:'timegraph', is recognized and written the
+  same way Group/LMS already are. Every existing singleton catalog
+  widget is untouched and keeps working exactly as before - Calendar's
+  multi-source/color-picker config and TV Guide's global
+  settings['xmltv_*'] fallback remain available there. Also fixed the
+  new iFrame popup's two checkboxes rendering as plain unstyled
+  Bootstrap checkboxes instead of the app's standard 38x20px blue
+  switch (.de-switch, already the documented standard class in
+  css/creative.css for exactly this case) - every checkbox added
+  across all five new popups uses it from the start. The Widgets
+  catalog modal now visually separates the two kinds of card under
+  their own heading - "Widgets (once per screen)" for the remaining
+  singleton cards and "Widgets (multiple per screen)" for the six
+  repeatable cards (iFrame/Calendar/Public transport/Timegraph/TV
+  Guide/LMS) - instead of mixing both in one grid. Refactored the
+  special-block kind lists that had grown into a hand-duplicated
+  ``kind === 'x' || kind === 'y' || ...`` chain repeated at up to 10
+  call sites across js/deviceeditor.js, js/layouteditor.js and
+  js/saveblocks.php into a small number of named, shared arrays
+  declared once per file, each call site now doing a plain
+  ``.indexOf(kind) > -1`` membership check instead - a behavior-
+  preserving refactor (every array's contents were extracted 1:1 from
+  the chain it replaces) fixing a recurring structural pain point:
+  those duplicated chains, and the test assertions matching their
+  exact literal multi-line text, were a frequent source of merge
+  conflicts between feature branches touching nearby special-block
+  code. A future repeatable special now touches one line per array
+  instead of up to 10 separately-duplicated chains, and the
+  corresponding test assertions were rewritten to check each array's
+  declaration/membership directly. Verified with the full node --test
+  suite (183 tests, including source-shape assertions updated for each
+  new kind) and Prettier's format check; live browser verification of
+  the Screen Editor flow was not possible in this environment (no
+  Domoticz/Docker stack available).
+
 v3.45.7 beta (25-8-2026)
 -------------------------
 
@@ -32,6 +91,14 @@ v3.45.7 beta (25-8-2026)
   string), distance from top in px (so multiple banners can stack
   without overlapping), and font size, with width left automatic so
   the banner fits any length of text.
+
+- Text actions now write to a target device's data/value field
+  instead of its title, matching how the block itself renders device
+  data. Disabled master rules no longer generate any CSS. When
+  several devices' text actions target the same device, each is
+  tracked by its own source key/label/rule index instead of
+  colliding, so they render as independent lines that stay correct
+  regardless of processing order.
 
 * **Code**
 
