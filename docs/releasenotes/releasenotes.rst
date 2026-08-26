@@ -31,6 +31,23 @@ v3.45.8 beta (26-8-2026)
   that local image is preferred over the playlist's own remote
   ``tvg-logo`` URL.
 
+- Added an optional CSS action to Device Rules Automation's "Put text
+  in another device" action, so a border/background/banner can be
+  applied to the text action's own target device, in sync with the
+  same trigger - previously CSS could only target the current device.
+  The new "Also apply CSS to target device" toggle
+  (``rule.actions.text.css`` in the schema) reuses the existing
+  background/border/banner style controls, and only ever applies
+  while the parent text action is itself enabled and targeted, so
+  there is never a border with no active text rule behind it. The new
+  class is generated and cleaned up through the same
+  ``setRuleClassState()``/``cleanupSourceStates()`` machinery already
+  used for the current-device CSS action, with its own managed class
+  name (suffixed ``_text``) so it can never collide with the
+  current-device action's class for the same rule.
+  ``js/savedevicerules.php`` gained matching
+  normalisation/validation and CSS generation for the nested action.
+
 * **Fixes**
 
 - Fixed the local-logo matching being completely inert as originally
@@ -118,6 +135,16 @@ v3.45.8 beta (26-8-2026)
 - Verified with the full node --test suite (184 tests, including a
   new ``php-security.test.js`` regression test for the new endpoint)
   and Prettier's format check.
+
+- The text action's own CSS class is generated and cleaned up through
+  the same ``setRuleClassState()``/``cleanupSourceStates()``
+  machinery already used for the current-device CSS action, extended
+  to also track a second, independent ``{id, target, action}`` entry
+  per rule instead of a new state system. Verified with the full node
+  --test suite (190 tests, including new coverage for the text
+  action's own CSS applying/clearing with its trigger and for the PHP
+  writer's matching normalisation and CSS generation) and Prettier's
+  format check.
 
 v3.45.7 beta (25-8-2026)
 -------------------------
