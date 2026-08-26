@@ -688,7 +688,7 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   /* Device Editor helper blocks are explicitly validated and whitelisted. */
   assert.match(
     source,
-    /in_array\(\$entry\['kind'\], \['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'lms'\], true\)/
+    /in_array\(\$entry\['kind'\], \['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'lms'\], true\)/
   );
   /* Lyrion Music Server block: server/port/player validated, credentials
      never echoed back in an error message. */

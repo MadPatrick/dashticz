@@ -1171,6 +1171,35 @@ var DashticzLayoutEditor = (function () {
       };
     }
 
+    if (
+      key &&
+      key !== 'widget_calendar' &&
+      String(definition.type || '').toLowerCase() !== 'calendar' &&
+      typeof definition.icalurl === 'string' &&
+      definition.icalurl !== ''
+    ) {
+      // Repeatable Calendar block, added via the Screen Editor's "Add
+      // items" -> Calendar quick-add popup (js/deviceeditor.js's
+      // _showCalendarPopup()), mirroring the iframe check above and
+      // deviceeditor.js's own _specialFromReference(): dispatched purely
+      // on a truthy icalurl string (js/components/calendar.js's
+      // canHandle()), no `type` of its own. The fixed 'widget_calendar'
+      // key, and any block with an explicit type: 'calendar' (the legacy
+      // multi-source `calendars` array shape the Widgets catalog's own
+      // singleton entry writes, where icalurl is an object rather than a
+      // string), are excluded so those keep going through the generic
+      // widget path below unchanged.
+      return {
+        definition: definition,
+        kind: 'calendar',
+        reference: key,
+        widgetId: null,
+        idx: null,
+        subidx: 0,
+        name: definition.title || key,
+      };
+    }
+
     if (key && String(definition.type || '').toLowerCase() === 'lms') {
       // Lyrion Music Server "Now Playing" block (js/components/lms.js),
       // dispatched on type: 'lms' like the separator/blocktitle check above.
@@ -1621,6 +1650,7 @@ var DashticzLayoutEditor = (function () {
           item.kind === 'separator' ||
           item.kind === 'html' ||
           item.kind === 'iframe' ||
+          item.kind === 'calendar' ||
           item.kind === 'lms' ||
           item.kind === 'group');
       var configureLabel =
@@ -1728,6 +1758,7 @@ var DashticzLayoutEditor = (function () {
         item.kind === 'separator' ||
         item.kind === 'html' ||
         item.kind === 'iframe' ||
+        item.kind === 'calendar' ||
         item.kind === 'lms' ||
         item.kind === 'group') &&
       item.reference

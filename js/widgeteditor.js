@@ -2024,16 +2024,19 @@ var DashticzWidgetEditor = (function () {
       '<div class="we-widget-grid">';
 
     catalog.forEach(function (item) {
-      // iframe is rendered as a repeatable card (see _iframeWidgetCardHtml()
-      // below) instead of the normal singleton toggle card, so it stays out
-      // of this loop's default rendering - it remains a real `catalog` entry
-      // (kept for the existing singleton 'widget_iframe' block's own config
-      // path, width/height/description metadata, etc.), only its card is
-      // special-cased here, the same way LMS's card is appended below.
-      if (item.id === 'iframe') return;
+      // iframe/calendar are rendered as repeatable cards (see
+      // _iframeWidgetCardHtml()/_calendarWidgetCardHtml() below) instead of
+      // the normal singleton toggle card, so they stay out of this loop's
+      // default rendering - each remains a real `catalog` entry (kept for
+      // the existing singleton 'widget_iframe'/'widget_calendar' block's
+      // own config path, width/height/description metadata, etc.), only
+      // its card is special-cased here, the same way LMS's card is
+      // appended below.
+      if (item.id === 'iframe' || item.id === 'calendar') return;
       html += _widgetCardHtml(item);
     });
     html += _iframeWidgetCardHtml();
+    html += _calendarWidgetCardHtml();
     html += _lmsWidgetCardHtml();
 
     html +=
@@ -2203,6 +2206,45 @@ var DashticzWidgetEditor = (function () {
     _closeModalWithoutSaving();
     DT_function.loadDTScript('js/deviceeditor.js').then(function () {
       DashticzDeviceEditor.openIframe();
+    });
+  }
+
+  /* Calendar is a `catalog` entry, same reasoning as iFrame above: kept
+     there so an existing install's singleton 'widget_calendar' block (its
+     richer multi-source-with-color-picker config, reached via that
+     specific placed tile's own gear icon) keeps working unchanged - only
+     the card shown *here* is replaced with a repeatable one, opening the
+     new Calendar quick-add popup (DashticzDeviceEditor.openCalendar())
+     instead of toggling selectedWidgets.calendar. */
+  function _calendarWidgetCardHtml() {
+    var item = catalog.filter(function (candidate) {
+      return candidate.id === 'calendar';
+    })[0];
+    if (!item) return '';
+    var itemTitle = _widgetTitle(item);
+    return (
+      '<div class="we-widget-card we-widget-card-calendar" data-special-widget="calendar" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="' +
+      item.icon +
+      '" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _widgetDescription(item) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openCalendarFromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openCalendar();
     });
   }
 
@@ -4522,6 +4564,10 @@ var DashticzWidgetEditor = (function () {
         _openIframeFromWidgets();
         return;
       }
+      if ($(this).data('special-widget') === 'calendar') {
+        _openCalendarFromWidgets();
+        return;
+      }
       _toggleWidget(String($(this).data('widget-id')));
     });
 
@@ -4535,6 +4581,10 @@ var DashticzWidgetEditor = (function () {
       }
       if ($(this).data('special-widget') === 'iframe') {
         _openIframeFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'calendar') {
+        _openCalendarFromWidgets();
         return;
       }
       _toggleWidget(String($(this).data('widget-id')));

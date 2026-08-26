@@ -337,6 +337,15 @@ var DashticzDeviceEditor = (function () {
     _showIframePopup();
   }
 
+  /** Open the dedicated Calendar popup used by the Screen Editor add menu. */
+  function openCalendar() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showCalendarPopup();
+  }
+
   /** Open the dedicated Lyrion Music Server popup used by the Screen Editor
    * add menu. */
   function openLms() {
@@ -687,6 +696,24 @@ var DashticzDeviceEditor = (function () {
       kind = 'iframe';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      reference !== 'widget_calendar' &&
+      String(definition.type || '').toLowerCase() !== 'calendar' &&
+      typeof definition.icalurl === 'string' &&
+      definition.icalurl !== ''
+    ) {
+      // Repeatable Calendar block, added via the Screen Editor's own "Add
+      // items" -> Calendar quick-add popup (_showCalendarPopup() above)
+      // rather than the Widgets catalog's singleton 'calendar' entry.
+      // Matches js/components/calendar.js's own canHandle(): dispatched on
+      // a truthy icalurl (this popup never writes an explicit type, same
+      // convention as html/iframe above). The fixed 'widget_calendar' key,
+      // and any block with an explicit type: 'calendar' (the legacy
+      // multi-source `calendars` array shape the singleton widget itself
+      // writes), are excluded so those keep going through
+      // DashticzWidgetEditor's own (unrelated) config path unchanged.
+      kind = 'calendar';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       String(definition.type || '').toLowerCase() === 'lms'
     ) {
       // Lyrion Music Server "Now Playing" block (js/components/lms.js),
@@ -709,6 +736,7 @@ var DashticzDeviceEditor = (function () {
         kind === 'slidebutton' ||
         kind === 'html' ||
         kind === 'iframe' ||
+        kind === 'calendar' ||
         kind === 'lms'
           ? null
           : kind === 'group'
@@ -721,6 +749,7 @@ var DashticzDeviceEditor = (function () {
         kind === 'group' ||
         kind === 'html' ||
         kind === 'iframe' ||
+        kind === 'calendar' ||
         kind === 'lms'
           ? String(definition.title || '')
           : String(
@@ -728,7 +757,11 @@ var DashticzDeviceEditor = (function () {
             ),
       width: _parseWidth(
         definition.width ||
-          (kind === 'title' ? 12 : kind === 'lms' || kind === 'iframe' ? 6 : 3)
+          (kind === 'title'
+            ? 12
+            : kind === 'lms' || kind === 'iframe' || kind === 'calendar'
+              ? 6
+              : 3)
       ),
       height: _parseHeight(definition.height),
       // Lyrion Music Server connection/player fields - kept as their own
@@ -1180,6 +1213,7 @@ var DashticzDeviceEditor = (function () {
       if (special.specialType === 'group') return 'fas fa-object-group';
       if (special.specialType === 'html') return 'fas fa-code';
       if (special.specialType === 'iframe') return 'fas fa-window-maximize';
+      if (special.specialType === 'calendar') return 'fas fa-calendar-alt';
       if (special.specialType === 'lms') return 'fas fa-music';
     }
     return 'fas fa-question';
@@ -3630,7 +3664,7 @@ var DashticzDeviceEditor = (function () {
     html +=
       '<input type="number" class="form-control" id="if-device-height" min="0" autocomplete="off"></div>';
     html +=
-      '<div class="mb-3 form-check form-switch"><input class="form-check-input" type="checkbox" id="if-device-scrollbars">';
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="if-device-scrollbars">';
     html +=
       '<label class="form-check-label" for="if-device-scrollbars">' +
       _esc(t.iframe_block_scrollbars) +
@@ -3648,7 +3682,7 @@ var DashticzDeviceEditor = (function () {
     html +=
       '<input type="text" class="form-control" id="if-device-aspectratio" autocomplete="off"></div>';
     html +=
-      '<div class="mb-3 form-check form-switch"><input class="form-check-input" type="checkbox" id="if-device-forcerefresh">';
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="if-device-forcerefresh">';
     html +=
       '<label class="form-check-label" for="if-device-forcerefresh">' +
       _esc(t.iframe_block_forcerefresh) +
@@ -3819,6 +3853,279 @@ var DashticzDeviceEditor = (function () {
     });
     window.bootstrap.Modal.getOrCreateInstance(
       document.getElementById('iframeblockpopup')
+    ).show();
+  }
+
+  /* Repeatable Calendar block - same managedSpecials mechanism as iFrame/
+     HTML Block above (kind:'special', specialType:'calendar'), so any
+     number of independently-configured calendars can be placed, unlike
+     the Widgets catalog's singleton 'calendar' entry (always the fixed
+     'widget_calendar' key). js/components/calendar.js dispatches on a
+     truthy icalurl (or an explicit type:'calendar'/legacy calendars
+     array) - see _specialFromReference()'s matching 'calendar' branch,
+     which excludes the legacy 'widget_calendar' key so that singleton
+     stays on its own Widget Editor path unchanged. Scoped to a single
+     ICS source per block (title/icalurl/holidayurl/layout/maxitems/
+     weeks/lastweek/isoweek/startonly) - the existing singleton widget's
+     richer multi-source-with-color picker stays available there for
+     anyone who needs it, same as hand-editing custom/CONFIG.js already
+     supports every calendar.js field regardless. */
+  function _showCalendarPopup() {
+    var t = _translations();
+    $('#calendarblockpopup').remove();
+
+    var layoutOptions = [
+      ['0', t.calendar_block_layout_0],
+      ['1', t.calendar_block_layout_1],
+      ['2', t.calendar_block_layout_2],
+      ['3', t.calendar_block_layout_3],
+      ['4', t.calendar_block_layout_4],
+    ];
+
+    var html =
+      '<div class="modal fade" id="calendarblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-calendar-alt me-2" aria-hidden="true"></i>' +
+      _esc(t.calendar_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    html += _quickOptionsHtml('cal', {
+      icon: false,
+      iconValue: 'fas fa-calendar-alt',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cal-device-name">' +
+      _esc(t.calendar_block_name) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="cal-device-name" autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.calendar_block_name_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cal-device-icalurl">' +
+      _esc(t.calendar_block_icalurl) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="cal-device-icalurl" placeholder="https://..." autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.calendar_block_icalurl_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cal-device-title">' +
+      _esc(t.html_block_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="cal-device-title" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cal-device-holidayurl">' +
+      _esc(t.calendar_block_holidayurl) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="cal-device-holidayurl" placeholder="https://..." autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cal-device-layout">' +
+      _esc(t.calendar_block_layout) +
+      '</label>';
+    html += '<select class="form-select" id="cal-device-layout">';
+    layoutOptions.forEach(function (option) {
+      html +=
+        '<option value="' +
+        _esc(option[0]) +
+        '">' +
+        _esc(option[1]) +
+        '</option>';
+    });
+    html += '</select></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cal-device-maxitems">' +
+      _esc(t.calendar_block_maxitems) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="cal-device-maxitems" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cal-device-weeks">' +
+      _esc(t.calendar_block_weeks) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="cal-device-weeks" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="cal-device-lastweek">';
+    html +=
+      '<label class="form-check-label" for="cal-device-lastweek">' +
+      _esc(t.calendar_block_lastweek) +
+      '</label></div>';
+    html +=
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="cal-device-isoweek">';
+    html +=
+      '<label class="form-check-label" for="cal-device-isoweek">' +
+      _esc(t.calendar_block_isoweek) +
+      '</label></div>';
+    html +=
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="cal-device-startonly">';
+    html +=
+      '<label class="form-check-label" for="cal-device-startonly">' +
+      _esc(t.calendar_block_startonly) +
+      '</label></div>';
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="cal-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#calendarblockpopup');
+    _wireQuickOptions('cal', $popup);
+    _wireBackButton('calendarblockpopup');
+
+    $('#cal-save-btn').on('click', function () {
+      var $message = $popup
+        .find('.cd-custom-message')
+        .removeClass('text-danger')
+        .text('');
+      var reference = $.trim(String($('#cal-device-name').val() || ''));
+      var title = $.trim(String($('#cal-device-title').val() || ''));
+      if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
+        $message.addClass('text-danger').text(t.invalid_calendar_block_name);
+        $('#cal-device-name').trigger('focus');
+        return;
+      }
+      if (
+        (typeof blocks !== 'undefined' && blocks[reference]) ||
+        managedSpecials[_specialOrderKey(reference)]
+      ) {
+        $message.addClass('text-danger').text(t.invalid_calendar_block_name);
+        $('#cal-device-name').trigger('focus');
+        return;
+      }
+
+      var icalurl = $.trim(String($('#cal-device-icalurl').val() || ''));
+      if (!icalurl || icalurl.length > 2048) {
+        $message.addClass('text-danger').text(t.invalid_calendar_block_icalurl);
+        $('#cal-device-icalurl').trigger('focus');
+        return;
+      }
+
+      var quickOptions = _readQuickOptions('cal');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+      var holidayurl = $.trim(String($('#cal-device-holidayurl').val() || ''));
+      var layout = String($('#cal-device-layout').val() || '0');
+      var maxitems = $.trim(String($('#cal-device-maxitems').val() || ''));
+      var weeks = $.trim(String($('#cal-device-weeks').val() || ''));
+      var lastweek = $('#cal-device-lastweek').is(':checked');
+      var isoweek = $('#cal-device-isoweek').is(':checked');
+      var startonly = $('#cal-device-startonly').is(':checked');
+
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      customRows.push({ field: 'icalurl', setting: icalurl, value: icalurl });
+      if (holidayurl) {
+        customRows.push({
+          field: 'holidayurl',
+          setting: holidayurl,
+          value: holidayurl,
+        });
+      }
+      if (layout !== '0') {
+        customRows.push({
+          field: 'layout',
+          setting: layout,
+          value: parseInt(layout, 10),
+        });
+      }
+      if (maxitems) {
+        var maxitemsInt = parseInt(maxitems, 10) || 0;
+        if (maxitemsInt > 0) {
+          customRows.push({
+            field: 'maxitems',
+            setting: String(maxitemsInt),
+            value: maxitemsInt,
+          });
+        }
+      }
+      if (weeks) {
+        var weeksInt = parseInt(weeks, 10) || 0;
+        if (weeksInt > 0) {
+          customRows.push({
+            field: 'weeks',
+            setting: String(weeksInt),
+            value: weeksInt,
+          });
+        }
+      }
+      if (lastweek) {
+        customRows.push({ field: 'lastweek', setting: 'true', value: true });
+      }
+      if (isoweek) {
+        customRows.push({ field: 'isoweek', setting: 'true', value: true });
+      }
+      if (startonly) {
+        customRows.push({ field: 'startonly', setting: 'true', value: true });
+      }
+
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'calendar',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: null,
+        title: title,
+        width: 6,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      window.bootstrap.Modal.getInstance(
+        document.getElementById('calendarblockpopup')
+      ).hide();
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('calendarblockpopup')
     ).show();
   }
 
@@ -4150,6 +4457,7 @@ var DashticzDeviceEditor = (function () {
     var isGroupBlock = special && special.specialType === 'group';
     var isHtmlBlock = special && special.specialType === 'html';
     var isIframeBlock = special && special.specialType === 'iframe';
+    var isCalendarBlock = special && special.specialType === 'calendar';
     var isLmsBlock = special && special.specialType === 'lms';
     var options = isSpecial ? special.options || {} : deviceOptions[ck] || {};
     var customRows = isSpecial ? special.customFields : deviceCustomFields[ck];
@@ -4259,6 +4567,7 @@ var DashticzDeviceEditor = (function () {
       !isGroupBlock &&
       !isHtmlBlock &&
       !isIframeBlock &&
+      !isCalendarBlock &&
       !isLmsBlock;
     var barDeviceIdx = null;
     if (hasDial) {
@@ -4336,7 +4645,11 @@ var DashticzDeviceEditor = (function () {
     // gets it (previously only Group/HTML/LMS/Separator specials did).
     var configOptions = isTitle
       ? ['icon', 'show_title']
-      : isGroupBlock || isHtmlBlock || isIframeBlock || isLmsBlock
+      : isGroupBlock ||
+          isHtmlBlock ||
+          isIframeBlock ||
+          isCalendarBlock ||
+          isLmsBlock
         ? ['icon', 'last_update', 'show_title']
         : ['icon', 'hide_data', 'last_update', 'show_title'];
     html += '<h6 class="de-section-title">' + _esc(t.display_options) + '</h6>';
@@ -5351,6 +5664,7 @@ var DashticzDeviceEditor = (function () {
     var isGroupBlock = special.specialType === 'group';
     var isHtmlBlock = special.specialType === 'html';
     var isIframeBlock = special.specialType === 'iframe';
+    var isCalendarBlock = special.specialType === 'calendar';
     var isLmsBlock = special.specialType === 'lms';
     // A Multi Device is a Custom device whose 'values' custom field was filled
     // in via the dedicated Multi Device popup (see openMultiDevice() above);
@@ -5373,6 +5687,7 @@ var DashticzDeviceEditor = (function () {
     if (isGroupBlock) label = t.group_block;
     else if (isHtmlBlock) label = t.html_block;
     else if (isIframeBlock) label = t.iframe_block;
+    else if (isCalendarBlock) label = t.calendar_block;
     else if (isLmsBlock) label = t.lms_block;
     var htmlFileRow =
       isHtmlBlock && special.customFields
@@ -5388,6 +5703,12 @@ var DashticzDeviceEditor = (function () {
             return (
               String((row && row.field) || '').toLowerCase() === 'frameurl'
             );
+          })
+        : null;
+    var icalurlRow =
+      isCalendarBlock && special.customFields
+        ? special.customFields.find(function (row) {
+            return String((row && row.field) || '').toLowerCase() === 'icalurl';
           })
         : null;
     var detail = isTitle
@@ -5406,13 +5727,15 @@ var DashticzDeviceEditor = (function () {
             ? (htmlFileRow && htmlFileRow.setting) || special.reference
             : isIframeBlock
               ? (frameurlRow && frameurlRow.setting) || special.reference
-              : isLmsBlock
-                ? special.lmsPlayerLabel ||
-                  special.lmsPlayer ||
-                  special.reference
-                : isCustom
-                  ? special.reference + ' · IDX\u00a0' + special.idx
-                  : 'IDX\u00a0' + special.idx;
+              : isCalendarBlock
+                ? (icalurlRow && icalurlRow.setting) || special.reference
+                : isLmsBlock
+                  ? special.lmsPlayerLabel ||
+                    special.lmsPlayer ||
+                    special.reference
+                  : isCustom
+                    ? special.reference + ' · IDX\u00a0' + special.idx
+                    : 'IDX\u00a0' + special.idx;
     var specialIconClass = isTitle
       ? 'fa-divide'
       : isSlideButton
@@ -5423,6 +5746,7 @@ var DashticzDeviceEditor = (function () {
     if (isGroupBlock) specialIconClass = 'fa-object-group';
     else if (isHtmlBlock) specialIconClass = 'fa-code';
     else if (isIframeBlock) specialIconClass = 'fa-window-maximize';
+    else if (isCalendarBlock) specialIconClass = 'fa-calendar-alt';
     else if (isLmsBlock) specialIconClass = 'fa-music';
     var html =
       '<div class="de-device-item de-special-item" data-special-key="' +
@@ -6030,6 +6354,7 @@ var DashticzDeviceEditor = (function () {
           special.specialType === 'group' ||
           special.specialType === 'html' ||
           special.specialType === 'iframe' ||
+          special.specialType === 'calendar' ||
           special.specialType === 'lms';
         if (!titleOptionalKind || String(special.title || '').trim()) {
           specialEntry.title = special.title;
@@ -6089,15 +6414,16 @@ var DashticzDeviceEditor = (function () {
         } else if (
           special.specialType === 'group' ||
           special.specialType === 'html' ||
-          special.specialType === 'iframe'
+          special.specialType === 'iframe' ||
+          special.specialType === 'calendar'
         ) {
           // Only Icon and Last update apply here (no Data/Switch/Dial - see
           // _quickOptionsHtml()); idx is optional and only meaningful for a
           // Group block (js/components/group.js can use 'devices' instead,
           // carried through specialCustomFields above like any other extra
           // field). configwriter.php writes type: 'group' unconditionally
-          // for that kind only - html/iframe have no `type` of their own
-          // (dispatched on htmlfile/frameurl instead), so it is not set here.
+          // for that kind only - html/iframe/calendar have no `type` of their own
+          // (dispatched on htmlfile/frameurl/icalurl instead), so it is not set here.
           var quickSaveOptions = special.options || {};
           if (quickSaveOptions.icon === false) {
             specialEntry.icon = '';
@@ -6666,6 +6992,7 @@ var DashticzDeviceEditor = (function () {
     openGroup: openGroup,
     openHtmlBlock: openHtmlBlock,
     openIframe: openIframe,
+    openCalendar: openCalendar,
     openLms: openLms,
     openSlideButton: openSlideButton,
     addSeparator: addSeparator,

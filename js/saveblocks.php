@@ -109,7 +109,7 @@ foreach ($data['devices'] as $entry) {
     if (is_array($entry)
         && isset($entry['kind'])
         && (
-            in_array($entry['kind'], ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'lms'], true)
+            in_array($entry['kind'], ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'lms'], true)
             || $entry['kind'] === 'slidebutton'
         )
     ) {
@@ -134,16 +134,17 @@ foreach ($data['devices'] as $entry) {
         $title = isset($entry['title']) && is_string($entry['title'])
             ? substr(trim($entry['title']), 0, 100)
             : '';
-        if ($title === '' && !in_array($kind, ['custom', 'slidebutton', 'group', 'html', 'iframe', 'lms'], true)) {
+        if ($title === '' && !in_array($kind, ['custom', 'slidebutton', 'group', 'html', 'iframe', 'calendar', 'lms'], true)) {
             dashticz_json_error(400, 'A special block title is required.');
         }
         $defaultWidth = 3;
         if ($kind === 'title' || $kind === 'slidebutton') {
             $defaultWidth = 12;
-        } elseif ($kind === 'lms' || $kind === 'iframe') {
-            // Cover (100x100) + artist/title/album (lms), or an embedded page
-            // (iframe), needs more room than the generic 3-column default
-            // other special blocks start at.
+        } elseif ($kind === 'lms' || $kind === 'iframe' || $kind === 'calendar') {
+            // Cover (100x100) + artist/title/album (lms), an embedded page
+            // (iframe), or an agenda/calendar table (calendar), needs more
+            // room than the generic 3-column default other special blocks
+            // start at.
             $defaultWidth = 6;
         }
         $width = isset($entry['width']) ? (int)$entry['width'] : $defaultWidth;
@@ -181,8 +182,8 @@ foreach ($data['devices'] as $entry) {
             $icon = array_key_exists('icon', $entry) && is_string($entry['icon'])
                 ? substr($entry['icon'], 0, 100)
                 : null;
-        } elseif ($kind === 'group' || $kind === 'html' || $kind === 'iframe') {
-            // Only Icon and Last update apply to these three (no Data/Switch/
+        } elseif ($kind === 'group' || $kind === 'html' || $kind === 'iframe' || $kind === 'calendar') {
+            // Only Icon and Last update apply to these four (no Data/Switch/
             // Dial - see js/deviceeditor.js's _quickOptionsHtml()).
             $icon = array_key_exists('icon', $entry) && is_string($entry['icon'])
                 ? substr($entry['icon'], 0, 100)
@@ -217,7 +218,7 @@ foreach ($data['devices'] as $entry) {
                 ) {
                     dashticz_json_error(400, 'Enter a valid html filename (relative to custom/).');
                 }
-            } else {
+            } elseif ($kind === 'iframe') {
                 // frameurl is otherwise just another custom field (see
                 // _normalise_custom_device_fields() above), but this block
                 // renders nothing at all without one, so it is required here -
@@ -229,6 +230,19 @@ foreach ($data['devices'] as $entry) {
                     || strlen($customFields['frameurl']) > 2048
                 ) {
                     dashticz_json_error(400, 'Enter a valid iFrame URL.');
+                }
+            } else {
+                // icalurl is otherwise just another custom field (see
+                // _normalise_custom_device_fields() above), but this block
+                // renders nothing at all without one, so it is required here -
+                // same reasoning as html's htmlfile requirement above.
+                if (
+                    !isset($customFields['icalurl'])
+                    || !is_string($customFields['icalurl'])
+                    || trim($customFields['icalurl']) === ''
+                    || strlen($customFields['icalurl']) > 2048
+                ) {
+                    dashticz_json_error(400, 'Enter a valid calendar (ICS) URL.');
                 }
             }
         } elseif ($kind === 'lms') {
