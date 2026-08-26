@@ -2021,27 +2021,35 @@ var DashticzWidgetEditor = (function () {
       '<p class="text-muted">' +
       _t('choose', 'Choose the functions to show as tiles on screen 1.') +
       '</p>' +
+      '<h6 class="we-widget-section-title">' +
+      _t('widgets_single_heading', 'Widgets (once per screen)') +
+      '</h6>' +
       '<div class="we-widget-grid">';
 
+    // Repeatable widgets (managedSpecials-based, same mechanism as Group/
+    // HTML Block) are rendered as their own always-clickable cards below
+    // instead of the normal singleton toggle card, so this loop skips
+    // them - each remains a real `catalog` entry (kept for the existing
+    // singleton 'widget_*' block's own config path, width/height/
+    // description metadata, etc.), only its card is special-cased.
+    var repeatableWidgetIds = {
+      iframe: true,
+      calendar: true,
+      publictransport: true,
+      timegraph: true,
+      xmltvguide: true,
+    };
     catalog.forEach(function (item) {
-      // iframe/calendar are rendered as repeatable cards (see
-      // _iframeWidgetCardHtml()/_calendarWidgetCardHtml() below) instead of
-      // the normal singleton toggle card, so they stay out of this loop's
-      // default rendering - each remains a real `catalog` entry (kept for
-      // the existing singleton 'widget_iframe'/'widget_calendar' block's
-      // own config path, width/height/description metadata, etc.), only
-      // its card is special-cased here, the same way LMS's card is
-      // appended below.
-      if (
-        item.id === 'iframe' ||
-        item.id === 'calendar' ||
-        item.id === 'publictransport' ||
-        item.id === 'timegraph' ||
-        item.id === 'xmltvguide'
-      )
-        return;
+      if (repeatableWidgetIds[item.id]) return;
       html += _widgetCardHtml(item);
     });
+
+    html +=
+      '</div>' +
+      '<h6 class="we-widget-section-title we-widget-section-title-multi">' +
+      _t('widgets_multi_heading', 'Widgets (multiple per screen)') +
+      '</h6>' +
+      '<div class="we-widget-grid">';
     html += _iframeWidgetCardHtml();
     html += _calendarWidgetCardHtml();
     html += _publicTransportWidgetCardHtml();

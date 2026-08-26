@@ -444,6 +444,8 @@
     "widgeteditor": {
       "title": "Widgets",
       "choose": "Choose the functions to show as tiles on screen 1.",
+      "widgets_single_heading": "Widgets (once per screen)",
+      "widgets_multi_heading": "Widgets (multiple per screen)",
       "close": "Close",
       "save": "Save",
       "saving": "Saving…",

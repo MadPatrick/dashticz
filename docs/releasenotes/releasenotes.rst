@@ -39,7 +39,12 @@ v3.45.8 beta (26-8-2026)
   Bootstrap checkboxes instead of the app's standard 38x20px blue
   switch (.de-switch, already the documented standard class in
   css/creative.css for exactly this case) - every checkbox added
-  across all five new popups uses it from the start. Verified with the
+  across all five new popups uses it from the start. The Widgets
+  catalog modal now visually separates the two kinds of card under
+  their own heading - "Widgets (once per screen)" for the remaining
+  singleton cards and "Widgets (multiple per screen)" for the six
+  repeatable cards (iFrame/Calendar/Public transport/Timegraph/TV
+  Guide/LMS) - instead of mixing both in one grid. Verified with the
   full node --test suite (183 tests, including source-shape assertions
   updated for each new kind) and Prettier's format check; live browser
   verification of the Screen Editor flow was not possible in this
