@@ -356,6 +356,15 @@ var DashticzDeviceEditor = (function () {
     _showPublicTransportPopup();
   }
 
+  /** Open the dedicated Timegraph popup used by the Screen Editor add menu. */
+  function openTimegraph() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showTimegraphPopup();
+  }
+
   /** Open the dedicated Lyrion Music Server popup used by the Screen Editor
    * add menu. */
   function openLms() {
@@ -741,6 +750,21 @@ var DashticzDeviceEditor = (function () {
       kind = 'publictransport';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      reference !== 'widget_timegraph' &&
+      String(definition.type || '').toLowerCase() === 'timegraph'
+    ) {
+      // Repeatable Timegraph block, added via the Screen Editor's own "Add
+      // items" -> Timegraph quick-add popup (_showTimegraphPopup() above)
+      // rather than the Widgets catalog's singleton 'timegraph' entry.
+      // Unlike html/iframe/calendar/publictransport above,
+      // js/components/timegraph.js dispatches purely on an explicit
+      // type:'timegraph' (like Group's type:'group'), so this is a type
+      // check rather than a field-shape one. The fixed 'widget_timegraph'
+      // key is excluded so that singleton keeps going through
+      // DashticzWidgetEditor's own (unrelated) config path unchanged.
+      kind = 'timegraph';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       String(definition.type || '').toLowerCase() === 'lms'
     ) {
       // Lyrion Music Server "Now Playing" block (js/components/lms.js),
@@ -779,6 +803,7 @@ var DashticzDeviceEditor = (function () {
         kind === 'iframe' ||
         kind === 'calendar' ||
         kind === 'publictransport' ||
+        kind === 'timegraph' ||
         kind === 'lms'
           ? String(definition.title || '')
           : String(
@@ -788,7 +813,10 @@ var DashticzDeviceEditor = (function () {
         definition.width ||
           (kind === 'title'
             ? 12
-            : kind === 'lms' || kind === 'iframe' || kind === 'calendar'
+            : kind === 'lms' ||
+                kind === 'iframe' ||
+                kind === 'calendar' ||
+                kind === 'timegraph'
               ? 6
               : 3)
       ),
@@ -1244,6 +1272,7 @@ var DashticzDeviceEditor = (function () {
       if (special.specialType === 'iframe') return 'fas fa-window-maximize';
       if (special.specialType === 'calendar') return 'fas fa-calendar-alt';
       if (special.specialType === 'publictransport') return 'fas fa-train';
+      if (special.specialType === 'timegraph') return 'fas fa-chart-line';
       if (special.specialType === 'lms') return 'fas fa-music';
     }
     return 'fas fa-question';
@@ -4414,6 +4443,249 @@ var DashticzDeviceEditor = (function () {
     ).show();
   }
 
+  /* Repeatable Timegraph block - same managedSpecials mechanism as
+     Public transport/Calendar/iFrame/HTML Block above (kind:'special',
+     specialType:'timegraph'), so any number of independently-configured
+     graphs can be placed, unlike the Widgets catalog's singleton
+     'timegraph' entry (always the fixed 'widget_timegraph' key). Unlike
+     html/iframe/calendar/publictransport above, js/components/timegraph.js
+     dispatches on an explicit type:'timegraph' only (no shape-based
+     fallback), the same as Group/LMS - see _specialFromReference()'s
+     matching branch and configwriter.php's 'timegraph' kind, which both
+     write/read that type unconditionally. Scoped to a single graphed
+     device per block (idx/duration/height/xTicks/yTicks/xLabels) - the
+     existing singleton widget's richer repeatable multi-value-row editor
+     (several series in one graph) stays available there for anyone who
+     needs it, same as hand-editing custom/CONFIG.js already supports
+     every timegraph.js field regardless. */
+  function _showTimegraphPopup() {
+    var t = _translations();
+    $('#timegraphblockpopup').remove();
+
+    var html =
+      '<div class="modal fade" id="timegraphblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-chart-line me-2" aria-hidden="true"></i>' +
+      _esc(t.timegraph_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    html += _quickOptionsHtml('tg', {
+      icon: true,
+      iconValue: 'fas fa-chart-line',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="tg-device-name">' +
+      _esc(t.timegraph_block_name) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="tg-device-name" autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.timegraph_block_name_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="tg-device-title">' +
+      _esc(t.html_block_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="tg-device-title" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="tg-device-idx">' +
+      _esc(t.timegraph_block_idx) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="tg-device-idx" min="1" autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.timegraph_block_idx_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="tg-device-duration">' +
+      _esc(t.timegraph_block_duration) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="tg-device-duration" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="tg-device-height">' +
+      _esc(t.timegraph_block_height) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="tg-device-height" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="tg-device-xticks">' +
+      _esc(t.timegraph_block_xticks) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="tg-device-xticks" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="tg-device-yticks">' +
+      _esc(t.timegraph_block_yticks) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="tg-device-yticks" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="tg-device-xlabels" checked>';
+    html +=
+      '<label class="form-check-label" for="tg-device-xlabels">' +
+      _esc(t.timegraph_block_xlabels) +
+      '</label></div>';
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="tg-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#timegraphblockpopup');
+    _wireQuickOptions('tg', $popup);
+    _wireBackButton('timegraphblockpopup');
+
+    $('#tg-save-btn').on('click', function () {
+      var $message = $popup
+        .find('.cd-custom-message')
+        .removeClass('text-danger')
+        .text('');
+      var reference = $.trim(String($('#tg-device-name').val() || ''));
+      var title = $.trim(String($('#tg-device-title').val() || ''));
+      if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
+        $message.addClass('text-danger').text(t.invalid_timegraph_block_name);
+        $('#tg-device-name').trigger('focus');
+        return;
+      }
+      if (
+        (typeof blocks !== 'undefined' && blocks[reference]) ||
+        managedSpecials[_specialOrderKey(reference)]
+      ) {
+        $message.addClass('text-danger').text(t.invalid_timegraph_block_name);
+        $('#tg-device-name').trigger('focus');
+        return;
+      }
+
+      var idx = parseInt($('#tg-device-idx').val(), 10) || 0;
+      if (idx < 1) {
+        $message.addClass('text-danger').text(t.invalid_timegraph_block_idx);
+        $('#tg-device-idx').trigger('focus');
+        return;
+      }
+
+      var quickOptions = _readQuickOptions('tg');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+      var duration = $.trim(String($('#tg-device-duration').val() || ''));
+      var height = $.trim(String($('#tg-device-height').val() || ''));
+      var xTicks = $.trim(String($('#tg-device-xticks').val() || ''));
+      var yTicks = $.trim(String($('#tg-device-yticks').val() || ''));
+      var xLabels = $('#tg-device-xlabels').is(':checked');
+
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      if (duration) {
+        var durationInt = parseInt(duration, 10) || 0;
+        if (durationInt > 0) {
+          customRows.push({
+            field: 'duration',
+            setting: String(durationInt),
+            value: durationInt,
+          });
+        }
+      }
+      if (height) {
+        var heightInt = parseInt(height, 10) || 0;
+        if (heightInt > 0) {
+          customRows.push({
+            field: 'height',
+            setting: String(heightInt),
+            value: heightInt,
+          });
+        }
+      }
+      if (xTicks) {
+        var xTicksInt = parseInt(xTicks, 10) || 0;
+        if (xTicksInt > 0) {
+          customRows.push({
+            field: 'xTicks',
+            setting: String(xTicksInt),
+            value: xTicksInt,
+          });
+        }
+      }
+      if (yTicks) {
+        var yTicksInt = parseInt(yTicks, 10) || 0;
+        if (yTicksInt > 0) {
+          customRows.push({
+            field: 'yTicks',
+            setting: String(yTicksInt),
+            value: yTicksInt,
+          });
+        }
+      }
+      if (!xLabels) {
+        customRows.push({ field: 'xLabels', setting: 'false', value: false });
+      }
+
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'timegraph',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: idx,
+        title: title,
+        width: 6,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      window.bootstrap.Modal.getInstance(
+        document.getElementById('timegraphblockpopup')
+      ).hide();
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('timegraphblockpopup')
+    ).show();
+  }
+
   function _showSlideButtonPopup() {
     var t = _translations();
     $('#slidebuttonpopup').remove();
@@ -4745,6 +5017,7 @@ var DashticzDeviceEditor = (function () {
     var isCalendarBlock = special && special.specialType === 'calendar';
     var isPublicTransportBlock =
       special && special.specialType === 'publictransport';
+    var isTimegraphBlock = special && special.specialType === 'timegraph';
     var isLmsBlock = special && special.specialType === 'lms';
     var options = isSpecial ? special.options || {} : deviceOptions[ck] || {};
     var customRows = isSpecial ? special.customFields : deviceCustomFields[ck];
@@ -4856,6 +5129,7 @@ var DashticzDeviceEditor = (function () {
       !isIframeBlock &&
       !isCalendarBlock &&
       !isPublicTransportBlock &&
+      !isTimegraphBlock &&
       !isLmsBlock;
     var barDeviceIdx = null;
     if (hasDial) {
@@ -4938,6 +5212,7 @@ var DashticzDeviceEditor = (function () {
           isIframeBlock ||
           isCalendarBlock ||
           isPublicTransportBlock ||
+          isTimegraphBlock ||
           isLmsBlock
         ? ['icon', 'last_update', 'show_title']
         : ['icon', 'hide_data', 'last_update', 'show_title'];
@@ -5955,6 +6230,7 @@ var DashticzDeviceEditor = (function () {
     var isIframeBlock = special.specialType === 'iframe';
     var isCalendarBlock = special.specialType === 'calendar';
     var isPublicTransportBlock = special.specialType === 'publictransport';
+    var isTimegraphBlock = special.specialType === 'timegraph';
     var isLmsBlock = special.specialType === 'lms';
     // A Multi Device is a Custom device whose 'values' custom field was filled
     // in via the dedicated Multi Device popup (see openMultiDevice() above);
@@ -5979,6 +6255,7 @@ var DashticzDeviceEditor = (function () {
     else if (isIframeBlock) label = t.iframe_block;
     else if (isCalendarBlock) label = t.calendar_block;
     else if (isPublicTransportBlock) label = t.publictransport_block;
+    else if (isTimegraphBlock) label = t.timegraph_block;
     else if (isLmsBlock) label = t.lms_block;
     var htmlFileRow =
       isHtmlBlock && special.customFields
@@ -6029,13 +6306,15 @@ var DashticzDeviceEditor = (function () {
                 ? (icalurlRow && icalurlRow.setting) || special.reference
                 : isPublicTransportBlock
                   ? (stationRow && stationRow.setting) || special.reference
-                  : isLmsBlock
-                    ? special.lmsPlayerLabel ||
-                      special.lmsPlayer ||
-                      special.reference
-                    : isCustom
-                      ? special.reference + ' · IDX\u00a0' + special.idx
-                      : 'IDX\u00a0' + special.idx;
+                  : isTimegraphBlock
+                    ? 'IDX ' + special.idx
+                    : isLmsBlock
+                      ? special.lmsPlayerLabel ||
+                        special.lmsPlayer ||
+                        special.reference
+                      : isCustom
+                        ? special.reference + ' · IDX\u00a0' + special.idx
+                        : 'IDX\u00a0' + special.idx;
     var specialIconClass = isTitle
       ? 'fa-divide'
       : isSlideButton
@@ -6048,6 +6327,7 @@ var DashticzDeviceEditor = (function () {
     else if (isIframeBlock) specialIconClass = 'fa-window-maximize';
     else if (isCalendarBlock) specialIconClass = 'fa-calendar-alt';
     else if (isPublicTransportBlock) specialIconClass = 'fa-train';
+    else if (isTimegraphBlock) specialIconClass = 'fa-chart-line';
     else if (isLmsBlock) specialIconClass = 'fa-music';
     var html =
       '<div class="de-device-item de-special-item" data-special-key="' +
@@ -6657,6 +6937,7 @@ var DashticzDeviceEditor = (function () {
           special.specialType === 'iframe' ||
           special.specialType === 'calendar' ||
           special.specialType === 'publictransport' ||
+          special.specialType === 'timegraph' ||
           special.specialType === 'lms';
         if (!titleOptionalKind || String(special.title || '').trim()) {
           specialEntry.title = special.title;
@@ -6737,6 +7018,21 @@ var DashticzDeviceEditor = (function () {
           if (special.specialType === 'group' && special.idx) {
             specialEntry.idx = special.idx;
           }
+        } else if (special.specialType === 'timegraph') {
+          // js/components/timegraph.js dispatches on an explicit
+          // type:'timegraph' alone (like Group's own type:'group') -
+          // configwriter.php writes it unconditionally for this kind, so
+          // it is not set here. Unlike Group/HTML/iFrame/Calendar/Public
+          // transport above, the graphed device idx is a required,
+          // always-present top-level property here, not optional.
+          var tgOptions = special.options || {};
+          if (tgOptions.icon === false) {
+            specialEntry.icon = '';
+          } else if (tgOptions.iconValue) {
+            specialEntry.icon = tgOptions.iconValue;
+          }
+          specialEntry.last_update = tgOptions.last_update === true;
+          specialEntry.idx = special.idx;
         } else if (special.specialType === 'slidebutton') {
           var slideOptions = special.options || {};
           specialEntry.slide = parseInt(special.slideTarget, 10) || 1;
@@ -7297,6 +7593,7 @@ var DashticzDeviceEditor = (function () {
     openIframe: openIframe,
     openCalendar: openCalendar,
     openPublicTransport: openPublicTransport,
+    openTimegraph: openTimegraph,
     openLms: openLms,
     openSlideButton: openSlideButton,
     addSeparator: addSeparator,

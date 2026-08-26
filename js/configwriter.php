@@ -1747,6 +1747,26 @@ function configwriter_special_block_props($block)
         if (!empty($block['last_update'])) {
             $props['last_update'] = true;
         }
+    } elseif ($kind === 'timegraph') {
+        // js/components/timegraph.js dispatches on an explicit
+        // type: 'timegraph' alone - unlike html/iframe/calendar/
+        // publictransport above, always written, the same as group's own
+        // type: 'group' (see saveblocks.php's 'timegraph' branch for the
+        // required-idx validation).
+        $props = [
+            'width' => $width,
+            'type' => 'timegraph',
+            'idx' => (int)$block['idx'],
+        ];
+        if (trim($title) !== '') {
+            $props['title'] = $title;
+        }
+        if (array_key_exists('icon', $block) && $block['icon'] !== null) {
+            $props['icon'] = (string)$block['icon'];
+        }
+        if (!empty($block['last_update'])) {
+            $props['last_update'] = true;
+        }
     } elseif ($kind === 'lms') {
         // js/components/lms.js dispatches on type: 'lms' - unlike html/group
         // above, always written, the same as group's own type: 'group'

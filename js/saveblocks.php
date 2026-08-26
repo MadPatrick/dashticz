@@ -109,7 +109,7 @@ foreach ($data['devices'] as $entry) {
     if (is_array($entry)
         && isset($entry['kind'])
         && (
-            in_array($entry['kind'], ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'lms'], true)
+            in_array($entry['kind'], ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'lms'], true)
             || $entry['kind'] === 'slidebutton'
         )
     ) {
@@ -134,17 +134,17 @@ foreach ($data['devices'] as $entry) {
         $title = isset($entry['title']) && is_string($entry['title'])
             ? substr(trim($entry['title']), 0, 100)
             : '';
-        if ($title === '' && !in_array($kind, ['custom', 'slidebutton', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'lms'], true)) {
+        if ($title === '' && !in_array($kind, ['custom', 'slidebutton', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'lms'], true)) {
             dashticz_json_error(400, 'A special block title is required.');
         }
         $defaultWidth = 3;
         if ($kind === 'title' || $kind === 'slidebutton') {
             $defaultWidth = 12;
-        } elseif ($kind === 'lms' || $kind === 'iframe' || $kind === 'calendar') {
+        } elseif ($kind === 'lms' || $kind === 'iframe' || $kind === 'calendar' || $kind === 'timegraph') {
             // Cover (100x100) + artist/title/album (lms), an embedded page
-            // (iframe), or an agenda/calendar table (calendar), needs more
-            // room than the generic 3-column default other special blocks
-            // start at.
+            // (iframe), an agenda/calendar table (calendar), or a chart
+            // (timegraph), needs more room than the generic 3-column
+            // default other special blocks start at.
             $defaultWidth = 6;
         }
         $width = isset($entry['width']) ? (int)$entry['width'] : $defaultWidth;
@@ -260,6 +260,20 @@ foreach ($data['devices'] as $entry) {
                     dashticz_json_error(400, 'Enter a station or a tpc code.');
                 }
             }
+        } elseif ($kind === 'timegraph') {
+            // Only Icon and Last update apply (no Data/Switch/Dial - see
+            // js/deviceeditor.js's _quickOptionsHtml()), but unlike
+            // Group/HTML/iFrame/Calendar/Public transport above, the
+            // graphed device idx is required (js/components/timegraph.js
+            // has no useful default without one).
+            if (!isset($entry['idx']) || !is_int($entry['idx']) || $entry['idx'] < 1) {
+                dashticz_json_error(400, 'A timegraph block requires a positive integer idx.');
+            }
+            $idx = $entry['idx'];
+            $icon = array_key_exists('icon', $entry) && is_string($entry['icon'])
+                ? substr($entry['icon'], 0, 100)
+                : null;
+            $lastUpdate = !empty($entry['last_update']);
         } elseif ($kind === 'lms') {
             // Icon defaults off (js/deviceeditor.js's Lyrion Music Server popup
             // uses the cover artwork as its visual, like an HTML Block), but is

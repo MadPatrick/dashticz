@@ -1227,6 +1227,33 @@ var DashticzLayoutEditor = (function () {
       };
     }
 
+    if (
+      key &&
+      key !== 'widget_timegraph' &&
+      String(definition.type || '').toLowerCase() === 'timegraph'
+    ) {
+      // Repeatable Timegraph block, added via the Screen Editor's "Add
+      // items" -> Timegraph quick-add popup (js/deviceeditor.js's
+      // _showTimegraphPopup()), mirroring deviceeditor.js's own
+      // _specialFromReference(): dispatched purely on an explicit
+      // type:'timegraph' (js/components/timegraph.js's canHandle()), like
+      // Group's type:'group' above rather than a field-shape check. The
+      // fixed 'widget_timegraph' key is excluded so that singleton keeps
+      // going through the generic widget path below unchanged.
+      return {
+        definition: definition,
+        kind: 'timegraph',
+        reference: key,
+        widgetId: null,
+        idx:
+          parseInt(definition.idx, 10) > 0
+            ? parseInt(definition.idx, 10)
+            : null,
+        subidx: 0,
+        name: definition.title || key,
+      };
+    }
+
     if (key && String(definition.type || '').toLowerCase() === 'lms') {
       // Lyrion Music Server "Now Playing" block (js/components/lms.js),
       // dispatched on type: 'lms' like the separator/blocktitle check above.
@@ -1679,6 +1706,7 @@ var DashticzLayoutEditor = (function () {
           item.kind === 'iframe' ||
           item.kind === 'calendar' ||
           item.kind === 'publictransport' ||
+          item.kind === 'timegraph' ||
           item.kind === 'lms' ||
           item.kind === 'group');
       var configureLabel =
@@ -1788,6 +1816,7 @@ var DashticzLayoutEditor = (function () {
         item.kind === 'iframe' ||
         item.kind === 'calendar' ||
         item.kind === 'publictransport' ||
+        item.kind === 'timegraph' ||
         item.kind === 'lms' ||
         item.kind === 'group') &&
       item.reference

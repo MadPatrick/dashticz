@@ -2035,7 +2035,8 @@ var DashticzWidgetEditor = (function () {
       if (
         item.id === 'iframe' ||
         item.id === 'calendar' ||
-        item.id === 'publictransport'
+        item.id === 'publictransport' ||
+        item.id === 'timegraph'
       )
         return;
       html += _widgetCardHtml(item);
@@ -2043,6 +2044,7 @@ var DashticzWidgetEditor = (function () {
     html += _iframeWidgetCardHtml();
     html += _calendarWidgetCardHtml();
     html += _publicTransportWidgetCardHtml();
+    html += _timegraphWidgetCardHtml();
     html += _lmsWidgetCardHtml();
 
     html +=
@@ -2290,6 +2292,45 @@ var DashticzWidgetEditor = (function () {
     _closeModalWithoutSaving();
     DT_function.loadDTScript('js/deviceeditor.js').then(function () {
       DashticzDeviceEditor.openPublicTransport();
+    });
+  }
+
+  /* Timegraph is a `catalog` entry, same reasoning as iFrame/Calendar/
+     Public transport above: kept there so an existing install's
+     singleton 'widget_timegraph' block (its richer repeatable
+     multi-value-row config) keeps working unchanged - only the card
+     shown *here* is replaced with a repeatable one, opening the new
+     Timegraph quick-add popup (DashticzDeviceEditor.openTimegraph())
+     instead of toggling selectedWidgets.timegraph. */
+  function _timegraphWidgetCardHtml() {
+    var item = catalog.filter(function (candidate) {
+      return candidate.id === 'timegraph';
+    })[0];
+    if (!item) return '';
+    var itemTitle = _widgetTitle(item);
+    return (
+      '<div class="we-widget-card we-widget-card-timegraph" data-special-widget="timegraph" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="' +
+      item.icon +
+      '" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _widgetDescription(item) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openTimegraphFromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openTimegraph();
     });
   }
 
@@ -4617,6 +4658,10 @@ var DashticzWidgetEditor = (function () {
         _openPublicTransportFromWidgets();
         return;
       }
+      if ($(this).data('special-widget') === 'timegraph') {
+        _openTimegraphFromWidgets();
+        return;
+      }
       _toggleWidget(String($(this).data('widget-id')));
     });
 
@@ -4638,6 +4683,10 @@ var DashticzWidgetEditor = (function () {
       }
       if ($(this).data('special-widget') === 'publictransport') {
         _openPublicTransportFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'timegraph') {
+        _openTimegraphFromWidgets();
         return;
       }
       _toggleWidget(String($(this).data('widget-id')));
