@@ -547,11 +547,6 @@ var DT_simpleblock = (function () {
         label: t.html_block || 'HTML Block',
       },
       {
-        action: 'iframe',
-        icon: 'fa-window-maximize',
-        label: t.iframe_block || 'iFrame',
-      },
-      {
         action: 'slidebutton',
         icon: 'fa-sliders-h',
         label: t.slide_button || 'Slide button',
@@ -620,8 +615,6 @@ var DT_simpleblock = (function () {
             DashticzDeviceEditor.openGroup();
           } else if (selectedAction === 'htmlblock') {
             DashticzDeviceEditor.openHtmlBlock();
-          } else if (selectedAction === 'iframe') {
-            DashticzDeviceEditor.openIframe();
           } else if (selectedAction === 'slidebutton') {
             DashticzDeviceEditor.openSlideButton();
           } else if (selectedAction === 'separator') {

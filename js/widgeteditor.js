@@ -2024,8 +2024,16 @@ var DashticzWidgetEditor = (function () {
       '<div class="we-widget-grid">';
 
     catalog.forEach(function (item) {
+      // iframe is rendered as a repeatable card (see _iframeWidgetCardHtml()
+      // below) instead of the normal singleton toggle card, so it stays out
+      // of this loop's default rendering - it remains a real `catalog` entry
+      // (kept for the existing singleton 'widget_iframe' block's own config
+      // path, width/height/description metadata, etc.), only its card is
+      // special-cased here, the same way LMS's card is appended below.
+      if (item.id === 'iframe') return;
       html += _widgetCardHtml(item);
     });
+    html += _iframeWidgetCardHtml();
     html += _lmsWidgetCardHtml();
 
     html +=
@@ -2149,6 +2157,52 @@ var DashticzWidgetEditor = (function () {
     _closeModalWithoutSaving();
     DT_function.loadDTScript('js/deviceeditor.js').then(function () {
       DashticzDeviceEditor.openLms();
+    });
+  }
+
+  /* iFrame is a `catalog` entry (unlike LMS/Group/HTML Block above), kept
+     there so an existing install's singleton 'widget_iframe' block - and
+     its own config popup, reached via the Layout Editor's gear icon on
+     that specific already-placed tile (openLayoutConfig('iframe') ->
+     _openConfigModal('iframe'), which looks the item up in `catalog` by
+     id) - keeps working completely unchanged. Only the card shown *here*,
+     in the Widgets catalog grid, is replaced: instead of toggling
+     selectedWidgets.iframe (which only ever wrote the one fixed
+     'widget_iframe' key), clicking it always opens the repeatable iFrame
+     quick-add popup (DashticzDeviceEditor.openIframe(), same
+     managedSpecials mechanism as Group/HTML Block/LMS), so any number of
+     independently-configured iframes can be added. Title/description are
+     read from the existing catalog entry so they stay in sync with (and
+     translated the same as) the legacy singleton widget's own labels. */
+  function _iframeWidgetCardHtml() {
+    var item = catalog.filter(function (candidate) {
+      return candidate.id === 'iframe';
+    })[0];
+    if (!item) return '';
+    var itemTitle = _widgetTitle(item);
+    return (
+      '<div class="we-widget-card we-widget-card-iframe" data-special-widget="iframe" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="' +
+      item.icon +
+      '" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _widgetDescription(item) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openIframeFromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openIframe();
     });
   }
 
@@ -4464,6 +4518,10 @@ var DashticzWidgetEditor = (function () {
         _openLmsFromWidgets();
         return;
       }
+      if ($(this).data('special-widget') === 'iframe') {
+        _openIframeFromWidgets();
+        return;
+      }
       _toggleWidget(String($(this).data('widget-id')));
     });
 
@@ -4473,6 +4531,10 @@ var DashticzWidgetEditor = (function () {
       event.preventDefault();
       if ($(this).data('special-widget') === 'lms') {
         _openLmsFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'iframe') {
+        _openIframeFromWidgets();
         return;
       }
       _toggleWidget(String($(this).data('widget-id')));

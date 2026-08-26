@@ -534,7 +534,6 @@
       "multi_device": "Multi Device",
       "group_block": "Group",
       "html_block": "HTML Block",
-      "iframe_block": "iFrame",
       "lms_block": "Lyrion Music Server",
       "lms_description": "Now playing info for a Lyrion Music Server (Logitech Media Server) player.",
       "separator": "Separator",
