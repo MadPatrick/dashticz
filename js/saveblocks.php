@@ -82,6 +82,18 @@ function _normalise_custom_device_fields($entry)
     return $customFields;
 }
 
+/* Special-block kinds recognized by the Device Editor's own quick-add
+   popups (js/deviceeditor.js), centralized here instead of repeating the
+   list at every call site below - adding another repeatable special
+   (see the iframe/calendar/publictransport/timegraph/xmltvguide entries
+   for the pattern) then only touches one array per list, and js/
+   configwriter.php's matching per-kind $props branch. 'slidebutton' is
+   checked separately below (its own key pattern differs from every
+   other kind here). */
+$specialBlockKinds = ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'xmltvguide', 'lms'];
+// Kinds whose title is optional (blank is fine) rather than required.
+$titleOptionalBlockKinds = ['custom', 'slidebutton', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'xmltvguide', 'lms'];
+
 dashticz_require_same_origin();
 dashticz_require_csrf();
 
@@ -109,7 +121,7 @@ foreach ($data['devices'] as $entry) {
     if (is_array($entry)
         && isset($entry['kind'])
         && (
-            in_array($entry['kind'], ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'xmltvguide', 'lms'], true)
+            in_array($entry['kind'], $specialBlockKinds, true)
             || $entry['kind'] === 'slidebutton'
         )
     ) {
@@ -134,7 +146,7 @@ foreach ($data['devices'] as $entry) {
         $title = isset($entry['title']) && is_string($entry['title'])
             ? substr(trim($entry['title']), 0, 100)
             : '';
-        if ($title === '' && !in_array($kind, ['custom', 'slidebutton', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'xmltvguide', 'lms'], true)) {
+        if ($title === '' && !in_array($kind, $titleOptionalBlockKinds, true)) {
             dashticz_json_error(400, 'A special block title is required.');
         }
         $defaultWidth = 3;

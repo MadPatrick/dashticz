@@ -9,6 +9,84 @@ var DashticzDeviceEditor = (function () {
   var managedOrder = []; // device:<ck> and widget:<id> in screen order
   var managedWidgets = {}; // order key -> widget metadata
   var managedSpecials = {}; // order key -> dummy/title block metadata
+
+  /* Special-block kind groupings shared by _specialFromReference(),
+     _showConfigPopup() and _buildDevicePayload() below. Centralizing
+     these here means adding another repeatable special (see the iFrame/
+     Calendar/Public transport/Timegraph/TV Guide additions for the
+     pattern - each is a `kind:'special'` entry in managedSpecials, same
+     mechanism as Group/HTML Block/LMS) touches one array per grouping
+     instead of a hand-duplicated `kind === 'x' || kind === 'y' || ...`
+     chain repeated at every call site - less code to keep in sync, and
+     far less likely to conflict with a concurrent branch adding a
+     different kind to the same chain. */
+
+  // No real Domoticz-device idx of their own (a plain numeric idx would
+  // be meaningless for these). 'group' is handled separately just below
+  // its own idx is optional-but-real; 'custom'/'dummy'/'timegraph' keep
+  // their real parsed idx.
+  var IDX_LESS_SPECIAL_KINDS = [
+    'title',
+    'slidebutton',
+    'html',
+    'iframe',
+    'calendar',
+    'publictransport',
+    'xmltvguide',
+    'lms',
+  ];
+
+  // Title is optional (blank is fine) rather than required.
+  var TITLE_OPTIONAL_SPECIAL_KINDS = [
+    'custom',
+    'group',
+    'html',
+    'iframe',
+    'calendar',
+    'publictransport',
+    'timegraph',
+    'xmltvguide',
+    'lms',
+  ];
+
+  // Defaults to a 6-column width instead of the generic 3-column
+  // default - their content needs more horizontal room.
+  var WIDE_DEFAULT_SPECIAL_KINDS = [
+    'lms',
+    'iframe',
+    'calendar',
+    'timegraph',
+    'xmltvguide',
+  ];
+
+  // No Dial/Bar/Slider visual mode of their own, and only Icon/Last
+  // update/Title among the Device Config display options (no Data/
+  // Switch) - every special except a plain dummy/custom device.
+  var NO_DIAL_SPECIAL_KINDS = [
+    'group',
+    'html',
+    'iframe',
+    'calendar',
+    'publictransport',
+    'timegraph',
+    'xmltvguide',
+    'lms',
+  ];
+
+  // _buildDevicePayload()'s shared "just Icon + Last update (+ Group's
+  // own optional idx)" branch - a subset of NO_DIAL_SPECIAL_KINDS
+  // excluding Timegraph/LMS, which need their own dedicated payload
+  // branches (a required idx + explicit type for Timegraph, several
+  // dedicated connection fields for LMS) despite sharing the same popup
+  // option set.
+  var SIMPLE_ICON_PAYLOAD_KINDS = [
+    'group',
+    'html',
+    'iframe',
+    'calendar',
+    'publictransport',
+    'xmltvguide',
+  ];
   var deviceNames = {}; // composite key -> device name
   var deviceWidths = {}; // composite key -> block width (1..12)
   var deviceHeights = {}; // composite key -> optional block height
@@ -810,14 +888,7 @@ var DashticzDeviceEditor = (function () {
       reference: reference,
       definition: definition,
       idx:
-        kind === 'title' ||
-        kind === 'slidebutton' ||
-        kind === 'html' ||
-        kind === 'iframe' ||
-        kind === 'calendar' ||
-        kind === 'publictransport' ||
-        kind === 'xmltvguide' ||
-        kind === 'lms'
+        IDX_LESS_SPECIAL_KINDS.indexOf(kind) > -1
           ? null
           : kind === 'group'
             ? parseInt(definition.idx, 10) > 0
@@ -825,15 +896,7 @@ var DashticzDeviceEditor = (function () {
               : null
             : parseInt(definition.idx, 10),
       title:
-        kind === 'custom' ||
-        kind === 'group' ||
-        kind === 'html' ||
-        kind === 'iframe' ||
-        kind === 'calendar' ||
-        kind === 'publictransport' ||
-        kind === 'timegraph' ||
-        kind === 'xmltvguide' ||
-        kind === 'lms'
+        TITLE_OPTIONAL_SPECIAL_KINDS.indexOf(kind) > -1
           ? String(definition.title || '')
           : String(
               definition.title || (kind === 'title' ? 'Title' : reference)
@@ -842,11 +905,7 @@ var DashticzDeviceEditor = (function () {
         definition.width ||
           (kind === 'title'
             ? 12
-            : kind === 'lms' ||
-                kind === 'iframe' ||
-                kind === 'calendar' ||
-                kind === 'timegraph' ||
-                kind === 'xmltvguide'
+            : WIDE_DEFAULT_SPECIAL_KINDS.indexOf(kind) > -1
               ? 6
               : 3)
       ),
@@ -5299,14 +5358,12 @@ var DashticzDeviceEditor = (function () {
     var isTitle = special && special.specialType === 'title';
     var isCustom = special && special.specialType === 'custom';
     var isGroupBlock = special && special.specialType === 'group';
-    var isHtmlBlock = special && special.specialType === 'html';
-    var isIframeBlock = special && special.specialType === 'iframe';
-    var isCalendarBlock = special && special.specialType === 'calendar';
-    var isPublicTransportBlock =
-      special && special.specialType === 'publictransport';
-    var isTimegraphBlock = special && special.specialType === 'timegraph';
-    var isXmltvguideBlock = special && special.specialType === 'xmltvguide';
     var isLmsBlock = special && special.specialType === 'lms';
+    // No Dial/Bar/Slider mode, and a restricted display-options set (see
+    // hasDial/configOptions below) - every special except dummy/custom.
+    var isNoDialSpecial = !!(
+      special && NO_DIAL_SPECIAL_KINDS.indexOf(special.specialType) > -1
+    );
     var options = isSpecial ? special.options || {} : deviceOptions[ck] || {};
     var customRows = isSpecial ? special.customFields : deviceCustomFields[ck];
     if (!customRows || !customRows.length) {
@@ -5409,17 +5466,10 @@ var DashticzDeviceEditor = (function () {
     html += '<div class="modal-body">';
     // A separator/title bar has no data value or last-update timestamp of its
     // own, but it can still show a leading icon like any other block.
-    // A Group/HTML/iFrame/LMS block has no Dial/Bar display mode of its own.
-    var hasDial =
-      !isTitle &&
-      !isGroupBlock &&
-      !isHtmlBlock &&
-      !isIframeBlock &&
-      !isCalendarBlock &&
-      !isPublicTransportBlock &&
-      !isTimegraphBlock &&
-      !isXmltvguideBlock &&
-      !isLmsBlock;
+    // No NO_DIAL_SPECIAL_KINDS special (Group/HTML/iFrame/Calendar/Public
+    // transport/Timegraph/TV Guide/LMS) has a Dial/Bar display mode of
+    // its own either.
+    var hasDial = !isTitle && !isNoDialSpecial;
     var barDeviceIdx = null;
     if (hasDial) {
       if (!isSpecial && ck) {
@@ -5496,14 +5546,7 @@ var DashticzDeviceEditor = (function () {
     // gets it (previously only Group/HTML/LMS/Separator specials did).
     var configOptions = isTitle
       ? ['icon', 'show_title']
-      : isGroupBlock ||
-          isHtmlBlock ||
-          isIframeBlock ||
-          isCalendarBlock ||
-          isPublicTransportBlock ||
-          isTimegraphBlock ||
-          isXmltvguideBlock ||
-          isLmsBlock
+      : isNoDialSpecial
         ? ['icon', 'last_update', 'show_title']
         : ['icon', 'hide_data', 'last_update', 'show_title'];
     html += '<h6 class="de-section-title">' + _esc(t.display_options) + '</h6>';
@@ -7235,15 +7278,7 @@ var DashticzDeviceEditor = (function () {
           width: _parseWidth(special.width),
         };
         var titleOptionalKind =
-          special.specialType === 'custom' ||
-          special.specialType === 'group' ||
-          special.specialType === 'html' ||
-          special.specialType === 'iframe' ||
-          special.specialType === 'calendar' ||
-          special.specialType === 'publictransport' ||
-          special.specialType === 'timegraph' ||
-          special.specialType === 'xmltvguide' ||
-          special.specialType === 'lms';
+          TITLE_OPTIONAL_SPECIAL_KINDS.indexOf(special.specialType) > -1;
         if (!titleOptionalKind || String(special.title || '').trim()) {
           specialEntry.title = special.title;
         }
@@ -7300,12 +7335,7 @@ var DashticzDeviceEditor = (function () {
             specialEntry.custom_fields = specialCustomFields;
           }
         } else if (
-          special.specialType === 'group' ||
-          special.specialType === 'html' ||
-          special.specialType === 'iframe' ||
-          special.specialType === 'calendar' ||
-          special.specialType === 'publictransport' ||
-          special.specialType === 'xmltvguide'
+          SIMPLE_ICON_PAYLOAD_KINDS.indexOf(special.specialType) > -1
         ) {
           // Only Icon and Last update apply here (no Data/Switch/Dial - see
           // _quickOptionsHtml()); idx is optional and only meaningful for a

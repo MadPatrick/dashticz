@@ -16,6 +16,26 @@ var DashticzLayoutEditor = (function () {
   // `overflow: auto`), the same as picking any other too-small height.
   var MIN_GRID_HEIGHT = 2;
   var MIN_TITLE_GRID_HEIGHT = 2;
+  // Every managedSpecials kind _resolveBlock() recognizes above,
+  // identified purely by their own block reference - 'device' and
+  // 'widget' (handled separately at each call site below) are not part
+  // of this set. Shared by _decorateItem()'s isConfigurable check and
+  // _openItemConfig()'s dispatch below, so adding another repeatable
+  // special (see js/deviceeditor.js's iFrame/Calendar/Public transport/
+  // Timegraph/TV Guide additions for the pattern) touches this one array
+  // instead of two separately hand-duplicated `item.kind === 'x' || ...`
+  // chains.
+  var REFERENCE_BASED_SPECIAL_KINDS = [
+    'separator',
+    'html',
+    'iframe',
+    'calendar',
+    'publictransport',
+    'timegraph',
+    'xmltvguide',
+    'lms',
+    'group',
+  ];
   var active = false;
   var items = [];
   var itemById = {};
@@ -1727,15 +1747,7 @@ var DashticzLayoutEditor = (function () {
         !item.isPending &&
         (item.kind === 'device' ||
           item.kind === 'widget' ||
-          item.kind === 'separator' ||
-          item.kind === 'html' ||
-          item.kind === 'iframe' ||
-          item.kind === 'calendar' ||
-          item.kind === 'publictransport' ||
-          item.kind === 'timegraph' ||
-          item.kind === 'xmltvguide' ||
-          item.kind === 'lms' ||
-          item.kind === 'group');
+          REFERENCE_BASED_SPECIAL_KINDS.indexOf(item.kind) > -1);
       var configureLabel =
         item.kind === 'widget'
           ? _t('configure_widget')
@@ -1838,15 +1850,7 @@ var DashticzLayoutEditor = (function () {
     if (!item) return;
     if (
       (item.kind === 'device' ||
-        item.kind === 'separator' ||
-        item.kind === 'html' ||
-        item.kind === 'iframe' ||
-        item.kind === 'calendar' ||
-        item.kind === 'publictransport' ||
-        item.kind === 'timegraph' ||
-        item.kind === 'xmltvguide' ||
-        item.kind === 'lms' ||
-        item.kind === 'group') &&
+        REFERENCE_BASED_SPECIAL_KINDS.indexOf(item.kind) > -1) &&
       item.reference
     ) {
       DT_function.loadDTScript('js/deviceeditor.js').then(function () {

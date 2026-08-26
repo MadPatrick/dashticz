@@ -44,11 +44,26 @@ v3.45.8 beta (26-8-2026)
   their own heading - "Widgets (once per screen)" for the remaining
   singleton cards and "Widgets (multiple per screen)" for the six
   repeatable cards (iFrame/Calendar/Public transport/Timegraph/TV
-  Guide/LMS) - instead of mixing both in one grid. Verified with the
-  full node --test suite (183 tests, including source-shape assertions
-  updated for each new kind) and Prettier's format check; live browser
-  verification of the Screen Editor flow was not possible in this
-  environment (no Domoticz/Docker stack available).
+  Guide/LMS) - instead of mixing both in one grid. Refactored the
+  special-block kind lists that had grown into a hand-duplicated
+  ``kind === 'x' || kind === 'y' || ...`` chain repeated at up to 10
+  call sites across js/deviceeditor.js, js/layouteditor.js and
+  js/saveblocks.php into a small number of named, shared arrays
+  declared once per file, each call site now doing a plain
+  ``.indexOf(kind) > -1`` membership check instead - a behavior-
+  preserving refactor (every array's contents were extracted 1:1 from
+  the chain it replaces) fixing a recurring structural pain point:
+  those duplicated chains, and the test assertions matching their
+  exact literal multi-line text, were a frequent source of merge
+  conflicts between feature branches touching nearby special-block
+  code. A future repeatable special now touches one line per array
+  instead of up to 10 separately-duplicated chains, and the
+  corresponding test assertions were rewritten to check each array's
+  declaration/membership directly. Verified with the full node --test
+  suite (183 tests, including source-shape assertions updated for each
+  new kind) and Prettier's format check; live browser verification of
+  the Screen Editor flow was not possible in this environment (no
+  Domoticz/Docker stack available).
 
 v3.45.7 beta (25-8-2026)
 -------------------------
