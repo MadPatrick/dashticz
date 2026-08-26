@@ -328,6 +328,15 @@ var DashticzDeviceEditor = (function () {
     _showHtmlBlockPopup();
   }
 
+  /** Open the dedicated iFrame popup used by the Screen Editor add menu. */
+  function openIframe() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showIframePopup();
+  }
+
   /** Open the dedicated Lyrion Music Server popup used by the Screen Editor
    * add menu. */
   function openLms() {
@@ -662,6 +671,22 @@ var DashticzDeviceEditor = (function () {
       kind = 'html';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      reference !== 'widget_iframe' &&
+      !definition.type &&
+      typeof definition.frameurl === 'string' &&
+      definition.frameurl !== ''
+    ) {
+      // Repeatable iFrame block, added via the Screen Editor's own "Add
+      // items" -> iFrame quick-add popup (_showIframePopup() above) rather
+      // than the Widgets catalog's singleton 'iframe' entry. Matches
+      // js/components/frame.js's own canHandle(): dispatched purely on a
+      // truthy frameurl, with no `type` of its own - same convention as
+      // html above. The fixed 'widget_iframe' key is excluded so the
+      // existing singleton catalog widget keeps going through
+      // DashticzWidgetEditor's own (unrelated) config path unchanged.
+      kind = 'iframe';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       String(definition.type || '').toLowerCase() === 'lms'
     ) {
       // Lyrion Music Server "Now Playing" block (js/components/lms.js),
@@ -683,6 +708,7 @@ var DashticzDeviceEditor = (function () {
         kind === 'title' ||
         kind === 'slidebutton' ||
         kind === 'html' ||
+        kind === 'iframe' ||
         kind === 'lms'
           ? null
           : kind === 'group'
@@ -694,13 +720,15 @@ var DashticzDeviceEditor = (function () {
         kind === 'custom' ||
         kind === 'group' ||
         kind === 'html' ||
+        kind === 'iframe' ||
         kind === 'lms'
           ? String(definition.title || '')
           : String(
               definition.title || (kind === 'title' ? 'Title' : reference)
             ),
       width: _parseWidth(
-        definition.width || (kind === 'title' ? 12 : kind === 'lms' ? 6 : 3)
+        definition.width ||
+          (kind === 'title' ? 12 : kind === 'lms' || kind === 'iframe' ? 6 : 3)
       ),
       height: _parseHeight(definition.height),
       // Lyrion Music Server connection/player fields - kept as their own
@@ -1151,6 +1179,7 @@ var DashticzDeviceEditor = (function () {
       if (special.specialType === 'custom') return 'fas fa-cube';
       if (special.specialType === 'group') return 'fas fa-object-group';
       if (special.specialType === 'html') return 'fas fa-code';
+      if (special.specialType === 'iframe') return 'fas fa-window-maximize';
       if (special.specialType === 'lms') return 'fas fa-music';
     }
     return 'fas fa-question';
@@ -3535,6 +3564,264 @@ var DashticzDeviceEditor = (function () {
     ).show();
   }
 
+  /* Repeatable iFrame block - same managedSpecials mechanism as HTML Block
+     above (kind:'special', specialType:'iframe'), so any number of
+     independently-configured iframes can be placed, unlike the Widgets
+     catalog's singleton 'iframe' entry (always the fixed 'widget_iframe'
+     key). js/components/frame.js dispatches on a truthy frameurl alone, no
+     `type` of its own - see _specialFromReference()'s matching 'iframe'
+     branch, which excludes the legacy 'widget_iframe' key so that singleton
+     stays on its own Widget Editor path unchanged. */
+  function _showIframePopup() {
+    var t = _translations();
+    $('#iframeblockpopup').remove();
+
+    var html =
+      '<div class="modal fade" id="iframeblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-window-maximize me-2" aria-hidden="true"></i>' +
+      _esc(t.iframe_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    // Icon defaults off, same as HTML Block - the embedded page is this
+    // block's own visual, with no Domoticz device to derive an icon from.
+    html += _quickOptionsHtml('if', {
+      icon: false,
+      iconValue: 'fas fa-window-maximize',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="if-device-name">' +
+      _esc(t.iframe_block_name) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="if-device-name" autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.iframe_block_name_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="if-device-url">' +
+      _esc(t.iframe_block_url) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="if-device-url" placeholder="https://..." autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.iframe_block_url_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="if-device-title">' +
+      _esc(t.html_block_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="if-device-title" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="if-device-height">' +
+      _esc(t.iframe_block_height) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="if-device-height" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input" type="checkbox" id="if-device-scrollbars">';
+    html +=
+      '<label class="form-check-label" for="if-device-scrollbars">' +
+      _esc(t.iframe_block_scrollbars) +
+      '</label></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="if-device-scaletofit">' +
+      _esc(t.iframe_block_scaletofit) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="if-device-scaletofit" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="if-device-aspectratio">' +
+      _esc(t.iframe_block_aspectratio) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="if-device-aspectratio" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input" type="checkbox" id="if-device-forcerefresh">';
+    html +=
+      '<label class="form-check-label" for="if-device-forcerefresh">' +
+      _esc(t.iframe_block_forcerefresh) +
+      '</label></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="if-device-refresh">' +
+      _esc(t.iframe_block_refresh) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="if-device-refresh" min="0" autocomplete="off"></div>';
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="if-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#iframeblockpopup');
+    _wireQuickOptions('if', $popup);
+    _wireBackButton('iframeblockpopup');
+
+    $('#if-save-btn').on('click', function () {
+      var $message = $popup
+        .find('.cd-custom-message')
+        .removeClass('text-danger')
+        .text('');
+      var reference = $.trim(String($('#if-device-name').val() || ''));
+      var title = $.trim(String($('#if-device-title').val() || ''));
+      if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
+        $message.addClass('text-danger').text(t.invalid_iframe_block_name);
+        $('#if-device-name').trigger('focus');
+        return;
+      }
+      if (
+        (typeof blocks !== 'undefined' && blocks[reference]) ||
+        managedSpecials[_specialOrderKey(reference)]
+      ) {
+        $message.addClass('text-danger').text(t.invalid_iframe_block_name);
+        $('#if-device-name').trigger('focus');
+        return;
+      }
+
+      var frameurl = $.trim(String($('#if-device-url').val() || ''));
+      if (!frameurl || frameurl.length > 2048) {
+        $message.addClass('text-danger').text(t.invalid_iframe_block_url);
+        $('#if-device-url').trigger('focus');
+        return;
+      }
+
+      var quickOptions = _readQuickOptions('if');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+      var height = $.trim(String($('#if-device-height').val() || ''));
+      var scrollbars = $('#if-device-scrollbars').is(':checked');
+      var scaletofit = $.trim(String($('#if-device-scaletofit').val() || ''));
+      var aspectratio = $.trim(String($('#if-device-aspectratio').val() || ''));
+      var forcerefresh = $('#if-device-forcerefresh').is(':checked');
+      var refresh = $.trim(String($('#if-device-refresh').val() || ''));
+
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      customRows.push({
+        field: 'frameurl',
+        setting: frameurl,
+        value: frameurl,
+      });
+      if (height) {
+        var heightInt = parseInt(height, 10) || 0;
+        if (heightInt > 0) {
+          customRows.push({
+            field: 'height',
+            setting: String(heightInt),
+            value: heightInt,
+          });
+        }
+      }
+      if (scrollbars) {
+        customRows.push({
+          field: 'scrollbars',
+          setting: 'true',
+          value: true,
+        });
+      }
+      if (scaletofit) {
+        var scaletofitInt = parseInt(scaletofit, 10) || 0;
+        if (scaletofitInt > 0) {
+          customRows.push({
+            field: 'scaletofit',
+            setting: String(scaletofitInt),
+            value: scaletofitInt,
+          });
+        }
+      }
+      if (aspectratio) {
+        customRows.push({
+          field: 'aspectratio',
+          setting: aspectratio,
+          value: aspectratio,
+        });
+      }
+      if (forcerefresh) {
+        customRows.push({
+          field: 'forcerefresh',
+          setting: 'true',
+          value: true,
+        });
+      }
+      if (refresh) {
+        var refreshInt = parseInt(refresh, 10) || 0;
+        if (refreshInt > 0) {
+          customRows.push({
+            field: 'refresh',
+            setting: String(refreshInt),
+            value: refreshInt,
+          });
+        }
+      }
+
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'iframe',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: null,
+        title: title,
+        width: 6,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      window.bootstrap.Modal.getInstance(
+        document.getElementById('iframeblockpopup')
+      ).hide();
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('iframeblockpopup')
+    ).show();
+  }
+
   function _showSlideButtonPopup() {
     var t = _translations();
     $('#slidebuttonpopup').remove();
@@ -3862,6 +4149,7 @@ var DashticzDeviceEditor = (function () {
     var isCustom = special && special.specialType === 'custom';
     var isGroupBlock = special && special.specialType === 'group';
     var isHtmlBlock = special && special.specialType === 'html';
+    var isIframeBlock = special && special.specialType === 'iframe';
     var isLmsBlock = special && special.specialType === 'lms';
     var options = isSpecial ? special.options || {} : deviceOptions[ck] || {};
     var customRows = isSpecial ? special.customFields : deviceCustomFields[ck];
@@ -3965,8 +4253,13 @@ var DashticzDeviceEditor = (function () {
     html += '<div class="modal-body">';
     // A separator/title bar has no data value or last-update timestamp of its
     // own, but it can still show a leading icon like any other block.
-    // A Group/HTML/LMS block has no Dial/Bar display mode of its own.
-    var hasDial = !isTitle && !isGroupBlock && !isHtmlBlock && !isLmsBlock;
+    // A Group/HTML/iFrame/LMS block has no Dial/Bar display mode of its own.
+    var hasDial =
+      !isTitle &&
+      !isGroupBlock &&
+      !isHtmlBlock &&
+      !isIframeBlock &&
+      !isLmsBlock;
     var barDeviceIdx = null;
     if (hasDial) {
       if (!isSpecial && ck) {
@@ -4043,7 +4336,7 @@ var DashticzDeviceEditor = (function () {
     // gets it (previously only Group/HTML/LMS/Separator specials did).
     var configOptions = isTitle
       ? ['icon', 'show_title']
-      : isGroupBlock || isHtmlBlock || isLmsBlock
+      : isGroupBlock || isHtmlBlock || isIframeBlock || isLmsBlock
         ? ['icon', 'last_update', 'show_title']
         : ['icon', 'hide_data', 'last_update', 'show_title'];
     html += '<h6 class="de-section-title">' + _esc(t.display_options) + '</h6>';
@@ -5057,6 +5350,7 @@ var DashticzDeviceEditor = (function () {
     var isSlideButton = special.specialType === 'slidebutton';
     var isGroupBlock = special.specialType === 'group';
     var isHtmlBlock = special.specialType === 'html';
+    var isIframeBlock = special.specialType === 'iframe';
     var isLmsBlock = special.specialType === 'lms';
     // A Multi Device is a Custom device whose 'values' custom field was filled
     // in via the dedicated Multi Device popup (see openMultiDevice() above);
@@ -5078,12 +5372,21 @@ var DashticzDeviceEditor = (function () {
             : t.dummy_device;
     if (isGroupBlock) label = t.group_block;
     else if (isHtmlBlock) label = t.html_block;
+    else if (isIframeBlock) label = t.iframe_block;
     else if (isLmsBlock) label = t.lms_block;
     var htmlFileRow =
       isHtmlBlock && special.customFields
         ? special.customFields.find(function (row) {
             return (
               String((row && row.field) || '').toLowerCase() === 'htmlfile'
+            );
+          })
+        : null;
+    var frameurlRow =
+      isIframeBlock && special.customFields
+        ? special.customFields.find(function (row) {
+            return (
+              String((row && row.field) || '').toLowerCase() === 'frameurl'
             );
           })
         : null;
@@ -5101,11 +5404,15 @@ var DashticzDeviceEditor = (function () {
             : special.reference
           : isHtmlBlock
             ? (htmlFileRow && htmlFileRow.setting) || special.reference
-            : isLmsBlock
-              ? special.lmsPlayerLabel || special.lmsPlayer || special.reference
-              : isCustom
-                ? special.reference + ' · IDX\u00a0' + special.idx
-                : 'IDX\u00a0' + special.idx;
+            : isIframeBlock
+              ? (frameurlRow && frameurlRow.setting) || special.reference
+              : isLmsBlock
+                ? special.lmsPlayerLabel ||
+                  special.lmsPlayer ||
+                  special.reference
+                : isCustom
+                  ? special.reference + ' · IDX\u00a0' + special.idx
+                  : 'IDX\u00a0' + special.idx;
     var specialIconClass = isTitle
       ? 'fa-divide'
       : isSlideButton
@@ -5115,6 +5422,7 @@ var DashticzDeviceEditor = (function () {
           : 'fa-cube';
     if (isGroupBlock) specialIconClass = 'fa-object-group';
     else if (isHtmlBlock) specialIconClass = 'fa-code';
+    else if (isIframeBlock) specialIconClass = 'fa-window-maximize';
     else if (isLmsBlock) specialIconClass = 'fa-music';
     var html =
       '<div class="de-device-item de-special-item" data-special-key="' +
@@ -5721,6 +6029,7 @@ var DashticzDeviceEditor = (function () {
           special.specialType === 'custom' ||
           special.specialType === 'group' ||
           special.specialType === 'html' ||
+          special.specialType === 'iframe' ||
           special.specialType === 'lms';
         if (!titleOptionalKind || String(special.title || '').trim()) {
           specialEntry.title = special.title;
@@ -5779,14 +6088,16 @@ var DashticzDeviceEditor = (function () {
           }
         } else if (
           special.specialType === 'group' ||
-          special.specialType === 'html'
+          special.specialType === 'html' ||
+          special.specialType === 'iframe'
         ) {
           // Only Icon and Last update apply here (no Data/Switch/Dial - see
           // _quickOptionsHtml()); idx is optional and only meaningful for a
           // Group block (js/components/group.js can use 'devices' instead,
           // carried through specialCustomFields above like any other extra
           // field). configwriter.php writes type: 'group' unconditionally
-          // for this kind, so it is not set here.
+          // for that kind only - html/iframe have no `type` of their own
+          // (dispatched on htmlfile/frameurl instead), so it is not set here.
           var quickSaveOptions = special.options || {};
           if (quickSaveOptions.icon === false) {
             specialEntry.icon = '';
@@ -6354,6 +6665,7 @@ var DashticzDeviceEditor = (function () {
     openMultiDevice: openMultiDevice,
     openGroup: openGroup,
     openHtmlBlock: openHtmlBlock,
+    openIframe: openIframe,
     openLms: openLms,
     openSlideButton: openSlideButton,
     addSeparator: addSeparator,

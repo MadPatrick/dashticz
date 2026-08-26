@@ -5086,11 +5086,11 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   assert.match(layoutEditor, /kind: 'lms',/);
   assert.match(
     layoutEditor,
-    /item\.kind === 'html' \|\|\s*\n\s*item\.kind === 'lms' \|\|\s*\n\s*item\.kind === 'group'\);/
+    /item\.kind === 'html' \|\|\s*\n\s*item\.kind === 'iframe' \|\|\s*\n\s*item\.kind === 'lms' \|\|\s*\n\s*item\.kind === 'group'\);/
   );
   assert.match(
     layoutEditor,
-    /item\.kind === 'html' \|\|\s*\n\s*item\.kind === 'lms' \|\|\s*\n\s*item\.kind === 'group'\) &&\s*\n\s*item\.reference/
+    /item\.kind === 'html' \|\|\s*\n\s*item\.kind === 'iframe' \|\|\s*\n\s*item\.kind === 'lms' \|\|\s*\n\s*item\.kind === 'group'\) &&\s*\n\s*item\.reference/
   );
 
   // Backend bridge (vendor/dashticz/lms/index.php): same-origin gated, LAN
@@ -5275,11 +5275,11 @@ test('Group block gets the Layout Editor config (cog) control, like HTML/LMS blo
   // 'group' kind alongside 'html'/'lms'.
   assert.match(
     layoutEditor,
-    /item\.kind === 'html' \|\|\s*\n\s*item\.kind === 'lms' \|\|\s*\n\s*item\.kind === 'group'\);/
+    /item\.kind === 'html' \|\|\s*\n\s*item\.kind === 'iframe' \|\|\s*\n\s*item\.kind === 'lms' \|\|\s*\n\s*item\.kind === 'group'\);/
   );
   assert.match(
     layoutEditor,
-    /item\.kind === 'html' \|\|\s*\n\s*item\.kind === 'lms' \|\|\s*\n\s*item\.kind === 'group'\) &&\s*\n\s*item\.reference/
+    /item\.kind === 'html' \|\|\s*\n\s*item\.kind === 'iframe' \|\|\s*\n\s*item\.kind === 'lms' \|\|\s*\n\s*item\.kind === 'group'\) &&\s*\n\s*item\.reference/
   );
 });
 

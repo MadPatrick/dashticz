@@ -6,6 +6,34 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v3.45.8 beta (26-8-2026)
+-------------------------
+
+* **Enhancements**
+
+- Added a repeatable iFrame block (Screen Editor's Add items menu,
+  next to Group/HTML Block/LMS), so multiple independently-configured
+  iframes can be placed on a dashboard - previously the Widgets
+  catalog's iframe entry was a singleton (one fixed widget_iframe
+  block, one shared config for every added instance), a first step on
+  `issue #201 <https://github.com/MadPatrick/dashticz/issues/201>`_'s
+  request for per-instance widget settings similar to LMS.
+
+* **Code**
+
+- Implemented by extending the same managedSpecials mechanism already
+  used for Group/HTML Block/LMS rather than the Widgets catalog's
+  singleton selectedWidgets/blockKey pattern; each instance's
+  frameurl/height/scrollbars/scaletofit/aspectratio/forcerefresh/refresh
+  ride through the existing generic custom_fields mechanism, mirroring
+  HTML Block's htmlfile. The existing singleton catalog widget (fixed
+  widget_iframe key) is explicitly excluded from the new recognition so
+  it keeps working unchanged. Verified with the full node --test suite
+  (183 tests, including 4 existing source-shape assertions updated to
+  reflect the new kind) and Prettier's format check; live browser
+  verification of the Screen Editor flow was not possible in this
+  environment (no Domoticz/Docker stack available).
+
 v3.45.7 beta (25-8-2026)
 -------------------------
 
