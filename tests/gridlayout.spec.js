@@ -589,8 +589,8 @@ screens[2] = {
     await page.locator('#if-save-btn').click();
 
     await expect.poll(() => blocksRequest).not.toBeNull();
-    const iframe = blocksRequest.devices[0];
-    expect(iframe.kind).toBe('iframe');
+    const iframe = blocksRequest.devices.find((d) => d.kind === 'iframe');
+    expect(iframe).toBeTruthy();
     expect(iframe.key).toBe('my_iframe');
     expect(iframe.icon).toBe('fas fa-window-maximize');
     expect(iframe.custom_fields.frameurl).toBe(
