@@ -365,6 +365,15 @@ var DashticzDeviceEditor = (function () {
     _showTimegraphPopup();
   }
 
+  /** Open the dedicated TV Guide popup used by the Screen Editor add menu. */
+  function openXmltvguide() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showXmltvguidePopup();
+  }
+
   /** Open the dedicated Lyrion Music Server popup used by the Screen Editor
    * add menu. */
   function openLms() {
@@ -765,6 +774,24 @@ var DashticzDeviceEditor = (function () {
       kind = 'timegraph';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      reference !== 'widget_xmltvguide' &&
+      !definition.type &&
+      typeof definition.xmltvurl === 'string' &&
+      definition.xmltvurl !== ''
+    ) {
+      // Repeatable TV Guide (XMLTV) block, added via the Screen Editor's
+      // own "Add items" -> TV Guide quick-add popup
+      // (_showXmltvguidePopup() above) rather than the Widgets catalog's
+      // singleton 'xmltvguide' entry. Matches
+      // js/components/xmltvguide.js's own canHandle(): dispatched on a
+      // truthy xmltvurl, no `type` of its own (this popup never writes
+      // one, same convention as html/iframe/calendar/publictransport
+      // above). The fixed 'widget_xmltvguide' key is excluded so that
+      // singleton keeps going through DashticzWidgetEditor's own
+      // (unrelated) config path unchanged.
+      kind = 'xmltvguide';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       String(definition.type || '').toLowerCase() === 'lms'
     ) {
       // Lyrion Music Server "Now Playing" block (js/components/lms.js),
@@ -789,6 +816,7 @@ var DashticzDeviceEditor = (function () {
         kind === 'iframe' ||
         kind === 'calendar' ||
         kind === 'publictransport' ||
+        kind === 'xmltvguide' ||
         kind === 'lms'
           ? null
           : kind === 'group'
@@ -804,6 +832,7 @@ var DashticzDeviceEditor = (function () {
         kind === 'calendar' ||
         kind === 'publictransport' ||
         kind === 'timegraph' ||
+        kind === 'xmltvguide' ||
         kind === 'lms'
           ? String(definition.title || '')
           : String(
@@ -816,10 +845,12 @@ var DashticzDeviceEditor = (function () {
             : kind === 'lms' ||
                 kind === 'iframe' ||
                 kind === 'calendar' ||
-                kind === 'timegraph'
+                kind === 'timegraph' ||
+                kind === 'xmltvguide'
               ? 6
               : 3)
       ),
+
       height: _parseHeight(definition.height),
       // Lyrion Music Server connection/player fields - kept as their own
       // properties (like slideTarget/buttonKey below) rather than routed
@@ -1273,6 +1304,7 @@ var DashticzDeviceEditor = (function () {
       if (special.specialType === 'calendar') return 'fas fa-calendar-alt';
       if (special.specialType === 'publictransport') return 'fas fa-train';
       if (special.specialType === 'timegraph') return 'fas fa-chart-line';
+      if (special.specialType === 'xmltvguide') return 'fas fa-tv';
       if (special.specialType === 'lms') return 'fas fa-music';
     }
     return 'fas fa-question';
@@ -4686,6 +4718,261 @@ var DashticzDeviceEditor = (function () {
     ).show();
   }
 
+  /* Repeatable TV Guide (XMLTV) block - same managedSpecials mechanism as
+     Timegraph/Public transport/Calendar/iFrame/HTML Block above
+     (kind:'special', specialType:'xmltvguide'), so any number of
+     independently-configured guides can be placed, unlike the Widgets
+     catalog's singleton 'xmltvguide' entry (always the fixed
+     'widget_xmltvguide' key, and whose settings additionally fall back to
+     global settings['xmltv_*'] when a block leaves a field unset -
+     js/components/xmltvguide.js's defaultCfg). Every field below is
+     always written explicitly onto the new block, so a repeatable
+     instance never depends on those globals. js/components/xmltvguide.js
+     dispatches on a truthy xmltvurl (or an explicit type:'xmltvguide') -
+     see _specialFromReference()'s matching 'xmltvguide' branch, which
+     excludes the legacy 'widget_xmltvguide' key. */
+  function _showXmltvguidePopup() {
+    var t = _translations();
+    $('#xmltvguideblockpopup').remove();
+
+    var layoutOptions = [
+      ['0', t.xmltvguide_block_layout_0],
+      ['1', t.xmltvguide_block_layout_1],
+    ];
+
+    var html =
+      '<div class="modal fade" id="xmltvguideblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-tv me-2" aria-hidden="true"></i>' +
+      _esc(t.xmltvguide_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    html += _quickOptionsHtml('xtv', {
+      icon: true,
+      iconValue: 'fas fa-tv',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="xtv-device-name">' +
+      _esc(t.xmltvguide_block_name) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="xtv-device-name" autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.xmltvguide_block_name_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="xtv-device-title">' +
+      _esc(t.html_block_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="xtv-device-title" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="xtv-device-url">' +
+      _esc(t.xmltvguide_block_url) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="xtv-device-url" placeholder="http://..." autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.xmltvguide_block_url_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="xtv-device-channels">' +
+      _esc(t.xmltvguide_block_channels) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="xtv-device-channels" placeholder="BBC One, ITV, Channel 4" autocomplete="off">';
+    html +=
+      '<div class="form-text">' +
+      _esc(t.xmltvguide_block_channels_help) +
+      '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="xtv-device-maxitems">' +
+      _esc(t.xmltvguide_block_maxitems) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="xtv-device-maxitems" min="0" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="xtv-device-layout">' +
+      _esc(t.xmltvguide_block_layout) +
+      '</label>';
+    html += '<select class="form-select" id="xtv-device-layout">';
+    layoutOptions.forEach(function (option) {
+      html +=
+        '<option value="' +
+        _esc(option[0]) +
+        '">' +
+        _esc(option[1]) +
+        '</option>';
+    });
+    html += '</select></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="xtv-device-refresh">' +
+      _esc(t.xmltvguide_block_refresh) +
+      '</label>';
+    html +=
+      '<input type="number" class="form-control" id="xtv-device-refresh" min="0" autocomplete="off"></div>';
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="xtv-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#xmltvguideblockpopup');
+    _wireQuickOptions('xtv', $popup);
+    _wireBackButton('xmltvguideblockpopup');
+
+    $('#xtv-save-btn').on('click', function () {
+      var $message = $popup
+        .find('.cd-custom-message')
+        .removeClass('text-danger')
+        .text('');
+      var reference = $.trim(String($('#xtv-device-name').val() || ''));
+      var title = $.trim(String($('#xtv-device-title').val() || ''));
+      if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
+        $message.addClass('text-danger').text(t.invalid_xmltvguide_block_name);
+        $('#xtv-device-name').trigger('focus');
+        return;
+      }
+      if (
+        (typeof blocks !== 'undefined' && blocks[reference]) ||
+        managedSpecials[_specialOrderKey(reference)]
+      ) {
+        $message.addClass('text-danger').text(t.invalid_xmltvguide_block_name);
+        $('#xtv-device-name').trigger('focus');
+        return;
+      }
+
+      var xmltvurl = $.trim(String($('#xtv-device-url').val() || ''));
+      if (!xmltvurl || xmltvurl.length > 2048) {
+        $message.addClass('text-danger').text(t.invalid_xmltvguide_block_url);
+        $('#xtv-device-url').trigger('focus');
+        return;
+      }
+
+      var quickOptions = _readQuickOptions('xtv');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+      var channelsRaw = $.trim(String($('#xtv-device-channels').val() || ''));
+      var channels = channelsRaw
+        ? channelsRaw
+            .split(',')
+            .map(function (value) {
+              return value.trim();
+            })
+            .filter(Boolean)
+        : [];
+      var maxitems = $.trim(String($('#xtv-device-maxitems').val() || ''));
+      var layout = String($('#xtv-device-layout').val() || '0');
+      var refresh = $.trim(String($('#xtv-device-refresh').val() || ''));
+
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      customRows.push({
+        field: 'xmltvurl',
+        setting: xmltvurl,
+        value: xmltvurl,
+      });
+      if (channels.length) {
+        customRows.push({
+          field: 'channels',
+          setting: channels.join(', '),
+          value: channels,
+        });
+      }
+      if (maxitems) {
+        var maxitemsInt = parseInt(maxitems, 10) || 0;
+        if (maxitemsInt > 0) {
+          customRows.push({
+            field: 'maxitems',
+            setting: String(maxitemsInt),
+            value: maxitemsInt,
+          });
+        }
+      }
+      if (layout !== '0') {
+        customRows.push({
+          field: 'layout',
+          setting: layout,
+          value: parseInt(layout, 10),
+        });
+      }
+      if (refresh) {
+        var refreshInt = parseInt(refresh, 10) || 0;
+        if (refreshInt > 0) {
+          customRows.push({
+            field: 'refresh',
+            setting: String(refreshInt),
+            value: refreshInt,
+          });
+        }
+      }
+
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'xmltvguide',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: null,
+        title: title,
+        width: 6,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      window.bootstrap.Modal.getInstance(
+        document.getElementById('xmltvguideblockpopup')
+      ).hide();
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('xmltvguideblockpopup')
+    ).show();
+  }
+
   function _showSlideButtonPopup() {
     var t = _translations();
     $('#slidebuttonpopup').remove();
@@ -5018,6 +5305,7 @@ var DashticzDeviceEditor = (function () {
     var isPublicTransportBlock =
       special && special.specialType === 'publictransport';
     var isTimegraphBlock = special && special.specialType === 'timegraph';
+    var isXmltvguideBlock = special && special.specialType === 'xmltvguide';
     var isLmsBlock = special && special.specialType === 'lms';
     var options = isSpecial ? special.options || {} : deviceOptions[ck] || {};
     var customRows = isSpecial ? special.customFields : deviceCustomFields[ck];
@@ -5130,6 +5418,7 @@ var DashticzDeviceEditor = (function () {
       !isCalendarBlock &&
       !isPublicTransportBlock &&
       !isTimegraphBlock &&
+      !isXmltvguideBlock &&
       !isLmsBlock;
     var barDeviceIdx = null;
     if (hasDial) {
@@ -5213,6 +5502,7 @@ var DashticzDeviceEditor = (function () {
           isCalendarBlock ||
           isPublicTransportBlock ||
           isTimegraphBlock ||
+          isXmltvguideBlock ||
           isLmsBlock
         ? ['icon', 'last_update', 'show_title']
         : ['icon', 'hide_data', 'last_update', 'show_title'];
@@ -6231,6 +6521,7 @@ var DashticzDeviceEditor = (function () {
     var isCalendarBlock = special.specialType === 'calendar';
     var isPublicTransportBlock = special.specialType === 'publictransport';
     var isTimegraphBlock = special.specialType === 'timegraph';
+    var isXmltvguideBlock = special.specialType === 'xmltvguide';
     var isLmsBlock = special.specialType === 'lms';
     // A Multi Device is a Custom device whose 'values' custom field was filled
     // in via the dedicated Multi Device popup (see openMultiDevice() above);
@@ -6256,6 +6547,7 @@ var DashticzDeviceEditor = (function () {
     else if (isCalendarBlock) label = t.calendar_block;
     else if (isPublicTransportBlock) label = t.publictransport_block;
     else if (isTimegraphBlock) label = t.timegraph_block;
+    else if (isXmltvguideBlock) label = t.xmltvguide_block;
     else if (isLmsBlock) label = t.lms_block;
     var htmlFileRow =
       isHtmlBlock && special.customFields
@@ -6286,6 +6578,14 @@ var DashticzDeviceEditor = (function () {
             return field === 'station' || field === 'tpc';
           })
         : null;
+    var xmltvurlRow =
+      isXmltvguideBlock && special.customFields
+        ? special.customFields.find(function (row) {
+            return (
+              String((row && row.field) || '').toLowerCase() === 'xmltvurl'
+            );
+          })
+        : null;
     var detail = isTitle
       ? special.title
       : isSlideButton
@@ -6308,13 +6608,16 @@ var DashticzDeviceEditor = (function () {
                   ? (stationRow && stationRow.setting) || special.reference
                   : isTimegraphBlock
                     ? 'IDX ' + special.idx
-                    : isLmsBlock
-                      ? special.lmsPlayerLabel ||
-                        special.lmsPlayer ||
+                    : isXmltvguideBlock
+                      ? (xmltvurlRow && xmltvurlRow.setting) ||
                         special.reference
-                      : isCustom
-                        ? special.reference + ' · IDX\u00a0' + special.idx
-                        : 'IDX\u00a0' + special.idx;
+                      : isLmsBlock
+                        ? special.lmsPlayerLabel ||
+                          special.lmsPlayer ||
+                          special.reference
+                        : isCustom
+                          ? special.reference + ' · IDX\u00a0' + special.idx
+                          : 'IDX\u00a0' + special.idx;
     var specialIconClass = isTitle
       ? 'fa-divide'
       : isSlideButton
@@ -6328,6 +6631,7 @@ var DashticzDeviceEditor = (function () {
     else if (isCalendarBlock) specialIconClass = 'fa-calendar-alt';
     else if (isPublicTransportBlock) specialIconClass = 'fa-train';
     else if (isTimegraphBlock) specialIconClass = 'fa-chart-line';
+    else if (isXmltvguideBlock) specialIconClass = 'fa-tv';
     else if (isLmsBlock) specialIconClass = 'fa-music';
     var html =
       '<div class="de-device-item de-special-item" data-special-key="' +
@@ -6938,6 +7242,7 @@ var DashticzDeviceEditor = (function () {
           special.specialType === 'calendar' ||
           special.specialType === 'publictransport' ||
           special.specialType === 'timegraph' ||
+          special.specialType === 'xmltvguide' ||
           special.specialType === 'lms';
         if (!titleOptionalKind || String(special.title || '').trim()) {
           specialEntry.title = special.title;
@@ -6999,15 +7304,17 @@ var DashticzDeviceEditor = (function () {
           special.specialType === 'html' ||
           special.specialType === 'iframe' ||
           special.specialType === 'calendar' ||
-          special.specialType === 'publictransport'
+          special.specialType === 'publictransport' ||
+          special.specialType === 'xmltvguide'
         ) {
           // Only Icon and Last update apply here (no Data/Switch/Dial - see
           // _quickOptionsHtml()); idx is optional and only meaningful for a
           // Group block (js/components/group.js can use 'devices' instead,
           // carried through specialCustomFields above like any other extra
           // field). configwriter.php writes type: 'group' unconditionally
-          // for that kind only - html/iframe/calendar have no `type` of their own
-          // (dispatched on htmlfile/frameurl/icalurl instead), so it is not set here.
+          // for that kind only - html/iframe/calendar/xmltvguide have no
+          // `type` of their own (dispatched on htmlfile/frameurl/icalurl/
+          // xmltvurl instead), so it is not set here.
           var quickSaveOptions = special.options || {};
           if (quickSaveOptions.icon === false) {
             specialEntry.icon = '';
@@ -7594,6 +7901,7 @@ var DashticzDeviceEditor = (function () {
     openCalendar: openCalendar,
     openPublicTransport: openPublicTransport,
     openTimegraph: openTimegraph,
+    openXmltvguide: openXmltvguide,
     openLms: openLms,
     openSlideButton: openSlideButton,
     addSeparator: addSeparator,

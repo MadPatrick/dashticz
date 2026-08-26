@@ -11,26 +11,37 @@ v3.45.8 beta (26-8-2026)
 
 * **Enhancements**
 
-- Added a repeatable iFrame block (Screen Editor's Add items menu,
-  next to Group/HTML Block/LMS), so multiple independently-configured
-  iframes can be placed on a dashboard - previously the Widgets
-  catalog's iframe entry was a singleton (one fixed widget_iframe
-  block, one shared config for every added instance), a first step on
+- Added repeatable iFrame, Calendar, Public transport, Timegraph and
+  TV Guide (XMLTV) blocks (Screen Editor's Widgets catalog, each card
+  now behaving like LMS's own): each can now be placed any number of
+  times on a dashboard, with fully independent settings per instance -
+  previously each was a singleton in the catalog (one fixed widget_*
+  block, one shared config for every added instance), addressing
   `issue #201 <https://github.com/MadPatrick/dashticz/issues/201>`_'s
   request for per-instance widget settings similar to LMS.
 
 * **Code**
 
-- Implemented by extending the same managedSpecials mechanism already
-  used for Group/HTML Block/LMS rather than the Widgets catalog's
-  singleton selectedWidgets/blockKey pattern; each instance's
-  frameurl/height/scrollbars/scaletofit/aspectratio/forcerefresh/refresh
-  ride through the existing generic custom_fields mechanism, mirroring
-  HTML Block's htmlfile. The existing singleton catalog widget (fixed
-  widget_iframe key) is explicitly excluded from the new recognition so
-  it keeps working unchanged. Verified with the full node --test suite
-  (183 tests, including 4 existing source-shape assertions updated to
-  reflect the new kind) and Prettier's format check; live browser
+- Every one of the five is implemented by extending the same
+  managedSpecials mechanism already used for Group/HTML Block/LMS
+  rather than the catalog's singleton selectedWidgets/blockKey
+  pattern, each with its own quick-add popup
+  (js/deviceeditor.js). iFrame/Calendar/Public transport/TV Guide are
+  recognized by their own component's existing field-shape dispatch
+  (frameurl/icalurl/station-or-tpc/xmltvurl, no explicit type,
+  mirroring HTML Block's htmlfile); Timegraph, whose component
+  requires an explicit type:'timegraph', is recognized and written the
+  same way Group/LMS already are. Every existing singleton catalog
+  widget is untouched and keeps working exactly as before - Calendar's
+  multi-source/color-picker config and TV Guide's global
+  settings['xmltv_*'] fallback remain available there. Also fixed the
+  new iFrame popup's two checkboxes rendering as plain unstyled
+  Bootstrap checkboxes instead of the app's standard 38x20px blue
+  switch (.de-switch, already the documented standard class in
+  css/creative.css for exactly this case) - every checkbox added
+  across all five new popups uses it from the start. Verified with the
+  full node --test suite (183 tests, including source-shape assertions
+  updated for each new kind) and Prettier's format check; live browser
   verification of the Screen Editor flow was not possible in this
   environment (no Domoticz/Docker stack available).
 

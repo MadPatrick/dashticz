@@ -109,7 +109,7 @@ foreach ($data['devices'] as $entry) {
     if (is_array($entry)
         && isset($entry['kind'])
         && (
-            in_array($entry['kind'], ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'lms'], true)
+            in_array($entry['kind'], ['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'xmltvguide', 'lms'], true)
             || $entry['kind'] === 'slidebutton'
         )
     ) {
@@ -134,17 +134,18 @@ foreach ($data['devices'] as $entry) {
         $title = isset($entry['title']) && is_string($entry['title'])
             ? substr(trim($entry['title']), 0, 100)
             : '';
-        if ($title === '' && !in_array($kind, ['custom', 'slidebutton', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'lms'], true)) {
+        if ($title === '' && !in_array($kind, ['custom', 'slidebutton', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'xmltvguide', 'lms'], true)) {
             dashticz_json_error(400, 'A special block title is required.');
         }
         $defaultWidth = 3;
         if ($kind === 'title' || $kind === 'slidebutton') {
             $defaultWidth = 12;
-        } elseif ($kind === 'lms' || $kind === 'iframe' || $kind === 'calendar' || $kind === 'timegraph') {
+        } elseif ($kind === 'lms' || $kind === 'iframe' || $kind === 'calendar' || $kind === 'timegraph' || $kind === 'xmltvguide') {
             // Cover (100x100) + artist/title/album (lms), an embedded page
-            // (iframe), an agenda/calendar table (calendar), or a chart
-            // (timegraph), needs more room than the generic 3-column
-            // default other special blocks start at.
+            // (iframe), an agenda/calendar table (calendar), a chart
+            // (timegraph), or a programme guide (xmltvguide), needs more
+            // room than the generic 3-column default other special blocks
+            // start at.
             $defaultWidth = 6;
         }
         $width = isset($entry['width']) ? (int)$entry['width'] : $defaultWidth;
@@ -182,8 +183,8 @@ foreach ($data['devices'] as $entry) {
             $icon = array_key_exists('icon', $entry) && is_string($entry['icon'])
                 ? substr($entry['icon'], 0, 100)
                 : null;
-        } elseif ($kind === 'group' || $kind === 'html' || $kind === 'iframe' || $kind === 'calendar' || $kind === 'publictransport') {
-            // Only Icon and Last update apply to these five (no Data/Switch/
+        } elseif ($kind === 'group' || $kind === 'html' || $kind === 'iframe' || $kind === 'calendar' || $kind === 'publictransport' || $kind === 'xmltvguide') {
+            // Only Icon and Last update apply to these six (no Data/Switch/
             // Dial - see js/deviceeditor.js's _quickOptionsHtml()).
             $icon = array_key_exists('icon', $entry) && is_string($entry['icon'])
                 ? substr($entry['icon'], 0, 100)
@@ -244,7 +245,7 @@ foreach ($data['devices'] as $entry) {
                 ) {
                     dashticz_json_error(400, 'Enter a valid calendar (ICS) URL.');
                 }
-            } else {
+            } elseif ($kind === 'publictransport') {
                 // station/tpc are otherwise just other custom fields (see
                 // _normalise_custom_device_fields() above), but this block
                 // renders nothing at all without at least one of them, so
@@ -258,6 +259,19 @@ foreach ($data['devices'] as $entry) {
                     && trim($customFields['tpc']) !== '';
                 if (!$hasStation && !$hasTpc) {
                     dashticz_json_error(400, 'Enter a station or a tpc code.');
+                }
+            } else {
+                // xmltvurl is otherwise just another custom field (see
+                // _normalise_custom_device_fields() above), but this block
+                // renders nothing at all without one, so it is required here -
+                // same reasoning as html's htmlfile requirement above.
+                if (
+                    !isset($customFields['xmltvurl'])
+                    || !is_string($customFields['xmltvurl'])
+                    || trim($customFields['xmltvurl']) === ''
+                    || strlen($customFields['xmltvurl']) > 2048
+                ) {
+                    dashticz_json_error(400, 'Enter a valid TV Guide (XMLTV) URL.');
                 }
             }
         } elseif ($kind === 'timegraph') {

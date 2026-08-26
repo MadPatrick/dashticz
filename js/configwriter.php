@@ -1767,6 +1767,24 @@ function configwriter_special_block_props($block)
         if (!empty($block['last_update'])) {
             $props['last_update'] = true;
         }
+    } elseif ($kind === 'xmltvguide') {
+        // js/components/xmltvguide.js dispatches on a truthy xmltvurl
+        // alone - no `type` of its own, same convention as
+        // html/iframe/calendar/publictransport above. xmltvurl itself is
+        // carried through custom_fields below (saveblocks.php requires
+        // and validates it for this kind).
+        $props = [
+            'width' => $width,
+        ];
+        if (trim($title) !== '') {
+            $props['title'] = $title;
+        }
+        if (array_key_exists('icon', $block) && $block['icon'] !== null) {
+            $props['icon'] = (string)$block['icon'];
+        }
+        if (!empty($block['last_update'])) {
+            $props['last_update'] = true;
+        }
     } elseif ($kind === 'lms') {
         // js/components/lms.js dispatches on type: 'lms' - unlike html/group
         // above, always written, the same as group's own type: 'group'

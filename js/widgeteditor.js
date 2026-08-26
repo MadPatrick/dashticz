@@ -2036,7 +2036,8 @@ var DashticzWidgetEditor = (function () {
         item.id === 'iframe' ||
         item.id === 'calendar' ||
         item.id === 'publictransport' ||
-        item.id === 'timegraph'
+        item.id === 'timegraph' ||
+        item.id === 'xmltvguide'
       )
         return;
       html += _widgetCardHtml(item);
@@ -2045,6 +2046,7 @@ var DashticzWidgetEditor = (function () {
     html += _calendarWidgetCardHtml();
     html += _publicTransportWidgetCardHtml();
     html += _timegraphWidgetCardHtml();
+    html += _xmltvguideWidgetCardHtml();
     html += _lmsWidgetCardHtml();
 
     html +=
@@ -2331,6 +2333,46 @@ var DashticzWidgetEditor = (function () {
     _closeModalWithoutSaving();
     DT_function.loadDTScript('js/deviceeditor.js').then(function () {
       DashticzDeviceEditor.openTimegraph();
+    });
+  }
+
+  /* TV Guide (XMLTV) is a `catalog` entry, same reasoning as iFrame/
+     Calendar/Public transport/Timegraph above: kept there so an existing
+     install's singleton 'widget_xmltvguide' block (whose settings can
+     also fall back to global settings['xmltv_*']) keeps working
+     unchanged - only the card shown *here* is replaced with a repeatable
+     one, opening the new TV Guide quick-add popup
+     (DashticzDeviceEditor.openXmltvguide()) instead of toggling
+     selectedWidgets.xmltvguide. */
+  function _xmltvguideWidgetCardHtml() {
+    var item = catalog.filter(function (candidate) {
+      return candidate.id === 'xmltvguide';
+    })[0];
+    if (!item) return '';
+    var itemTitle = _widgetTitle(item);
+    return (
+      '<div class="we-widget-card we-widget-card-xmltvguide" data-special-widget="xmltvguide" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="' +
+      item.icon +
+      '" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _widgetDescription(item) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openXmltvguideFromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openXmltvguide();
     });
   }
 
@@ -4662,6 +4704,10 @@ var DashticzWidgetEditor = (function () {
         _openTimegraphFromWidgets();
         return;
       }
+      if ($(this).data('special-widget') === 'xmltvguide') {
+        _openXmltvguideFromWidgets();
+        return;
+      }
       _toggleWidget(String($(this).data('widget-id')));
     });
 
@@ -4687,6 +4733,10 @@ var DashticzWidgetEditor = (function () {
       }
       if ($(this).data('special-widget') === 'timegraph') {
         _openTimegraphFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'xmltvguide') {
+        _openXmltvguideFromWidgets();
         return;
       }
       _toggleWidget(String($(this).data('widget-id')));
