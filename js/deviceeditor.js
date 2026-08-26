@@ -3773,10 +3773,13 @@ var DashticzDeviceEditor = (function () {
       _esc(t.close) +
       '"></button></div>';
     html += '<div class="modal-body">';
-    // Icon defaults off, same as HTML Block - the embedded page is this
-    // block's own visual, with no Domoticz device to derive an icon from.
+    // Icon defaults on, using the catalog's own iframe icon - unlike HTML
+    // Block/Calendar, iframe already has a well-known default icon
+    // (js/widgeteditor.js's _usesExplicitEditorDefaultIcon() persists this
+    // exact icon for the singleton catalog widget too, to avoid a
+    // historical no-icon regression - see its comment for context).
     html += _quickOptionsHtml('if', {
-      icon: false,
+      icon: true,
       iconValue: 'fas fa-window-maximize',
       lastUpdate: false,
       showTitle: true,

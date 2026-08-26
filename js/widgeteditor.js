@@ -2027,11 +2027,18 @@ var DashticzWidgetEditor = (function () {
       '<div class="we-widget-grid">';
 
     // Repeatable widgets (managedSpecials-based, same mechanism as Group/
-    // HTML Block) are rendered as their own always-clickable cards below
-    // instead of the normal singleton toggle card, so this loop skips
-    // them - each remains a real `catalog` entry (kept for the existing
+    // HTML Block) get their own always-clickable "click to add" card
+    // below in addition to (not instead of) the normal singleton toggle
+    // card - each remains a real `catalog` entry (kept for the existing
     // singleton 'widget_*' block's own config path, width/height/
-    // description metadata, etc.), only its card is special-cased.
+    // description metadata, etc.). The normal card is only skipped when
+    // hydration found no existing instance of that legacy shape
+    // (selectedWidgets[item.id] false): a fresh install gets just the
+    // clean repeatable card, while an existing install that already has
+    // one of these placed (any key, matched by shape - see
+    // _widgetIdFromDefinition()) keeps its familiar toggle/gear-icon
+    // card so that instance stays editable/removable exactly as before,
+    // alongside the new card for adding further independent instances.
     var repeatableWidgetIds = {
       iframe: true,
       calendar: true,
@@ -2040,7 +2047,7 @@ var DashticzWidgetEditor = (function () {
       xmltvguide: true,
     };
     catalog.forEach(function (item) {
-      if (repeatableWidgetIds[item.id]) return;
+      if (repeatableWidgetIds[item.id] && !selectedWidgets[item.id]) return;
       html += _widgetCardHtml(item);
     });
 
