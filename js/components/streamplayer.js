@@ -69,7 +69,8 @@ var DT_streamplayer = {
         var idMatch = line.match(/tvg-id="([^"]*)"/i);
         var groupMatch = line.match(/group-title="([^"]*)"/i);
         var commaIdx = line.lastIndexOf(',');
-        var displayName = commaIdx > -1 ? line.substring(commaIdx + 1).trim() : '';
+        var displayName =
+          commaIdx > -1 ? line.substring(commaIdx + 1).trim() : '';
 
         current = {
           name: (nameMatch && nameMatch[1]) || displayName,
@@ -105,12 +106,22 @@ var DT_streamplayer = {
         if (tracks.length > 0) {
           callback(tracks);
         } else {
-          console.log('StreamPlayer: ' + path + ' found but empty/invalid, falling back to config');
+          console.log(
+            'StreamPlayer: ' +
+              path +
+              ' found but empty/invalid, falling back to config'
+          );
           callback(null);
         }
       })
       .fail(function (jqXHR, textStatus) {
-        console.log('StreamPlayer: ' + path + ' not found (' + textStatus + '), falling back to config');
+        console.log(
+          'StreamPlayer: ' +
+            path +
+            ' not found (' +
+            textStatus +
+            '), falling back to config'
+        );
         callback(null);
       });
   },
@@ -386,11 +397,16 @@ var DT_streamplayer = {
 
       // Close the popup when clicking outside it or outside the toggle button
       var clickNamespace =
-        'click.stationPopup_' + (me.mountPoint || '').replace(/[^a-zA-Z0-9]/g, '');
+        'click.stationPopup_' +
+        (me.mountPoint || '').replace(/[^a-zA-Z0-9]/g, '');
       $(document)
         .off(clickNamespace)
         .on(clickNamespace, function (e) {
-          if (!$(e.target).closest(streamelement + ' .stationPopup, ' + streamelement + ' .btnList').length) {
+          if (
+            !$(e.target).closest(
+              streamelement + ' .stationPopup, ' + streamelement + ' .btnList'
+            ).length
+          ) {
             stationPopup.hide();
           }
         });
