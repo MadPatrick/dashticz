@@ -20,6 +20,32 @@ v3.45.8 beta (26-8-2026)
   `issue #201 <https://github.com/MadPatrick/dashticz/issues/201>`_'s
   request for per-instance widget settings similar to LMS.
 
+- Added M3U/M3U8 playlist support to the StreamPlayer widget. A
+  playlist placed at ``custom/radio_playlist.m3u`` (``#EXTINF`` tags
+  ``tvg-name``/``tvg-logo``/``tvg-id``/``group-title``, followed by
+  the stream URL) is loaded automatically when present and valid,
+  with a station-selection popup grouped by ``group-title`` and
+  sorted; the widget falls back to the existing configured track list
+  when the file is missing, empty or invalid. When a station's
+  ``tvg-id`` matches a locally stored logo in ``img/custom/radio/``,
+  that local image is preferred over the playlist's own remote
+  ``tvg-logo`` URL.
+
+* **Fixes**
+
+- Fixed the local-logo matching being completely inert as originally
+  submitted: the widget called ``vendor/dashticz/streamplayer.php``
+  to resolve a station's ``tvg-id`` to a local filename, but that
+  endpoint didn't exist, so the lookup always 404'd and silently fell
+  back to no local logos at all. Added it, following the existing
+  ``listcustomicons.php``/``listbackgrounds.php`` pattern (same-origin
+  GET only, ``scandir()``'d against a real path, image-extension
+  allowlist, symlinks rejected).
+
+- Async playlist/logo loading is now guarded by a per-instance
+  generation token so a rerender never duplicates event handlers or
+  leaves stale UI state behind.
+
 * **Code**
 
 - Every one of the five is implemented by extending the same
@@ -64,33 +90,6 @@ v3.45.8 beta (26-8-2026)
   new kind) and Prettier's format check; live browser verification of
   the Screen Editor flow was not possible in this environment (no
   Domoticz/Docker stack available).
-- Added M3U/M3U8 playlist support to the StreamPlayer widget. A
-  playlist placed at ``custom/radio_playlist.m3u`` (``#EXTINF`` tags
-  ``tvg-name``/``tvg-logo``/``tvg-id``/``group-title``, followed by
-  the stream URL) is loaded automatically when present and valid,
-  with a station-selection popup grouped by ``group-title`` and
-  sorted; the widget falls back to the existing configured track list
-  when the file is missing, empty or invalid. When a station's
-  ``tvg-id`` matches a locally stored logo in ``img/custom/radio/``,
-  that local image is preferred over the playlist's own remote
-  ``tvg-logo`` URL.
-
-* **Fixes**
-
-- Fixed the local-logo matching being completely inert as originally
-  submitted: the widget called ``vendor/dashticz/streamplayer.php``
-  to resolve a station's ``tvg-id`` to a local filename, but that
-  endpoint didn't exist, so the lookup always 404'd and silently fell
-  back to no local logos at all. Added it, following the existing
-  ``listcustomicons.php``/``listbackgrounds.php`` pattern (same-origin
-  GET only, ``scandir()``'d against a real path, image-extension
-  allowlist, symlinks rejected).
-
-- Async playlist/logo loading is now guarded by a per-instance
-  generation token so a rerender never duplicates event handlers or
-  leaves stale UI state behind.
-
-* **Code**
 
 - Fixed Prettier formatting mismatches in
   ``js/components/streamplayer.js`` and
