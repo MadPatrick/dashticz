@@ -65,6 +65,34 @@ v3.45.8 beta (26-8-2026)
   the Screen Editor flow was not possible in this environment (no
   Domoticz/Docker stack available).
 
+- Added Camera and News to the same repeatable-widget mechanism
+  (Screen Editor's Widgets catalog), so both can now also be placed
+  any number of times with fully independent settings, alongside
+  iFrame/Calendar/Public transport/Timegraph/TV Guide/LMS above -
+  Camera (a single image/optional MJPEG video URL per block; the
+  existing singleton's richer multi-camera tray/carousel config stays
+  available there unchanged) and News (a single RSS feed URL per
+  block; the existing singleton's global default feed/scroll-speed
+  settings stay available there unchanged). Every repeatable widget's
+  quick-add popup - iFrame/Calendar/Public transport/Timegraph/TV
+  Guide/Camera/News - no longer asks for a manual block name: the
+  reference is now auto-generated (``iframe_1``, ``iframe_2``, ...)
+  the same way LMS's popup already worked, via a shared
+  ``_nextSpecialReference()`` prefix table in js/deviceeditor.js,
+  removing the unique-name validation step and its error message from
+  each popup.
+
+- Fixed two regressions surfaced by CI after the initial iFrame/
+  Calendar/Public transport/Timegraph/TV Guide work above: the
+  Widgets catalog's normal singleton card (gear-icon config access)
+  for those five was being hidden unconditionally instead of only
+  when no legacy instance of that widget still exists, and the new
+  iFrame popup's icon defaulted off instead of on (unlike the
+  singleton catalog widget's own established default-icon behavior).
+  Verified with the full node --test suite (183 tests) and Prettier's
+  format check; live browser verification was not possible in this
+  environment (no Domoticz/Docker stack available).
+
 v3.45.7 beta (25-8-2026)
 -------------------------
 
