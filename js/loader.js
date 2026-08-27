@@ -87,6 +87,15 @@ function loader() {
       });
     })
     .then(function () {
+      return loadScript('js/customfieldpresetbehavior.js').fail(function (err) {
+        console.warn(
+          'Unable to load js/customfieldpresetbehavior.js. Custom field preset behavior fix disabled.',
+          err
+        );
+        return $.Deferred().resolve();
+      });
+    })
+    .then(function () {
       return loadScript('js/customfieldsetoptions.js').fail(function (err) {
         console.warn(
           'Unable to load js/customfieldsetoptions.js. Custom field setting suggestions disabled.',
