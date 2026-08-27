@@ -150,7 +150,7 @@ test.describe('Basic testing', () => {
     await setDeviceData(page, '9106', '');
     await expect(imageOf(page, 'hi_live_hide')).toBeHidden();
 
-    // 7. Whitespace/<br>/&nbsp; (and combinations) count as empty.
+    // 7. Whitespace/<br>/&nbsp;/&#160;/NBSP (and combinations) count as empty.
     const emptyVariants = [
       ' ',
       '\t',
@@ -159,7 +159,9 @@ test.describe('Basic testing', () => {
       '<br/>',
       '<br />',
       '&nbsp;',
-      '  \n<br>\t&nbsp;<br />  ',
+      '&#160;',
+      ' ',
+      '  \n<br>\t&nbsp;&#160; <br />  ',
     ];
     for (const variant of emptyVariants) {
       await setDeviceData(page, '9107', variant);
@@ -167,6 +169,15 @@ test.describe('Basic testing', () => {
     }
     await setDeviceData(page, '9107', 'Spa-Francorchamps');
     await expect(imageOf(page, 'hi_variants')).toBeVisible();
+
+    // 8. hideimageonempty accepts the string 'true' as well as the boolean.
+    await expect(imageOf(page, 'hi_string_true')).toBeHidden();
+
+    // 9. hideimageonempty accepts the number 1 as well as the boolean.
+    await expect(imageOf(page, 'hi_number_one')).toBeHidden();
+
+    // 10. Falls back to sValue when Data is unset.
+    await expect(imageOf(page, 'hi_svalue_fallback')).toBeVisible();
   });
 });
 
