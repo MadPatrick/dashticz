@@ -1,6 +1,6 @@
 /*global loadFiles */
 
-var _DASHTICZ_VERSION = 185;
+var _DASHTICZ_VERSION = 186;
 var head = document.getElementsByTagName('head')[0],
   script = document.createElement('script');
 
@@ -81,6 +81,15 @@ function loader() {
       return loadScript('js/customfieldpresets.js').fail(function (err) {
         console.warn(
           'Unable to load js/customfieldpresets.js. Custom field presets disabled.',
+          err
+        );
+        return $.Deferred().resolve();
+      });
+    })
+    .then(function () {
+      return loadScript('js/customfieldsetoptions.js').fail(function (err) {
+        console.warn(
+          'Unable to load js/customfieldsetoptions.js. Custom field setting suggestions disabled.',
           err
         );
         return $.Deferred().resolve();
