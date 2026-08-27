@@ -323,8 +323,26 @@ function deviceUpdateHandler(block) {
   if (device.HaveTimeout) $div.addClass('timeout');
   else $div.removeClass('timeout');
 
+  applyImageVisibility($div, block);
   addBatteryLevel($div, block);
   triggerStatus(block); //moved the second call to the end to assure that the block has been created in the DOM completely
+}
+
+/* Opt-in via block.hideimageonempty: true. Hides only the <img> itself (not
+   .col-icon) when device.Data is empty, so block layout/sizing is untouched
+   and font-icon fallbacks are unaffected. */
+function applyImageVisibility($div, block) {
+  if (!block.hideimageonempty) return;
+
+  var device = block.device;
+  var text = device && device.Data != null ? String(device.Data) : '';
+  var isEmpty =
+    text
+      .replace(/<br\s*\/?>/gi, '')
+      .replace(/&nbsp;/gi, ' ')
+      .trim() === '';
+
+  $div.find('.col-icon img').css('display', isEmpty ? 'none' : '');
 }
 
 /*add the battery level indicator*/

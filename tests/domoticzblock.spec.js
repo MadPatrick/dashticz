@@ -109,6 +109,65 @@ test.describe('Basic testing', () => {
       '19,0°C'
     );
   });
+
+  test('hideimageonempty block option', async ({ page }) => {
+    await page.waitForTimeout(1000);
+
+    // 1. hideimageonempty absent: image stays visible even with empty Data.
+    await expect(imageOf(page, 'hi_missing')).toHaveAttribute(
+      'src',
+      'img/heating.png'
+    );
+    await expect(imageOf(page, 'hi_missing')).toBeVisible();
+
+    // 2. hideimageonempty: false: image stays visible even with empty Data.
+    await expect(imageOf(page, 'hi_false')).toHaveAttribute(
+      'src',
+      'img/heating.png'
+    );
+    await expect(imageOf(page, 'hi_false')).toBeVisible();
+
+    // 3. hideimageonempty: true + Data filled: image visible.
+    await expect(imageOf(page, 'hi_true_filled')).toHaveAttribute(
+      'src',
+      'img/heating.png'
+    );
+    await expect(imageOf(page, 'hi_true_filled')).toBeVisible();
+
+    // 4. hideimageonempty: true + Data empty: image hidden, .col-icon kept.
+    await expect(imageOf(page, 'hi_true_empty')).toBeHidden();
+    await expect(
+      page.locator('[data-id="hi_true_empty"] .col-icon')
+    ).toBeVisible();
+
+    // 5. Live update: Data empty -> filled makes the image reappear.
+    await expect(imageOf(page, 'hi_live_show')).toBeHidden();
+    await setDeviceData(page, '9105', 'Dutch GP');
+    await expect(imageOf(page, 'hi_live_show')).toBeVisible();
+
+    // 6. Live update: Data filled -> empty hides the image again.
+    await expect(imageOf(page, 'hi_live_hide')).toBeVisible();
+    await setDeviceData(page, '9106', '');
+    await expect(imageOf(page, 'hi_live_hide')).toBeHidden();
+
+    // 7. Whitespace/<br>/&nbsp; (and combinations) count as empty.
+    const emptyVariants = [
+      ' ',
+      '\t',
+      '\n',
+      '<br>',
+      '<br/>',
+      '<br />',
+      '&nbsp;',
+      '  \n<br>\t&nbsp;<br />  ',
+    ];
+    for (const variant of emptyVariants) {
+      await setDeviceData(page, '9107', variant);
+      await expect(imageOf(page, 'hi_variants')).toBeHidden();
+    }
+    await setDeviceData(page, '9107', 'Spa-Francorchamps');
+    await expect(imageOf(page, 'hi_variants')).toBeVisible();
+  });
 });
 
 async function checkBlock(page, key, icon, image, title, value) {
@@ -127,4 +186,22 @@ async function checkBlock(page, key, icon, image, title, value) {
     (await expect
       .soft(locator.locator('.col-icon img'))
       .toHaveAttribute('src', image));
+}
+
+function imageOf(page, key) {
+  return page.locator('[data-id="' + key + '"] .col-icon img');
+}
+
+// Pushes a live Domoticz device update through the fake_domoticz test hook,
+// the same path a real websocket/poll update takes (Domoticz.setDevice ->
+// deviceObservable -> deviceUpdateHandler), without a page reload.
+async function setDeviceData(page, idx, data) {
+  await page.evaluate(
+    ({ idx, data }) => {
+      var device = window.Domoticz.getAllDevices(idx);
+      device.Data = data;
+      window.Domoticz.setDevice(idx, device);
+    },
+    { idx, data }
+  );
 }
