@@ -232,8 +232,6 @@
       title: 'Possible values',
       strictHint: 'Choose one of these supported values.',
       freeHint: 'Suggested values. You may also type another valid value.',
-      noPreset:
-        'This field accepts a custom value. Use the field description/example as guidance.',
       current: 'Current',
     },
     nl: {
@@ -241,8 +239,6 @@
       strictHint: 'Kies één van deze ondersteunde waarden.',
       freeHint:
         'Voorgestelde waarden. Je kunt ook zelf een andere geldige waarde typen.',
-      noPreset:
-        'Dit veld gebruikt een vrije waarde. Gebruik de beschrijving/het voorbeeld van het veld als richtlijn.',
       current: 'Huidig',
     },
   };
@@ -321,14 +317,9 @@
       '<div class="dt-custom-setting-options-menu" role="listbox">' +
       '<div class="dt-custom-setting-options-header"><strong>' +
       escapeHtml(t.title) +
-      '</strong><small>';
-
-    if (optionSet) {
-      html += escapeHtml(optionSet.strict ? t.strictHint : t.freeHint);
-    } else {
-      html += escapeHtml(t.noPreset);
-    }
-    html += '</small></div>';
+      '</strong><small>' +
+      escapeHtml(optionSet && optionSet.strict ? t.strictHint : t.freeHint) +
+      '</small></div>';
 
     if (optionSet && optionSet.values && optionSet.values.length) {
       optionSet.values.forEach(function (entry) {
@@ -387,6 +378,20 @@
     var field = fieldForSetting($setting);
     if (!field || normalise(field) === 'title') return;
 
+    var optionSet = optionsForField(field);
+    var preset = presetForField(field);
+
+    // Unknown/custom fields intentionally remain free-form. Do not show a
+    // generic overlay for them: apart from adding no useful choices, such an
+    // overlay can cover neighbouring controls (including Save in short
+    // modals). Known presets and fields with real suggestions still get the
+    // contextual menu below.
+    if (!optionSet && !preset) {
+      removeMenus();
+      $row.find('.dt-custom-setting-options-menu').remove();
+      return;
+    }
+
     removeMenus($row);
     $row.addClass('dt-setting-options-host');
     $row.find('.dt-custom-setting-options-menu').remove();
@@ -412,10 +417,10 @@
     if (document.getElementById('dt-custom-setting-options-style')) return;
     var css =
       '.dt-setting-options-host{position:relative!important;overflow:visible!important;}' +
-      '.dt-custom-setting-options-menu{position:absolute;z-index:1210;right:0;top:calc(100% + 3px);width:420px;max-width:calc(100vw - 48px);max-height:320px;overflow:auto;padding:0;background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#212529);border:1px solid var(--bs-border-color,#dee2e6);border-radius:.45rem;box-shadow:0 .5rem 1rem rgba(0,0,0,.2);}' +
-      '.dt-custom-setting-options-header{position:sticky;top:0;z-index:2;display:flex;flex-direction:column;gap:2px;padding:9px 12px;background:var(--bs-body-bg,#fff);border-bottom:1px solid var(--bs-border-color,#dee2e6);}' +
+      '.dt-custom-setting-options-menu{position:absolute;z-index:1210;right:0;top:calc(100% + 3px);width:420px;max-width:calc(100vw - 48px);max-height:320px;overflow:auto;padding:0;background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#212529);border:1px solid var(--bs-border-color,#dee2e6);border-radius:.45rem;box-shadow:0 .5rem 1rem rgba(0,0,0,.2);pointer-events:none;}' +
+      '.dt-custom-setting-options-header{position:sticky;top:0;z-index:2;display:flex;flex-direction:column;gap:2px;padding:9px 12px;background:var(--bs-body-bg,#fff);border-bottom:1px solid var(--bs-border-color,#dee2e6);pointer-events:none;}' +
       '.dt-custom-setting-options-header small{opacity:.72;font-size:.75rem;}' +
-      '.dt-custom-setting-option{display:flex;width:100%;flex-direction:column;gap:2px;padding:8px 12px;text-align:left;color:inherit;background:transparent;border:0;border-bottom:1px solid rgba(127,127,127,.12);}' +
+      '.dt-custom-setting-option{display:flex;width:100%;flex-direction:column;gap:2px;padding:8px 12px;text-align:left;color:inherit;background:var(--bs-body-bg,#fff);border:0;border-bottom:1px solid rgba(127,127,127,.12);pointer-events:auto;}' +
       '.dt-custom-setting-option:hover,.dt-custom-setting-option:focus{background:rgba(13,110,253,.12);outline:0;}' +
       '.dt-custom-setting-option.is-current{background:rgba(25,135,84,.10);}' +
       '.dt-custom-setting-option-main{display:flex;align-items:center;gap:8px;}' +
