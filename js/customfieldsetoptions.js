@@ -9,15 +9,27 @@
     hideimageonempty: {
       strict: true,
       values: [
-        ['true', 'Hide image when Data is empty', 'Afbeelding verbergen als Data leeg is'],
+        [
+          'true',
+          'Hide image when Data is empty',
+          'Afbeelding verbergen als Data leeg is',
+        ],
         ['false', 'Always show image', 'Afbeelding altijd tonen'],
       ],
     },
     multi_line: {
       strict: true,
       values: [
-        ['true', 'Show values on separate lines', 'Waarden op aparte regels tonen'],
-        ['false', 'Do not force multiple lines', 'Geen meerdere regels afdwingen'],
+        [
+          'true',
+          'Show values on separate lines',
+          'Waarden op aparte regels tonen',
+        ],
+        [
+          'false',
+          'Do not force multiple lines',
+          'Geen meerdere regels afdwingen',
+        ],
       ],
     },
     single_line: {
@@ -79,7 +91,11 @@
         ['2', 'Open in popup/frame', 'Openen in popup/frame'],
         ['3', 'HTTP GET without window', 'HTTP GET zonder venster'],
         ['4', 'HTTP POST without window', 'HTTP POST zonder venster'],
-        ['5', 'Open in separate browser window', 'Openen in apart browservenster'],
+        [
+          '5',
+          'Open in separate browser window',
+          'Openen in apart browservenster',
+        ],
       ],
     },
     colorpicker: {
@@ -92,13 +108,23 @@
     },
     switchmode: {
       strict: false,
-      values: [['color', 'Open colorpicker instead of On/Off', 'Kleurkiezer openen in plaats van Aan/Uit']],
+      values: [
+        [
+          'color',
+          'Open colorpicker instead of On/Off',
+          'Kleurkiezer openen in plaats van Aan/Uit',
+        ],
+      ],
     },
     backgroundsize: {
       strict: false,
       values: [
         ['cover', 'Fill the complete block', 'Volledige block vullen'],
-        ['contain', 'Fit complete image inside block', 'Volledige afbeelding in block passen'],
+        [
+          'contain',
+          'Fit complete image inside block',
+          'Volledige afbeelding in block passen',
+        ],
         ['80%', 'Custom percentage example', 'Voorbeeld aangepast percentage'],
         ['100%', 'Original/full percentage example', 'Voorbeeld 100%'],
       ],
@@ -163,7 +189,13 @@
     },
     mode: {
       strict: false,
-      values: [['1', 'Example: device-specific mode 1', 'Voorbeeld: device-specifieke modus 1']],
+      values: [
+        [
+          '1',
+          'Example: device-specific mode 1',
+          'Voorbeeld: device-specifieke modus 1',
+        ],
+      ],
     },
     texton: {
       strict: false,
@@ -200,14 +232,17 @@
       title: 'Possible values',
       strictHint: 'Choose one of these supported values.',
       freeHint: 'Suggested values. You may also type another valid value.',
-      noPreset: 'This field accepts a custom value. Use the field description/example as guidance.',
+      noPreset:
+        'This field accepts a custom value. Use the field description/example as guidance.',
       current: 'Current',
     },
     nl: {
       title: 'Mogelijke waarden',
       strictHint: 'Kies één van deze ondersteunde waarden.',
-      freeHint: 'Voorgestelde waarden. Je kunt ook zelf een andere geldige waarde typen.',
-      noPreset: 'Dit veld gebruikt een vrije waarde. Gebruik de beschrijving/het voorbeeld van het veld als richtlijn.',
+      freeHint:
+        'Voorgestelde waarden. Je kunt ook zelf een andere geldige waarde typen.',
+      noPreset:
+        'Dit veld gebruikt een vrije waarde. Gebruik de beschrijving/het voorbeeld van het veld als richtlijn.',
       current: 'Huidig',
     },
   };
@@ -298,7 +333,8 @@
     if (optionSet && optionSet.values && optionSet.values.length) {
       optionSet.values.forEach(function (entry) {
         var value = entry[0];
-        var description = currentLanguage() === 'nl' ? entry[2] || entry[1] : entry[1];
+        var description =
+          currentLanguage() === 'nl' ? entry[2] || entry[1] : entry[1];
         var selected = String(value) === current;
         html +=
           '<button type="button" class="dt-custom-setting-option' +
@@ -332,7 +368,9 @@
           '"><span class="dt-custom-setting-option-main"><code>' +
           escapeHtml(example) +
           '</code></span><span class="dt-custom-setting-option-description">' +
-          escapeHtml(currentLanguage() === 'nl' ? 'Voorbeeldwaarde' : 'Example value') +
+          escapeHtml(
+            currentLanguage() === 'nl' ? 'Voorbeeldwaarde' : 'Example value'
+          ) +
           '</span></button>';
       }
     }
@@ -384,7 +422,9 @@
       '.dt-custom-setting-current{margin-left:auto;padding:1px 6px;border-radius:999px;font-size:.68rem;background:rgba(25,135,84,.18);}' +
       '.dt-custom-setting-option-description{font-size:.77rem;opacity:.78;white-space:normal;}' +
       '@media(max-width:767.98px){.dt-custom-setting-options-menu{left:0;right:auto;width:calc(100vw - 48px);max-height:280px;}}';
-    $('<style id="dt-custom-setting-options-style"></style>').text(css).appendTo('head');
+    $('<style id="dt-custom-setting-options-style"></style>')
+      .text(css)
+      .appendTo('head');
   }
 
   injectStyles();

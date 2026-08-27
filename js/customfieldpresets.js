@@ -441,7 +441,8 @@
     en: {
       title: 'Available extra fields',
       hint: 'Type to filter. You can still enter a custom field manually.',
-      noResults: 'No matching preset. The typed field can still be used manually.',
+      noResults:
+        'No matching preset. The typed field can still be used manually.',
       alreadyUsed: 'Already added',
       type: 'Type',
       defaultValue: 'Default',
@@ -459,7 +460,8 @@
     nl: {
       title: 'Beschikbare extra velden',
       hint: 'Typ om te filteren. Je kunt ook nog steeds zelf een veld invoeren.',
-      noResults: 'Geen passende preset. Het getypte veld kan nog steeds handmatig worden gebruikt.',
+      noResults:
+        'Geen passende preset. Het getypte veld kan nog steeds handmatig worden gebruikt.',
       alreadyUsed: 'Al toegevoegd',
       type: 'Type',
       defaultValue: 'Standaard',
@@ -540,7 +542,9 @@
 
   function settingForInput($input) {
     var $row = rowForInput($input);
-    return $row.find('.de-custom-field-setting, .cd-custom-field-setting').first();
+    return $row
+      .find('.de-custom-field-setting, .cd-custom-field-setting')
+      .first();
   }
 
   function usedFields($input) {
@@ -568,7 +572,10 @@
 
   function removeMenus(exceptRow) {
     $('.dt-custom-field-preset-menu').each(function () {
-      if (exceptRow && $(this).closest('.dt-field-preset-host')[0] === exceptRow[0])
+      if (
+        exceptRow &&
+        $(this).closest('.dt-field-preset-host')[0] === exceptRow[0]
+      )
         return;
       $(this).remove();
     });
@@ -703,7 +710,9 @@
 
   function selectPreset($button) {
     var $row = $button.closest('.de-custom-field-row, .cd-custom-field-row');
-    var $input = $row.find('.de-custom-field-name, .cd-custom-field-name').first();
+    var $input = $row
+      .find('.de-custom-field-name, .cd-custom-field-name')
+      .first();
     var field = String($button.attr('data-field') || '');
     var preset = findPreset(field);
     if (!preset || !$input.length) return;
@@ -717,7 +726,8 @@
     // already edited setting.
     if (
       $setting.length &&
-      (previousField !== normalise(preset.field) || !$.trim(String($setting.val() || '')))
+      (previousField !== normalise(preset.field) ||
+        !$.trim(String($setting.val() || '')))
     ) {
       $setting.val(presetExample(preset)).trigger('input').trigger('change');
     }
@@ -750,7 +760,9 @@
       '.dt-custom-field-preset-example{margin-top:3px;opacity:.85;}' +
       '.dt-custom-field-preset-example code{user-select:all;}' +
       '@media(max-width:767.98px){.dt-custom-field-preset-menu{width:calc(100vw - 48px);max-height:300px;}}';
-    $('<style id="dt-custom-field-preset-style"></style>').text(css).appendTo('head');
+    $('<style id="dt-custom-field-preset-style"></style>')
+      .text(css)
+      .appendTo('head');
   }
 
   injectStyles();
