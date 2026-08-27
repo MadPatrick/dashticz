@@ -741,11 +741,11 @@
     if (document.getElementById('dt-custom-field-preset-style')) return;
     var css =
       '.dt-field-preset-host{position:relative!important;overflow:visible!important;flex-wrap:wrap!important;}' +
-      '.dt-custom-field-preset-menu{position:absolute;z-index:1200;left:0;top:calc(100% + 3px);width:620px;max-width:calc(100vw - 48px);max-height:360px;overflow:auto;padding:0;background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#212529);border:1px solid var(--bs-border-color,#dee2e6);border-radius:.45rem;box-shadow:0 .5rem 1rem rgba(0,0,0,.2);}' +
+      '.dt-custom-field-preset-menu{position:absolute;z-index:1200;left:0;top:calc(100% + 3px);width:620px;max-width:calc(100vw - 48px);max-height:360px;overflow:auto;padding:0;background:var(--bs-body-bg,#fff);color:var(--bs-body-color,#212529);border:1px solid var(--bs-border-color,#dee2e6);border-radius:.45rem;box-shadow:0 .5rem 1rem rgba(0,0,0,.2);pointer-events:none;}' +
       '.dt-custom-field-preset-menu-header{position:sticky;top:0;z-index:2;display:flex;flex-direction:column;gap:2px;padding:9px 12px;background:var(--bs-body-bg,#fff);border-bottom:1px solid var(--bs-border-color,#dee2e6);}' +
       '.dt-custom-field-preset-menu-header small{opacity:.7;font-size:.75rem;}' +
       '.dt-custom-field-preset-category{padding:6px 12px 4px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;opacity:.7;background:rgba(127,127,127,.08);}' +
-      '.dt-custom-field-preset-option{display:flex;width:100%;flex-direction:column;gap:2px;padding:8px 12px;text-align:left;color:inherit;background:transparent;border:0;border-bottom:1px solid rgba(127,127,127,.12);}' +
+      '.dt-custom-field-preset-option{display:flex;width:100%;flex-direction:column;gap:2px;padding:8px 12px;text-align:left;color:inherit;background:var(--bs-body-bg,#fff);border:0;border-bottom:1px solid rgba(127,127,127,.12);pointer-events:auto;}' +
       '.dt-custom-field-preset-option:hover,.dt-custom-field-preset-option:focus{background:rgba(13,110,253,.12);outline:0;}' +
       '.dt-custom-field-preset-option.is-used{opacity:.45;cursor:not-allowed;}' +
       '.dt-custom-field-preset-option-main{display:flex;align-items:center;gap:7px;}' +
