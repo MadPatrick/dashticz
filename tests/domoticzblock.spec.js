@@ -5,6 +5,12 @@ const compareScreenshots =
   process.platform === 'linux' &&
   (process.env.DASHTICZ_BROWSER || 'chromium') === 'chromium';
 
+// Font rasterisation and headless browser updates can move a small number of
+// antialiased pixels without changing the actual Dashticz layout. Keep visual
+// regression testing enabled, but tolerate up to 1.5% pixel difference so
+// tiny renderer-only changes do not make an otherwise correct PR fail.
+const screenshotOptions = { maxDiffPixelRatio: 0.015 };
+
 test.describe('Basic testing', () => {
   test.beforeEach(async ({ page }) => {
     // Go to the starting url before each test.
@@ -15,7 +21,10 @@ test.describe('Basic testing', () => {
     await expect(page).toHaveTitle(/Dashticz/);
     await page.waitForTimeout(1000);
     if (compareScreenshots) {
-      await expect(page.locator('.block_43_1')).toHaveScreenshot('bl_43_1.png');
+      await expect(page.locator('.block_43_1')).toHaveScreenshot(
+        'bl_43_1.png',
+        screenshotOptions
+      );
     }
     await expect(page.locator('.block_43_1 .value')).toHaveText('700W');
 
@@ -185,7 +194,7 @@ async function checkBlock(page, key, icon, image, title, value) {
   var fileName = 'bl_' + key + '.png';
   const locator = page.locator('css=[data-id="' + key + '"]');
   if (compareScreenshots) {
-    await expect.soft(locator).toHaveScreenshot(fileName);
+    await expect.soft(locator).toHaveScreenshot(fileName, screenshotOptions);
   }
   typeof value !== 'undefined' &&
     (await expect.soft(locator.locator('.value')).toHaveText(value));
