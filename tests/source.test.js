@@ -495,9 +495,17 @@ test('package and runtime versions remain synchronized', () => {
   const descriptionVersion = index.match(
     /content="Dashticz ([^"]+) - a customizable dashboard for Domoticz"/
   );
+  // The loading screen's version line is a static placeholder shown before
+  // js/version.js's initVersion() fetches version.txt and overwrites it -
+  // it must start in sync so a stale number never flashes on first paint.
+  const loaderVersion = index.match(
+    /<div class="loaderVersion">Version ([^<]+)<\/div>/
+  );
   assert.equal(runtimeVersion, packageVersion);
   assert.ok(descriptionVersion);
   assert.equal(descriptionVersion[1], packageVersion);
+  assert.ok(loaderVersion);
+  assert.equal(loaderVersion[1], packageVersion);
 });
 
 test('JavaScript and stylesheet bundles use the same cache version', () => {
