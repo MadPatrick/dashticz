@@ -69,7 +69,7 @@ refresh                   Poll interval in seconds (2-3600, default: ``5``)
 hide_when_off             ``true``: show nothing (no icon, no "Player off" text) while the player is off, instead of the usual "Player off" message. Default ``false``
 title                     ``'<string>'``: Custom title for the block
 width                     The block width
-icon                      Optional icon to show in the block. Default no icon (the cover artwork is this block's own visual)
+icon                      Optional icon to show in the block. Default no icon (the cover artwork is this block's own visual). When set, it's shown as a small badge in the top-left corner of the cover artwork itself, rather than in the usual icon column
 =======================   ===============================
 
 Networking

@@ -136,10 +136,32 @@ var DT_lms_api = {
     return text ? '<div class="' + cls + '">' + _esc(text) + '</div>' : '';
   }
 
-  function _skeletonHtml() {
+  /* The block's own configured icon/image (#217), rendered as a small badge
+     inside .lms-cover itself instead of through getColIcon()'s normal
+     .col-icon column (js/dashticz.js) - that column floats over the same
+     top-left corner the cover art occupies, so css/creative.css hides it
+     for LMS blocks (.lms-block > .col-icon) and this renders the badge
+     directly on top of the artwork instead. Mirrors getColIcon()'s
+     icon-vs-image handling so both configuration paths keep working. */
+  function _coverIconHtml(me) {
+    var icon = me.block.icon;
+    if (icon) return '<em class="' + icon + ' lms-cover-icon"></em>';
+    var image = me.block.image;
+    if (image)
+      return (
+        '<img src="img/' +
+        image +
+        '" class="lms-cover-icon lms-cover-icon-img"/>'
+      );
+    return '';
+  }
+
+  function _skeletonHtml(me) {
     return (
       '<div class="lms-block-inner">' +
-      '<div class="lms-cover"><div class="lms-cover-placeholder"><em class="fas fa-music" aria-hidden="true"></em></div></div>' +
+      '<div class="lms-cover">' +
+      _coverIconHtml(me) +
+      '<div class="lms-cover-placeholder"><em class="fas fa-music" aria-hidden="true"></em></div></div>' +
       '<div class="lms-info"><div class="lms-title">' +
       _esc(_lmsText('loading', 'Loading...')) +
       '</div></div>' +
@@ -147,23 +169,27 @@ var DT_lms_api = {
     );
   }
 
-  function _renderCover($cover, dataUrl) {
+  function _renderCover(me, $cover, dataUrl) {
+    var iconHtml = _coverIconHtml(me);
     if (!dataUrl) {
       $cover.html(
-        '<div class="lms-cover-placeholder"><em class="fas fa-music" aria-hidden="true"></em></div>'
+        iconHtml +
+          '<div class="lms-cover-placeholder"><em class="fas fa-music" aria-hidden="true"></em></div>'
       );
       return;
     }
+    $cover.html(iconHtml);
     var $img = $('<img class="lms-cover-img" alt="">');
     // A broken/expired data URL must fall back to the placeholder instead of
     // the browser's own broken-image icon (#9's "sensible placeholder").
     $img.on('error', function () {
       $cover.html(
-        '<div class="lms-cover-placeholder"><em class="fas fa-music" aria-hidden="true"></em></div>'
+        iconHtml +
+          '<div class="lms-cover-placeholder"><em class="fas fa-music" aria-hidden="true"></em></div>'
       );
     });
     $img.attr('src', dataUrl);
-    $cover.html($img);
+    $cover.append($img);
   }
 
   /* Write an inline style with !important when hiding the whole block.
@@ -315,7 +341,7 @@ var DT_lms_api = {
 
     if (!artworkKey) {
       _resetArtworkState(me);
-      _renderCover($cover, null);
+      _renderCover(me, $cover, null);
       return;
     }
 
@@ -352,12 +378,12 @@ var DT_lms_api = {
           me.lmsArtworkLoadedKey = artworkKey;
           me.lmsArtworkRetryKey = '';
           me.lmsArtworkRetryAt = 0;
-          _renderCover($cover, dataUrl);
+          _renderCover(me, $cover, dataUrl);
         } else {
           me.lmsArtworkLoadedKey = '';
           me.lmsArtworkRetryKey = artworkKey;
           me.lmsArtworkRetryAt = Date.now() + ARTWORK_RETRY_MS;
-          _renderCover($cover, null);
+          _renderCover(me, $cover, null);
         }
       })
       .catch(function () {
@@ -367,7 +393,7 @@ var DT_lms_api = {
         me.lmsArtworkLoadedKey = '';
         me.lmsArtworkRetryKey = artworkKey;
         me.lmsArtworkRetryAt = Date.now() + ARTWORK_RETRY_MS;
-        _renderCover($cover, null);
+        _renderCover(me, $cover, null);
       });
   }
 

@@ -5261,6 +5261,61 @@ test('Lyrion Music Server "Hide block when player is off" switch clears both tex
   assert.match(lmsDocs, /hide_when_off\s+``true``/);
 });
 
+test("Lyrion Music Server's configured icon renders as a badge on the cover art, not the generic icon column (#217)", () => {
+  const lms = fs.readFileSync(path.join(root, 'js/components/lms.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const lmsDocs = fs.readFileSync(
+    path.join(root, 'docs/blocks/specials/lms.rst'),
+    'utf8'
+  );
+
+  // getColIcon()'s (js/dashticz.js) generic .col-icon column floats over the
+  // same top-left corner .lms-cover's own artwork occupies, so turning the
+  // Icon toggle on for an LMS block made it collide with the cover instead
+  // of rendering as a clean addition - hidden here so lms.js renders the
+  // icon itself, directly on the artwork, instead.
+  assert.match(styles, /\.lms-block > \.col-icon \{\s*\n\s*display: none;/);
+
+  // .lms-cover is the positioning context for the badge, which is pinned to
+  // its top-left corner, above it (positive z-index) and excluded from
+  // pointer events so it never steals a click meant for the block/cover.
+  assert.match(styles, /\.lms-cover \{[\s\S]*?position: relative;/);
+  assert.match(
+    styles,
+    /\.lms-cover-icon \{[\s\S]*?position: absolute;[\s\S]*?top: 4px;[\s\S]*?left: 4px;[\s\S]*?z-index: 1;[\s\S]*?pointer-events: none;/
+  );
+
+  // js/components/lms.js builds the badge itself from the block's own icon/
+  // image config, mirroring getColIcon()'s icon-vs-image handling, and
+  // injects it into every .lms-cover render path (initial skeleton, no
+  // artwork available, freshly loaded artwork, and the broken-image
+  // fallback) so it never depends on which of those happens to run first.
+  assert.match(
+    lms,
+    /function _coverIconHtml\(me\) \{\s*\n\s*var icon = me\.block\.icon;\s*\n\s*if \(icon\) return '<em class="' \+ icon \+ ' lms-cover-icon"><\/em>';\s*\n\s*var image = me\.block\.image;/
+  );
+  assert.match(
+    lms,
+    /function _skeletonHtml\(me\) \{[\s\S]*?_coverIconHtml\(me\)/
+  );
+  assert.match(
+    lms,
+    /function _renderCover\(me, \$cover, dataUrl\) \{\s*\n\s*var iconHtml = _coverIconHtml\(me\);/
+  );
+  // Every $cover.html(...) call in _renderCover (no-artwork, error-fallback)
+  // includes iconHtml so the badge survives a re-render triggered by a
+  // track/station change or a failed artwork fetch, not just the first paint.
+  assert.equal(
+    (lms.match(/\$cover\.html\(\s*\n\s*iconHtml \+/g) || []).length,
+    2
+  );
+
+  assert.match(
+    lmsDocs,
+    /shown as a small badge in the top-left corner of the cover artwork/
+  );
+});
+
 test('Group block gets the Layout Editor config (cog) control, like HTML/LMS blocks, instead of only a drag handle', () => {
   const layoutEditor = fs.readFileSync(
     path.join(root, 'js/layouteditor.js'),
