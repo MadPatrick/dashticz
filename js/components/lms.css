@@ -16,8 +16,8 @@
   grid-template-columns: 100px 1fr;
   grid-template-rows: auto auto;
   grid-template-areas:
-    "cover info"
-    "controls controls";
+    'cover info'
+    'controls controls';
   align-items: center;
   gap: 6px 10px;
   padding: 5px;
@@ -123,7 +123,9 @@
   font-size: var(--font-small);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 .lms-btn:hover {
   background: var(--main-bg-dark-hover, var(--main-bg-dark));
