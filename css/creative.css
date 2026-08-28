@@ -369,7 +369,7 @@
 
 .dt_block .col-icon {
   margin-top: 5px;
-  width: 45px !important;
+  width: var(--icon-column-width, 45px) !important;
 }
 
 .dt_title {
@@ -3525,7 +3525,7 @@ Only add this hover on NON touch devices
 }
 
 .col-icon {
-  width: 40px !important;
+  width: var(--icon-column-width, 40px) !important;
   float: left;
   z-index: 10;
   padding-left: 5px;
@@ -3533,7 +3533,7 @@ Only add this hover on NON touch devices
 }
 
 .col-data {
-  width: calc(100% - 45px);
+  width: calc(100% - var(--icon-column-width, 45px));
   float: left;
 }
 
@@ -4179,7 +4179,7 @@ img.icon {
     margin: 2px 2px;
   }
   .dt_block .col-icon {
-    width: 36px !important;
+    width: var(--icon-column-width, 36px) !important;
     margin: 2px;
   }
   .button .dt_state,
@@ -4213,10 +4213,10 @@ img.icon {
     font-size: 30px !important;
   }
   .col-icon {
-    max-width: 26px !important;
+    max-width: var(--icon-column-width, 26px) !important;
   }
   .col-data {
-    width: calc(100% - 30px);
+    width: calc(100% - var(--icon-column-width, 26px) - 4px);
   }
 
   .trashcan {

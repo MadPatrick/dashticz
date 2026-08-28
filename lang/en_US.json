@@ -962,7 +962,8 @@
         "--font-large": "Text title (--font-large)",
         "--font-update": "Text update (--font-update)",
         "--icon-font-size": "Icon (--icon-font-size)",
-        "--icon-image-size": "Image (--icon-image-size)"
+        "--icon-image-size": "Image (--icon-image-size)",
+        "--icon-column-width": "Icon column width (--icon-column-width)"
       }
     },
     "customfieldpresets": {

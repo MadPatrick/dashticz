@@ -5316,6 +5316,74 @@ test("Lyrion Music Server's configured icon renders as a badge on the cover art,
   );
 });
 
+test('icon column width (--icon-column-width) is configurable from the Theme settings menu', () => {
+  const settingsJs = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
+  const saveCustomCss = fs.readFileSync(
+    path.join(root, 'js/savecustomcss.php'),
+    'utf8'
+  );
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const modernDark = fs.readFileSync(
+    path.join(root, 'themes/modern-dark/modern-dark.css'),
+    'utf8'
+  );
+  const liquidGlassBlue = fs.readFileSync(
+    path.join(root, 'themes/liquid-glass-blue/liquid-glass-blue.css'),
+    'utf8'
+  );
+  const liquidGlassGrey = fs.readFileSync(
+    path.join(root, 'themes/liquid-glass-grey/liquid-glass-grey.css'),
+    'utf8'
+  );
+  const enLang = JSON.parse(
+    fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8')
+  );
+  const nlLang = JSON.parse(
+    fs.readFileSync(path.join(root, 'lang/nl_NL.json'), 'utf8')
+  );
+
+  // The icon column's own box width (.col-icon, .dt_block .col-icon) was the
+  // one icon-related size still hardcoded in css/creative.css, unlike
+  // --icon-font-size/--icon-image-size (the icon glyph/image content inside
+  // that column) which are already theme variables - added to the same
+  // _THEME_ICON_VARS-driven settings panel and save allowlist those use, so
+  // it renders in the same Icon size column, no new plumbing needed.
+  assert.match(
+    settingsJs,
+    /var _THEME_ICON_VARS = \[\s*\n\s*'--icon-font-size',\s*\n\s*'--icon-image-size',\s*\n\s*'--icon-column-width',\s*\n\s*\];/
+  );
+  assert.match(saveCustomCss, /'--icon-image-size', '--icon-column-width',/);
+
+  // css/creative.css (loaded for every theme) drives both rules from the
+  // variable, keeping each rule's own current literal value as its fallback
+  // so a theme/install that never sets the variable renders unchanged.
+  assert.match(
+    styles,
+    /\.col-icon \{\s*\n\s*width: var\(--icon-column-width, 40px\) !important;/
+  );
+  assert.match(
+    styles,
+    /\.dt_block \.col-icon \{\s*\n\s*margin-top: 5px;\s*\n\s*width: var\(--icon-column-width, 45px\) !important;/
+  );
+
+  // Modern Dark/Liquid Glass Blue/Liquid Glass Grey each set an explicit
+  // default (matching the 45px .dt_block .col-icon already renders in
+  // practice, since getContainer() always adds the dt_block class) so the
+  // settings panel's field is correctly pre-filled instead of showing blank.
+  [modernDark, liquidGlassBlue, liquidGlassGrey].forEach((theme) => {
+    assert.match(theme, /--icon-column-width: 45px;/);
+  });
+
+  assert.equal(
+    enLang.settings.theme.vars['--icon-column-width'],
+    'Icon column width (--icon-column-width)'
+  );
+  assert.equal(
+    nlLang.settings.theme.vars['--icon-column-width'],
+    'Icoon kolombreedte (--icon-column-width)'
+  );
+});
+
 test('Group block gets the Layout Editor config (cog) control, like HTML/LMS blocks, instead of only a drag handle', () => {
   const layoutEditor = fs.readFileSync(
     path.join(root, 'js/layouteditor.js'),
