@@ -2742,10 +2742,13 @@
     var $popup = $(popup);
     var $customSection = $popup.find('.de-custom-fields-section');
     if (!$customSection.length || !$popup.find('#de-config-ok').length) return;
-    // Specials (Title, Separator, Group, HTML Block, LMS, Custom Device, ...)
+    // Idx-less specials (Title, Separator, HTML Block, LMS, iFrame, ...)
     // reuse this same popup template - e.g. a Title's only real control is
     // its icon/image pulldown - but have no live Domoticz Status/nValue to
     // trigger an Automation rule from, so the section makes no sense there.
+    // A Custom/Multi Device or Group special still wraps a real idx (data-
+    // block-kind reflects that, not just isSpecial - see _showConfigPopup)
+    // and keeps the section, same as a plain device.
     if ($popup.attr('data-block-kind') === 'special') return;
 
     var source = popupSource(popup);

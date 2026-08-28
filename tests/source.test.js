@@ -5604,12 +5604,18 @@ test('Bar and Slider show On/Off (not Open/Closed) for Dimmers, and Slider becom
   );
 });
 
-test('Device Config popup tags itself device/special so Automation only attaches to real devices', () => {
+test('Device Config popup tags itself device/special so Automation only attaches where there is a live device', () => {
   // Automation (Device Rules) reused this popup's DOM shape alone to decide
-  // whether to attach - so a Title/Separator/Group/... "special" being
-  // re-edited (whose only real control can be an icon/image pulldown) got
-  // an unrelated Automation section glued onto it too, since those specials
-  // have no live Domoticz Status/nValue to trigger from in the first place.
+  // whether to attach - so an idx-less special (Title, Separator, HTML
+  // Block, ...) being re-edited (whose only real control can be an
+  // icon/image pulldown) got an unrelated Automation section glued onto it
+  // too, since those have no live Domoticz Status/nValue to trigger from.
+  // A Custom/Multi Device or Group special, unlike those, still wraps a
+  // real idx (same one idxLabel/Bar/Dial already resolve from special.idx)
+  // and must keep the section, same as a plain device - a first cut of this
+  // fix that only checked isSpecial wrongly stripped Automation from every
+  // device the user gave a hand-picked block key instead of leaving it at
+  // the auto-generated device_<idx> default.
   const deviceEditor = fs.readFileSync(
     path.join(root, 'js/deviceeditor.js'),
     'utf8'
@@ -5621,11 +5627,15 @@ test('Device Config popup tags itself device/special so Automation only attaches
 
   assert.match(
     deviceEditor,
-    /var html =\s*\n\s*'<div class="modal fade de-config-popup" id="de-config-popup" data-block-kind="' \+\s*\n\s*\(isSpecial \? 'special' : 'device'\) \+\s*\n\s*'" tabindex="-1" aria-hidden="true">';/
+    /var hasLiveDevice =\s*!isSpecial \|\| \(\(isCustom \|\| isGroupBlock\) && special\.idx\);/
+  );
+  assert.match(
+    deviceEditor,
+    /var html =\s*\n\s*'<div class="modal fade de-config-popup" id="de-config-popup" data-block-kind="' \+\s*\n\s*\(hasLiveDevice \? 'device' : 'special'\) \+\s*\n\s*'" tabindex="-1" aria-hidden="true">';/
   );
   assert.match(
     devicerules,
-    /if \(!\$customSection\.length \|\| !\$popup\.find\('#de-config-ok'\)\.length\) return;\s*\n\s*\/\/[\s\S]{0,400}?if \(\$popup\.attr\('data-block-kind'\) === 'special'\) return;/
+    /if \(!\$customSection\.length \|\| !\$popup\.find\('#de-config-ok'\)\.length\) return;\s*\n\s*\/\/[\s\S]{0,600}?if \(\$popup\.attr\('data-block-kind'\) === 'special'\) return;/
   );
 });
 
