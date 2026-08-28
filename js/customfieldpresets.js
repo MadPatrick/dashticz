@@ -1,4 +1,4 @@
-/* global $, config, language */
+/* global $, language */
 //# sourceURL=js/customfieldpresets.js
 (function () {
   'use strict';
@@ -12,8 +12,8 @@
       type: 'boolean',
       defaultValue: 'false',
       example: 'true',
-      en: 'Hide the configured image when the device Data/sValue is empty.',
-      nl: 'Verberg de ingestelde afbeelding wanneer Data/sValue van het device leeg is.',
+      description:
+        'Hide the configured image when the device Data/sValue is empty.',
     },
     {
       field: 'iconOn',
@@ -21,8 +21,7 @@
       type: 'string',
       defaultValue: 'device default',
       example: 'fas fa-toggle-on',
-      en: 'Font Awesome icon to use when the device is On.',
-      nl: 'Font Awesome-icoon dat wordt gebruikt wanneer het device Aan is.',
+      description: 'Font Awesome icon to use when the device is On.',
     },
     {
       field: 'iconOff',
@@ -30,8 +29,7 @@
       type: 'string',
       defaultValue: 'device default',
       example: 'fas fa-toggle-off',
-      en: 'Font Awesome icon to use when the device is Off.',
-      nl: 'Font Awesome-icoon dat wordt gebruikt wanneer het device Uit is.',
+      description: 'Font Awesome icon to use when the device is Off.',
     },
     {
       field: 'imageOn',
@@ -39,8 +37,7 @@
       type: 'string',
       defaultValue: 'image/default',
       example: 'bulb_on.png',
-      en: 'Image from the img/ folder to use when the device is On.',
-      nl: 'Afbeelding uit de map img/ die wordt gebruikt wanneer het device Aan is.',
+      description: 'Image from the img/ folder to use when the device is On.',
     },
     {
       field: 'imageOff',
@@ -48,8 +45,7 @@
       type: 'string',
       defaultValue: 'image/default',
       example: 'bulb_off.png',
-      en: 'Image from the img/ folder to use when the device is Off.',
-      nl: 'Afbeelding uit de map img/ die wordt gebruikt wanneer het device Uit is.',
+      description: 'Image from the img/ folder to use when the device is Off.',
     },
     {
       field: 'addClass',
@@ -57,8 +53,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'myclassname',
-      en: 'Add a custom CSS class to the block.',
-      nl: 'Voeg een eigen CSS-class toe aan het block.',
+      description: 'Add a custom CSS class to the block.',
       widget: true,
     },
     {
@@ -67,9 +62,7 @@
       type: 'string',
       defaultValue: 'device value',
       example: 'On',
-      nlExample: 'Aan',
-      en: 'Text shown when the device is On.',
-      nl: 'Tekst die wordt getoond wanneer het device Aan is.',
+      description: 'Text shown when the device is On.',
     },
     {
       field: 'textOff',
@@ -77,9 +70,7 @@
       type: 'string',
       defaultValue: 'device value',
       example: 'Off',
-      nlExample: 'Uit',
-      en: 'Text shown when the device is Off.',
-      nl: 'Tekst die wordt getoond wanneer het device Uit is.',
+      description: 'Text shown when the device is Off.',
     },
     {
       field: 'unit',
@@ -87,8 +78,7 @@
       type: 'string',
       defaultValue: 'device unit',
       example: 'kW',
-      en: 'Text placed behind the displayed device value.',
-      nl: 'Tekst die achter de weergegeven devicewaarde wordt geplaatst.',
+      description: 'Text placed behind the displayed device value.',
     },
     {
       field: 'decimals',
@@ -96,8 +86,7 @@
       type: 'number',
       defaultValue: 'device default',
       example: '1',
-      en: 'Number of decimals used for the displayed value.',
-      nl: 'Aantal decimalen voor de weergegeven waarde.',
+      description: 'Number of decimals used for the displayed value.',
     },
     {
       field: 'scale',
@@ -105,8 +94,7 @@
       type: 'number',
       defaultValue: '1',
       example: '0.001',
-      en: 'Multiplier applied to the device value before display.',
-      nl: 'Vermenigvuldigingsfactor die vóór weergave op de devicewaarde wordt toegepast.',
+      description: 'Multiplier applied to the device value before display.',
     },
     {
       field: 'values',
@@ -114,8 +102,8 @@
       type: 'array',
       defaultValue: 'none',
       example: '[{"value":"<Data>"}]',
-      en: 'Define which device/subdevice values are shown. Enter valid JSON.',
-      nl: 'Bepaal welke device/subdevicewaarden worden getoond. Gebruik geldige JSON.',
+      description:
+        'Define which device/subdevice values are shown. Enter valid JSON.',
     },
     {
       field: 'multi_line',
@@ -123,8 +111,7 @@
       type: 'boolean',
       defaultValue: 'false',
       example: 'true',
-      en: 'Show multiple subvalues on separate lines.',
-      nl: 'Toon meerdere subwaarden op afzonderlijke regels.',
+      description: 'Show multiple subvalues on separate lines.',
     },
     {
       field: 'single_line',
@@ -132,8 +119,7 @@
       type: 'boolean',
       defaultValue: 'false',
       example: 'true',
-      en: 'Show multiple subvalues on one line.',
-      nl: 'Toon meerdere subwaarden op één regel.',
+      description: 'Show multiple subvalues on one line.',
     },
     {
       field: 'showsubtitles',
@@ -141,8 +127,7 @@
       type: 'number',
       defaultValue: '0',
       example: '1',
-      en: 'Show subvalue subtitles. Supported variants are 1 and 2.',
-      nl: 'Toon subtitels van subwaarden. Ondersteunde varianten zijn 1 en 2.',
+      description: 'Show subvalue subtitles. Supported variants are 1 and 2.',
     },
     {
       field: 'showvalues',
@@ -150,8 +135,7 @@
       type: 'array',
       defaultValue: 'all',
       example: '[1,2]',
-      en: 'Array of subvalue numbers to display. Enter valid JSON.',
-      nl: 'Array met nummers van subwaarden die getoond worden. Gebruik geldige JSON.',
+      description: 'Array of subvalue numbers to display. Enter valid JSON.',
     },
     {
       field: 'sortOrder',
@@ -159,8 +143,7 @@
       type: 'number',
       defaultValue: '0',
       example: '1',
-      en: 'Selector sorting: 0 none, 1 ascending, -1 descending.',
-      nl: 'Sortering van selectors: 0 geen, 1 oplopend, -1 aflopend.',
+      description: 'Selector sorting: 0 none, 1 ascending, -1 descending.',
     },
     {
       field: 'batteryThreshold',
@@ -168,8 +151,7 @@
       type: 'number',
       defaultValue: 'global setting',
       example: '15',
-      en: 'Show the battery warning below this percentage.',
-      nl: 'Toon de batterijwaarschuwing onder dit percentage.',
+      description: 'Show the battery warning below this percentage.',
     },
     {
       field: 'flash',
@@ -177,8 +159,8 @@
       type: 'number',
       defaultValue: '0',
       example: '500',
-      en: 'Flash the block after a value change for this many milliseconds.',
-      nl: 'Laat het block na een waardewijziging dit aantal milliseconden knipperen.',
+      description:
+        'Flash the block after a value change for this many milliseconds.',
     },
     {
       field: 'hide_stop',
@@ -186,8 +168,7 @@
       type: 'boolean',
       defaultValue: 'false',
       example: 'true',
-      en: 'Hide the Stop button for supported devices such as blinds.',
-      nl: 'Verberg de Stop-knop voor ondersteunde devices, zoals zonwering.',
+      description: 'Hide the Stop button for supported devices such as blinds.',
     },
     {
       field: 'protected',
@@ -195,8 +176,7 @@
       type: 'boolean',
       defaultValue: 'false',
       example: 'true',
-      en: 'Prevent manual switching from Dashticz.',
-      nl: 'Voorkom handmatig schakelen vanuit Dashticz.',
+      description: 'Prevent manual switching from Dashticz.',
     },
     {
       field: 'confirmation',
@@ -204,8 +184,7 @@
       type: 'number',
       defaultValue: '0',
       example: '1',
-      en: 'Ask for confirmation before changing a switch device.',
-      nl: 'Vraag om bevestiging voordat een schakeldevice wordt gewijzigd.',
+      description: 'Ask for confirmation before changing a switch device.',
     },
     {
       field: 'password',
@@ -213,8 +192,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'secret',
-      en: 'Password-protect supported switch actions.',
-      nl: 'Beveilig ondersteunde schakelacties met een wachtwoord.',
+      description: 'Password-protect supported switch actions.',
     },
     {
       field: 'playsound',
@@ -222,8 +200,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'sounds/ping.mp3',
-      en: 'Play a sound when the device changes.',
-      nl: 'Speel een geluid af wanneer het device verandert.',
+      description: 'Play a sound when the device changes.',
     },
     {
       field: 'playsoundOn',
@@ -231,8 +208,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'sounds/ping.mp3',
-      en: 'Play a sound when the device changes to On.',
-      nl: 'Speel een geluid af wanneer het device naar Aan verandert.',
+      description: 'Play a sound when the device changes to On.',
     },
     {
       field: 'playsoundOff',
@@ -240,8 +216,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'sounds/ping.mp3',
-      en: 'Play a sound when the device changes to Off.',
-      nl: 'Speel een geluid af wanneer het device naar Uit verandert.',
+      description: 'Play a sound when the device changes to Off.',
     },
     {
       field: 'speak',
@@ -249,9 +224,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'Device status has changed',
-      nlExample: 'Device status is gewijzigd',
-      en: 'Speak text when the device changes.',
-      nl: 'Spreek tekst uit wanneer het device verandert.',
+      description: 'Speak text when the device changes.',
     },
     {
       field: 'speakOn',
@@ -259,9 +232,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'Device is on',
-      nlExample: 'Device is aan',
-      en: 'Speak text when the device changes to On.',
-      nl: 'Spreek tekst uit wanneer het device naar Aan verandert.',
+      description: 'Speak text when the device changes to On.',
     },
     {
       field: 'speakOff',
@@ -269,9 +240,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'Device is off',
-      nlExample: 'Device is uit',
-      en: 'Speak text when the device changes to Off.',
-      nl: 'Spreek tekst uit wanneer het device naar Uit verandert.',
+      description: 'Speak text when the device changes to Off.',
     },
     {
       field: 'gotoslide',
@@ -279,8 +248,7 @@
       type: 'number',
       defaultValue: 'none',
       example: '2',
-      en: 'Go to this screen when the device changes.',
-      nl: 'Ga naar dit scherm wanneer het device verandert.',
+      description: 'Go to this screen when the device changes.',
     },
     {
       field: 'gotoslideOn',
@@ -288,8 +256,7 @@
       type: 'number',
       defaultValue: 'none',
       example: '2',
-      en: 'Go to this screen when the device changes to On.',
-      nl: 'Ga naar dit scherm wanneer het device naar Aan verandert.',
+      description: 'Go to this screen when the device changes to On.',
     },
     {
       field: 'gotoslideOff',
@@ -297,8 +264,7 @@
       type: 'number',
       defaultValue: 'none',
       example: '2',
-      en: 'Go to this screen when the device changes to Off.',
-      nl: 'Ga naar dit scherm wanneer het device naar Uit verandert.',
+      description: 'Go to this screen when the device changes to Off.',
     },
     {
       field: 'openpopup',
@@ -306,8 +272,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'popup_name',
-      en: 'Open a configured popup when the device changes.',
-      nl: 'Open een ingestelde popup wanneer het device verandert.',
+      description: 'Open a configured popup when the device changes.',
     },
     {
       field: 'openpopupOn',
@@ -315,8 +280,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'popup_name',
-      en: 'Open a configured popup when the device changes to On.',
-      nl: 'Open een ingestelde popup wanneer het device naar Aan verandert.',
+      description: 'Open a configured popup when the device changes to On.',
     },
     {
       field: 'openpopupOff',
@@ -324,8 +288,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'popup_name',
-      en: 'Open a configured popup when the device changes to Off.',
-      nl: 'Open een ingestelde popup wanneer het device naar Uit verandert.',
+      description: 'Open a configured popup when the device changes to Off.',
     },
     {
       field: 'popup',
@@ -333,8 +296,7 @@
       type: 'string',
       defaultValue: 'automatic',
       example: 'popup_graph',
-      en: 'Use a configured popup definition for this block.',
-      nl: 'Gebruik een ingestelde popupdefinitie voor dit block.',
+      description: 'Use a configured popup definition for this block.',
       widget: true,
     },
     {
@@ -343,8 +305,7 @@
       type: 'boolean',
       defaultValue: 'device default',
       example: 'false',
-      en: 'Enable or disable the click graph for supported devices.',
-      nl: 'Schakel de klikgrafiek voor ondersteunde devices in of uit.',
+      description: 'Enable or disable the click graph for supported devices.',
     },
     {
       field: 'url',
@@ -352,8 +313,7 @@
       type: 'string',
       defaultValue: 'none',
       example: 'https://example.com',
-      en: 'URL opened when a supported block is clicked.',
-      nl: 'URL die wordt geopend wanneer op een ondersteund block wordt geklikt.',
+      description: 'URL opened when a supported block is clicked.',
       widget: true,
     },
     {
@@ -362,8 +322,8 @@
       type: 'number',
       defaultValue: '2',
       example: '2',
-      en: 'URL click mode: 0 same window, 1 tab, 2 frame, 3 GET, 4 POST, 5 window.',
-      nl: 'URL-klikmodus: 0 zelfde venster, 1 tab, 2 frame, 3 GET, 4 POST, 5 venster.',
+      description:
+        'URL click mode: 0 same window, 1 tab, 2 frame, 3 GET, 4 POST, 5 window.',
       widget: true,
     },
     {
@@ -372,8 +332,8 @@
       type: 'string / idx',
       defaultValue: 'none',
       example: 'https://example.com/image.jpg',
-      en: 'Background image URL or Domoticz text-device idx containing the URL.',
-      nl: 'URL van de achtergrondafbeelding of IDX van een Domoticz text-device met de URL.',
+      description:
+        'Background image URL or Domoticz text-device idx containing the URL.',
       widget: true,
     },
     {
@@ -382,8 +342,7 @@
       type: 'string',
       defaultValue: 'cover',
       example: 'contain',
-      en: 'Background sizing, for example cover, contain or 80%.',
-      nl: 'Formaat van de achtergrond, bijvoorbeeld cover, contain of 80%.',
+      description: 'Background sizing, for example cover, contain or 80%.',
       widget: true,
     },
     {
@@ -392,8 +351,7 @@
       type: 'number / string',
       defaultValue: '1',
       example: '0.5',
-      en: 'Opacity of the configured background image.',
-      nl: 'Dekking van de ingestelde achtergrondafbeelding.',
+      description: 'Opacity of the configured background image.',
       widget: true,
     },
     {
@@ -402,8 +360,8 @@
       type: 'number',
       defaultValue: '0',
       example: '2',
-      en: 'RGB colorpicker mode: 0 disabled, 1 old style, 2 new style.',
-      nl: 'RGB-kleurkiezer: 0 uit, 1 oude stijl, 2 nieuwe stijl.',
+      description:
+        'RGB colorpicker mode: 0 disabled, 1 old style, 2 new style.',
     },
     {
       field: 'colorpickerscale',
@@ -411,8 +369,7 @@
       type: 'number',
       defaultValue: '1',
       example: '1.5',
-      en: 'Relative scale of colorpicker mode 2.',
-      nl: 'Relatieve schaal van kleurkiezer type 2.',
+      description: 'Relative scale of colorpicker mode 2.',
     },
     {
       field: 'mode',
@@ -420,8 +377,8 @@
       type: 'number / string',
       defaultValue: 'device default',
       example: '1',
-      en: 'Device-specific mode; only use when the relevant block documentation requires it.',
-      nl: 'Device-specifieke modus; alleen gebruiken wanneer de betreffende blockdocumentatie dit vereist.',
+      description:
+        'Device-specific mode; only use when the relevant block documentation requires it.',
     },
     {
       field: 'switchMode',
@@ -429,8 +386,8 @@
       type: 'string',
       defaultValue: 'switch',
       example: 'color',
-      en: 'For supported RGB devices, open the colorpicker instead of toggling On/Off.',
-      nl: 'Open bij ondersteunde RGB-devices de kleurkiezer in plaats van Aan/Uit te schakelen.',
+      description:
+        'For supported RGB devices, open the colorpicker instead of toggling On/Off.',
     },
   ];
 
@@ -444,81 +401,49 @@
     'advanced',
   ];
 
-  var TEXT = {
-    en: {
-      title: 'Available extra fields',
-      hint: 'Type to filter. You can still enter a custom field manually.',
-      noResults:
-        'No matching preset. The typed field can still be used manually.',
-      alreadyUsed: 'Already added',
-      type: 'Type',
-      defaultValue: 'Default',
-      example: 'Example',
-      categories: {
-        visual: 'Image / icon',
-        data: 'Data / display',
-        behaviour: 'Behaviour',
-        actions: 'Actions on change',
-        navigation: 'Popup / navigation',
-        background: 'Background',
-        advanced: 'Advanced',
-      },
-    },
-    nl: {
-      title: 'Beschikbare extra velden',
-      hint: 'Typ om te filteren. Je kunt ook nog steeds zelf een veld invoeren.',
-      noResults:
-        'Geen passende preset. Het getypte veld kan nog steeds handmatig worden gebruikt.',
-      alreadyUsed: 'Al toegevoegd',
-      type: 'Type',
-      defaultValue: 'Standaard',
-      example: 'Voorbeeld',
-      categories: {
-        visual: 'Afbeelding / icoon',
-        data: 'Data / weergave',
-        behaviour: 'Gedrag',
-        actions: 'Acties bij wijziging',
-        navigation: 'Popup / navigatie',
-        background: 'Achtergrond',
-        advanced: 'Geavanceerd',
-      },
-    },
-  };
-
-  function currentLanguage() {
+  function _translations() {
     var configured =
-      typeof config !== 'undefined' && config && config.language
-        ? String(config.language)
-        : '';
-    if (/^nl(?:_|-|$)/i.test(configured)) return 'nl';
-
-    if (
       typeof language !== 'undefined' &&
-      language &&
       language.settings &&
-      language.settings.deviceeditor &&
-      /^(Veld|Instelling|Apparaat|Weergave)/i.test(
-        String(language.settings.deviceeditor.field || '') +
-          String(language.settings.deviceeditor.setting || '') +
-          String(language.settings.deviceeditor.device_config || '')
-      )
-    )
-      return 'nl';
-
-    return 'en';
+      language.settings.customfieldpresets
+        ? language.settings.customfieldpresets
+        : {};
+    return $.extend(
+      {
+        title: 'Available extra fields',
+        hint: 'Type to filter. You can still enter a custom field manually.',
+        noResults:
+          'No matching preset. The typed field can still be used manually.',
+        alreadyUsed: 'Already added',
+        type: 'Type',
+        defaultValue: 'Default',
+        example: 'Example',
+        categories: {
+          visual: 'Image / icon',
+          data: 'Data / display',
+          behaviour: 'Behaviour',
+          actions: 'Actions on change',
+          navigation: 'Popup / navigation',
+          background: 'Background',
+          advanced: 'Advanced',
+        },
+        presets: {},
+      },
+      configured
+    );
   }
 
-  function labels() {
-    return TEXT[currentLanguage()] || TEXT.en;
+  function presetTranslation(preset) {
+    var presets = _translations().presets || {};
+    return presets[preset.field] || {};
   }
 
   function presetDescription(preset) {
-    return currentLanguage() === 'nl' ? preset.nl : preset.en;
+    return presetTranslation(preset).description || preset.description;
   }
 
   function presetExample(preset) {
-    if (currentLanguage() === 'nl' && preset.nlExample) return preset.nlExample;
-    return preset.example;
+    return presetTranslation(preset).example || preset.example;
   }
 
   function escapeHtml(value) {
@@ -627,7 +552,7 @@
       return;
     }
 
-    var t = labels();
+    var t = _translations();
     $info
       .html(
         '<div class="dt-custom-field-preset-meta"><strong>' +
@@ -667,7 +592,7 @@
   }
 
   function menuHtml($input) {
-    var t = labels();
+    var t = _translations();
     var query = normalise($input.val());
     var used = usedFields($input);
     var current = normalise($input.val());
@@ -855,5 +780,7 @@
     presets: PRESETS.slice(),
     find: findPreset,
     presetsForContext: presetsForContext,
+    description: presetDescription,
+    example: presetExample,
   };
 })();

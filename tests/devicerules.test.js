@@ -141,6 +141,12 @@ function createRuntime(initialBlocks = {}, liveDevices = {}) {
     if (value && value.__testCollection) return value;
     return emptyCollection();
   }
+  jQuery.extend = function extend() {
+    const args = Array.prototype.slice.call(arguments);
+    const target = args.shift() || {};
+    args.forEach((source) => Object.assign(target, source));
+    return target;
+  };
 
   const window = {
     blocks,

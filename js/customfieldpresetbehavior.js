@@ -24,6 +24,17 @@
       : [];
   }
 
+  function presetDescription(preset) {
+    if (
+      typeof DashticzCustomFieldPresets !== 'undefined' &&
+      DashticzCustomFieldPresets &&
+      typeof DashticzCustomFieldPresets.description === 'function'
+    ) {
+      return DashticzCustomFieldPresets.description(preset);
+    }
+    return preset.description;
+  }
+
   function matchingPresets(query, context) {
     var presets = presetsForContext(context);
     var wanted = normalise(query);
@@ -34,8 +45,7 @@
         preset.field,
         preset.category,
         preset.type,
-        preset.en,
-        preset.nl,
+        presetDescription(preset),
       ]
         .join(' ')
         .toLowerCase();
