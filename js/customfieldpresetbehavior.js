@@ -9,19 +9,27 @@
     return $.trim(String(value || '')).toLowerCase();
   }
 
-  function matchingPresets(query) {
+  function presetsForContext(context) {
     if (
       typeof DashticzCustomFieldPresets === 'undefined' ||
-      !DashticzCustomFieldPresets ||
-      !Array.isArray(DashticzCustomFieldPresets.presets)
+      !DashticzCustomFieldPresets
     ) {
       return [];
     }
+    if (typeof DashticzCustomFieldPresets.presetsForContext === 'function') {
+      return DashticzCustomFieldPresets.presetsForContext(context) || [];
+    }
+    return Array.isArray(DashticzCustomFieldPresets.presets)
+      ? DashticzCustomFieldPresets.presets
+      : [];
+  }
 
+  function matchingPresets(query, context) {
+    var presets = presetsForContext(context);
     var wanted = normalise(query);
-    if (!wanted) return DashticzCustomFieldPresets.presets.slice();
+    if (!wanted) return presets.slice();
 
-    return DashticzCustomFieldPresets.presets.filter(function (preset) {
+    return presets.filter(function (preset) {
       var haystack = [
         preset.field,
         preset.category,
@@ -36,7 +44,15 @@
   }
 
   function rowForInput($input) {
-    return $input.closest('.de-custom-field-row, .cd-custom-field-row');
+    return $input.closest(
+      '.de-custom-field-row, .cd-custom-field-row, .we-custom-field-row'
+    );
+  }
+
+  function contextForInput($input) {
+    return rowForInput($input).hasClass('we-custom-field-row')
+      ? 'widget'
+      : 'device';
   }
 
   function closePresetMenu($row) {
@@ -53,11 +69,14 @@
   // below the row (notably Save in the compact Custom Device dialog).
   $(document).on(
     'input.dtCustomFieldPresetBehavior',
-    '.de-custom-field-name:not([readonly]), .cd-custom-field-name:not([readonly])',
+    '.de-custom-field-name:not([readonly]), .cd-custom-field-name:not([readonly]), .we-custom-field-name:not([readonly])',
     function () {
       var $input = $(this);
       var query = normalise($input.val());
-      if (query && matchingPresets(query).length === 0) {
+      if (
+        query &&
+        matchingPresets(query, contextForInput($input)).length === 0
+      ) {
         closePresetMenu(rowForInput($input));
       }
     }
@@ -67,7 +86,7 @@
   // Close it immediately instead of leaving a floating menu behind.
   $(document).on(
     'focus.dtCustomFieldPresetBehavior click.dtCustomFieldPresetBehavior',
-    '.de-custom-field-setting, .cd-custom-field-setting',
+    '.de-custom-field-setting, .cd-custom-field-setting, .we-custom-field-setting',
     function () {
       closePresetMenu();
     }

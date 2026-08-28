@@ -59,6 +59,7 @@
       example: 'myclassname',
       en: 'Add a custom CSS class to the block.',
       nl: 'Voeg een eigen CSS-class toe aan het block.',
+      widget: true,
     },
     {
       field: 'textOn',
@@ -334,6 +335,7 @@
       example: 'popup_graph',
       en: 'Use a configured popup definition for this block.',
       nl: 'Gebruik een ingestelde popupdefinitie voor dit block.',
+      widget: true,
     },
     {
       field: 'graph',
@@ -352,6 +354,7 @@
       example: 'https://example.com',
       en: 'URL opened when a supported block is clicked.',
       nl: 'URL die wordt geopend wanneer op een ondersteund block wordt geklikt.',
+      widget: true,
     },
     {
       field: 'newwindow',
@@ -361,6 +364,7 @@
       example: '2',
       en: 'URL click mode: 0 same window, 1 tab, 2 frame, 3 GET, 4 POST, 5 window.',
       nl: 'URL-klikmodus: 0 zelfde venster, 1 tab, 2 frame, 3 GET, 4 POST, 5 venster.',
+      widget: true,
     },
     {
       field: 'backgroundimage',
@@ -370,6 +374,7 @@
       example: 'https://example.com/image.jpg',
       en: 'Background image URL or Domoticz text-device idx containing the URL.',
       nl: 'URL van de achtergrondafbeelding of IDX van een Domoticz text-device met de URL.',
+      widget: true,
     },
     {
       field: 'backgroundsize',
@@ -379,6 +384,7 @@
       example: 'contain',
       en: 'Background sizing, for example cover, contain or 80%.',
       nl: 'Formaat van de achtergrond, bijvoorbeeld cover, contain of 80%.',
+      widget: true,
     },
     {
       field: 'backgroundopacity',
@@ -388,6 +394,7 @@
       example: '0.5',
       en: 'Opacity of the configured background image.',
       nl: 'Dekking van de ingestelde achtergrondafbeelding.',
+      widget: true,
     },
     {
       field: 'colorpicker',
@@ -530,26 +537,46 @@
   function isSupportedFieldInput(element) {
     var $input = $(element);
     if ($input.prop('readonly') || $input.prop('disabled')) return false;
+    // The icon/image pulldown (a <select>, not a free-text field) also
+    // carries the de-custom-field-name/we-custom-field-name class - it must
+    // only ever offer "Icon"/"Image", never a field-name suggestion menu.
+    if ($input.hasClass('de-icon-source') || $input.hasClass('we-icon-source'))
+      return false;
     return (
       $input.hasClass('de-custom-field-name') ||
-      $input.hasClass('cd-custom-field-name')
+      $input.hasClass('cd-custom-field-name') ||
+      $input.hasClass('we-custom-field-name')
     );
   }
 
+  function isWidgetRow($row) {
+    return $row.hasClass('we-custom-field-row');
+  }
+
+  function contextForInput($input) {
+    return isWidgetRow(rowForInput($input)) ? 'widget' : 'device';
+  }
+
   function rowForInput($input) {
-    return $input.closest('.de-custom-field-row, .cd-custom-field-row');
+    return $input.closest(
+      '.de-custom-field-row, .cd-custom-field-row, .we-custom-field-row'
+    );
   }
 
   function settingForInput($input) {
     var $row = rowForInput($input);
     return $row
-      .find('.de-custom-field-setting, .cd-custom-field-setting')
+      .find(
+        '.de-custom-field-setting, .cd-custom-field-setting, .we-custom-field-setting'
+      )
       .first();
   }
 
   function usedFields($input) {
     var used = {};
-    $('.de-custom-field-name, .cd-custom-field-name').each(function () {
+    $(
+      '.de-custom-field-name, .cd-custom-field-name, .we-custom-field-name'
+    ).each(function () {
       if (this === $input[0]) return;
       var value = normalise($(this).val());
       if (value) used[value] = true;
@@ -557,10 +584,17 @@
     return used;
   }
 
-  function findPreset(field) {
+  function presetsForContext(context) {
+    if (context !== 'widget') return PRESETS;
+    return PRESETS.filter(function (preset) {
+      return preset.widget === true;
+    });
+  }
+
+  function findPreset(field, context) {
     var wanted = normalise(field);
     var found = null;
-    PRESETS.some(function (preset) {
+    presetsForContext(context).some(function (preset) {
       if (normalise(preset.field) === wanted) {
         found = preset;
         return true;
@@ -637,6 +671,7 @@
     var query = normalise($input.val());
     var used = usedFields($input);
     var current = normalise($input.val());
+    var contextPresets = presetsForContext(contextForInput($input));
     var html =
       '<div class="dt-custom-field-preset-menu" role="listbox">' +
       '<div class="dt-custom-field-preset-menu-header"><strong>' +
@@ -647,7 +682,7 @@
     var count = 0;
 
     CATEGORY_ORDER.forEach(function (category) {
-      var items = PRESETS.filter(function (preset) {
+      var items = contextPresets.filter(function (preset) {
         return preset.category === category && presetMatches(preset, query);
       });
       if (!items.length) return;
@@ -705,13 +740,17 @@
     $row.addClass('dt-field-preset-host');
     $row.find('.dt-custom-field-preset-menu').remove();
     $row.append(menuHtml($input));
-    renderInfo($input, findPreset($input.val()));
+    renderInfo($input, findPreset($input.val(), contextForInput($input)));
   }
 
   function selectPreset($button) {
-    var $row = $button.closest('.de-custom-field-row, .cd-custom-field-row');
+    var $row = $button.closest(
+      '.de-custom-field-row, .cd-custom-field-row, .we-custom-field-row'
+    );
     var $input = $row
-      .find('.de-custom-field-name, .cd-custom-field-name')
+      .find(
+        '.de-custom-field-name, .cd-custom-field-name, .we-custom-field-name'
+      )
       .first();
     var field = String($button.attr('data-field') || '');
     var preset = findPreset(field);
@@ -767,9 +806,12 @@
 
   injectStyles();
 
+  var FIELD_INPUT_SELECTOR =
+    '.de-custom-field-name:not([readonly]), .cd-custom-field-name:not([readonly]), .we-custom-field-name:not([readonly])';
+
   $(document).on(
     'focus.dtCustomFieldPresets click.dtCustomFieldPresets',
-    '.de-custom-field-name:not([readonly]), .cd-custom-field-name:not([readonly])',
+    FIELD_INPUT_SELECTOR,
     function () {
       openMenu($(this));
     }
@@ -777,11 +819,11 @@
 
   $(document).on(
     'input.dtCustomFieldPresets',
-    '.de-custom-field-name:not([readonly]), .cd-custom-field-name:not([readonly])',
+    FIELD_INPUT_SELECTOR,
     function () {
       var $input = $(this);
       openMenu($input);
-      renderInfo($input, findPreset($input.val()));
+      renderInfo($input, findPreset($input.val(), contextForInput($input)));
     }
   );
 
@@ -798,7 +840,7 @@
   $(document).on('mousedown.dtCustomFieldPresets', function (event) {
     if (
       $(event.target).closest(
-        '.dt-custom-field-preset-menu, .de-custom-field-name, .cd-custom-field-name'
+        '.dt-custom-field-preset-menu, .de-custom-field-name, .cd-custom-field-name, .we-custom-field-name'
       ).length
     )
       return;
@@ -812,5 +854,6 @@
   window.DashticzCustomFieldPresets = {
     presets: PRESETS.slice(),
     find: findPreset,
+    presetsForContext: presetsForContext,
   };
 })();

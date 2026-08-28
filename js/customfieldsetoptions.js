@@ -269,13 +269,17 @@
   }
 
   function rowForSetting($setting) {
-    return $setting.closest('.de-custom-field-row, .cd-custom-field-row');
+    return $setting.closest(
+      '.de-custom-field-row, .cd-custom-field-row, .we-custom-field-row'
+    );
   }
 
   function fieldForSetting($setting) {
     return String(
       rowForSetting($setting)
-        .find('.de-custom-field-name, .cd-custom-field-name')
+        .find(
+          '.de-custom-field-name, .cd-custom-field-name, .we-custom-field-name'
+        )
         .first()
         .val() || ''
     );
@@ -399,9 +403,13 @@
   }
 
   function selectValue($button) {
-    var $row = $button.closest('.de-custom-field-row, .cd-custom-field-row');
+    var $row = $button.closest(
+      '.de-custom-field-row, .cd-custom-field-row, .we-custom-field-row'
+    );
     var $setting = $row
-      .find('.de-custom-field-setting, .cd-custom-field-setting')
+      .find(
+        '.de-custom-field-setting, .cd-custom-field-setting, .we-custom-field-setting'
+      )
       .first();
     if (!$setting.length) return;
 
@@ -436,7 +444,7 @@
 
   $(document).on(
     'focus.dtCustomSettingOptions click.dtCustomSettingOptions',
-    '.de-custom-field-setting, .cd-custom-field-setting',
+    '.de-custom-field-setting, .cd-custom-field-setting, .we-custom-field-setting',
     function () {
       openMenu($(this));
     }
@@ -455,7 +463,7 @@
   $(document).on('mousedown.dtCustomSettingOptions', function (event) {
     if (
       $(event.target).closest(
-        '.dt-custom-setting-options-menu, .de-custom-field-setting, .cd-custom-field-setting'
+        '.dt-custom-setting-options-menu, .de-custom-field-setting, .cd-custom-field-setting, .we-custom-field-setting'
       ).length
     )
       return;

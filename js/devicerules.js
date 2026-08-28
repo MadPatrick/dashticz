@@ -1205,6 +1205,19 @@
     return { source: candidates[0] || 'device', entry: null };
   }
 
+  // Cheap "is there an enabled Automation rule for this block" check for the
+  // live dashboard's automation-active indicator - does not evaluate
+  // whether any rule's trigger currently matches, only whether one exists.
+  function hasEnabledRules(block) {
+    if (!block) return false;
+    var resolved = entryForBlock(block);
+    if (!resolved.entry) return false;
+    var rules = normaliseRules(resolved.entry.rules, resolved.source);
+    return rules.some(function (rule) {
+      return rule.enabled !== false;
+    });
+  }
+
   function process(block, resolved) {
     if (!block || !block.device) return;
     resolved = resolved || entryForBlock(block);
@@ -2729,6 +2742,11 @@
     var $popup = $(popup);
     var $customSection = $popup.find('.de-custom-fields-section');
     if (!$customSection.length || !$popup.find('#de-config-ok').length) return;
+    // Specials (Title, Separator, Group, HTML Block, LMS, Custom Device, ...)
+    // reuse this same popup template - e.g. a Title's only real control is
+    // its icon/image pulldown - but have no live Domoticz Status/nValue to
+    // trigger an Automation rule from, so the section makes no sense there.
+    if ($popup.attr('data-block-kind') === 'special') return;
 
     var source = popupSource(popup);
     if (!source) return;
@@ -2960,6 +2978,7 @@
     syncAutomationAddClassCustomField: syncAutomationAddClassCustomField,
     process: process,
     enhancePopup: enhancePopup,
+    hasEnabledRules: hasEnabledRules,
     tryWrap: tryWrapGetCustomFunction,
     generatedDeclarations: generatedDeclarations,
     generatedBlockSelectors: generatedBlockSelectors,

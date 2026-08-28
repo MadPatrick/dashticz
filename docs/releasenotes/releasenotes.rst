@@ -25,7 +25,37 @@ v3.45.10 beta (27-8-2026)
   labels/buttons, 12px help/metadata text - technical identifiers
   like IDX badges keep/gain a monospace face.
 
+* **Enhancements**
+
+- Added a small dot indicator in a device block's bottom-left corner,
+  shown whenever the block has at least one enabled Automation
+  (Device Rules) rule configured for it. Opt out per block via
+  ``automation_indicator: false``; the indicator updates live on the
+  next device update, no page reload needed.
+
+- Extended the Device Config popup's custom-field suggestion systems
+  (field-name presets and value suggestions) to also cover the Widget
+  Editor's own custom fields, filtered to a block-type-agnostic
+  preset subset (``addClass``, ``popup``, ``url``, ``newwindow``,
+  ``backgroundimage``, ``backgroundsize``, ``backgroundopacity``)
+  instead of every device-oriented preset (``textOn``, ``iconOn``,
+  ``batteryThreshold``, ...) that would never apply to a widget.
+
 * **Fixes**
+
+- Fixed the Automation (Device Rules) section attaching to the
+  Device Config popup even when editing a special block (Title,
+  Separator, Group, HTML Block, LMS, Custom Device, Multi Device,
+  iFrame, Calendar, Public Transport, Timegraph, XMLTV Guide) - that
+  popup is reused for both real Domoticz devices and re-editing
+  already-placed specials, but Device Rules only recognized it by DOM
+  shape, not block type, so a special whose only real control is an
+  icon/image pulldown still got an unrelated Automation section, even
+  though it has no live Status/nValue to trigger from.
+
+- Fixed the icon/image pulldown (a ``<select>``, not a free-text
+  field) itself triggering a field-name suggestion menu, in both the
+  Device Config and Widget Editor popups.
 
 - Fixed several real sub-12px or inconsistent config-menu sizes:
   Bootstrap's un-sized .form-control/.form-select (16px) and
@@ -51,12 +81,14 @@ v3.45.10 beta (27-8-2026)
 
 * **Code**
 
-- Verified with the full node --test suite (173 tests), Prettier's
-  format check, and live Playwright rendering (desktop and 390px-wide
-  mobile viewports) of the Settings modal, Device Editor, Add Custom
-  Device, Widget gallery, a Widget Config section, and the Layout
-  Editor toolbar, confirming every computed font-size/font-family
-  matches the new scale with no visible config text below 12px.
+- Verified with the full node --test suite (201 tests), Prettier's
+  format check, a production build, and live Playwright rendering
+  (desktop and 390px-wide mobile viewports) of the Settings modal,
+  Device Editor, Add Custom Device, Widget gallery, a Widget Config
+  section, the Layout Editor toolbar, and the automation indicator's
+  present/absent/opted-out/live add-remove behavior, confirming every
+  computed font-size/font-family matches the new scale with no
+  visible config text below 12px.
 
 v3.45.8 beta (26-8-2026)
 -------------------------

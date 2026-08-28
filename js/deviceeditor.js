@@ -5772,7 +5772,9 @@ var DashticzDeviceEditor = (function () {
 
     $('#de-config-popup').remove();
     var html =
-      '<div class="modal fade de-config-popup" id="de-config-popup" tabindex="-1" aria-hidden="true">';
+      '<div class="modal fade de-config-popup" id="de-config-popup" data-block-kind="' +
+      (isSpecial ? 'special' : 'device') +
+      '" tabindex="-1" aria-hidden="true">';
     html +=
       '<div class="modal-dialog modal-dialog-centered de-config-dialog"><div class="modal-content">';
     html +=
