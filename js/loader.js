@@ -54,6 +54,13 @@ function loadScriptsParallel(scripts) {
   );
 }
 
+function loadScripts(scripts, sequentially) {
+  if (typeof scripts === 'string') return loadScript(scripts);
+  return sequentially
+    ? loadScriptsSequentially(scripts)
+    : loadScriptsParallel(scripts);
+}
+
 function loader() {
   loadScript('js/main.js')
     .then(function () {
@@ -65,15 +72,6 @@ function loader() {
       return loadScript('js/devicerules.js').fail(function (err) {
         console.warn(
           'Unable to load js/devicerules.js. Device Rules disabled.',
-          err
-        );
-        return $.Deferred().resolve();
-      });
-    })
-    .then(function () {
-      return loadScript('js/lmsconfig.js').fail(function (err) {
-        console.warn(
-          'Unable to load js/lmsconfig.js. LMS Device Config enhancement disabled.',
           err
         );
         return $.Deferred().resolve();
