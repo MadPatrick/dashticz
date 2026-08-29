@@ -320,7 +320,13 @@ var DashticzDeviceEditor = (function () {
     editorMode = 'devices';
     openedFromAddMenu = false;
     gridMode = _activeScreenDom().hasClass('dt-grid-screen');
-    _init();
+    // preserveDeviceState=true, matching openLayoutConfig() below: without
+    // it, _init() wipes managedSpecials entirely on every call, so editing
+    // the same special block (e.g. an LMS block's Text style fields) twice
+    // in one session re-derived the second popup's fields from the stale
+    // client-side blocks[] snapshot from page load - silently reverting to
+    // whatever was saved before this session, not the first edit just made.
+    _init(true);
 
     var prepared = _prepareManagedDeviceState();
     var orderKey = '';

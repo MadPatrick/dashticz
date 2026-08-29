@@ -5414,6 +5414,33 @@ test('Lyrion Music Server Title/Artist/Station text style (size/color) is config
   assert.equal(enLang.settings.deviceeditor.lms_title_line, 'Title');
 });
 
+test('openConfig() preserves already-edited special-block state across repeated opens, like openLayoutConfig()', () => {
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+
+  // _init(preserveDeviceState) wipes managedSpecials entirely (and, for
+  // each special, re-derives it from the stale client-side blocks[]
+  // snapshot from page load) unless preserveDeviceState is true. openConfig()
+  // - "Open Device Config directly for a rendered block", i.e. an existing
+  // one, same use case as openLayoutConfig() right below it - previously
+  // called plain _init(), so reopening the same special a second time in one
+  // session (e.g. to adjust an LMS block's Text style fields again) silently
+  // reverted every special field to whatever was saved before this session,
+  // discarding the first edit. The quick-add popups further below (openCustom,
+  // openMultiDevice, openGroup, ...) correctly keep plain _init() - a brand
+  // new block should never inherit a different special's stale state.
+  assert.match(
+    deviceEditor,
+    /function openConfig\(reference\) \{[\s\S]{0,600}_init\(true\);/
+  );
+  assert.match(
+    deviceEditor,
+    /function openLayoutConfig\(reference\) \{[\s\S]{0,200}_init\(true\);/
+  );
+});
+
 test('icon column width (--icon-column-width) is configurable from the Theme settings menu', () => {
   const settingsJs = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
   const saveCustomCss = fs.readFileSync(
