@@ -8,11 +8,10 @@
    after creative.css so narrowly-scoped compatibility rules can correct the
    base stylesheet without changing theme-specific styling loaded afterwards.
 
-   Normal dashboard typography is unaffected except for the dedicated default
-   device-title rule below. It restores the classic 12px title in the default
-   and White themes while keeping device titles independent from both data
-   text and the larger heading/miniclock size. Themes loaded later keep their
-   own .title rule and therefore remain visually unchanged.
+   The first rule also owns the dedicated device-title size introduced for
+   issue #242. Keeping that size independent from both data text and headings
+   prevents a theme setting or browser font-metric update from unexpectedly
+   changing block height. All other rules remain scoped to config/editor UI.
    ========================================================================== */
 
 :root {
@@ -28,9 +27,10 @@
 }
 
 /* Device rows render their name as a direct .title child of .col-data.
-   :where() keeps this selector at the same specificity as the existing
-   theme .title rules: it wins over creative.css because this file loads
-   afterwards, while Modern Dark/Liquid Glass still win when loaded later. */
+   The :where() wrapper keeps the selector at the same specificity as the
+   existing .title rule while this later-loaded stylesheet restores the
+   classic 12px default. Themes define their own --font-device-title value,
+   so their existing 18px device-title layout remains unchanged. */
 :where(.mh .col-data) > .title {
   font-size: var(--font-device-title) !important;
 }
