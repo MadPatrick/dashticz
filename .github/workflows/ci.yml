@@ -12,7 +12,7 @@ on:
         default: false
         type: boolean
       update_snapshots:
-        description: Regenerate chromium Playwright visual snapshots and upload them as an artifact, instead of asserting against the committed ones
+        description: Regenerate tests/domoticzblock.spec.js's chromium Playwright visual snapshots and print them as base64 in the job log, instead of asserting against the committed ones
         required: false
         default: false
         type: boolean
@@ -119,7 +119,7 @@ jobs:
             test-results/
             php-server.log
           retention-days: 7
-      - name: Print updated snapshots as base64 (sandbox artifact downloads are blocked)
+      - name: Print regenerated snapshots as base64
         if: ${{ inputs.update_snapshots && matrix.browser == 'chromium' }}
         run: |
           for f in tests/domoticzblock.spec.js-snapshots/*.png; do
