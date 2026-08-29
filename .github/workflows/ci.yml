@@ -48,6 +48,23 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  format-export:
+    name: Export Prettier result
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prettier --config build/prettier.json tests/domoticzblock.spec.js --write
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formatted-domoticzblock
+          path: tests/domoticzblock.spec.js
+          retention-days: 1
+
   php:
     name: PHP ${{ matrix.php }}
     runs-on: ubuntu-latest
