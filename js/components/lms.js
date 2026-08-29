@@ -737,10 +737,10 @@ var DT_lms_scheduler = {
         function (rawStatus, serverError) {
           if (!rawStatus) {
             _setHiddenOff(me, false);
-            var errorText = DT_lms_api._errorMessage(serverError);
+            serverError = DT_lms_api._errorMessage(serverError);
             var text =
-              errorText === LMS_CURL_REQUIRED_ERROR
-                ? errorText
+              serverError === LMS_CURL_REQUIRED_ERROR
+                ? serverError
                 : _lmsText('lms_server_unavailable', 'LMS unavailable');
             me.$mountPoint
               .find('.dt_state')
