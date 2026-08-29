@@ -1,7 +1,21 @@
 /* Lyrion Music Server interactive layout/controls.
-   Base LMS typography, artwork and icon-badge styling stays in
-   css/creative.css. This file only contains the layout and controls added
-   by the interactive LMS implementation from PR #240. */
+   Base LMS typography and artwork styling stays in css/creative.css. This
+   file contains the layout/controls from the interactive LMS implementation
+   and the LMS-specific display-option compatibility rules. */
+
+/* Issue #217: the Device Config "Icon" option must behave like it does for
+   other Dashticz blocks. creative.css historically hides LMS's generic
+   .col-icon and lms.js mirrors the configured icon as a badge on the artwork.
+   Restore the normal block icon here and suppress that legacy artwork badge.
+   The album cover remains an independent LMS visual and is not affected by
+   the Icon display option. */
+.lms-block > .col-icon {
+  display: block;
+}
+
+.lms-block .lms-cover-icon {
+  display: none;
+}
 
 .lms-block-inner {
   display: grid;
