@@ -3,16 +3,15 @@
  * Keeps the existing Garbage component intact while adding editor/runtime
  * behaviour that is specific to this widget:
  * - persist the generated Font Awesome icon when Icon is enabled;
- * - expose per-widget Kliko width/height as block properties;
- * - align the widget title to the right;
+ * - expose one per-widget Kliko scale percentage;
+ * - keep the widget title left aligned;
  * - render the first garbage collection row in bold;
  * - move the Kliko image 100 px to the right.
  */
 (function () {
   'use strict';
 
-  var WIDTH_FIELD = 'kliko_width';
-  var HEIGHT_FIELD = 'kliko_height';
+  var SCALE_FIELD = 'kliko_scale';
   var POLL_MS = 500;
 
   function normaliseField(value) {
@@ -52,6 +51,11 @@
     row.style.setProperty('display', 'none', 'important');
   }
 
+  function removeManagedCustomRow(popup, fieldName) {
+    var row = findCustomFieldRow(popup, fieldName);
+    if (row && row.parentNode) row.parentNode.removeChild(row);
+  }
+
   function createManagedCustomRow(popup, fieldName, value) {
     var fields = popup.querySelector('.we-custom-fields');
     if (!fields) return null;
@@ -80,7 +84,7 @@
   function syncManagedCustomField(popup, fieldName, rawValue) {
     var value = String(rawValue || '').trim();
     if (value) {
-      var parsed = parseInt(value, 10);
+      var parsed = parseFloat(value);
       value = isFinite(parsed) && parsed > 0 ? String(parsed) : '';
     }
 
@@ -98,26 +102,28 @@
     if (setting) setting.value = value;
   }
 
-  function createSizeField(id, labelText, value) {
+  function createScaleField(value) {
     var group = document.createElement('div');
     group.className = 'mb-3';
 
     var label = document.createElement('label');
     label.className = 'form-label we-field-label';
-    label.setAttribute('for', id);
-    label.textContent = labelText;
+    label.setAttribute('for', 'we-cfg-kliko-scale');
+    label.textContent = 'Kliko scale (%)';
 
     var input = document.createElement('input');
     input.type = 'number';
-    input.className = 'form-control form-control-sm garbage-kliko-size-input';
-    input.id = id;
+    input.className = 'form-control form-control-sm garbage-kliko-scale-input';
+    input.id = 'we-cfg-kliko-scale';
     input.min = '1';
     input.step = '1';
+    input.placeholder = '100';
     input.value = value;
 
     var help = document.createElement('div');
     help.className = 'form-text';
-    help.textContent = 'Leave empty to keep the current theme/default size.';
+    help.textContent =
+      '100 = normal size, 80 = 80%, 125 = 125%. Leave empty to use the theme size.';
 
     group.appendChild(label);
     group.appendChild(input);
@@ -125,11 +131,9 @@
     return group;
   }
 
-  function syncSizeInputs(popup) {
-    var width = popup.querySelector('#we-cfg-kliko-width');
-    var height = popup.querySelector('#we-cfg-kliko-height');
-    if (width) syncManagedCustomField(popup, WIDTH_FIELD, width.value);
-    if (height) syncManagedCustomField(popup, HEIGHT_FIELD, height.value);
+  function syncScaleInput(popup) {
+    var scale = popup.querySelector('#we-cfg-kliko-scale');
+    if (scale) syncManagedCustomField(popup, SCALE_FIELD, scale.value);
   }
 
   function enhanceGarbagePopup(popup) {
@@ -137,13 +141,15 @@
       return;
     }
 
-    var widthValue = customFieldValue(popup, WIDTH_FIELD);
-    var heightValue = customFieldValue(popup, HEIGHT_FIELD);
-    hideManagedCustomRow(findCustomFieldRow(popup, WIDTH_FIELD));
-    hideManagedCustomRow(findCustomFieldRow(popup, HEIGHT_FIELD));
+    var scaleValue = customFieldValue(popup, SCALE_FIELD);
+    hideManagedCustomRow(findCustomFieldRow(popup, SCALE_FIELD));
+
+    // Remove the two temporary pixel-size fields from the previous revision.
+    removeManagedCustomRow(popup, 'kliko_width');
+    removeManagedCustomRow(popup, 'kliko_height');
 
     var wrapper = document.createElement('div');
-    wrapper.className = 'garbage-kliko-size-fields';
+    wrapper.className = 'garbage-kliko-scale-fields';
 
     var heading = document.createElement('h6');
     heading.className = 'mt-3 mb-2';
@@ -151,12 +157,7 @@
       'font-size:14px;font-weight:600;color:#495057';
     heading.textContent = 'Kliko image';
     wrapper.appendChild(heading);
-    wrapper.appendChild(
-      createSizeField('we-cfg-kliko-width', 'Kliko width (px)', widthValue)
-    );
-    wrapper.appendChild(
-      createSizeField('we-cfg-kliko-height', 'Kliko height (px)', heightValue)
-    );
+    wrapper.appendChild(createScaleField(scaleValue));
 
     var hideIcon = popup.querySelector('#we-cfg-garbage-hideicon');
     var anchor = hideIcon && hideIcon.closest('.mb-3');
@@ -167,13 +168,13 @@
       if (body) body.appendChild(wrapper);
     }
 
-    var inputs = wrapper.querySelectorAll('.garbage-kliko-size-input');
-    for (var i = 0; i < inputs.length; i++) {
-      inputs[i].addEventListener('input', function () {
-        syncSizeInputs(popup);
+    var input = wrapper.querySelector('.garbage-kliko-scale-input');
+    if (input) {
+      input.addEventListener('input', function () {
+        syncScaleInput(popup);
       });
-      inputs[i].addEventListener('change', function () {
-        syncSizeInputs(popup);
+      input.addEventListener('change', function () {
+        syncScaleInput(popup);
       });
     }
 
@@ -200,7 +201,8 @@
     var images = document.querySelectorAll('img.trashcan');
     for (var i = 0; i < images.length; i++) {
       var image = images[i];
-      var block = image.closest('.dt_block[data-id]') || image.closest('[data-id]');
+      var block =
+        image.closest('.dt_block[data-id]') || image.closest('[data-id]');
       if (!block) continue;
 
       var key = String(block.getAttribute('data-id') || '');
@@ -210,17 +212,23 @@
       block.classList.add('garbage-widget-enhanced');
 
       var title = block.querySelector('.dt_title');
-      if (title) title.style.setProperty('text-align', 'right', 'important');
+      if (title) title.style.setProperty('text-align', 'left', 'important');
 
       image.style.setProperty('position', 'relative', 'important');
       image.style.setProperty('left', '100px', 'important');
 
-      var width = positiveNumber(definition && definition[WIDTH_FIELD]);
-      var height = positiveNumber(definition && definition[HEIGHT_FIELD]);
-      if (width) image.style.setProperty('width', width + 'px', 'important');
-      else image.style.removeProperty('width');
-      if (height) image.style.setProperty('height', height + 'px', 'important');
-      else image.style.removeProperty('height');
+      var scale = positiveNumber(definition && definition[SCALE_FIELD]);
+      if (scale) {
+        image.style.setProperty(
+          'transform',
+          'scale(' + scale / 100 + ')',
+          'important'
+        );
+        image.style.setProperty('transform-origin', 'left center', 'important');
+      } else {
+        image.style.removeProperty('transform');
+        image.style.removeProperty('transform-origin');
+      }
 
       var rows = block.querySelectorAll('.trashrow');
       for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
@@ -244,7 +252,7 @@
       if (!target || !target.closest) return;
 
       if (target.closest('#we-cfg-ok-btn')) {
-        syncSizeInputs(popup);
+        syncScaleInput(popup);
         markIconExplicit(popup);
         return;
       }

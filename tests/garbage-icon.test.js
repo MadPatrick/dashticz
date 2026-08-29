@@ -28,38 +28,38 @@ test('Garbage icon and Kliko layout enhancements stay available', () => {
   );
   assert.match(
     helper,
-    /kliko_width/,
-    'Garbage blocks must support a per-widget Kliko width'
+    /var SCALE_FIELD = 'kliko_scale'/,
+    'Garbage blocks must use one per-widget Kliko scale percentage'
   );
   assert.match(
     helper,
-    /kliko_height/,
-    'Garbage blocks must support a per-widget Kliko height'
+    /removeManagedCustomRow\(popup, 'kliko_width'\)/,
+    'the previous pixel width field must be removed from the editor'
+  );
+  assert.match(
+    helper,
+    /removeManagedCustomRow\(popup, 'kliko_height'\)/,
+    'the previous pixel height field must be removed from the editor'
   );
   assert.match(
     helper,
     /setProperty\('left', '100px', 'important'\)/,
-    'the Kliko image must be shifted 100px to the right'
+    'the Kliko image must remain shifted 100px to the right'
   );
   assert.match(
     helper,
-    /setProperty\('text-align', 'right', 'important'\)/,
-    'the Garbage title must be right aligned'
+    /setProperty\('text-align', 'left', 'important'\)/,
+    'the Garbage title must be left aligned'
+  );
+  assert.match(
+    helper,
+    /'scale\(' \+ scale \/ 100 \+ '\)'/,
+    'the Kliko must be proportionally scaled from one percentage value'
   );
   assert.match(
     helper,
     /rows\[0\]\.style\.setProperty\('font-weight', '700', 'important'\)/,
     'only the first collection row must be made bold'
-  );
-  assert.match(
-    helper,
-    /setProperty\('width', width \+ 'px', 'important'\)/,
-    'configured Kliko width must override theme sizing'
-  );
-  assert.match(
-    helper,
-    /setProperty\('height', height \+ 'px', 'important'\)/,
-    'configured Kliko height must override theme sizing'
   );
   assert.match(
     garbage,
@@ -73,7 +73,7 @@ test('Garbage icon and Kliko layout enhancements stay available', () => {
   );
   assert.match(
     index,
-    /<script src="js\/garbageconfig\.js\?t=2"><\/script>/,
+    /<script src="js\/garbageconfig\.js\?t=3"><\/script>/,
     'the updated Garbage helper must be loaded with a fresh cache key'
   );
 });
