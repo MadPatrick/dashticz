@@ -1305,6 +1305,21 @@ var DashticzDeviceEditor = (function () {
     player: true,
     refresh: true,
     hide_when_off: true,
+    // Title/Artist/Station text style (size/color) - managed by the
+    // dedicated Text style section of the Lyrion Music Server popup above,
+    // not the generic custom-fields grid. Without this, these six
+    // properties were double-carried: once correctly through the dedicated
+    // lmsTitleSize/etc. fields, and once more as stale generic custom-field
+    // rows (hydrated from CONFIG.js when the popup first opened and never
+    // touched again). configwriter.php's special-block-props builder
+    // unconditionally applies custom_fields last, so that stale copy
+    // silently overwrote every real edit on save (#217 follow-up).
+    title_size: true,
+    title_color: true,
+    artist_size: true,
+    artist_color: true,
+    station_size: true,
+    station_color: true,
     __proto__: true,
     prototype: true,
     constructor: true,

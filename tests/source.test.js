@@ -5414,6 +5414,30 @@ test('Lyrion Music Server Title/Artist/Station text style (size/color) is config
   assert.equal(enLang.settings.deviceeditor.lms_title_line, 'Title');
 });
 
+test('LMS text style fields are protected from the generic Custom fields grid, so a saved edit is not reverted by a stale duplicate', () => {
+  // Regression: title_size/title_color/artist_size/artist_color/
+  // station_size/station_color are real CONFIG.js properties on an LMS
+  // block, so _deviceCustomFieldRows() (js/deviceeditor.js) picked them up
+  // a second time as generic "leftover" custom-field rows unless excluded
+  // via protectedCustomDeviceProperties - exactly like server/port/.../
+  // hide_when_off already are just above them. Those stale rows are never
+  // touched by the user (they edit the dedicated Text style inputs
+  // instead), so on save they still carry whatever value was on screen
+  // when the popup first opened. configwriter_special_block_props()
+  // (js/configwriter.php) applies a block's custom_fields entries last and
+  // unconditionally (`$props[$field] = $value;`), so that stale duplicate
+  // silently overwrote the correctly-updated title_size/etc. on every
+  // single save - the fields never actually updated on a second edit.
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+  assert.match(
+    deviceEditor,
+    /hide_when_off: true,[\s\S]{0,700}title_size: true,[\s\S]{0,20}title_color: true,[\s\S]{0,20}artist_size: true,[\s\S]{0,20}artist_color: true,[\s\S]{0,20}station_size: true,[\s\S]{0,20}station_color: true,/
+  );
+});
+
 test('openConfig() preserves already-edited special-block state across repeated opens, like openLayoutConfig()', () => {
   const deviceEditor = fs.readFileSync(
     path.join(root, 'js/deviceeditor.js'),
