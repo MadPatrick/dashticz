@@ -772,9 +772,6 @@ var DT_lms_scheduler = {
   }
 
   var DT_lms = {
-    init: function () {
-      return DT_function.loadCSS('./js/components/lms.css');
-    },
     name: 'lms',
     canHandle: function (block) {
       return block && block.type === 'lms';

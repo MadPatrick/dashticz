@@ -7528,3 +7528,177 @@ canvas {
 .value {
   font-size: var(--font-small) !important;
 }
+
+/* Lyrion Music Server (LMS) "Now Playing" block: fixed-size cover on the
+   left, metadata on the right, and a row of transport/volume/power buttons
+   spanning the full width underneath - see js/components/lms.js and
+   docs/blocks/specials/lms.rst. Only the cover has a fixed pixel size (100
+   x 100, per spec); everything else uses the block's own width so the
+   block stays usable at any configured width, in both column and grid mode.
+   A CSS grid (rather than a flex row) is used for .lms-block-inner so the
+   controls row can span both the cover and info columns without any extra
+   wrapper element in the markup. */
+.lms-block .dt_state {
+  margin: 0;
+  min-height: 100px;
+}
+.lms-block-inner {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    'cover info'
+    'controls controls';
+  align-items: center;
+  gap: 6px 10px;
+  padding: 5px;
+  min-width: 0;
+  height: 100%;
+}
+.lms-cover {
+  grid-area: cover;
+  align-self: start;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-selector, 4px);
+  overflow: hidden;
+  background: var(--main-bg-dark);
+}
+.lms-cover-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Keeps LMS/album artwork proportions intact - crops rather than
+     stretching or letterboxing, so it never distorts. */
+  object-fit: contain;
+}
+.lms-cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-inactive);
+  font-size: 32px;
+}
+.lms-info {
+  grid-area: info;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+}
+.lms-info > div {
+  /* Long artist/title/album/station values truncate instead of wrapping or
+     forcing a horizontal scrollbar (#20). */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lms-player-name {
+  font-size: var(--font-small);
+  color: var(--text-inactive);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.lms-station,
+.lms-artist {
+  font-size: var(--font-small);
+  color: var(--text-normal);
+}
+.lms-title {
+  /* Match the artist typography while retaining the distinct title color. */
+  font-size: var(--font-small);
+  color: var(--text-title);
+}
+.lms-album {
+  font-size: calc(var(--font-small) - 2px);
+  color: var(--text-muted);
+}
+.lms-state-label {
+  font-size: var(--font-small);
+  color: var(--text-inactive);
+  font-style: italic;
+}
+.lms-paused {
+  color: var(--button-active);
+}
+
+/* ---- Transport / power / volume controls ------------------------------- */
+.lms-controls {
+  grid-area: controls;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  /* Collapses to zero height (no stray gap) when left empty - e.g. while
+     the player is unknown or the tile is hidden by hide_when_off. */
+  min-height: 0;
+}
+.lms-controls:empty {
+  display: none;
+}
+.lms-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 2px;
+  border: none;
+  border-radius: var(--radius-selector, 4px);
+  background: var(--main-bg-dark);
+  color: var(--text-normal);
+  font-size: var(--font-small);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.lms-btn:hover {
+  background: var(--main-bg-dark-hover, var(--main-bg-dark));
+}
+.lms-btn:active {
+  transform: scale(0.94);
+}
+.lms-btn:focus-visible {
+  outline: 2px solid var(--button-active);
+  outline-offset: 1px;
+}
+/* The play/pause button is the primary action, so it gets a slightly
+   larger tap target than the surrounding transport/volume buttons. */
+.lms-btn-playpause {
+  width: 34px;
+  height: 34px;
+  font-size: calc(var(--font-small) + 4px);
+}
+/* Power button reflects on/off state, matching .lms-paused's use of
+   --button-active as the "player is doing something" accent color. */
+.lms-btn-power.lms-btn-active {
+  background: var(--button-active);
+  color: var(--main-bg, #fff);
+}
+
+@media (max-width: 400px) {
+  .lms-block-inner {
+    grid-template-columns: 72px 1fr;
+  }
+  .lms-cover {
+    width: 72px;
+    height: 72px;
+  }
+  .lms-block .dt_state {
+    min-height: 72px;
+  }
+  .lms-btn {
+    width: 27px;
+    height: 27px;
+  }
+  .lms-btn-playpause {
+    width: 30px;
+    height: 30px;
+  }
+}
