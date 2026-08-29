@@ -14,6 +14,7 @@ test('LMS Icon display option uses a visible normal block icon column', () => {
     path.join(root, 'js/deviceeditor.js'),
     'utf8'
   );
+  const lmsConfig = fs.readFileSync(path.join(root, 'js/lmsconfig.js'), 'utf8');
 
   assert.match(
     lmsCss,
@@ -34,5 +35,15 @@ test('LMS Icon display option uses a visible normal block icon column', () => {
     deviceEditor,
     /_quickOptionsHtml\('lm',\s*\{[\s\S]*?icon:\s*false,[\s\S]*?iconValue:\s*'fas fa-music'/,
     'new LMS blocks should keep Icon off by default and offer fa-music when enabled'
+  );
+  assert.match(
+    lmsConfig,
+    /iconRow\.setAttribute\('data-generated-icon', 'false'\)/,
+    'an active LMS Font Awesome value must be marked explicit so Device Editor saves it'
+  );
+  assert.match(
+    lmsConfig,
+    /syncConfiguredIcon\(block, definition\)/,
+    'the stored LMS icon must be synchronized into the normal block icon column'
   );
 });
