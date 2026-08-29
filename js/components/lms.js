@@ -154,8 +154,7 @@ var DT_lms_scheduler = {
       return $.Deferred().resolve(entry.data).promise();
     }
 
-    var req = DT_lms_api
-      .getPlayers(block)
+    var req = DT_lms_api.getPlayers(block)
       .then(function (playersLoop) {
         var map = self._indexPlayersLoop(playersLoop);
         self.playersCache[key] = { data: map, ts: Date.now() };
@@ -190,8 +189,11 @@ var DT_lms_scheduler = {
       return $.Deferred().resolve(entry.data).promise();
     }
 
-    var req = DT_lms_api
-      .request(block, ['status', '-', 1, STATUS_TAGS], playerid)
+    var req = DT_lms_api.request(
+      block,
+      ['status', '-', 1, STATUS_TAGS],
+      playerid
+    )
       .then(function (detail) {
         self.statusCache[key] = { data: detail, ts: Date.now() };
         return detail;
@@ -458,12 +460,42 @@ var DT_lms_scheduler = {
   }
 
   var CONTROL_BUTTONS = [
-    { action: 'power', icon: 'fa-power-off', labelKey: 'lms_power', fallback: 'Power' },
-    { action: 'prev', icon: 'fa-step-backward', labelKey: 'lms_prev', fallback: 'Previous' },
-    { action: 'playpause', icon: 'fa-play', labelKey: 'lms_playpause', fallback: 'Play/Pause' },
-    { action: 'next', icon: 'fa-step-forward', labelKey: 'lms_next', fallback: 'Next' },
-    { action: 'voldown', icon: 'fa-volume-down', labelKey: 'lms_vol_down', fallback: 'Volume down' },
-    { action: 'volup', icon: 'fa-volume-up', labelKey: 'lms_vol_up', fallback: 'Volume up' },
+    {
+      action: 'power',
+      icon: 'fa-power-off',
+      labelKey: 'lms_power',
+      fallback: 'Power',
+    },
+    {
+      action: 'prev',
+      icon: 'fa-step-backward',
+      labelKey: 'lms_prev',
+      fallback: 'Previous',
+    },
+    {
+      action: 'playpause',
+      icon: 'fa-play',
+      labelKey: 'lms_playpause',
+      fallback: 'Play/Pause',
+    },
+    {
+      action: 'next',
+      icon: 'fa-step-forward',
+      labelKey: 'lms_next',
+      fallback: 'Next',
+    },
+    {
+      action: 'voldown',
+      icon: 'fa-volume-down',
+      labelKey: 'lms_vol_down',
+      fallback: 'Volume down',
+    },
+    {
+      action: 'volup',
+      icon: 'fa-volume-up',
+      labelKey: 'lms_vol_up',
+      fallback: 'Volume up',
+    },
   ];
 
   function _controlsHtml(meta) {
@@ -554,7 +586,8 @@ var DT_lms_scheduler = {
       .attr('data-lms-state', meta.state)
       .toggleClass('lms-remote', !!meta.remote);
 
-    var hideWhenOff = me.block.hide_when_off === true && meta.known && !meta.power;
+    var hideWhenOff =
+      me.block.hide_when_off === true && meta.known && !meta.power;
     _setHiddenOff(me, hideWhenOff);
 
     var $info = $existing.find('.lms-info');
