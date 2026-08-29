@@ -2716,8 +2716,36 @@ screens[1] = {
         });
         return;
       }
-      // action: 'rpc' - the per-block "status" poll. Player-specific result
-      // so the two blocks below can be asserted never to swap metadata.
+      // action: 'rpc' - the scheduler first requests one server-wide player
+      // list, then detailed status only for connected, powered-on players.
+      if (payload.params[0] === 'players') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            result: {
+              players_loop: [
+                {
+                  playerid: 'aa:bb:cc:dd:ee:ff',
+                  name: 'Living Room',
+                  connected: 1,
+                  power: 1,
+                },
+                {
+                  playerid: '11:22:33:44:55:66',
+                  name: 'Kitchen',
+                  connected: 1,
+                  power: 1,
+                },
+              ],
+            },
+          }),
+        });
+        return;
+      }
+
+      // Player-specific status results let the assertions below verify that
+      // independently rendered blocks never swap their metadata.
       const player = payload.player;
       let result;
       if (player === 'aa:bb:cc:dd:ee:ff') {

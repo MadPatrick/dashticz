@@ -19,14 +19,16 @@ test.describe('Basic testing', () => {
   test('block tests', async ({ page }) => {
     // Expect a title "to contain" a substring.
     await expect(page).toHaveTitle(/Dashticz/);
-    await page.waitForTimeout(1000);
+    // Wait for the Domoticz payload to render before taking the screenshot.
+    // A fixed delay could capture the initial title-only skeleton on a slower
+    // CI runner, producing a large but non-functional visual diff.
+    await expect(page.locator('.block_43_1 .value')).toHaveText('700W');
     if (compareScreenshots) {
       await expect(page.locator('.block_43_1')).toHaveScreenshot(
         'bl_43_1.png',
         screenshotOptions
       );
     }
-    await expect(page.locator('.block_43_1 .value')).toHaveText('700W');
 
     await checkBlock(page, 'tc1', 'fa-car', undefined, 'Tuin');
     await checkBlock(
