@@ -153,10 +153,7 @@ test.describe('Basic testing', () => {
 
     // The dedicated variable remains available for a theme/custom override.
     await page.evaluate(() => {
-      document.documentElement.style.setProperty(
-        '--font-device-title',
-        '14px'
-      );
+      document.documentElement.style.setProperty('--font-device-title', '14px');
     });
     await expect(title).toHaveCSS('font-size', '14px');
   });
