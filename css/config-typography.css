@@ -1,21 +1,20 @@
-/* ========================================================================== 
+/* ==========================================================================
    Configuration / editor UI typography
-   ========================================================================== 
+   ==========================================================================
    Centralized typography for Dashticz's configuration and editor dialogs
    (Settings, Device Config, Widget Config, Screen/Layout Editor, and every
    Add Device/Widget/Group/HTML/iFrame dialog). This file is intentionally
-   separate from css/creative.css and is loaded by js/main.js immediately
-   after creative.css so narrowly-scoped compatibility rules can correct the
-   base stylesheet without changing theme-specific styling loaded afterwards.
+   separate from css/creative.css (which stays untouched by design - it is
+   scheduled for its own typography refactor later) and is loaded by
+   js/main.js immediately after creative.css so it can win the cascade for
+   any rule that shares the same specificity.
 
-   The first rule also owns the dedicated device-title size introduced for
-   issue #242. Keeping that size independent from both data text and headings
-   prevents a theme setting or browser font-metric update from unexpectedly
-   changing block height. All other rules remain scoped to config/editor UI.
+   Normal dashboard block typography is not affected: every rule below is
+   scoped to the known config/editor dialog roots, or targets a class name
+   that only ever appears inside those dialogs.
    ========================================================================== */
 
 :root {
-  --font-device-title: 12px;
   --dt-config-font-family:
     system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
@@ -24,15 +23,6 @@
   --dt-config-font-body: 14px;
   --dt-config-font-label: 13px;
   --dt-config-font-small: 12px;
-}
-
-/* Device rows render their name as a direct .title child of .col-data.
-   The :where() wrapper keeps the selector at the same specificity as the
-   existing .title rule while this later-loaded stylesheet restores the
-   classic 12px default. Themes define their own --font-device-title value,
-   so their existing 18px device-title layout remains unchanged. */
-:where(.mh .col-data) > .title {
-  font-size: var(--font-device-title) !important;
 }
 
 /* Every config/editor dialog root. Layout Editor has no modal of its own
