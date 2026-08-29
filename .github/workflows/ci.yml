@@ -1,256 +1,180 @@
-name: Apply issue 242 fix
+name: CI
 
 on:
+  push:
+    branches: [beta, develop, test]
   pull_request:
   workflow_dispatch:
+    inputs:
+      run_live_integrations:
+        description: Run tests against configured live services
+        required: false
+        default: false
+        type: boolean
+      update_snapshots:
+        description: Regenerate tests/domoticzblock.spec.js's chromium Playwright visual snapshots and print them as base64 in the job log, instead of asserting against the committed ones
+        required: false
+        default: false
+        type: boolean
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: issue-242-apply-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  apply:
-    name: Apply validated source changes
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+  quality:
+    name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ${{ fromJSON(github.event_name == 'pull_request' && '[22]' || '[20,22,24]') }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          ref: fix/issue-242-layout-stability
-          fetch-depth: 0
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl
+          coverage: none
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build
+
+  php:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJSON(github.event_name == 'pull_request' && '["8.4"]' || '["7.4","8.1","8.2","8.3","8.4","8.5"]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl
+          coverage: none
+      - run: php --version
+      - run: php -m | grep -qi '^curl$'
+      - run: node --test tests/php-security.test.js
+
+  browsers:
+    name: Playwright ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: ${{ fromJSON(github.event_name == 'pull_request' && '["chromium","webkit"]' || '["chromium","firefox","webkit"]') }}
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl
+          coverage: none
       - run: npm ci
-      - name: Apply and validate permanent issue 242 fix
+      - run: npm run build
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Start PHP test server
         run: |
-          if grep -q '"version": "3.45.12"' package.json; then
-            echo "Issue 242 source changes are already applied."
-            exit 0
-          fi
+          php -S 127.0.0.1:8082 -t . > php-server.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:8082/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat php-server.log
+          exit 1
+      - if: ${{ !(inputs.update_snapshots && matrix.browser == 'chromium') }}
+        run: npx playwright test --project=${{ matrix.browser }}
+        env:
+          DASHTICZ_TEST_URL: http://127.0.0.1:8082
+          DASHTICZ_BROWSER: ${{ matrix.browser }}
+      - if: ${{ inputs.update_snapshots && matrix.browser == 'chromium' }}
+        run: npx playwright test tests/domoticzblock.spec.js --project=chromium --update-snapshots
+        env:
+          DASHTICZ_TEST_URL: http://127.0.0.1:8082
+          DASHTICZ_BROWSER: chromium
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-${{ matrix.browser }}
+          path: |
+            playwright-report/
+            test-results/
+            php-server.log
+          retention-days: 7
+      - name: Print regenerated snapshots as base64
+        if: ${{ inputs.update_snapshots && matrix.browser == 'chromium' }}
+        run: |
+          for f in tests/domoticzblock.spec.js-snapshots/*.png; do
+            echo "===SNAPSHOT_BASE64_START:$f==="
+            base64 -w0 "$f"
+            echo ""
+            echo "===SNAPSHOT_BASE64_END==="
+          done
 
-          git fetch origin beta
-          git show origin/beta:css/config-typography.css > css/config-typography.css
-
-          python3 - <<'PY'
-          from collections import OrderedDict
-          import json
-          from pathlib import Path
-
-          def replace_once(path, old, new):
-              file_path = Path(path)
-              text = file_path.read_text(encoding='utf-8')
-              count = text.count(old)
-              if count != 1:
-                  raise RuntimeError(f'{path}: expected one match, found {count}: {old!r}')
-              file_path.write_text(text.replace(old, new, 1), encoding='utf-8')
-
-          replace_once(
-              'css/creative.css',
-              '  --font-small: 12px;\n  --font-large: 24px;\n  --font-update: 10px;',
-              '  --font-small: 12px;\n  --font-large: 24px;\n  --font-device-title: 12px;\n  --font-update: 10px;',
-          )
-          replace_once(
-              'css/creative.css',
-              '.title {\n  color: var(--text-title) !important;\n  font-size: var(--font-large) !important;\n}',
-              '.title {\n  color: var(--text-title) !important;\n  font-size: var(--font-device-title) !important;\n}',
-          )
-          replace_once(
-              'js/settings.js',
-              "var _THEME_FONT_VARS = ['--font-large', '--font-small', '--font-update'];",
-              "var _THEME_FONT_VARS = [\n  '--font-large',\n  '--font-device-title',\n  '--font-small',\n  '--font-update',\n];",
-          )
-          replace_once(
-              'js/savecustomcss.php',
-              "    '--font-small', '--font-large', '--font-update',",
-              "    '--font-small', '--font-large', '--font-device-title', '--font-update',",
-          )
-
-          labels = {
-              'lang/en_US.json': {
-                  '--font-large': 'Header/title bar text (--font-large)',
-                  '--font-device-title': 'Device title text (--font-device-title)',
-                  '--font-small': 'Data text (--font-small)',
-                  '--font-update': 'Update text (--font-update)',
-              },
-              'lang/nl_NL.json': {
-                  '--font-large': 'Tekst kop/titelbalk (--font-large)',
-                  '--font-device-title': 'Tekst device-titel (--font-device-title)',
-                  '--font-small': 'Tekst data (--font-small)',
-                  '--font-update': 'Tekst update (--font-update)',
-              },
-          }
-          for path, translated in labels.items():
-              file_path = Path(path)
-              data = json.loads(file_path.read_text(encoding='utf-8'))
-              variables = data['settings']['theme']['vars']
-              rebuilt = OrderedDict()
-              for key, value in variables.items():
-                  if key == '--font-small':
-                      rebuilt[key] = translated[key]
-                  elif key == '--font-large':
-                      rebuilt[key] = translated[key]
-                      rebuilt['--font-device-title'] = translated['--font-device-title']
-                  elif key == '--font-update':
-                      rebuilt[key] = translated[key]
-                  else:
-                      rebuilt[key] = value
-              data['settings']['theme']['vars'] = rebuilt
-              file_path.write_text(
-                  json.dumps(data, ensure_ascii=False, indent=2) + '\n',
-                  encoding='utf-8',
-              )
-
-          test_path = Path('tests/source.test.js')
-          test_source = test_path.read_text(encoding='utf-8')
-          marker = "test('icon column width (--icon-column-width) is configurable from the Theme settings menu', () => {"
-          if marker not in test_source:
-              raise RuntimeError('source test insertion marker not found')
-          if 'device title font size (--font-device-title)' in test_source:
-              raise RuntimeError('device title source test already exists')
-          new_test = r"""test('device title font size (--font-device-title) is independent and configurable from Theme settings', () => {
-            const settingsJs = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
-            const saveCustomCss = fs.readFileSync(
-              path.join(root, 'js/savecustomcss.php'),
-              'utf8'
-            );
-            const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
-            const themes = [
-              'themes/modern-dark/modern-dark.css',
-              'themes/liquid-glass-blue/liquid-glass-blue.css',
-              'themes/liquid-glass-grey/liquid-glass-grey.css',
-            ].map((file) => fs.readFileSync(path.join(root, file), 'utf8'));
-            const enLang = JSON.parse(
-              fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8')
-            );
-            const nlLang = JSON.parse(
-              fs.readFileSync(path.join(root, 'lang/nl_NL.json'), 'utf8')
-            );
-
-            assert.match(
-              settingsJs,
-              /var _THEME_FONT_VARS = \[\s*\n\s*'--font-large',\s*\n\s*'--font-device-title',\s*\n\s*'--font-small',\s*\n\s*'--font-update',\s*\n\s*\];/
-            );
-            assert.match(saveCustomCss, /'--font-device-title'/);
-            assert.match(styles, /--font-device-title: 12px;/);
-            assert.match(
-              styles,
-              /\.title \{\s*\n\s*color: var\(--text-title\) !important;\s*\n\s*font-size: var\(--font-device-title\) !important;/
-            );
-            themes.forEach((theme) => {
-              assert.match(theme, /--font-device-title: 18px;/);
-              assert.match(
-                theme,
-                /\.title \{\s*\n\s*font-size: var\(--font-device-title, 18px\) !important;/
-              );
-            });
-            assert.equal(
-              enLang.settings.theme.vars['--font-device-title'],
-              'Device title text (--font-device-title)'
-            );
-            assert.equal(
-              nlLang.settings.theme.vars['--font-device-title'],
-              'Tekst device-titel (--font-device-title)'
-            );
-          });
-
-          """
-          test_path.write_text(
-              test_source.replace(marker, new_test + marker, 1),
-              encoding='utf-8',
-          )
-
-          summary = (
-              'Fixed legacy column tile overlap and unstable visual regressions exposed by Chromium 151 by separating '
-              'device-title sizing into a dedicated --font-device-title variable. The default/White layout keeps its '
-              'classic 12px title size, while Modern Dark and both Liquid Glass themes keep their existing 18px layout. '
-              'Added the new size to Theme settings, EN/NL labels and the custom.css save allowlist; restored isolated '
-              'per-block screenshots; added typography and geometry regressions; and enabled CI on beta pushes.'
-          )
-          version_path = Path('version.txt')
-          version_data = json.loads(version_path.read_text(encoding='utf-8'))
-          if version_data['version'] != '3.45.11':
-              raise RuntimeError(f"Unexpected version: {version_data['version']}")
-          version_data['version'] = '3.45.12'
-          version_data['last_changes'] = summary
-          version_data['changelog'] = OrderedDict(
-              [('3.45.12', summary), *version_data['changelog'].items()]
-          )
-          version_path.write_text(
-              json.dumps(version_data, ensure_ascii=False, indent=4) + '\n',
-              encoding='utf-8',
-          )
-
-          replace_once('package.json', '"version": "3.45.11"', '"version": "3.45.12"')
-          package_lock = Path('package-lock.json')
-          lock_text = package_lock.read_text(encoding='utf-8')
-          if lock_text.count('"version": "3.45.11"') != 2:
-              raise RuntimeError('package-lock.json version occurrence count changed')
-          package_lock.write_text(
-              lock_text.replace('"version": "3.45.11"', '"version": "3.45.12"'),
-              encoding='utf-8',
-          )
-          index_path = Path('index.html')
-          index_text = index_path.read_text(encoding='utf-8')
-          if index_text.count('3.45.11') != 2:
-              raise RuntimeError('index.html version occurrence count changed')
-          index_path.write_text(index_text.replace('3.45.11', '3.45.12'), encoding='utf-8')
-
-          release_path = Path('docs/releasenotes/releasenotes.rst')
-          release_text = release_path.read_text(encoding='utf-8')
-          anchor = '\n\nv3.45.11 beta (28-8-2026)\n'
-          if anchor not in release_text:
-              raise RuntimeError('release notes insertion marker not found')
-          title = 'v3.45.12 beta (29-8-2026)'
-          entry = f"""
-
-          {title}
-          {'-' * len(title)}
-
-          * **Enhancements**
-
-          - Added a dedicated ``--font-device-title`` option to the Theme
-            settings menu, its custom.css save allowlist and the English/Dutch
-            labels. Device titles can now be adjusted independently from both
-            header/title-bar text (``--font-large``) and data/status text
-            (``--font-small``).
-
-          * **Fixes**
-
-          - Fixed the legacy column layout becoming unstable when a device title
-            wrapped under newer Chromium font metrics. The default and White
-            layouts retain the classic 12px device-title size, while Modern Dark
-            and both Liquid Glass themes retain their existing 18px appearance;
-            no block dimensions, packing rules or device functionality changed.
-
-          * **Code**
-
-          - Restored all per-block Chromium visual regression screenshots. Each
-            component screenshot now hides neighbouring blocks with
-            ``visibility:hidden`` while preserving their float positions, so one
-            overflowing neighbour cannot make unrelated component snapshots fail.
-          - Added explicit browser regressions for independent title/data sizing
-            and overlapping legacy-column block rectangles, plus source tests for
-            the new theme variable wiring. CI now also runs on direct pushes to
-            ``beta``.
-          """
-          release_path.write_text(
-              release_text.replace(anchor, entry + anchor, 1),
-              encoding='utf-8',
-          )
-          PY
-
-          npm run format
-          npm test
-          npm run build
-          git diff --check
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add css/config-typography.css css/creative.css docs/releasenotes/releasenotes.rst index.html js/savecustomcss.php js/settings.js lang/en_US.json lang/nl_NL.json package-lock.json package.json tests/source.test.js version.txt
-          git commit -m "Fix legacy block layout stability and visual regressions (#242)"
-          git push origin HEAD:fix/issue-242-layout-stability
+  live-integrations:
+    name: Live integrations
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live_integrations
+    runs-on: ubuntu-latest
+    environment: live-integrations
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl
+          coverage: none
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Require at least one configured live integration
+        run: test -n "${DASHTICZ_LIVE_DOMOTICZ_URL}${DASHTICZ_LIVE_LMS_HOST}${DASHTICZ_LIVE_ICAL_URL}"
+        env:
+          DASHTICZ_LIVE_DOMOTICZ_URL: ${{ secrets.DASHTICZ_LIVE_DOMOTICZ_URL }}
+          DASHTICZ_LIVE_LMS_HOST: ${{ secrets.DASHTICZ_LIVE_LMS_HOST }}
+          DASHTICZ_LIVE_ICAL_URL: ${{ secrets.DASHTICZ_LIVE_ICAL_URL }}
+      - name: Start PHP test server
+        run: |
+          php -S 127.0.0.1:8082 -t . > php-server.log 2>&1 &
+          for attempt in {1..30}; do
+            curl --fail --silent http://127.0.0.1:8082/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat php-server.log
+          exit 1
+        env:
+          DASHTICZ_ALLOWED_REMOTE_HOSTS: ${{ secrets.DASHTICZ_ALLOWED_REMOTE_HOSTS }}
+      - run: npm run test:live
+        env:
+          DASHTICZ_TEST_URL: http://127.0.0.1:8082
+          DASHTICZ_BROWSER: chromium
+          DASHTICZ_ALLOWED_REMOTE_HOSTS: ${{ secrets.DASHTICZ_ALLOWED_REMOTE_HOSTS }}
+          DASHTICZ_LIVE_DOMOTICZ_URL: ${{ secrets.DASHTICZ_LIVE_DOMOTICZ_URL }}
+          DASHTICZ_LIVE_DOMOTICZ_USERNAME: ${{ secrets.DASHTICZ_LIVE_DOMOTICZ_USERNAME }}
+          DASHTICZ_LIVE_DOMOTICZ_PASSWORD: ${{ secrets.DASHTICZ_LIVE_DOMOTICZ_PASSWORD }}
+          DASHTICZ_LIVE_LMS_HOST: ${{ secrets.DASHTICZ_LIVE_LMS_HOST }}
+          DASHTICZ_LIVE_LMS_PORT: ${{ secrets.DASHTICZ_LIVE_LMS_PORT }}
+          DASHTICZ_LIVE_LMS_USERNAME: ${{ secrets.DASHTICZ_LIVE_LMS_USERNAME }}
+          DASHTICZ_LIVE_LMS_PASSWORD: ${{ secrets.DASHTICZ_LIVE_LMS_PASSWORD }}
+          DASHTICZ_LIVE_ICAL_URL: ${{ secrets.DASHTICZ_LIVE_ICAL_URL }}
