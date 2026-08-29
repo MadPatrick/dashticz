@@ -5,7 +5,7 @@ const test = require('node:test');
 
 const root = path.resolve(__dirname, '..');
 
-test('Garbage Font Awesome icon is persisted without replacing the kliko', () => {
+test('Garbage icon and Kliko layout enhancements stay available', () => {
   const helper = fs.readFileSync(
     path.join(root, 'js/garbageconfig.js'),
     'utf8'
@@ -27,6 +27,41 @@ test('Garbage Font Awesome icon is persisted without replacing the kliko', () =>
     'the selected Garbage Font Awesome icon must be marked explicit before save'
   );
   assert.match(
+    helper,
+    /kliko_width/,
+    'Garbage blocks must support a per-widget Kliko width'
+  );
+  assert.match(
+    helper,
+    /kliko_height/,
+    'Garbage blocks must support a per-widget Kliko height'
+  );
+  assert.match(
+    helper,
+    /setProperty\('left', '100px', 'important'\)/,
+    'the Kliko image must be shifted 100px to the right'
+  );
+  assert.match(
+    helper,
+    /setProperty\('text-align', 'right', 'important'\)/,
+    'the Garbage title must be right aligned'
+  );
+  assert.match(
+    helper,
+    /rows\[0\]\.style\.setProperty\('font-weight', '700', 'important'\)/,
+    'only the first collection row must be made bold'
+  );
+  assert.match(
+    helper,
+    /setProperty\('width', width \+ 'px', 'important'\)/,
+    'configured Kliko width must override theme sizing'
+  );
+  assert.match(
+    helper,
+    /setProperty\('height', height \+ 'px', 'important'\)/,
+    'configured Kliko height must override theme sizing'
+  );
+  assert.match(
     garbage,
     /img\/garbage\/kliko\.png/,
     'the existing Garbage kliko image must remain in the component'
@@ -38,7 +73,7 @@ test('Garbage Font Awesome icon is persisted without replacing the kliko', () =>
   );
   assert.match(
     index,
-    /<script src="js\/garbageconfig\.js\?t=1"><\/script>/,
-    'the Garbage Widget Config helper must be loaded by the dashboard'
+    /<script src="js\/garbageconfig\.js\?t=2"><\/script>/,
+    'the updated Garbage helper must be loaded with a fresh cache key'
   );
 });

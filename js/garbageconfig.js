@@ -1,18 +1,26 @@
 /* Garbage Widget Config enhancement.
  *
- * The Widget Editor can show a generated catalog icon such as
- * `fas fa-trash-alt` while leaving data-generated-icon="true" on the row.
- * Generated icons are intentionally skipped by the generic save path, which
- * means the Garbage widget receives no `icon` property and therefore cannot
- * render the selected Font Awesome icon. Custom images do not have that flag,
- * which is why Image already works.
- *
- * Mark the active Garbage icon row as explicit immediately before the Widget
- * Editor handles OK. The Garbage component itself is not changed: its existing
- * img/garbage/kliko.png and waste-type image/color behavior stay untouched.
+ * Keeps the existing Garbage component intact while adding editor/runtime
+ * behaviour that is specific to this widget:
+ * - persist the generated Font Awesome icon when Icon is enabled;
+ * - expose per-widget Kliko width/height as block properties;
+ * - align the widget title to the right;
+ * - render the first garbage collection row in bold;
+ * - move the Kliko image 100 px to the right.
  */
 (function () {
   'use strict';
+
+  var WIDTH_FIELD = 'kliko_width';
+  var HEIGHT_FIELD = 'kliko_height';
+  var POLL_MS = 500;
+
+  function normaliseField(value) {
+    return String(value || '')
+      .trim()
+      .replace(/[\s-]+/g, '_')
+      .toLowerCase();
+  }
 
   function garbagePopup() {
     var popup = document.getElementById('we-config-popup');
@@ -20,6 +28,156 @@
       return null;
     }
     return popup;
+  }
+
+  function findCustomFieldRow(popup, fieldName) {
+    var wanted = normaliseField(fieldName);
+    var rows = popup.querySelectorAll('.we-custom-field-row');
+    for (var i = 0; i < rows.length; i++) {
+      var field = rows[i].querySelector('.we-custom-field-name');
+      if (field && normaliseField(field.value) === wanted) return rows[i];
+    }
+    return null;
+  }
+
+  function customFieldValue(popup, fieldName) {
+    var row = findCustomFieldRow(popup, fieldName);
+    var setting = row && row.querySelector('.we-custom-field-setting');
+    return setting ? String(setting.value || '').trim() : '';
+  }
+
+  function hideManagedCustomRow(row) {
+    if (!row) return;
+    row.classList.add('we-system-field-row', 'garbage-managed-custom-field');
+    row.style.setProperty('display', 'none', 'important');
+  }
+
+  function createManagedCustomRow(popup, fieldName, value) {
+    var fields = popup.querySelector('.we-custom-fields');
+    if (!fields) return null;
+
+    var row = document.createElement('div');
+    row.className =
+      'we-custom-field-row we-system-field-row garbage-managed-custom-field';
+    row.style.setProperty('display', 'none', 'important');
+
+    var name = document.createElement('input');
+    name.type = 'text';
+    name.className = 'we-custom-field-name';
+    name.value = fieldName;
+
+    var setting = document.createElement('input');
+    setting.type = 'text';
+    setting.className = 'we-custom-field-setting';
+    setting.value = value;
+
+    row.appendChild(name);
+    row.appendChild(setting);
+    fields.appendChild(row);
+    return row;
+  }
+
+  function syncManagedCustomField(popup, fieldName, rawValue) {
+    var value = String(rawValue || '').trim();
+    if (value) {
+      var parsed = parseInt(value, 10);
+      value = isFinite(parsed) && parsed > 0 ? String(parsed) : '';
+    }
+
+    var row = findCustomFieldRow(popup, fieldName);
+    if (!value) {
+      if (row && row.parentNode) row.parentNode.removeChild(row);
+      return;
+    }
+
+    if (!row) row = createManagedCustomRow(popup, fieldName, value);
+    if (!row) return;
+
+    hideManagedCustomRow(row);
+    var setting = row.querySelector('.we-custom-field-setting');
+    if (setting) setting.value = value;
+  }
+
+  function createSizeField(id, labelText, value) {
+    var group = document.createElement('div');
+    group.className = 'mb-3';
+
+    var label = document.createElement('label');
+    label.className = 'form-label we-field-label';
+    label.setAttribute('for', id);
+    label.textContent = labelText;
+
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'form-control form-control-sm garbage-kliko-size-input';
+    input.id = id;
+    input.min = '1';
+    input.step = '1';
+    input.value = value;
+
+    var help = document.createElement('div');
+    help.className = 'form-text';
+    help.textContent = 'Leave empty to keep the current theme/default size.';
+
+    group.appendChild(label);
+    group.appendChild(input);
+    group.appendChild(help);
+    return group;
+  }
+
+  function syncSizeInputs(popup) {
+    var width = popup.querySelector('#we-cfg-kliko-width');
+    var height = popup.querySelector('#we-cfg-kliko-height');
+    if (width) syncManagedCustomField(popup, WIDTH_FIELD, width.value);
+    if (height) syncManagedCustomField(popup, HEIGHT_FIELD, height.value);
+  }
+
+  function enhanceGarbagePopup(popup) {
+    if (!popup || popup.getAttribute('data-garbage-layout-enhanced') === 'true') {
+      return;
+    }
+
+    var widthValue = customFieldValue(popup, WIDTH_FIELD);
+    var heightValue = customFieldValue(popup, HEIGHT_FIELD);
+    hideManagedCustomRow(findCustomFieldRow(popup, WIDTH_FIELD));
+    hideManagedCustomRow(findCustomFieldRow(popup, HEIGHT_FIELD));
+
+    var wrapper = document.createElement('div');
+    wrapper.className = 'garbage-kliko-size-fields';
+
+    var heading = document.createElement('h6');
+    heading.className = 'mt-3 mb-2';
+    heading.style.cssText =
+      'font-size:14px;font-weight:600;color:#495057';
+    heading.textContent = 'Kliko image';
+    wrapper.appendChild(heading);
+    wrapper.appendChild(
+      createSizeField('we-cfg-kliko-width', 'Kliko width (px)', widthValue)
+    );
+    wrapper.appendChild(
+      createSizeField('we-cfg-kliko-height', 'Kliko height (px)', heightValue)
+    );
+
+    var hideIcon = popup.querySelector('#we-cfg-garbage-hideicon');
+    var anchor = hideIcon && hideIcon.closest('.mb-3');
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.insertBefore(wrapper, anchor);
+    } else {
+      var body = popup.querySelector('.modal-body');
+      if (body) body.appendChild(wrapper);
+    }
+
+    var inputs = wrapper.querySelectorAll('.garbage-kliko-size-input');
+    for (var i = 0; i < inputs.length; i++) {
+      inputs[i].addEventListener('input', function () {
+        syncSizeInputs(popup);
+      });
+      inputs[i].addEventListener('change', function () {
+        syncSizeInputs(popup);
+      });
+    }
+
+    popup.setAttribute('data-garbage-layout-enhanced', 'true');
   }
 
   function markIconExplicit(popup) {
@@ -33,16 +191,60 @@
     row.setAttribute('data-generated-icon', 'false');
   }
 
+  function positiveNumber(value) {
+    var parsed = parseFloat(value);
+    return isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  function applyRuntimeStyles() {
+    var images = document.querySelectorAll('img.trashcan');
+    for (var i = 0; i < images.length; i++) {
+      var image = images[i];
+      var block = image.closest('.dt_block[data-id]') || image.closest('[data-id]');
+      if (!block) continue;
+
+      var key = String(block.getAttribute('data-id') || '');
+      var definition =
+        key && typeof window.blocks !== 'undefined' ? window.blocks[key] : null;
+
+      block.classList.add('garbage-widget-enhanced');
+
+      var title = block.querySelector('.dt_title');
+      if (title) title.style.setProperty('text-align', 'right', 'important');
+
+      image.style.setProperty('position', 'relative', 'important');
+      image.style.setProperty('left', '100px', 'important');
+
+      var width = positiveNumber(definition && definition[WIDTH_FIELD]);
+      var height = positiveNumber(definition && definition[HEIGHT_FIELD]);
+      if (width) image.style.setProperty('width', width + 'px', 'important');
+      else image.style.removeProperty('width');
+      if (height) image.style.setProperty('height', height + 'px', 'important');
+      else image.style.removeProperty('height');
+
+      var rows = block.querySelectorAll('.trashrow');
+      for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+        rows[rowIndex].style.removeProperty('font-weight');
+      }
+      if (rows.length) {
+        rows[0].style.setProperty('font-weight', '700', 'important');
+      }
+    }
+  }
+
   document.addEventListener(
     'click',
     function (event) {
       var popup = garbagePopup();
       if (!popup) return;
 
+      enhanceGarbagePopup(popup);
+
       var target = event.target;
       if (!target || !target.closest) return;
 
       if (target.closest('#we-cfg-ok-btn')) {
+        syncSizeInputs(popup);
         markIconExplicit(popup);
         return;
       }
@@ -56,6 +258,15 @@
     },
     true
   );
+
+  function refreshGarbageEnhancements() {
+    var popup = garbagePopup();
+    if (popup) enhanceGarbagePopup(popup);
+    applyRuntimeStyles();
+  }
+
+  refreshGarbageEnhancements();
+  window.setInterval(refreshGarbageEnhancements, POLL_MS);
 })();
 
 //# sourceURL=js/garbageconfig.js
