@@ -5137,11 +5137,23 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
     styles,
     /\.lms-info > div \{[\s\S]*text-overflow: ellipsis;[\s\S]*white-space: nowrap;/
   );
+  // Title/Artist/Station each carry their own --lms-*-font-size/--lms-*-color
+  // override (js/components/lms.js sets them inline per block from Device
+  // Config's Text style fields), falling back to the shared --font-small/
+  // theme color when a block never set one. Title is bold by default,
+  // unconditionally, to stand out from artist/station (#217 follow-up).
   assert.match(
     styles,
-    /\.lms-title \{[\s\S]*font-size: var\(--font-small\);[\s\S]*color: var\(--text-title\);/
+    /\.lms-title \{[\s\S]*font-size: var\(--lms-title-font-size, var\(--font-small\)\);[\s\S]*color: var\(--lms-title-color, var\(--text-title\)\);[\s\S]*font-weight: bold;/
   );
-  assert.doesNotMatch(styles, /\.lms-title \{[\s\S]{0,150}font-weight:/);
+  assert.match(
+    styles,
+    /\.lms-artist \{[\s\S]*font-size: var\(--lms-artist-font-size, var\(--font-small\)\);[\s\S]*color: var\(--lms-artist-color, var\(--text-normal\)\);/
+  );
+  assert.match(
+    styles,
+    /\.lms-station \{[\s\S]*font-size: var\(--lms-station-font-size, var\(--font-small\)\);[\s\S]*color: var\(--lms-station-color, var\(--text-normal\)\);/
+  );
   assert.match(
     styles,
     /\.lms-album \{[\s\S]*font-size: calc\(var\(--font-small\) - 2px\);[\s\S]*color: var\(--text-muted\);/
@@ -5314,6 +5326,92 @@ test("Lyrion Music Server's configured icon renders as a badge on the cover art,
     lmsDocs,
     /shown as a small badge in the top-left corner of the cover artwork/
   );
+});
+
+test('Lyrion Music Server Title/Artist/Station text style (size/color) is configurable in Device Config', () => {
+  const lms = fs.readFileSync(path.join(root, 'js/components/lms.js'), 'utf8');
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+  const saveBlocks = fs.readFileSync(
+    path.join(root, 'js/saveblocks.php'),
+    'utf8'
+  );
+  const configWriter = fs.readFileSync(
+    path.join(root, 'js/configwriter.php'),
+    'utf8'
+  );
+  const enLang = JSON.parse(
+    fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8')
+  );
+
+  // Wizard (js/deviceeditor.js): _lmsFieldsHtml() renders a Size/Color pair
+  // per line, shared between the quick-add popup and the normal Device
+  // Config edit view for an already-saved LMS block, same as the existing
+  // Server/Port/.../Player fields above it.
+  assert.match(
+    deviceEditor,
+    /id="' \+\s*\n?\s*prefix \+ '-lms-' \+ line\.key \+ '-size"/
+  );
+  assert.match(
+    deviceEditor,
+    /id="' \+\s*\n?\s*prefix \+ '-lms-' \+ line\.key \+ '-color"/
+  );
+  assert.match(
+    deviceEditor,
+    /titleSize:[\s\S]{0,20}parseInt\(\$popup\.find\('#' \+ prefix \+ '-lms-title-size'\)\.val\(\), 10\)[\s\S]{0,10}\|\|[\s\S]{0,10}16,/
+  );
+  assert.match(
+    deviceEditor,
+    /titleColor: String\([\s\S]{0,80}\$popup\.find\('#' \+ prefix \+ '-lms-title-color'\)\.val\(\) \|\| '#ffffff'[\s\S]{0,10}\),/
+  );
+  // Both save paths (the quick-add popup's managedSpecials[orderKey] entry,
+  // and the edit popup's special.lmsXxx = pendingLms.xxx assignment) carry
+  // the 6 new fields through to the specialEntry the rest of _save() posts.
+  assert.match(deviceEditor, /lmsTitleSize: lms\.titleSize,/);
+  assert.match(deviceEditor, /special\.lmsTitleSize = pendingLms\.titleSize;/);
+  assert.match(
+    deviceEditor,
+    /specialEntry\.title_size = special\.lmsTitleSize;/
+  );
+  assert.match(
+    deviceEditor,
+    /specialEntry\.title_color = special\.lmsTitleColor;/
+  );
+
+  // Backend (js/saveblocks.php): a size outside 8-60 or a non hex-color
+  // value is dropped rather than rejecting the whole save.
+  assert.match(saveBlocks, /\$size >= 8 && \$size <= 60\) \? \$size : null;/);
+  assert.match(
+    saveBlocks,
+    /preg_match\('\/\^#\[0-9a-fA-F\]\{6\}\$\/', \$value\)/
+  );
+  assert.match(saveBlocks, /'lms_title_size' => \$lmsTitleSize,/);
+
+  // configwriter.php: omitted entirely (not even an empty string) when never
+  // set, so an untouched block's CONFIG.js entry is unchanged and
+  // css/creative.css's theme defaults keep applying.
+  assert.match(
+    configWriter,
+    /'lms_title_size' => 'title_size',[\s\S]{0,300}'lms_station_color' => 'station_color',/
+  );
+  assert.match(
+    configWriter,
+    /if \(isset\(\$block\[\$blockKey\]\) && \$block\[\$blockKey\] !== null && \$block\[\$blockKey\] !== ''\) \{\s*\n\s*\$props\[\$propKey\] = \$block\[\$blockKey\];/
+  );
+
+  // Runtime (js/components/lms.js): applied as inline CSS custom properties
+  // on .lms-block-inner, matching the property names configwriter.php just
+  // wrote (title_size/title_color/... - no lms_ prefix at this point).
+  assert.match(
+    lms,
+    /var LMS_TEXT_STYLE_VARS = \{\s*\n\s*title_size: '--lms-title-font-size',\s*\n\s*title_color: '--lms-title-color',/
+  );
+  assert.match(lms, /_applyTextStyleVars\(me, \$existing\);/);
+
+  assert.equal(enLang.settings.deviceeditor.lms_text_style, 'Text style');
+  assert.equal(enLang.settings.deviceeditor.lms_title_line, 'Title');
 });
 
 test('icon column width (--icon-column-width) is configurable from the Theme settings menu', () => {

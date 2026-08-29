@@ -70,6 +70,37 @@ var DT_lms_api = {
   var LMS_CURL_REQUIRED_ERROR =
     'The PHP curl extension is required for the Lyrion Music Server block.';
 
+  // Device Config's Title/Artist/Station text style fields (js/deviceeditor.js's
+  // _lmsFieldsHtml()) - each block property maps to the css/creative.css
+  // custom property its .lms-title/.lms-artist/.lms-station rule reads via
+  // var(..., --font-small/theme color), so an unset property (older/never
+  // resaved config) renders exactly as before.
+  var LMS_TEXT_STYLE_VARS = {
+    title_size: '--lms-title-font-size',
+    title_color: '--lms-title-color',
+    artist_size: '--lms-artist-font-size',
+    artist_color: '--lms-artist-color',
+    station_size: '--lms-station-font-size',
+    station_color: '--lms-station-color',
+  };
+
+  function _applyTextStyleVars(me, $el) {
+    var el = $el[0];
+    if (!el) return;
+    Object.keys(LMS_TEXT_STYLE_VARS).forEach(function (blockProp) {
+      var cssVar = LMS_TEXT_STYLE_VARS[blockProp];
+      var value = me.block[blockProp];
+      if (value === undefined || value === null || value === '') {
+        el.style.removeProperty(cssVar);
+        return;
+      }
+      el.style.setProperty(
+        cssVar,
+        /_size$/.test(blockProp) ? value + 'px' : String(value)
+      );
+    });
+  }
+
   function _esc(value) {
     return $('<div>')
       .text(value === null || typeof value === 'undefined' ? '' : String(value))
@@ -275,6 +306,7 @@ var DT_lms_api = {
       );
       $existing = $state.find('.lms-block-inner');
     }
+    _applyTextStyleVars(me, $existing);
     $existing
       .attr('data-lms-state', meta.state)
       .toggleClass('lms-remote', !!meta.remote);

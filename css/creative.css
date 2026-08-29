@@ -7650,16 +7650,26 @@ canvas {
   letter-spacing: 0.03em;
 }
 
-.lms-station,
+/* Per-block overrides (Device Config's Title/Artist/Station text style
+   fields, js/deviceeditor.js's _lmsFieldsHtml()) land as inline
+   --lms-*-font-size/--lms-*-color custom properties on .lms-block-inner
+   (js/components/lms.js) - each falls back to today's shared --font-small/
+   theme color when the block never set an override. */
+.lms-station {
+  font-size: var(--lms-station-font-size, var(--font-small));
+  color: var(--lms-station-color, var(--text-normal));
+}
+
 .lms-artist {
-  font-size: var(--font-small);
-  color: var(--text-normal);
+  font-size: var(--lms-artist-font-size, var(--font-small));
+  color: var(--lms-artist-color, var(--text-normal));
 }
 
 .lms-title {
-  /* Match the artist typography while retaining the distinct title color. */
-  font-size: var(--font-small);
-  color: var(--text-title);
+  font-size: var(--lms-title-font-size, var(--font-small));
+  color: var(--lms-title-color, var(--text-title));
+  /* Bold by default so the current track stands out from artist/station. */
+  font-weight: bold;
 }
 
 .lms-album {
