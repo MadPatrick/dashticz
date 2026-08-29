@@ -48,21 +48,30 @@ jobs:
       - run: npm test
       - run: npm run build
 
-  format-export:
-    name: Export Prettier result
+  source-export:
+    name: Export issue 242 source files
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx prettier --config build/prettier.json tests/domoticzblock.spec.js --write
       - uses: actions/upload-artifact@v4
         with:
-          name: formatted-domoticzblock
-          path: tests/domoticzblock.spec.js
+          name: issue-242-source
+          path: |
+            css/config-typography.css
+            docs/releasenotes/releasenotes.rst
+            index.html
+            js/savecustomcss.php
+            js/settings.js
+            lang/en_US.json
+            lang/nl_NL.json
+            package-lock.json
+            package.json
+            tests/domoticzblock.spec.js
+            tests/source.test.js
+            themes/liquid-glass-blue/liquid-glass-blue.css
+            themes/liquid-glass-grey/liquid-glass-grey.css
+            themes/modern-dark/modern-dark.css
+            version.txt
           retention-days: 1
 
   php:
