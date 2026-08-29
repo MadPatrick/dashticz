@@ -4924,7 +4924,10 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
     path.join(root, 'vendor/dashticz/lms/index.php'),
     'utf8'
   );
-  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const lmsStyles = fs.readFileSync(
+    path.join(root, 'js/components/lms.css'),
+    'utf8'
+  );
   const enLang = JSON.parse(
     fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8')
   );
@@ -4936,10 +4939,10 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   // silently falls through to the default/button dispatch instead.
   assert.match(dashticz, /'group',\s*\n\s*'waqi',\s*\n\s*'lms',\s*\n\s*\];/);
 
-  // The component itself: dispatches on type: 'lms' (like js/components/group.js
-  // dispatches on type: 'group'), never sends an LMS control command, and
-  // shares one fetch/error implementation (DT_lms_api) with the Wizard popup
-  // below rather than duplicating it.
+  // The component itself dispatches on type: 'lms' (like
+  // js/components/group.js dispatches on type: 'group') and shares one
+  // fetch/error implementation (DT_lms_api) with the Wizard popup below
+  // rather than duplicating it.
   assert.match(
     lms,
     /canHandle: function \(block\) \{\s*\n\s*return block && block\.type === 'lms';/
@@ -4973,21 +4976,34 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
     lms,
     /return \[\s*\n\s*meta\.remote \? 'remote' : 'local',\s*\n\s*meta\.station,\s*\n\s*meta\.artist,\s*\n\s*meta\.title,\s*\n\s*meta\.album,\s*\n\s*meta\.coverid,\s*\n\s*meta\.artworkUrl,\s*\n\s*\]\.join\('\|'\);/
   );
-  // Read-only: the runtime block only ever issues the "status" poll (never a
-  // play/pause/power/volume control command) - DT_lms_api.request() itself
-  // is reused by the Wizard's own "serverstatus" discovery call, but that
-  // lives in js/deviceeditor.js, not here.
-  assert.equal(
-    (lms.match(/DT_lms_api\.request\(\s*me\.block/g) || []).length,
-    1
-  );
+  // Runtime polling first fetches one shared server-wide player list and only
+  // fetches detailed status for an active player. The scheduler owns the
+  // caches/deduplication while Dashticz continues to own the refresh timer.
+  assert.match(lms, /var DT_lms_scheduler = \{/);
+  assert.match(lms, /this\.request\(block, \['players', 0, 100\], ''\)/);
   assert.match(lms, /\['status', '-', 1, STATUS_TAGS\]/);
   assert.match(lms, /STATUS_TAGS = 'tags:aclK'/);
+  assert.match(lms, /DT_lms_scheduler\.poll\(/);
+  // Interactive controls send their commands through the same API bridge and
+  // invalidate the shared cache before requesting a fresh render.
+  assert.match(
+    lms,
+    /function _sendCommand\(me, params\) \{\s*\n\s*DT_lms_api\.request\(me\.block, params, me\.block\.player\)/
+  );
+  assert.match(
+    lms,
+    /case 'power':[\s\S]{0,150}?\['power', meta\.power \? 0 : 1\]/
+  );
+  assert.match(lms, /case 'playpause':[\s\S]{0,300}?\['pause'\] : \['play'\]/);
   // Automatic refresh reuses Dashticz's own per-block polling (me.block.refresh
   // + special.refresh, wired centrally in js/dashticz.js's _mountSpecialBlock,
   // including cleanup via removeBlock's clearInterval) instead of a bespoke
   // setInterval that would need its own teardown.
   assert.doesNotMatch(lms, /setInterval\(/);
+  assert.match(
+    lms,
+    /init: function \(\) \{\s*\n\s*return DT_function\.loadCSS\('\.\/js\/components\/lms\.css'\);/
+  );
   assert.match(lms, /refresh: function \(me\) \{/);
   assert.match(lms, /defaultCfg: \{[\s\S]*refresh: 5,/);
   assert.doesNotMatch(lms, /defaultCfg: \{[\s\S]*icon:/);
@@ -5124,25 +5140,25 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   assert.doesNotMatch(lmsBackend, /CURLOPT_SSL_VERIFYPEER/);
   assert.doesNotMatch(lmsBackend, /echo curl_error/);
 
-  // CSS: fixed 100x100 cover with object-fit: cover (never distorts, never a
-  // browser broken-image icon - see js/components/lms.js's placeholder div),
-  // text truncates with ellipsis instead of overflowing (#20).
+  // Component CSS: fixed 100x100 cover with object-fit: cover (never
+  // distorts, never a browser broken-image icon - see js/components/lms.js's
+  // placeholder div), and text truncates instead of overflowing (#20).
   assert.match(
-    styles,
+    lmsStyles,
     /\.lms-cover \{[\s\S]*width: 100px;[\s\S]*height: 100px;/
   );
-  assert.match(styles, /\.lms-cover-img \{[\s\S]*object-fit: cover;/);
+  assert.match(lmsStyles, /\.lms-cover-img \{[\s\S]*object-fit: cover;/);
   assert.match(
-    styles,
+    lmsStyles,
     /\.lms-info > div \{[\s\S]*text-overflow: ellipsis;[\s\S]*white-space: nowrap;/
   );
   assert.match(
-    styles,
+    lmsStyles,
     /\.lms-title \{[\s\S]*font-size: var\(--font-small\);[\s\S]*color: var\(--text-title\);/
   );
-  assert.doesNotMatch(styles, /\.lms-title \{[\s\S]{0,150}font-weight:/);
+  assert.doesNotMatch(lmsStyles, /\.lms-title \{[\s\S]{0,150}font-weight:/);
   assert.match(
-    styles,
+    lmsStyles,
     /\.lms-album \{[\s\S]*font-size: calc\(var\(--font-small\) - 2px\);[\s\S]*color: var\(--text-muted\);/
   );
 
