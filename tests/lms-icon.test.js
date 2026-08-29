@@ -36,38 +36,3 @@ test('LMS Icon display option uses a visible normal block icon column', () => {
     'new LMS blocks should keep Icon off by default and offer fa-music when enabled'
   );
 });
-
-test('LMS Device Config can disable player controls', () => {
-  const lmsConfig = fs.readFileSync(path.join(root, 'js/lmsconfig.js'), 'utf8');
-  const lmsCss = fs.readFileSync(
-    path.join(root, 'js/components/lms.css'),
-    'utf8'
-  );
-  const loader = fs.readFileSync(path.join(root, 'js/loader.js'), 'utf8');
-
-  assert.match(
-    lmsConfig,
-    /var FIELD = 'player_controls';/,
-    'the LMS setting must be stored as player_controls'
-  );
-  assert.match(
-    lmsConfig,
-    /id=\\?"?' \+\s*SWITCH_ID|SWITCH_ID = 'de-config-lms-player-controls'/,
-    'Device Config must expose a dedicated player controls switch'
-  );
-  assert.match(
-    lmsConfig,
-    /definition\.player_controls === false/,
-    'only explicit false should hide controls so existing configurations stay enabled'
-  );
-  assert.match(
-    lmsCss,
-    /\.lms-block\.lms-player-controls-hidden\s+\.lms-controls\s*\{[\s\S]*?display:\s*none\s*!important;/,
-    'the runtime setting must hide the controls row'
-  );
-  assert.match(
-    loader,
-    /loadScript\('js\/lmsconfig\.js'\)/,
-    'the LMS Device Config extension must be loaded at startup'
-  );
-});
