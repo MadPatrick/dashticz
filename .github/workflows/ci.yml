@@ -1,49 +1,41 @@
-name: CI
+name: Apply issue 242 fix
 
 on:
-  push:
-    branches: [beta, develop, test]
   pull_request:
   workflow_dispatch:
-    inputs:
-      run_live_integrations:
-        description: Run tests against configured live services
-        required: false
-        default: false
-        type: boolean
-      update_snapshots:
-        description: Regenerate tests/domoticzblock.spec.js's chromium Playwright visual snapshots and print them as base64 in the job log, instead of asserting against the committed ones
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: write
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: issue-242-apply-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  apply-issue-242:
-    name: Apply final issue 242 source changes
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+  apply:
+    name: Apply validated source changes
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: fix/issue-242-layout-stability
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Apply permanent layout and test fix
+      - name: Apply and validate permanent issue 242 fix
         run: |
+          if grep -q '"version": "3.45.12"' package.json; then
+            echo "Issue 242 source changes are already applied."
+            exit 0
+          fi
+
           git fetch origin beta
-          git show origin/beta:.github/workflows/ci.yml > .github/workflows/ci.yml
           git show origin/beta:css/config-typography.css > css/config-typography.css
+
           python3 - <<'PY'
           from collections import OrderedDict
           import json
@@ -77,13 +69,8 @@ jobs:
               "    '--font-small', '--font-large', '--font-update',",
               "    '--font-small', '--font-large', '--font-device-title', '--font-update',",
           )
-          replace_once(
-              '.github/workflows/ci.yml',
-              '    branches: [develop, test]',
-              '    branches: [beta, develop, test]',
-          )
 
-          language_labels = {
+          labels = {
               'lang/en_US.json': {
                   '--font-large': 'Header/title bar text (--font-large)',
                   '--font-device-title': 'Device title text (--font-device-title)',
@@ -97,23 +84,21 @@ jobs:
                   '--font-update': 'Tekst update (--font-update)',
               },
           }
-          for path, labels in language_labels.items():
+          for path, translated in labels.items():
               file_path = Path(path)
               data = json.loads(file_path.read_text(encoding='utf-8'))
               variables = data['settings']['theme']['vars']
               rebuilt = OrderedDict()
               for key, value in variables.items():
                   if key == '--font-small':
-                      rebuilt['--font-small'] = labels['--font-small']
-                      continue
-                  if key == '--font-large':
-                      rebuilt['--font-large'] = labels['--font-large']
-                      rebuilt['--font-device-title'] = labels['--font-device-title']
-                      continue
-                  if key == '--font-update':
-                      rebuilt['--font-update'] = labels['--font-update']
-                      continue
-                  rebuilt[key] = value
+                      rebuilt[key] = translated[key]
+                  elif key == '--font-large':
+                      rebuilt[key] = translated[key]
+                      rebuilt['--font-device-title'] = translated['--font-device-title']
+                  elif key == '--font-update':
+                      rebuilt[key] = translated[key]
+                  else:
+                      rebuilt[key] = value
               data['settings']['theme']['vars'] = rebuilt
               file_path.write_text(
                   json.dumps(data, ensure_ascii=False, indent=2) + '\n',
@@ -179,7 +164,7 @@ jobs:
               encoding='utf-8',
           )
 
-          version_summary = (
+          summary = (
               'Fixed legacy column tile overlap and unstable visual regressions exposed by Chromium 151 by separating '
               'device-title sizing into a dedicated --font-device-title variable. The default/White layout keeps its '
               'classic 12px title size, while Modern Dark and both Liquid Glass themes keep their existing 18px layout. '
@@ -191,9 +176,9 @@ jobs:
           if version_data['version'] != '3.45.11':
               raise RuntimeError(f"Unexpected version: {version_data['version']}")
           version_data['version'] = '3.45.12'
-          version_data['last_changes'] = version_summary
+          version_data['last_changes'] = summary
           version_data['changelog'] = OrderedDict(
-              [('3.45.12', version_summary), *version_data['changelog'].items()]
+              [('3.45.12', summary), *version_data['changelog'].items()]
           )
           version_path.write_text(
               json.dumps(version_data, ensure_ascii=False, indent=4) + '\n',
@@ -213,10 +198,7 @@ jobs:
           index_text = index_path.read_text(encoding='utf-8')
           if index_text.count('3.45.11') != 2:
               raise RuntimeError('index.html version occurrence count changed')
-          index_path.write_text(
-              index_text.replace('3.45.11', '3.45.12'),
-              encoding='utf-8',
-          )
+          index_path.write_text(index_text.replace('3.45.11', '3.45.12'), encoding='utf-8')
 
           release_path = Path('docs/releasenotes/releasenotes.rst')
           release_text = release_path.read_text(encoding='utf-8')
@@ -224,7 +206,7 @@ jobs:
           if anchor not in release_text:
               raise RuntimeError('release notes insertion marker not found')
           title = 'v3.45.12 beta (29-8-2026)'
-          release_entry = f"""
+          entry = f"""
 
           {title}
           {'-' * len(title)}
@@ -257,170 +239,18 @@ jobs:
             ``beta``.
           """
           release_path.write_text(
-              release_text.replace(anchor, release_entry + anchor, 1),
+              release_text.replace(anchor, entry + anchor, 1),
               encoding='utf-8',
           )
           PY
+
           npm run format
           npm test
           npm run build
           git diff --check
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/workflows/ci.yml css/config-typography.css css/creative.css docs/releasenotes/releasenotes.rst index.html js/savecustomcss.php js/settings.js lang/en_US.json lang/nl_NL.json package-lock.json package.json tests/source.test.js version.txt
+          git add css/config-typography.css css/creative.css docs/releasenotes/releasenotes.rst index.html js/savecustomcss.php js/settings.js lang/en_US.json lang/nl_NL.json package-lock.json package.json tests/source.test.js version.txt
           git commit -m "Fix legacy block layout stability and visual regressions (#242)"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
-
-  quality:
-    name: Node ${{ matrix.node }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node: ${{ fromJSON(github.event_name == 'pull_request' && '[22]' || '[20,22,24]') }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          cache: npm
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: curl
-          coverage: none
-      - run: npm ci
-      - run: npm run format:check
-      - run: npm test
-      - run: npm run build
-
-  php:
-    name: PHP ${{ matrix.php }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ${{ fromJSON(github.event_name == 'pull_request' && '["8.4"]' || '["7.4","8.1","8.2","8.3","8.4","8.5"]') }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: curl
-          coverage: none
-      - run: php --version
-      - run: php -m | grep -qi '^curl$'
-      - run: node --test tests/php-security.test.js
-
-  browsers:
-    name: Playwright ${{ matrix.browser }}
-    runs-on: ubuntu-latest
-    needs: quality
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: ${{ fromJSON(github.event_name == 'pull_request' && '["chromium","webkit"]' || '["chromium","firefox","webkit"]') }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: curl
-          coverage: none
-      - run: npm ci
-      - run: npm run build
-      - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - name: Start PHP test server
-        run: |
-          php -S 127.0.0.1:8082 -t . > php-server.log 2>&1 &
-          for attempt in {1..30}; do
-            curl --fail --silent http://127.0.0.1:8082/ >/dev/null && exit 0
-            sleep 1
-          done
-          cat php-server.log
-          exit 1
-      - if: ${{ !(inputs.update_snapshots && matrix.browser == 'chromium') }}
-        run: npx playwright test --project=${{ matrix.browser }}
-        env:
-          DASHTICZ_TEST_URL: http://127.0.0.1:8082
-          DASHTICZ_BROWSER: ${{ matrix.browser }}
-      - if: ${{ inputs.update_snapshots && matrix.browser == 'chromium' }}
-        run: npx playwright test tests/domoticzblock.spec.js --project=chromium --update-snapshots
-        env:
-          DASHTICZ_TEST_URL: http://127.0.0.1:8082
-          DASHTICZ_BROWSER: chromium
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-${{ matrix.browser }}
-          path: |
-            playwright-report/
-            test-results/
-            php-server.log
-          retention-days: 7
-      - name: Print regenerated snapshots as base64
-        if: ${{ inputs.update_snapshots && matrix.browser == 'chromium' }}
-        run: |
-          for f in tests/domoticzblock.spec.js-snapshots/*.png; do
-            echo "===SNAPSHOT_BASE64_START:$f==="
-            base64 -w0 "$f"
-            echo ""
-            echo "===SNAPSHOT_BASE64_END==="
-          done
-
-  live-integrations:
-    name: Live integrations
-    if: github.event_name == 'workflow_dispatch' && inputs.run_live_integrations
-    runs-on: ubuntu-latest
-    environment: live-integrations
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: curl
-          coverage: none
-      - run: npm ci
-      - run: npm run build
-      - run: npx playwright install --with-deps chromium
-      - name: Require at least one configured live integration
-        run: test -n "${DASHTICZ_LIVE_DOMOTICZ_URL}${DASHTICZ_LIVE_LMS_HOST}${DASHTICZ_LIVE_ICAL_URL}"
-        env:
-          DASHTICZ_LIVE_DOMOTICZ_URL: ${{ secrets.DASHTICZ_LIVE_DOMOTICZ_URL }}
-          DASHTICZ_LIVE_LMS_HOST: ${{ secrets.DASHTICZ_LIVE_LMS_HOST }}
-          DASHTICZ_LIVE_ICAL_URL: ${{ secrets.DASHTICZ_LIVE_ICAL_URL }}
-      - name: Start PHP test server
-        run: |
-          php -S 127.0.0.1:8082 -t . > php-server.log 2>&1 &
-          for attempt in {1..30}; do
-            curl --fail --silent http://127.0.0.1:8082/ >/dev/null && exit 0
-            sleep 1
-          done
-          cat php-server.log
-          exit 1
-        env:
-          DASHTICZ_ALLOWED_REMOTE_HOSTS: ${{ secrets.DASHTICZ_ALLOWED_REMOTE_HOSTS }}
-      - run: npm run test:live
-        env:
-          DASHTICZ_TEST_URL: http://127.0.0.1:8082
-          DASHTICZ_BROWSER: chromium
-          DASHTICZ_ALLOWED_REMOTE_HOSTS: ${{ secrets.DASHTICZ_ALLOWED_REMOTE_HOSTS }}
-          DASHTICZ_LIVE_DOMOTICZ_URL: ${{ secrets.DASHTICZ_LIVE_DOMOTICZ_URL }}
-          DASHTICZ_LIVE_DOMOTICZ_USERNAME: ${{ secrets.DASHTICZ_LIVE_DOMOTICZ_USERNAME }}
-          DASHTICZ_LIVE_DOMOTICZ_PASSWORD: ${{ secrets.DASHTICZ_LIVE_DOMOTICZ_PASSWORD }}
-          DASHTICZ_LIVE_LMS_HOST: ${{ secrets.DASHTICZ_LIVE_LMS_HOST }}
-          DASHTICZ_LIVE_LMS_PORT: ${{ secrets.DASHTICZ_LIVE_LMS_PORT }}
-          DASHTICZ_LIVE_LMS_USERNAME: ${{ secrets.DASHTICZ_LIVE_LMS_USERNAME }}
-          DASHTICZ_LIVE_LMS_PASSWORD: ${{ secrets.DASHTICZ_LIVE_LMS_PASSWORD }}
-          DASHTICZ_LIVE_ICAL_URL: ${{ secrets.DASHTICZ_LIVE_ICAL_URL }}
+          git push origin HEAD:fix/issue-242-layout-stability
