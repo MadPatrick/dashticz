@@ -137,7 +137,10 @@
   }
 
   function enhanceGarbagePopup(popup) {
-    if (!popup || popup.getAttribute('data-garbage-layout-enhanced') === 'true') {
+    if (
+      !popup ||
+      popup.getAttribute('data-garbage-layout-enhanced') === 'true'
+    ) {
       return;
     }
 
