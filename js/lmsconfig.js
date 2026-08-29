@@ -11,6 +11,13 @@
  * why images and Font Awesome behaved differently. This module makes both use
  * the same normal .col-icon structure.
  *
+ * Device Editor auto-generates a default icon row when a stored block has no
+ * explicit icon. That row is normally ignored on save while it still carries
+ * data-generated-icon="true". For LMS this caused the visible/selected
+ * Font Awesome value (for example `fas fa-music`) never to reach CONFIG.js.
+ * The LMS popup therefore marks an active non-empty icon row as an explicit
+ * user choice before Device Editor validates/saves it.
+ *
  * This module deliberately does not use MutationObserver and does not touch
  * the main Dashticz loader. It is safe to execute before the dashboard has
  * finished loading; the small polling loop only acts when the LMS popup or
@@ -68,12 +75,55 @@
     return row;
   }
 
+  function fixLmsIconPersistence(popup) {
+    var iconToggle = popup.querySelector(
+      '.de-config-option[data-option="icon"]'
+    );
+    var iconRow = popup.querySelector('.de-icon-field-row');
+    if (!iconToggle || !iconRow) return;
+
+    var source = iconRow.querySelector('.de-icon-source');
+    var setting = iconRow.querySelector('.de-custom-field-setting');
+    if (!setting) return;
+
+    function markExplicitIfActive() {
+      if (!iconToggle.classList.contains('active')) return;
+      if (!String(setting.value || '').trim()) return;
+      iconRow.setAttribute('data-generated-icon', 'false');
+    }
+
+    // The current Device Editor considers an LMS definition without an
+    // explicit `icon` property enabled and shows its generated `fas fa-music`
+    // value. If the UI says Icon is active, saving must persist that value.
+    markExplicitIfActive();
+
+    if (iconRow.getAttribute('data-lms-icon-persistence-wired') === 'true') {
+      return;
+    }
+    iconRow.setAttribute('data-lms-icon-persistence-wired', 'true');
+
+    setting.addEventListener('input', markExplicitIfActive);
+    setting.addEventListener('change', markExplicitIfActive);
+    if (source) source.addEventListener('change', markExplicitIfActive);
+
+    // Device Editor's click handler is delegated on the popup, so it toggles
+    // .active after this target-level listener runs. Defer one task and then
+    // read the final state. When the user enables Icon, the default value is
+    // now a real choice and must no longer be discarded as generated.
+    iconToggle.addEventListener('click', function () {
+      window.setTimeout(markExplicitIfActive, 0);
+    });
+  }
+
   function enhanceLmsPopup() {
     var popup = document.getElementById('de-config-popup');
     if (!popup) return;
 
     var hideWhenOff = popup.querySelector('#de-config-lms-hide-when-off');
     if (!hideWhenOff) return;
+
+    fixLmsIconPersistence(popup);
+
     if (popup.querySelector('#' + SWITCH_ID)) return;
 
     var enabled = storedEnabled(popup);
