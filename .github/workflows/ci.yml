@@ -100,12 +100,16 @@ jobs:
           done
           cat php-server.log
           exit 1
-      - run: >-
-          npx playwright test --project=${{ matrix.browser }}
-          ${{ inputs.update_snapshots && matrix.browser == 'chromium' && '--update-snapshots' || '' }}
+      - if: ${{ !(inputs.update_snapshots && matrix.browser == 'chromium') }}
+        run: npx playwright test --project=${{ matrix.browser }}
         env:
           DASHTICZ_TEST_URL: http://127.0.0.1:8082
           DASHTICZ_BROWSER: ${{ matrix.browser }}
+      - if: ${{ inputs.update_snapshots && matrix.browser == 'chromium' }}
+        run: npx playwright test tests/domoticzblock.spec.js --project=chromium --update-snapshots
+        env:
+          DASHTICZ_TEST_URL: http://127.0.0.1:8082
+          DASHTICZ_BROWSER: chromium
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -115,12 +119,15 @@ jobs:
             test-results/
             php-server.log
           retention-days: 7
-      - uses: actions/upload-artifact@v4
+      - name: Print updated snapshots as base64 (sandbox artifact downloads are blocked)
         if: ${{ inputs.update_snapshots && matrix.browser == 'chromium' }}
-        with:
-          name: updated-snapshots
-          path: tests/**/*-snapshots/**
-          retention-days: 7
+        run: |
+          for f in tests/domoticzblock.spec.js-snapshots/*.png; do
+            echo "===SNAPSHOT_BASE64_START:$f==="
+            base64 -w0 "$f"
+            echo ""
+            echo "===SNAPSHOT_BASE64_END==="
+          done
 
   live-integrations:
     name: Live integrations
