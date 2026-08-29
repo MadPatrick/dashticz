@@ -11,6 +11,11 @@ on:
         required: false
         default: false
         type: boolean
+      update_snapshots:
+        description: Regenerate chromium Playwright visual snapshots and upload them as an artifact, instead of asserting against the committed ones
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -95,7 +100,9 @@ jobs:
           done
           cat php-server.log
           exit 1
-      - run: npx playwright test --project=${{ matrix.browser }}
+      - run: >-
+          npx playwright test --project=${{ matrix.browser }}
+          ${{ inputs.update_snapshots && matrix.browser == 'chromium' && '--update-snapshots' || '' }}
         env:
           DASHTICZ_TEST_URL: http://127.0.0.1:8082
           DASHTICZ_BROWSER: ${{ matrix.browser }}
@@ -107,6 +114,12 @@ jobs:
             playwright-report/
             test-results/
             php-server.log
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.update_snapshots && matrix.browser == 'chromium' }}
+        with:
+          name: updated-snapshots
+          path: tests/**/*-snapshots/**
           retention-days: 7
 
   live-integrations:
