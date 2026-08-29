@@ -156,8 +156,7 @@
 
     var heading = document.createElement('h6');
     heading.className = 'mt-3 mb-2';
-    heading.style.cssText =
-      'font-size:14px;font-weight:600;color:#495057';
+    heading.style.cssText = 'font-size:14px;font-weight:600;color:#495057';
     heading.textContent = 'Kliko image';
     wrapper.appendChild(heading);
     wrapper.appendChild(createScaleField(scaleValue));
