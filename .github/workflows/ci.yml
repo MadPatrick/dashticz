@@ -58,6 +58,7 @@ jobs:
           name: issue-242-source
           path: |
             css/config-typography.css
+            css/creative.css
             docs/releasenotes/releasenotes.rst
             index.html
             js/savecustomcss.php
