@@ -4,6 +4,13 @@
  * stores the value as the normal block property `player_controls` through
  * the Device Editor's existing custom-field save path.
  *
+ * It also restores the normal Dashticz icon column for LMS blocks. The LMS
+ * component renders its own dt_state content and therefore does not currently
+ * create the generic .col-icon element for Font Awesome icons. A selected
+ * custom image could still appear through the old cover-badge path, which is
+ * why images and Font Awesome behaved differently. This module makes both use
+ * the same normal .col-icon structure.
+ *
  * This module deliberately does not use MutationObserver and does not touch
  * the main Dashticz loader. It is safe to execute before the dashboard has
  * finished loading; the small polling loop only acts when the LMS popup or
@@ -98,7 +105,102 @@
     }
   }
 
-  function applyRuntimeVisibility() {
+  function normaliseFontAwesomeIcon(value) {
+    var icon = String(value || '').trim();
+    if (!icon) return '';
+
+    var classes = icon.split(/\s+/);
+    var hasFaGlyph = false;
+    var hasFamily = false;
+    for (var i = 0; i < classes.length; i++) {
+      if (/^fa-/.test(classes[i])) hasFaGlyph = true;
+      if (
+        /^(fas|far|fab|fal|fad|fat|fak|fa-solid|fa-regular|fa-brands|fa-light|fa-thin|fa-duotone)$/.test(
+          classes[i]
+        )
+      ) {
+        hasFamily = true;
+      }
+    }
+
+    // Older/custom Device Config values sometimes contain only `fa-music`.
+    // Font Awesome needs a style/family class as well.
+    if (hasFaGlyph && !hasFamily) return 'fas ' + icon;
+    return icon;
+  }
+
+  function ownIconColumn(block) {
+    var children = block.children || [];
+    for (var i = 0; i < children.length; i++) {
+      if (
+        children[i].classList &&
+        children[i].classList.contains('lms-configured-icon')
+      ) {
+        return children[i];
+      }
+    }
+    return null;
+  }
+
+  function genericIconColumn(block) {
+    var children = block.children || [];
+    for (var i = 0; i < children.length; i++) {
+      if (children[i].classList && children[i].classList.contains('col-icon')) {
+        return children[i];
+      }
+    }
+    return null;
+  }
+
+  function syncConfiguredIcon(block, definition) {
+    var icon = normaliseFontAwesomeIcon(definition && definition.icon);
+    var image = String((definition && definition.image) || '').trim();
+    var signature = icon ? 'icon:' + icon : image ? 'image:' + image : '';
+    var column = ownIconColumn(block);
+
+    if (!signature) {
+      if (column && column.parentNode) column.parentNode.removeChild(column);
+      return;
+    }
+
+    // If the core renderer starts supplying a normal icon column again in a
+    // future version, leave that renderer in charge instead of duplicating it.
+    var generic = genericIconColumn(block);
+    if (generic && generic !== column) return;
+
+    if (!column) {
+      column = document.createElement('div');
+      column.className = 'col-icon lms-configured-icon';
+      var content = null;
+      for (var i = 0; i < block.children.length; i++) {
+        if (block.children[i].classList.contains('dt_content')) {
+          content = block.children[i];
+          break;
+        }
+      }
+      block.insertBefore(column, content || block.firstChild);
+    }
+
+    if (column.getAttribute('data-lms-icon') === signature) return;
+    column.setAttribute('data-lms-icon', signature);
+    while (column.firstChild) column.removeChild(column.firstChild);
+
+    if (icon) {
+      var em = document.createElement('em');
+      em.className = icon + ' icon';
+      em.setAttribute('aria-hidden', 'true');
+      column.appendChild(em);
+      return;
+    }
+
+    var img = document.createElement('img');
+    img.className = 'icon';
+    img.src = 'img/' + image;
+    img.alt = '';
+    column.appendChild(img);
+  }
+
+  function applyRuntimeSettings() {
     var definitions = window.blocks;
     if (!definitions) return;
 
@@ -107,14 +209,17 @@
       var block = lmsBlocks[i];
       var key = String(block.getAttribute('data-id') || '');
       var definition = key ? definitions[key] : null;
-      var hidden = !!(definition && definition.player_controls === false);
+      if (!definition) continue;
+
+      var hidden = definition.player_controls === false;
       block.classList.toggle('lms-player-controls-hidden', hidden);
+      syncConfiguredIcon(block, definition);
     }
   }
 
   function tick() {
     enhanceLmsPopup();
-    applyRuntimeVisibility();
+    applyRuntimeSettings();
   }
 
   if (document.readyState === 'loading') {
