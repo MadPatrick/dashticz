@@ -1,27 +1,12 @@
 /* LMS-specific Device Config enhancement.
  *
- * Adds a Player controls On/Off switch to an LMS Device Config popup and
- * stores the value as the normal block property `player_controls` through
- * the Device Editor's existing custom-field save path.
+ * Adds a Player controls switch to an LMS Device Config popup and restores
+ * the normal Dashticz icon column for LMS blocks. It also ensures that the
+ * Device Editor persists an enabled generated Font Awesome icon as an
+ * explicit user choice.
  *
- * It also restores the normal Dashticz icon column for LMS blocks. The LMS
- * component renders its own dt_state content and therefore does not currently
- * create the generic .col-icon element for Font Awesome icons. A selected
- * custom image could still appear through the old cover-badge path, which is
- * why images and Font Awesome behaved differently. This module makes both use
- * the same normal .col-icon structure.
- *
- * Device Editor auto-generates a default icon row when a stored block has no
- * explicit icon. That row is normally ignored on save while it still carries
- * data-generated-icon="true". For LMS this caused the visible/selected
- * Font Awesome value (for example `fas fa-music`) never to reach CONFIG.js.
- * The LMS popup therefore marks an active non-empty icon row as an explicit
- * user choice before Device Editor validates/saves it.
- *
- * This module deliberately does not use MutationObserver and does not touch
- * the main Dashticz loader. It is safe to execute before the dashboard has
- * finished loading; the small polling loop only acts when the LMS popup or
- * an LMS block actually exists.
+ * This module deliberately avoids MutationObserver and does not touch the
+ * main Dashticz loader.
  */
 (function () {
   'use strict';
@@ -29,117 +14,171 @@
   var FIELD = 'player_controls';
   var SWITCH_ID = 'de-config-lms-player-controls';
   var POLL_MS = 500;
+  var FA_FAMILIES = [
+    'fas',
+    'far',
+    'fab',
+    'fal',
+    'fad',
+    'fat',
+    'fak',
+    'fa-solid',
+    'fa-regular',
+    'fa-brands',
+    'fa-light',
+    'fa-thin',
+    'fa-duotone',
+  ];
 
   function findFieldRow(popup) {
     var rows = popup.querySelectorAll('.de-custom-field-row');
     for (var i = 0; i < rows.length; i++) {
       var input = rows[i].querySelector('.de-custom-field-name');
-      var field = input ? String(input.value || '').trim().toLowerCase() : '';
-      if (field === FIELD) return rows[i];
+      var field = input ? String(input.value || '') : '';
+      if (field.trim().toLowerCase() === FIELD) {
+        return rows[i];
+      }
     }
     return null;
   }
 
   function storedEnabled(popup) {
     var row = findFieldRow(popup);
-    if (!row) return true;
+    if (!row) {
+      return true;
+    }
+
     var setting = row.querySelector('.de-custom-field-setting');
-    var value = setting
-      ? String(setting.value || '').trim().toLowerCase()
-      : 'true';
+    var value = setting ? String(setting.value || '') : 'true';
+    value = value.trim().toLowerCase();
     return value !== 'false' && value !== '0';
+  }
+
+  function createStorageRow() {
+    var row = document.createElement('div');
+    row.className = [
+      'de-custom-field-row',
+      'input-group',
+      'input-group-sm',
+      'mb-2',
+      'd-none',
+      'de-lms-player-controls-storage',
+    ].join(' ');
+
+    var field = document.createElement('input');
+    field.type = 'text';
+    field.className = 'form-control de-custom-field-name';
+    field.value = FIELD;
+    row.appendChild(field);
+
+    var setting = document.createElement('input');
+    setting.type = 'text';
+    setting.className = 'form-control de-custom-field-setting';
+    setting.value = 'true';
+    row.appendChild(setting);
+
+    return row;
   }
 
   function ensureStorageRow(popup, enabled) {
     var row = findFieldRow(popup);
     if (!row) {
       var fields = popup.querySelector('.de-custom-fields');
-      if (!fields) return null;
-
-      row = document.createElement('div');
-      row.className =
-        'de-custom-field-row input-group input-group-sm mb-2 d-none de-lms-player-controls-storage';
-      row.innerHTML =
-        '<input type="text" class="form-control de-custom-field-name" value="' +
-        FIELD +
-        '">' +
-        '<input type="text" class="form-control de-custom-field-setting" value="true">';
+      if (!fields) {
+        return null;
+      }
+      row = createStorageRow();
       fields.appendChild(row);
     }
 
-    row.classList.add('d-none', 'de-lms-player-controls-storage');
-    var nameInput = row.querySelector('.de-custom-field-name');
-    var settingInput = row.querySelector('.de-custom-field-setting');
-    if (nameInput) nameInput.value = FIELD;
-    if (settingInput) settingInput.value = enabled ? 'true' : 'false';
+    row.classList.add('d-none');
+    row.classList.add('de-lms-player-controls-storage');
+
+    var field = row.querySelector('.de-custom-field-name');
+    var setting = row.querySelector('.de-custom-field-setting');
+    if (field) {
+      field.value = FIELD;
+    }
+    if (setting) {
+      setting.value = enabled ? 'true' : 'false';
+    }
     return row;
   }
 
+  function markIconExplicit(iconToggle, iconRow, setting) {
+    if (!iconToggle.classList.contains('active')) {
+      return;
+    }
+    if (!String(setting.value || '').trim()) {
+      return;
+    }
+    iconRow.setAttribute('data-generated-icon', 'false');
+  }
+
   function fixLmsIconPersistence(popup) {
-    var iconToggle = popup.querySelector(
-      '.de-config-option[data-option="icon"]'
-    );
+    var selector = '.de-config-option[data-option="icon"]';
+    var iconToggle = popup.querySelector(selector);
     var iconRow = popup.querySelector('.de-icon-field-row');
-    if (!iconToggle || !iconRow) return;
+    if (!iconToggle || !iconRow) {
+      return;
+    }
 
     var source = iconRow.querySelector('.de-icon-source');
     var setting = iconRow.querySelector('.de-custom-field-setting');
-    if (!setting) return;
-
-    function markExplicitIfActive() {
-      if (!iconToggle.classList.contains('active')) return;
-      if (!String(setting.value || '').trim()) return;
-      iconRow.setAttribute('data-generated-icon', 'false');
+    if (!setting) {
+      return;
     }
 
-    // The current Device Editor considers an LMS definition without an
-    // explicit `icon` property enabled and shows its generated `fas fa-music`
-    // value. If the UI says Icon is active, saving must persist that value.
+    function markExplicitIfActive() {
+      markIconExplicit(iconToggle, iconRow, setting);
+    }
+
     markExplicitIfActive();
 
-    if (iconRow.getAttribute('data-lms-icon-persistence-wired') === 'true') {
+    var wired = iconRow.getAttribute('data-lms-icon-persistence-wired');
+    if (wired === 'true') {
       return;
     }
     iconRow.setAttribute('data-lms-icon-persistence-wired', 'true');
 
     setting.addEventListener('input', markExplicitIfActive);
     setting.addEventListener('change', markExplicitIfActive);
-    if (source) source.addEventListener('change', markExplicitIfActive);
-
-    // Device Editor's click handler is delegated on the popup, so it toggles
-    // .active after this target-level listener runs. Defer one task and then
-    // read the final state. When the user enables Icon, the default value is
-    // now a real choice and must no longer be discarded as generated.
+    if (source) {
+      source.addEventListener('change', markExplicitIfActive);
+    }
     iconToggle.addEventListener('click', function () {
       window.setTimeout(markExplicitIfActive, 0);
     });
   }
 
-  function enhanceLmsPopup() {
-    var popup = document.getElementById('de-config-popup');
-    if (!popup) return;
+  function createPlayerControlsOption(enabled) {
+    var option = document.createElement('label');
+    option.className = 'form-check form-switch mb-3 lms-player-controls-option';
 
-    var hideWhenOff = popup.querySelector('#de-config-lms-hide-when-off');
-    if (!hideWhenOff) return;
+    var toggle = document.createElement('input');
+    toggle.className = 'form-check-input de-lms-switch';
+    toggle.type = 'checkbox';
+    toggle.id = SWITCH_ID;
+    toggle.checked = enabled;
+    option.appendChild(toggle);
 
-    fixLmsIconPersistence(popup);
+    var text = document.createElement('span');
+    text.className = 'form-check-label';
+    text.textContent = 'Player controls';
+    option.appendChild(text);
 
-    if (popup.querySelector('#' + SWITCH_ID)) return;
+    return option;
+  }
+
+  function addPlayerControlsOption(popup, hideWhenOff) {
+    if (popup.querySelector('#' + SWITCH_ID)) {
+      return;
+    }
 
     var enabled = storedEnabled(popup);
     ensureStorageRow(popup, enabled);
 
-    var option = document.createElement('label');
-    option.className =
-      'form-check form-switch mb-3 lms-player-controls-option';
-    option.innerHTML =
-      '<input class="form-check-input de-lms-switch" type="checkbox" id="' +
-      SWITCH_ID +
-      '"' +
-      (enabled ? ' checked' : '') +
-      '>' +
-      '<span class="form-check-label">Player controls</span>';
-
+    var option = createPlayerControlsOption(enabled);
     var host = hideWhenOff.closest('label.form-switch');
     if (host && host.parentNode) {
       host.parentNode.insertBefore(option, host.nextSibling);
@@ -148,92 +187,96 @@
     }
 
     var toggle = option.querySelector('#' + SWITCH_ID);
-    if (toggle) {
-      toggle.addEventListener('change', function () {
-        ensureStorageRow(popup, toggle.checked);
-      });
+    toggle.addEventListener('change', function () {
+      ensureStorageRow(popup, toggle.checked);
+    });
+  }
+
+  function enhanceLmsPopup() {
+    var popup = document.getElementById('de-config-popup');
+    if (!popup) {
+      return;
     }
+
+    var hideWhenOff = popup.querySelector('#de-config-lms-hide-when-off');
+    if (!hideWhenOff) {
+      return;
+    }
+
+    fixLmsIconPersistence(popup);
+    addPlayerControlsOption(popup, hideWhenOff);
   }
 
   function normaliseFontAwesomeIcon(value) {
     var icon = String(value || '').trim();
-    if (!icon) return '';
+    if (!icon) {
+      return '';
+    }
 
     var classes = icon.split(/\s+/);
     var hasFaGlyph = false;
     var hasFamily = false;
     for (var i = 0; i < classes.length; i++) {
-      if (/^fa-/.test(classes[i])) hasFaGlyph = true;
-      if (
-        /^(fas|far|fab|fal|fad|fat|fak|fa-solid|fa-regular|fa-brands|fa-light|fa-thin|fa-duotone)$/.test(
-          classes[i]
-        )
-      ) {
+      if (/^fa-/.test(classes[i])) {
+        hasFaGlyph = true;
+      }
+      if (FA_FAMILIES.indexOf(classes[i]) !== -1) {
         hasFamily = true;
       }
     }
 
-    // Older/custom Device Config values sometimes contain only `fa-music`.
-    // Font Awesome needs a style/family class as well.
-    if (hasFaGlyph && !hasFamily) return 'fas ' + icon;
+    if (hasFaGlyph && !hasFamily) {
+      return 'fas ' + icon;
+    }
     return icon;
   }
 
-  function ownIconColumn(block) {
+  function findDirectChildByClass(block, className) {
     var children = block.children || [];
     for (var i = 0; i < children.length; i++) {
-      if (
-        children[i].classList &&
-        children[i].classList.contains('lms-configured-icon')
-      ) {
-        return children[i];
+      var child = children[i];
+      if (child.classList && child.classList.contains(className)) {
+        return child;
       }
     }
     return null;
+  }
+
+  function ownIconColumn(block) {
+    return findDirectChildByClass(block, 'lms-configured-icon');
   }
 
   function genericIconColumn(block) {
-    var children = block.children || [];
-    for (var i = 0; i < children.length; i++) {
-      if (children[i].classList && children[i].classList.contains('col-icon')) {
-        return children[i];
-      }
-    }
-    return null;
+    return findDirectChildByClass(block, 'col-icon');
   }
 
-  function syncConfiguredIcon(block, definition) {
-    var icon = normaliseFontAwesomeIcon(definition && definition.icon);
-    var image = String((definition && definition.image) || '').trim();
-    var signature = icon ? 'icon:' + icon : image ? 'image:' + image : '';
+  function removeIconColumn(column) {
+    if (column && column.parentNode) {
+      column.parentNode.removeChild(column);
+    }
+  }
+
+  function ensureIconColumn(block) {
     var column = ownIconColumn(block);
-
-    if (!signature) {
-      if (column && column.parentNode) column.parentNode.removeChild(column);
-      return;
+    if (column) {
+      return column;
     }
 
-    // If the core renderer starts supplying a normal icon column again in a
-    // future version, leave that renderer in charge instead of duplicating it.
-    var generic = genericIconColumn(block);
-    if (generic && generic !== column) return;
+    column = document.createElement('div');
+    column.className = 'col-icon lms-configured-icon';
+    var content = findDirectChildByClass(block, 'dt_content');
+    block.insertBefore(column, content || block.firstChild);
+    return column;
+  }
 
-    if (!column) {
-      column = document.createElement('div');
-      column.className = 'col-icon lms-configured-icon';
-      var content = null;
-      for (var i = 0; i < block.children.length; i++) {
-        if (block.children[i].classList.contains('dt_content')) {
-          content = block.children[i];
-          break;
-        }
-      }
-      block.insertBefore(column, content || block.firstChild);
+  function clearChildren(element) {
+    while (element.firstChild) {
+      element.removeChild(element.firstChild);
     }
+  }
 
-    if (column.getAttribute('data-lms-icon') === signature) return;
-    column.setAttribute('data-lms-icon', signature);
-    while (column.firstChild) column.removeChild(column.firstChild);
+  function renderConfiguredIcon(column, icon, image) {
+    clearChildren(column);
 
     if (icon) {
       var em = document.createElement('em');
@@ -250,16 +293,48 @@
     column.appendChild(img);
   }
 
+  function syncConfiguredIcon(block, definition) {
+    var icon = normaliseFontAwesomeIcon(definition.icon);
+    var image = String(definition.image || '').trim();
+    var signature = icon ? 'icon:' + icon : '';
+    if (!signature && image) {
+      signature = 'image:' + image;
+    }
+
+    var column = ownIconColumn(block);
+    if (!signature) {
+      removeIconColumn(column);
+      return;
+    }
+
+    var generic = genericIconColumn(block);
+    if (generic && generic !== column) {
+      return;
+    }
+
+    column = ensureIconColumn(block);
+    if (column.getAttribute('data-lms-icon') === signature) {
+      return;
+    }
+
+    column.setAttribute('data-lms-icon', signature);
+    renderConfiguredIcon(column, icon, image);
+  }
+
   function applyRuntimeSettings() {
     var definitions = window.blocks;
-    if (!definitions) return;
+    if (!definitions) {
+      return;
+    }
 
     var lmsBlocks = document.querySelectorAll('.lms-block[data-id]');
     for (var i = 0; i < lmsBlocks.length; i++) {
       var block = lmsBlocks[i];
       var key = String(block.getAttribute('data-id') || '');
       var definition = key ? definitions[key] : null;
-      if (!definition) continue;
+      if (!definition) {
+        continue;
+      }
 
       var hidden = definition.player_controls === false;
       block.classList.toggle('lms-player-controls-hidden', hidden);
