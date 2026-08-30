@@ -1,0 +1,21 @@
+name: Format diagnostic
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run format
+      - name: Show Prettier diff
+        run: git diff -- js/garbageconfig.js tests/garbage-row-styling.test.js
