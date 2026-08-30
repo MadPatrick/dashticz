@@ -135,7 +135,6 @@
     "close": "Close",
     "close_reload": "Close and reload!",
     "back": "Back",
-    "clear": "Clear",
     "choose": "Choose a category to configure.",
     "update": {
       "button": "Update",
@@ -479,7 +478,6 @@
       "settings_for": "Settings for",
       "added": "Added",
       "click_to_add": "Click to add",
-      "clear": "Clear",
       "display": "Display",
       "general_display": "General display",
       "none": "None",

@@ -131,7 +131,6 @@
     "close": "Sluiten",
     "close_reload": "Sluit venster en herlaad Dashticz",
     "back": "Terug",
-    "clear": "Wissen",
     "choose": "Kies een categorie om te configureren.",
     "update": {
       "button": "Update",
@@ -369,7 +368,6 @@
       "settings_for": "Instellingen voor",
       "added": "Toegevoegd",
       "click_to_add": "Klik om toe te voegen",
-      "clear": "Wissen",
       "display": "Weergave",
       "general_display": "Algemene weergave",
       "none": "Geen",

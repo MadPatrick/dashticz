@@ -2597,36 +2597,24 @@ var DashticzWidgetEditor = (function () {
         _esc(String(value !== null && value !== undefined ? value : '')) +
         '">';
     } else if (type === 'color') {
-      // Same swatch-style picker as Automation's Tekstkleur field
-      // (js/devicerules.js's .dr-text-color), but this value is optional -
-      // a plain <input type="color"> can never represent "no color", so the
-      // swatch only drives display/picking while the actual (possibly
-      // empty) value lives in a hidden .we-widget-field the Clear button
-      // can reset without the swatch fighting back to a default hex.
+      // Same plain swatch as Automation's Tekstkleur field and the LMS
+      // popup's title/artist/station color pickers (js/deviceeditor.js's
+      // _lmsFieldsHtml()) - a direct <input type="color"> with data-cfg-key,
+      // collected the same generic way as every other field type here.
       var colorValue =
-        value && /^#[0-9a-f]{3,8}$/i.test(String(value)) ? String(value) : '';
+        value && /^#[0-9a-f]{3,8}$/i.test(String(value))
+          ? String(value)
+          : opts && opts.default
+            ? opts.default
+            : '#000000';
       html +=
-        '<div class="d-flex align-items-center gap-2">' +
-        '<input type="color" class="form-control form-control-color we-color-swatch" id="' +
+        '<input type="color" class="form-control form-control-color we-widget-field" id="' +
         _esc(id) +
-        '" data-color-for="' +
-        _esc(id) +
-        '-raw" value="' +
-        (colorValue || '#000000') +
-        '">' +
-        '<input type="hidden" class="we-widget-field" id="' +
-        _esc(id) +
-        '-raw" data-cfg-key="' +
+        '" data-cfg-key="' +
         _esc(key) +
         '" value="' +
-        _esc(colorValue) +
-        '">' +
-        '<button type="button" class="btn btn-sm btn-outline-secondary we-color-clear" data-color-for="' +
-        _esc(id) +
-        '-raw" title="' +
-        _esc(_t('clear', 'Clear')) +
-        '"><i class="fas fa-xmark" aria-hidden="true"></i></button>' +
-        '</div>';
+        colorValue +
+        '">';
     }
     if (help) {
       html += '<div class="form-text">' + _esc(help) + '</div>';
@@ -4225,23 +4213,6 @@ var DashticzWidgetEditor = (function () {
 
     $cfgModal.on('input change', '.we-calendar-color', function () {
       $(this).attr('data-calendar-color-value', $(this).val());
-    });
-
-    // _cfgField's 'color' type: the swatch only picks/displays a color, the
-    // hidden field it points at (via data-color-for) is what actually gets
-    // saved, and Clear resets that hidden field back to empty (no override)
-    // without the swatch snapping back to a default hex on its own.
-    $cfgModal.on('input change', '.we-color-swatch', function () {
-      var targetId = String($(this).data('color-for'));
-      $cfgModal.find('#' + targetId).val($(this).val());
-    });
-
-    $cfgModal.on('click', '.we-color-clear', function () {
-      var targetId = String($(this).data('color-for'));
-      $cfgModal.find('#' + targetId).val('');
-      $cfgModal
-        .find('.we-color-swatch[data-color-for="' + targetId + '"]')
-        .val('#000000');
     });
 
     $cfgModal.on('click', '.we-calendar-remove', function () {
