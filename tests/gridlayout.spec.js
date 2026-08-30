@@ -2536,6 +2536,28 @@ screens[1] = {
       await expect(item).toHaveCSS('overflow', 'auto');
     }
 
+    await page.locator('.screen1 .layouteditoricon').click();
+    await expect(page.locator('body')).toHaveClass(/dle-active/);
+    const graphOverlay = graph.locator('.dle-overlay');
+    await expect(graphOverlay.locator('.dle-drag-icon')).toHaveCount(0);
+    await expect(
+      graphOverlay.locator('.dle-config-button .fa-cog')
+    ).toHaveCount(1);
+    await graphOverlay.locator('.dle-config-button').click();
+    await expect(page.locator('#de-config-popup')).toBeVisible();
+    await expect(page.locator('#de-config-popup')).toHaveAttribute(
+      'data-block-kind',
+      'special'
+    );
+    await expect(
+      page.locator('#de-config-popup .de-custom-field-name[value="devices"]')
+    ).toHaveCount(1);
+    await page
+      .locator('#de-config-popup [data-bs-dismiss="modal"]')
+      .last()
+      .click();
+    await expect(page.locator('#de-config-popup')).toBeHidden();
+
     await openDeviceEditorFromScreenEditor(page);
     await page
       .locator('#deviceeditorpopup [data-bs-dismiss="modal"]')

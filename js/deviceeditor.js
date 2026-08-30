@@ -953,7 +953,7 @@ var DashticzDeviceEditor = (function () {
       kind = 'news';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
-      !definition.type &&
+      (!definition.type || definition.type === reference) &&
       Array.isArray(definition.devices) &&
       definition.devices.length > 0
     ) {
@@ -962,12 +962,14 @@ var DashticzDeviceEditor = (function () {
       // above). Matches js/components/graph.js's own canHandle():
       // dispatched on a truthy devices array (this popup never writes an
       // explicit type, same convention as html/iframe/calendar/
-      // publictransport/xmltvguide/news above). devices/graph/legend/
-      // groupBy/... all ride through custom_fields (see
-      // _deviceCustomFieldRows() below), same as every other field-shape
-      // special. Excludes type:'group' blocks, which can also carry a
-      // devices array (js/components/group.js) but always write an
-      // explicit type of their own.
+      // publictransport/xmltvguide/news above). convertBlock() stamps the
+      // block's own reference into definition.type after rendering; that is
+      // only a dispatch hint, not an explicit Graph type, so it is accepted
+      // here too. devices/graph/legend/groupBy/... all ride through
+      // custom_fields (see _deviceCustomFieldRows() below), same as every
+      // other field-shape special. Excludes type:'group' blocks, which can
+      // also carry a devices array (js/components/group.js) but always write
+      // an explicit type of their own.
       kind = 'graph';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
