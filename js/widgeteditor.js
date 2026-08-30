@@ -2596,6 +2596,37 @@ var DashticzWidgetEditor = (function () {
         ' value="' +
         _esc(String(value !== null && value !== undefined ? value : '')) +
         '">';
+    } else if (type === 'color') {
+      // Same swatch-style picker as Automation's Tekstkleur field
+      // (js/devicerules.js's .dr-text-color), but this value is optional -
+      // a plain <input type="color"> can never represent "no color", so the
+      // swatch only drives display/picking while the actual (possibly
+      // empty) value lives in a hidden .we-widget-field the Clear button
+      // can reset without the swatch fighting back to a default hex.
+      var colorValue =
+        value && /^#[0-9a-f]{3,8}$/i.test(String(value)) ? String(value) : '';
+      html +=
+        '<div class="d-flex align-items-center gap-2">' +
+        '<input type="color" class="form-control form-control-color we-color-swatch" id="' +
+        _esc(id) +
+        '" data-color-for="' +
+        _esc(id) +
+        '-raw" value="' +
+        (colorValue || '#000000') +
+        '">' +
+        '<input type="hidden" class="we-widget-field" id="' +
+        _esc(id) +
+        '-raw" data-cfg-key="' +
+        _esc(key) +
+        '" value="' +
+        _esc(colorValue) +
+        '">' +
+        '<button type="button" class="btn btn-sm btn-outline-secondary we-color-clear" data-color-for="' +
+        _esc(id) +
+        '-raw" title="' +
+        _esc(_t('clear', 'Clear')) +
+        '"><i class="fas fa-xmark" aria-hidden="true"></i></button>' +
+        '</div>';
     }
     if (help) {
       html += '<div class="form-text">' + _esc(help) + '</div>';
@@ -3413,7 +3444,7 @@ var DashticzWidgetEditor = (function () {
         null,
         lg.garbage_calendar_id_help || ''
       );
-      fields += _cfgHeading(_t('display', 'Display'));
+      fields += '<div class="we-switch-grid">';
       fields += _cfgField(
         'garbage_hideicon',
         lg.garbage_hideicon || 'Hide icon',
@@ -3432,34 +3463,34 @@ var DashticzWidgetEditor = (function () {
         'checkbox',
         gcfg.garbage_use_colors
       );
+      fields += '</div>';
       fields += _cfgField(
         'garbage_row1_fontsize',
         lg.garbage_row1_fontsize || 'Row 1 font size (px)',
-        'text',
-        gcfg.garbage_row1_fontsize
+        'number',
+        gcfg.garbage_row1_fontsize,
+        { min: 8, max: 60, step: 1 }
       );
       fields += _cfgField(
         'garbage_row1_color',
         lg.garbage_row1_color || 'Row 1 color',
-        'text',
-        gcfg.garbage_row1_color,
-        null,
-        lg.garbage_row1_color_help || 'Hex color code, e.g. #ff0000'
+        'color',
+        gcfg.garbage_row1_color
       );
       fields += _cfgField(
         'garbage_row2_fontsize',
         lg.garbage_row2_fontsize || 'Row 2+ font size (px)',
-        'text',
-        gcfg.garbage_row2_fontsize
+        'number',
+        gcfg.garbage_row2_fontsize,
+        { min: 8, max: 60, step: 1 }
       );
       fields += _cfgField(
         'garbage_row2_color',
         lg.garbage_row2_color || 'Row 2+ color',
-        'text',
-        gcfg.garbage_row2_color,
-        null,
-        lg.garbage_row2_color_help || 'Hex color code, e.g. #ff0000'
+        'color',
+        gcfg.garbage_row2_color
       );
+      fields += '<div class="we-switch-grid">';
       fields += _cfgField(
         'garbage_use_names',
         lg.garbage_use_names || 'Use names',
@@ -3472,6 +3503,7 @@ var DashticzWidgetEditor = (function () {
         'checkbox',
         gcfg.garbage_use_cors_prefix
       );
+      fields += '</div>';
     } else if (item.id === 'sonarr') {
       var scfg = widgetConfigs.sonarr || {};
       fields += _cfgField(
@@ -4195,6 +4227,23 @@ var DashticzWidgetEditor = (function () {
 
     $cfgModal.on('input change', '.we-calendar-color', function () {
       $(this).attr('data-calendar-color-value', $(this).val());
+    });
+
+    // _cfgField's 'color' type: the swatch only picks/displays a color, the
+    // hidden field it points at (via data-color-for) is what actually gets
+    // saved, and Clear resets that hidden field back to empty (no override)
+    // without the swatch snapping back to a default hex on its own.
+    $cfgModal.on('input change', '.we-color-swatch', function () {
+      var targetId = String($(this).data('color-for'));
+      $cfgModal.find('#' + targetId).val($(this).val());
+    });
+
+    $cfgModal.on('click', '.we-color-clear', function () {
+      var targetId = String($(this).data('color-for'));
+      $cfgModal.find('#' + targetId).val('');
+      $cfgModal
+        .find('.we-color-swatch[data-color-for="' + targetId + '"]')
+        .val('#000000');
     });
 
     $cfgModal.on('click', '.we-calendar-remove', function () {

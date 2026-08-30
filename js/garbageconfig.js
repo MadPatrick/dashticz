@@ -232,7 +232,14 @@
         image.style.removeProperty('transform-origin');
       }
 
-      var rows = block.querySelectorAll('.trashrow');
+      // Every collection row carries one of these three classes depending on
+      // its date (today/tomorrow/later) - querying only .trashrow left out
+      // today's/tomorrow's row entirely, so rows[0] was the first *later*
+      // row instead of the actual topmost (soonest) one, bolding the wrong
+      // line whenever a collection fell on today or tomorrow.
+      var rows = block.querySelectorAll(
+        '.trashtoday, .trashtomorrow, .trashrow'
+      );
       for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
         rows[rowIndex].style.removeProperty('font-weight');
       }

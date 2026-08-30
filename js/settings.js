@@ -505,27 +505,25 @@ var widgetSettingTiles = [
         title:
           language.settings.garbage.garbage_row1_fontsize ||
           'Row 1 font size (px)',
-        type: 'text',
+        type: 'number',
+        min: 8,
+        max: 60,
       },
       garbage_row1_color: {
         title: language.settings.garbage.garbage_row1_color || 'Row 1 color',
-        type: 'text',
-        help:
-          language.settings.garbage.garbage_row1_color_help ||
-          'Hex color code, e.g. #ff0000',
+        type: 'color',
       },
       garbage_row2_fontsize: {
         title:
           language.settings.garbage.garbage_row2_fontsize ||
           'Row 2+ font size (px)',
-        type: 'text',
+        type: 'number',
+        min: 8,
+        max: 60,
       },
       garbage_row2_color: {
         title: language.settings.garbage.garbage_row2_color || 'Row 2+ color',
-        type: 'text',
-        help:
-          language.settings.garbage.garbage_row2_color_help ||
-          'Hex color code, e.g. #ff0000',
+        type: 'color',
       },
       garbage_use_names: {
         title: language.settings.garbage.garbage_use_names,
@@ -1197,6 +1195,57 @@ function renderSettingsRow(settingName, definition) {
     html += '</div>';
   }
 
+  if (definition.type === 'number') {
+    html +=
+      '<input class="form-control" type="number" id="' +
+      escapeSettingsHtml(controlId) +
+      '" name="' +
+      escapeSettingsHtml(settingName) +
+      '"' +
+      (typeof definition.min !== 'undefined'
+        ? ' min="' + escapeSettingsHtml(definition.min) + '"'
+        : '') +
+      (typeof definition.max !== 'undefined'
+        ? ' max="' + escapeSettingsHtml(definition.max) + '"'
+        : '') +
+      ' value="' +
+      escapeSettingsHtml(value) +
+      '">';
+  }
+
+  if (definition.type === 'color') {
+    // Same swatch-style picker as Automation's Tekstkleur field
+    // (js/devicerules.js's .dr-text-color), but this value is optional -
+    // a plain <input type="color"> can never represent "no color", so the
+    // swatch only drives display/picking while the actual (possibly empty)
+    // value lives in a hidden field the Clear button can reset without the
+    // swatch fighting back to a default hex.
+    var colorValue =
+      value && /^#[0-9a-f]{3,8}$/i.test(String(value)) ? String(value) : '';
+    html +=
+      '<div class="d-flex align-items-center gap-2">' +
+      '<input type="color" class="form-control form-control-color settings-color-swatch" id="' +
+      escapeSettingsHtml(controlId) +
+      '" data-color-for="' +
+      escapeSettingsHtml(controlId) +
+      '-raw" value="' +
+      (colorValue || '#000000') +
+      '">' +
+      '<input type="hidden" id="' +
+      escapeSettingsHtml(controlId) +
+      '-raw" name="' +
+      escapeSettingsHtml(settingName) +
+      '" value="' +
+      escapeSettingsHtml(colorValue) +
+      '">' +
+      '<button type="button" class="btn btn-sm btn-outline-secondary settings-color-clear" data-color-for="' +
+      escapeSettingsHtml(controlId) +
+      '-raw" title="' +
+      escapeSettingsHtml(language.settings.clear || 'Clear') +
+      '"><i class="fas fa-xmark" aria-hidden="true"></i></button>' +
+      '</div>';
+  }
+
   if (definition.type === 'select') {
     html +=
       '<select id="' +
@@ -1336,6 +1385,7 @@ function loadSettings() {
         bindClockTypeToggle();
         bindThemeCssVarControls();
         bindThemeCustomCssNotice();
+        bindSettingsColorControls();
 
         $('#php_version').html(phpversion);
 
@@ -2317,6 +2367,25 @@ function bindThemeCustomCssNotice() {
   refresh();
 }
 
+// renderSettingsRow's 'color' type: the swatch only picks/displays a color,
+// the hidden field it points at (via data-color-for) is what actually gets
+// saved, and Clear resets that hidden field back to empty (no override)
+// without the swatch snapping back to a default hex on its own.
+function bindSettingsColorControls() {
+  var $popup = $('#settingspopup');
+  $popup.on('input change', '.settings-color-swatch', function () {
+    var targetId = String($(this).data('color-for'));
+    $popup.find('#' + targetId).val($(this).val());
+  });
+  $popup.on('click', '.settings-color-clear', function () {
+    var targetId = String($(this).data('color-for'));
+    $popup.find('#' + targetId).val('');
+    $popup
+      .find('.settings-color-swatch[data-color-for="' + targetId + '"]')
+      .val('#000000');
+  });
+}
+
 function _syncSwatchFromText($swatch, value) {
   var normalized = String(value || '').trim();
   // Try to convert to a 6-digit hex so the color input accepts it.
@@ -2930,7 +2999,7 @@ function saveSettings() {
       ';\n';
   }
   $(
-    'div#settingspopup input[type="text"],div#settingspopup input[type="hidden"],div#settingspopup select'
+    'div#settingspopup input[type="text"],div#settingspopup input[type="number"],div#settingspopup input[type="hidden"],div#settingspopup select'
   ).each(function () {
     // Skip UI-only controls that must not become config[...] keys.
     if (
