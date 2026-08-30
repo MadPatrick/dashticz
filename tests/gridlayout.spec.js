@@ -2622,9 +2622,17 @@ screens[1] = {
     });
 
     const layoutEditorButton = page.locator('.screen1 .layouteditoricon');
-    await expect(layoutEditorButton).toBeVisible();
-    // The icon briefly animates while the responsive layout settles in
-    // WebKit. Dispatching its click avoids a false failure on element motion.
+    // The icon briefly animates while the responsive layout settles back
+    // from the mobile viewport above, and in WebKit that settle can still be
+    // in progress once the desktop viewport is applied - especially now that
+    // this test already cycles the Layout Editor open/closed once beforehand
+    // (see the Graph config-cog check above), leaving less margin than the
+    // default 5s timeout before this second, later open. Reuse
+    // waitForDashboard()'s own 15s allowance instead of the default.
+    // Dispatching the click via evaluate() (rather than Playwright's own
+    // actionability-checked click()) avoids a false failure on the element
+    // still being mid-motion once it is visible.
+    await expect(layoutEditorButton).toBeVisible({ timeout: 15000 });
     await layoutEditorButton.evaluate((button) => button.click());
     await expect(page.locator('body')).toHaveClass(/dle-active/);
     await expect(grid).toHaveClass(/dle-grid-canvas/);
