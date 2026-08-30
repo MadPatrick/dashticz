@@ -30,7 +30,10 @@ test('Garbage text styling uses the same compact LMS-style layout', () => {
   assert.match(helper, /className = 'row g-2 mb-3'/);
   assert.match(helper, /className = 'col-12 col-md-6'/);
   assert.match(helper, /form-control form-control-sm garbage-row-size-input/);
-  assert.match(helper, /form-control form-control-color garbage-row-color-input/);
+  assert.match(
+    helper,
+    /form-control form-control-color garbage-row-color-input/
+  );
 });
 
 test('Explicit Garbage row styles override theme rules', () => {

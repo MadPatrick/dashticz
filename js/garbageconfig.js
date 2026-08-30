@@ -257,32 +257,16 @@
     var row2Color = popup.querySelector('#we-cfg-garbage-row2-color');
 
     if (row1Size) {
-      syncPositiveNumberField(
-        popup,
-        ROW_STYLE_FIELDS.row1Size,
-        row1Size.value
-      );
+      syncPositiveNumberField(popup, ROW_STYLE_FIELDS.row1Size, row1Size.value);
     }
     if (row1Color) {
-      syncManagedValueField(
-        popup,
-        ROW_STYLE_FIELDS.row1Color,
-        row1Color.value
-      );
+      syncManagedValueField(popup, ROW_STYLE_FIELDS.row1Color, row1Color.value);
     }
     if (row2Size) {
-      syncPositiveNumberField(
-        popup,
-        ROW_STYLE_FIELDS.row2Size,
-        row2Size.value
-      );
+      syncPositiveNumberField(popup, ROW_STYLE_FIELDS.row2Size, row2Size.value);
     }
     if (row2Color) {
-      syncManagedValueField(
-        popup,
-        ROW_STYLE_FIELDS.row2Color,
-        row2Color.value
-      );
+      syncManagedValueField(popup, ROW_STYLE_FIELDS.row2Color, row2Color.value);
     }
   }
 
@@ -459,7 +443,9 @@
     );
     for (var i = 0; i < rows.length; i++) {
       rows[i].classList.remove('garbage-row-first', 'garbage-row-other');
-      rows[i].classList.add(i === 0 ? 'garbage-row-first' : 'garbage-row-other');
+      rows[i].classList.add(
+        i === 0 ? 'garbage-row-first' : 'garbage-row-other'
+      );
     }
   }
 
