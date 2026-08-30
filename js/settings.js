@@ -501,6 +501,15 @@ var widgetSettingTiles = [
         title: language.settings.garbage.garbage_use_colors,
         type: 'checkbox',
       },
+      garbage_use_names: {
+        title: language.settings.garbage.garbage_use_names,
+        type: 'checkbox',
+      },
+      garbage_use_cors_prefix: {
+        title: language.settings.garbage.garbage_use_cors_prefix,
+        type: 'checkbox',
+        help: language.settings.garbage.garbage_use_prefix_help,
+      },
       garbage_row1_fontsize: {
         title:
           language.settings.garbage.garbage_row1_fontsize ||
@@ -524,15 +533,6 @@ var widgetSettingTiles = [
       garbage_row2_color: {
         title: language.settings.garbage.garbage_row2_color || 'Row 2+ color',
         type: 'color',
-      },
-      garbage_use_names: {
-        title: language.settings.garbage.garbage_use_names,
-        type: 'checkbox',
-      },
-      garbage_use_cors_prefix: {
-        title: language.settings.garbage.garbage_use_cors_prefix,
-        type: 'checkbox',
-        help: language.settings.garbage.garbage_use_prefix_help,
       },
     },
   },

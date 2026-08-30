@@ -3463,6 +3463,18 @@ var DashticzWidgetEditor = (function () {
         'checkbox',
         gcfg.garbage_use_colors
       );
+      fields += _cfgField(
+        'garbage_use_names',
+        lg.garbage_use_names || 'Use names',
+        'checkbox',
+        gcfg.garbage_use_names
+      );
+      fields += _cfgField(
+        'garbage_use_cors_prefix',
+        lg.garbage_use_cors_prefix || 'Use CORS prefix',
+        'checkbox',
+        gcfg.garbage_use_cors_prefix
+      );
       fields += '</div>';
       fields += _cfgField(
         'garbage_row1_fontsize',
@@ -3490,20 +3502,6 @@ var DashticzWidgetEditor = (function () {
         'color',
         gcfg.garbage_row2_color
       );
-      fields += '<div class="we-switch-grid">';
-      fields += _cfgField(
-        'garbage_use_names',
-        lg.garbage_use_names || 'Use names',
-        'checkbox',
-        gcfg.garbage_use_names
-      );
-      fields += _cfgField(
-        'garbage_use_cors_prefix',
-        lg.garbage_use_cors_prefix || 'Use CORS prefix',
-        'checkbox',
-        gcfg.garbage_use_cors_prefix
-      );
-      fields += '</div>';
     } else if (item.id === 'sonarr') {
       var scfg = widgetConfigs.sonarr || {};
       fields += _cfgField(
