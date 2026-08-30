@@ -129,13 +129,38 @@ Voeg regressietests toe die minimaal controleren:
 6. bestaande icon/image/dynamische kleurfunctionaliteit behouden blijft;
 7. cache-key is bijgewerkt indien nodig.
 
+# VERPLICHTE FORMAT- EN CI-CONTROLE
+De opdracht is NIET klaar en de branch mag NIET als merge-ready worden gemeld
+voordat de repository-formatcontrole groen is.
+
+Voer na iedere codewijziging en in ieder geval direct voor commit/push/PR uit:
+
+npm run format:check
+
+Als deze controle faalt:
+
+npm run format
+npm run format:check
+
+Controleer daarna de formatteringsdiff en commit de geformatteerde bestanden.
+Sla deze stap nooit over en stel hem niet uit tot na de merge.
+
 Voer daarna minimaal uit:
+
+npm test
+npm run build
+
+De aanbevolen volledige controlevolgorde is dus:
 
 npm run format:check
 npm test
 npm run build
 
-Los format/check failures op voordat de branch als gereed wordt gemeld.
+Als de AI via een GitHub API/connector werkt en de npm-toolchain lokaal niet
+kan uitvoeren, moet de AI de Node CI-run controleren. De taak mag pas als
+klaar/merge-ready worden gemeld als de stap "npm run format:check" in Node CI
+groen is. Bij een formatteringsfout moet de AI deze eerst herstellen en een
+nieuwe CI-run controleren.
 
 # GIT
 - Werk uitsluitend op <BRANCHNAAM>.
@@ -143,7 +168,9 @@ Los format/check failures op voordat de branch als gereed wordt gemeld.
 - Maak een echte commit.
 - Push/update de branch.
 - Controleer daarna opnieuw de remote branch-head.
-- Meld pas "gepusht" wanneer de nieuwe commit-SHA via GitHub bevestigd is.
+- Controleer na de push de Node CI-status en in het bijzonder format:check.
+- Meld pas "gepusht en gereed" wanneer de nieuwe commit-SHA via GitHub is
+  bevestigd EN npm run format:check/Node CI groen is.
 - Maak geen PR tenzij ik dat expliciet vraag.
 
 # ACCEPTATIECRITERIA
@@ -154,8 +181,10 @@ De opdracht is pas klaar wanneer:
 - verschillende widgetinstanties eigen waarden kunnen hebben;
 - de gekozen waarden zichtbaar het theme overschrijven;
 - overige widgetfunctionaliteit niet is veranderd;
-- tests/format/build slagen;
-- de remote branch daadwerkelijk de nieuwe commit bevat.
+- npm run format:check slaagt;
+- tests en build slagen;
+- de remote branch daadwerkelijk de nieuwe commit bevat;
+- de Node CI geen format failure meer meldt.
 
 
 CONTROLELIJST VOOR DE AI
@@ -171,9 +200,12 @@ CONTROLELIJST VOOR DE AI
 [ ] Bestaande dynamische styling intact
 [ ] Semantische row/classes gebruikt
 [ ] Regressietests toegevoegd/aangepast
-[ ] Prettier/format gecontroleerd
+[ ] npm run format:check uitgevoerd en GROEN
+[ ] Bij format failure: npm run format uitgevoerd en diff gecontroleerd
 [ ] Unit tests gecontroleerd
 [ ] Build gecontroleerd
+[ ] Node CI gecontroleerd indien lokaal npm uitvoeren niet mogelijk was
 [ ] Cache-bust aangepast indien nodig
 [ ] Commit gemaakt
 [ ] Remote branch-head na push opnieuw gecontroleerd
+[ ] Branch pas merge-ready gemeld nadat format/check groen is
