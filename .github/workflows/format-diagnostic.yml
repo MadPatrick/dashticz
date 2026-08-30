@@ -4,18 +4,28 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: garbage-row-styling
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run format
-      - name: Show Prettier diff
-        run: git diff -- js/garbageconfig.js tests/garbage-row-styling.test.js
+      - name: Commit formatted files
+        run: |
+          git add js/garbageconfig.js tests/garbage-row-styling.test.js
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Format Garbage row styling"
+          git push origin HEAD:garbage-row-styling
