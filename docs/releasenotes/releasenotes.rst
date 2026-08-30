@@ -37,7 +37,10 @@ v3.45.13 beta (30-8-2026)
   as a generic arrows-only drag control instead of the standard
   configuration cog. Render-time key-as-type hints are now accepted
   by both the Layout Editor and Device Editor Graph recognition, so
-  clicking the cog opens that Graph widget's configuration.
+  clicking the cog opens that Graph widget's configuration. The popup
+  now also exposes the same dedicated Devices, graph type, Group by,
+  legend and height controls as Widget Config, while advanced Graph
+  options remain available under Custom fields.
 
 * **Code**
 
@@ -46,7 +49,8 @@ v3.45.13 beta (30-8-2026)
   Verified with the full node --test suite.
 
 - Added source and Playwright regressions covering the Graph widget's
-  configuration cog and popup routing.
+  configuration cog, its shared Graph controls and canonical save
+  path.
 
 v3.45.12 beta (29-8-2026)
 -------------------------

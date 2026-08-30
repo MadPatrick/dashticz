@@ -2549,9 +2549,19 @@ screens[1] = {
       'data-block-kind',
       'special'
     );
+    await expect(page.locator('#de-config-graph-devices')).toHaveValue('708');
+    await expect(page.locator('#de-config-graph-type')).toHaveValue('line');
+    await expect(page.locator('#de-config-graph-groupby')).toHaveValue('');
+    await expect(page.locator('#de-config-graph-legend')).not.toBeChecked();
+    await expect(page.locator('#de-config-graph-height')).toHaveValue('');
+    // The dedicated fields replace their raw Custom-field duplicates, while
+    // that section remains available for advanced Graph options.
     await expect(
       page.locator('#de-config-popup .de-custom-field-name[value="devices"]')
-    ).toHaveCount(1);
+    ).toHaveCount(0);
+    await expect(
+      page.locator('#de-config-popup .de-custom-fields')
+    ).toBeVisible();
     await page
       .locator('#de-config-popup [data-bs-dismiss="modal"]')
       .last()
