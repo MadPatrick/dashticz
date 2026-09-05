@@ -58,6 +58,23 @@ v4.0.4 beta (5-9-2026)
   instead of the id it actually is, so the toggle never got
   injected into Widget Config at all.
 
+- Moon, Weather/Wunderground and Spotify build their own markup
+  instead of going through the standard rendering path, so their
+  configured Icon/Title were silently dropped entirely - all three
+  now paint them via the same ``.col-icon``/``.icon`` and
+  ``.dt_title`` classes every other block uses, so a theme's
+  icon-size and title styling applies to them too.
+
+- The OWM widget replaced its entire themed block - icon and title
+  included - with its own embed on every update, instead of only
+  updating its own content area.
+
+- Graph's header icon had a hardcoded pixel size, and Sonarr's icon
+  was missing the class its own icon column already required to be
+  themed - both now follow a theme's icon size. Each widget's other
+  custom styling (Graph's icon color, Sonarr's title position) is
+  unchanged.
+
 v4.0.3 beta (4-9-2026)
 ----------------------
 

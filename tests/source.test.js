@@ -6237,3 +6237,137 @@ test("startSwiper() resets .swiper's scrollLeft on resize, so a viewport change 
     /if \(myswiper && myswiper\.el\) myswiper\.el\.scrollLeft = 0;/
   );
 });
+
+test('Sunrise, Moon, Weather/Wunderground and Spotify icons follow theme icon size via .col-icon/.icon', () => {
+  // These js/components/simpleblock.js (and js/spotify.js) renderers build
+  // their own markup instead of going through getColIcon() (js/dashticz.js),
+  // so their icon previously had no way to pick up a theme's icon-size
+  // rule (.col-icon .icon, e.g. themes/modern-dark/modern-dark.css). Each
+  // now wraps its icon in the exact same <div class="col-icon"><em
+  // class="... icon"> markup getColIcon() itself emits.
+  const simpleBlockSource = fs.readFileSync(
+    path.join(root, 'js/components/simpleblock.js'),
+    'utf8'
+  );
+  const spotifySource = fs.readFileSync(
+    path.join(root, 'js/spotify.js'),
+    'utf8'
+  );
+  const colIconRe =
+    /<div class="col-icon"><em class="' \+ icon \+ ' icon"><\/em><\/div>/;
+  assert.match(simpleBlockSource, colIconRe);
+  // Sunrise, Moon and Weather each build this markup independently -
+  // confirm it appears at least 3 times in simpleblock.js.
+  const matches = simpleBlockSource.match(new RegExp(colIconRe, 'g')) || [];
+  assert.ok(
+    matches.length >= 3,
+    `expected at least 3 .col-icon/.icon occurrences in simpleblock.js, found ${matches.length}`
+  );
+  assert.match(spotifySource, colIconRe);
+});
+
+test('Moon widget paints its Icon/Title checkboxes instead of always dropping them', () => {
+  const simpleBlockSource = fs.readFileSync(
+    path.join(root, 'js/components/simpleblock.js'),
+    'utf8'
+  );
+  const renderMoonBody = simpleBlockSource.slice(
+    simpleBlockSource.indexOf('function renderMoon'),
+    simpleBlockSource.indexOf(
+      '})();',
+      simpleBlockSource.indexOf('function renderMoon')
+    )
+  );
+  // Moon is in getWidgetTitle()'s titleKeys (js/dashticz.js), so the Widget
+  // Editor's Icon/Title checkboxes save block.icon/block.title correctly,
+  // but renderMoon() replaced the whole mount point with just the
+  // moon-phase image, silently dropping both.
+  assert.match(renderMoonBody, /var icon = me\.block\.icon;/);
+  assert.match(
+    renderMoonBody,
+    /var showTitle = !me\.block\.hide_title && me\.block\.title;/
+  );
+  assert.match(renderMoonBody, /class="dt-simple-header"/);
+  assert.match(renderMoonBody, /class="dt_title">'\s*\+\s*me\.block\.title/);
+});
+
+test('Weather/Wunderground widget paints its Icon/Title checkboxes, and loadWeatherFull() refresh no longer wipes them', () => {
+  const simpleBlockSource = fs.readFileSync(
+    path.join(root, 'js/components/simpleblock.js'),
+    'utf8'
+  );
+  const renderWeatherBody = simpleBlockSource.slice(
+    simpleBlockSource.indexOf('function renderWeather'),
+    simpleBlockSource.indexOf('function renderCurrentWeather')
+  );
+  assert.match(renderWeatherBody, /var icon = me\.block\.icon;/);
+  assert.match(renderWeatherBody, /class="dt-simple-header"/);
+  // .containsweatherfull must be a nested child, not the outer .dt_block
+  // itself - js/weather.js's loadWeatherFull() replaces
+  // div.containsweatherfull's content wholesale on every refresh, which
+  // would wipe the header out too if it lived on the same element.
+  assert.match(
+    renderWeatherBody,
+    /header \+\s*\n\s*'<div class="containsweatherfull"><\/div>'/
+  );
+  assert.doesNotMatch(renderWeatherBody, /' containsweatherfull'/);
+});
+
+test('Spotify widget paints its Icon/Title checkboxes instead of always dropping them', () => {
+  const spotifySource = fs.readFileSync(
+    path.join(root, 'js/spotify.js'),
+    'utf8'
+  );
+  // Spotify is in getWidgetTitle()'s titleKeys (js/dashticz.js), so the
+  // Widget Editor's Icon/Title checkboxes save block.icon/block.title
+  // correctly, but _getSpotify() never painted them at all.
+  assert.match(spotifySource, /var icon = block\.icon;/);
+  assert.match(
+    spotifySource,
+    /var showTitle = !block\.hide_title && block\.title;/
+  );
+  assert.match(spotifySource, /class="dt-simple-header"/);
+});
+
+test('OWM widget stops wiping the framework-rendered .col-icon/.dt_title when it mounts its own content', () => {
+  // js/components/owmwidget.js is a normal special block - js/dashticz.js's
+  // _mountSpecialBlock() already rendered .dt_block's own .col-icon/
+  // .dt_title before run() executes - but run() replaced .dt_block's
+  // entire innerHTML with just its own embed div, wiping that header out.
+  const owm = fs.readFileSync(
+    path.join(root, 'js/components/owmwidget.js'),
+    'utf8'
+  );
+  assert.doesNotMatch(owm, /me\.\$block\.html\('<div id="/);
+  assert.match(
+    owm,
+    /me\.\$block\s*\n\s*\.find\('\.dt_state'\)\s*\n\s*\.html\('<div id="' \+ me\.containerid \+ '"><\/div>'\);/
+  );
+});
+
+test('Graph header icon and Sonarr icons follow theme icon size instead of a hardcoded size', () => {
+  const graph = fs.readFileSync(
+    path.join(root, 'js/components/graph.js'),
+    'utf8'
+  );
+  const sonarr = fs.readFileSync(path.join(root, 'js/sonarr.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  // createHeader() had a hardcoded font-size:20px inline style; the icon
+  // color (graph.block.iconColour) stays a deliberate, existing per-graph
+  // CONFIG.js override, untouched.
+  assert.doesNotMatch(graph, /font-size:20px/);
+  assert.match(graph, /fas fa-chart-bar icon" style="margin-left:5px;color:/);
+  assert.match(
+    styles,
+    /\.graphtitle \.icon \{\s*\n\s*font-size: var\(--icon-font-size, 20px\) !important;\s*\n\s*\}/
+  );
+  // Sonarr's title_position: 'left' icon already sat inside .col-icon but
+  // was missing the .icon class that rule keys off; title_position: 'top'
+  // has no .col-icon ancestor at all, so it gets its own themed rule.
+  assert.match(sonarr, /class="col-xs-2 col-icon"><em class="fas fa-tv icon">/);
+  assert.match(sonarr, /<h3><em class="fas fa-tv icon">/);
+  assert.match(
+    styles,
+    /\.titlegroups h3 \.icon \{\s*\n\s*font-size: var\(--icon-font-size, inherit\) !important;\s*\n\s*\}/
+  );
+});

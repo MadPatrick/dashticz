@@ -876,16 +876,39 @@ var DT_simpleblock = (function () {
         fixedHeight > 0
           ? ' style="height:' + fixedHeight + 'px !important"'
           : '';
+      var icon = me.block.icon;
+      var showTitle = !me.block.hide_title && me.block.title;
+      // Weather is in getWidgetTitle()'s titleKeys (js/dashticz.js), so the
+      // Widget Editor's Icon/Title checkboxes save block.icon/block.title
+      // correctly, but this renderer replaced the whole mount point with a
+      // bare .containsweatherfull, silently dropping both. .col-icon/.icon
+      // and .dt_title reuse getColIcon()'s/renderTitle()'s own markup
+      // purely so a theme's icon-size/title rules apply here too - as
+      // siblings of .containsweatherfull (not inside it), since
+      // loadWeatherFull() below replaces that div's content wholesale on
+      // every refresh.
+      var header = '';
+      if (icon || showTitle) {
+        header += '<div class="dt-simple-header">';
+        if (icon)
+          header +=
+            '<div class="col-icon"><em class="' + icon + ' icon"></em></div>';
+        if (showTitle)
+          header += '<div class="dt_title">' + me.block.title + '</div>';
+        header += '</div>';
+      }
       me.$mountPoint.html(
         '<div data-id="weather" class="mh transbg dt_block block_' +
           me.block.type +
           ' col-xs-' +
           me.block.width +
-          ' containsweatherfull' +
           heightClass +
           '"' +
           heightStyle +
-          '></div>'
+          '>' +
+          header +
+          '<div class="containsweatherfull"></div>' +
+          '</div>'
       );
       if (settings['wu_api'] && settings['wu_city']) {
         loadWeatherFull(settings['wu_city'], settings['wu_country']);
@@ -979,20 +1002,23 @@ var DT_simpleblock = (function () {
     // save block.icon/block.title/block.hide_title correctly - were never
     // actually painted anywhere. Icon and title are combined into one small
     // header row above the sunrise/sunset line - like the top-of-block
-    // placement every other device/widget uses - instead of reusing
-    // getColIcon()'s floated .col-icon (sized/positioned for a .dt_block's
-    // flex layout, which sunriseholder deliberately isn't - see the
-    // .dt-grid-item > .sunriseholder rule in creative.css). The title still
-    // carries the standard .dt_title class (own font-size/margin overridden
-    // small in creative.css's .sunriseholder rules) so a theme's .dt_title
-    // alignment rules - e.g. a theme that right-aligns titles - apply here
-    // like they do on every other block. .sunrise-header is a flex row
-    // (creative.css) with .dt_title given flex: 1 so it actually spans the
-    // rest of the tile's width instead of shrink-wrapping to the title
-    // text - text-align: right has no visible effect on a box no wider
-    // than its own content, which is why the icon and title otherwise stay
-    // stuck together on the left regardless of theme. The sunrise/sunset
-    // line is wrapped in its own .sunrise-data div so grid mode's
+    // placement every other device/widget uses. The icon still reuses
+    // getColIcon()'s exact <div class="col-icon"><em class="... icon">
+    // markup (not the whole function, since sunriseholder isn't a
+    // .dt_block - see the .dt-grid-item > .sunriseholder rule in
+    // creative.css) purely so a theme's icon-size rules (.col-icon .icon)
+    // apply here too, instead of the icon being stuck at creative.css's own
+    // hardcoded size regardless of theme. The title still carries the
+    // standard .dt_title class (own font-size/margin overridden small in
+    // creative.css's .sunriseholder rules) so a theme's .dt_title alignment
+    // rules - e.g. a theme that right-aligns titles - apply here like they
+    // do on every other block. .sunrise-header is a flex row (creative.css)
+    // with .dt_title given flex: 1 so it actually spans the rest of the
+    // tile's width instead of shrink-wrapping to the title text -
+    // text-align: right has no visible effect on a box no wider than its
+    // own content, which is why the icon and title otherwise stay stuck
+    // together on the left regardless of theme. The sunrise/sunset line is
+    // wrapped in its own .sunrise-data div so grid mode's
     // flex-direction: column on .sunriseholder stacks exactly two rows
     // (header, data) instead of flexing every individual icon/span in both
     // rows side by side.
@@ -1023,7 +1049,14 @@ var DT_simpleblock = (function () {
     var html = '<div data-id="sunrise" class="' + classes + '">';
     if (hasHeader) {
       html += '<div class="sunrise-header">';
-      if (icon) html += '<em class="' + icon + '"></em>';
+      // .col-icon/.icon match getColIcon()'s (js/dashticz.js) own markup
+      // purely so a theme's icon-size rules (e.g. .col-icon .icon in
+      // themes/modern-dark/modern-dark.css) apply here too, instead of the
+      // icon staying stuck at creative.css's own hardcoded
+      // .sunriseholder font-size regardless of theme.
+      if (icon)
+        html +=
+          '<div class="col-icon"><em class="' + icon + ' icon"></em></div>';
       if (showTitle)
         html +=
           '<strong class="dt_title title">' + me.block.title + '</strong>';
@@ -1104,18 +1137,33 @@ var DT_simpleblock = (function () {
 
   function renderMoon(me) {
     me.block.btnimage = 'moon';
+    var icon = me.block.icon;
+    var showTitle = !me.block.hide_title && me.block.title;
     var html =
       '<div class="col-xs-' +
       me.block.width +
       ' moon' +
       '" data-id="' +
       me.block.key +
-      '">' +
-      DT_button.defaultContent(me) +
-      '</div>';
+      '">';
+    // Moon is in getWidgetTitle()'s titleKeys (js/dashticz.js), so the
+    // Widget Editor's Icon/Title checkboxes save block.icon/block.title
+    // correctly, but nothing ever painted them - this renderer replaces the
+    // whole mount point with just the moon-phase image, silently dropping
+    // both. .col-icon/.icon and .dt_title reuse getColIcon()'s/
+    // renderTitle()'s own markup purely so a theme's icon-size/title rules
+    // apply here too.
+    if (icon || showTitle) {
+      html += '<div class="dt-simple-header">';
+      if (icon)
+        html +=
+          '<div class="col-icon"><em class="' + icon + ' icon"></em></div>';
+      if (showTitle)
+        html += '<div class="dt_title">' + me.block.title + '</div>';
+      html += '</div>';
+    }
+    html += DT_button.defaultContent(me) + '</div>';
     return html;
-    //    me.$mountPoint.find('.dt_state').html(DT_button.defaultContent(me));
-    //return DT_button.defaultContent(me);
   }
 })();
 

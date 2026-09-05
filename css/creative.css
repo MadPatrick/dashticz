@@ -2957,6 +2957,16 @@ a.playlist {
   margin-left: 0px;
 }
 
+/* Sonarr's title_position: 'top' layout (js/sonarr.js) - its icon sits
+   inside this h3 instead of a .col-icon, so it needs its own rule to pick
+   up a theme's --icon-font-size (the title_position: 'left' layout's icon
+   is already inside .col-icon, styled by the existing .col-icon .icon
+   rule). Falls back to the h3's own inherited size on themes that don't
+   set the variable, matching the icon's original unstyled appearance. */
+.titlegroups h3 .icon {
+  font-size: var(--icon-font-size, inherit) !important;
+}
+
 .blocktitle {
   font-size: 150%;
 }
@@ -3107,6 +3117,17 @@ a.playlist {
 
 .graphtitle span .fas {
   font-size: 16px !important;
+}
+
+/* createHeader() (js/components/graph.js) builds its own header instead of
+   going through getColIcon() (js/dashticz.js), so its icon previously had
+   a hardcoded 20px inline style rather than a theme's icon size. --icon-
+   font-size is a plain custom property set at :root by a theme (e.g.
+   themes/modern-dark/modern-dark.css), so referencing it here picks up
+   that value without needing the .col-icon ancestor its other consumer
+   (.col-icon .icon) requires. */
+.graphtitle .icon {
+  font-size: var(--icon-font-size, 20px) !important;
 }
 
 .graphbuttons .btn {
@@ -3284,10 +3305,6 @@ div.big {
   align-self: stretch;
 }
 
-.sunriseholder .sunrise-header em {
-  margin-right: 5px;
-}
-
 /* The title reuses the standard .dt_title class (see renderSunrise() in
    js/components/simpleblock.js) purely so a theme's .dt_title rules -
    including title text-align - apply here like on every other block. Its
@@ -3313,6 +3330,29 @@ div.big {
 .sunriseholder .wi {
   padding-right: 5px;
   padding-top: 5px;
+}
+
+/* Shared icon+title header row for other js/components/simpleblock.js
+   widgets (Moon, Weather, Spotify, ...) that build their own markup
+   instead of going through getContainer()/getColIcon()/renderTitle()
+   (js/dashticz.js) like every other block, and so have no .dt_block flex
+   layout of their own to hang an icon-left/title-right row off of. Reuses
+   .col-icon/.icon (icon size) and .dt_title (title size/color/alignment)
+   so a theme's rules for those classes apply here too, instead of icon
+   and title silently ignoring the active theme. Unlike .sunriseholder's
+   own .sunrise-header (a small, compact single-line tile that overrides
+   .dt_title's size back down), these widgets are full-size tiles, so
+   .dt_title keeps its normal theme-driven size here. */
+.dt-simple-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.dt-simple-header .dt_title {
+  flex: 1;
+  min-width: 0;
 }
 
 select,
