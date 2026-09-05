@@ -2905,20 +2905,33 @@ var DashticzWidgetEditor = (function () {
     html +=
       '<div class="d-flex align-items-center justify-content-between flex-wrap mb-2">';
     // Icon/Title as icon buttons, same look as Device Config's own
-    // .de-config-option row (#195).
+    // .de-config-option row (#195). Most catalog widgets have no runtime use
+    // for Data (hide_data) - see the "Catalog widgets do not expose
+    // Data/Updated controls" comment on save below - so it's only added here
+    // for widgets whose renderer actually reads it (currently just Sunrise's
+    // sunrise/sunset time row, js/components/simpleblock.js).
+    var blockOptionButtons = [
+      ['icon', _t('icon', 'Icon'), 'fas fa-image', options.icon],
+    ];
+    if (item.id === 'sunrise') {
+      blockOptionButtons.push([
+        'hide_data',
+        _t('data', 'Data'),
+        'fas fa-align-left',
+        options.hide_data !== true,
+      ]);
+    }
+    blockOptionButtons.push([
+      'show_title',
+      _t('show_title', 'Title'),
+      'fas fa-heading',
+      options.show_title,
+    ]);
     html +=
       '<div class="d-flex flex-wrap gap-2 we-block-options-row" role="group" aria-label="' +
       _esc(_t('display_options', 'Display options')) +
       '">';
-    [
-      ['icon', _t('icon', 'Icon'), 'fas fa-image', options.icon],
-      [
-        'show_title',
-        _t('show_title', 'Title'),
-        'fas fa-heading',
-        options.show_title,
-      ],
-    ].forEach(function (option) {
+    blockOptionButtons.forEach(function (option) {
       html +=
         '<button type="button" class="btn btn-outline-secondary we-block-option' +
         (option[3] ? ' active' : '') +
@@ -4341,13 +4354,20 @@ var DashticzWidgetEditor = (function () {
       var pendingTitle = '';
       var pendingIconValue = null;
       var hasIconField = false;
+      var $hideDataButton = $cfgModal.find('[data-block-option="hide_data"]');
       var pendingBlockOptions = {
         icon: $cfgModal.find('[data-block-option="icon"]').hasClass('active'),
         iconValue: null,
-        // Catalog widgets do not expose Data/Updated controls. Preserve values
-        // loaded from an existing CONFIG.js so a different widget edit cannot
+        // Most catalog widgets do not expose a Data control (see
+        // _widgetBlockOptionsHtml above) - preserve the value loaded from an
+        // existing CONFIG.js for those so a different widget edit cannot
         // silently remove settings still supported elsewhere in Dashticz.
-        hide_data: existingBlockOptions.hide_data === true,
+        // Sunrise does expose it: active means the sunrise/sunset time row
+        // is visible, so the saved (inverse) hide_data is the button's
+        // un-toggled state.
+        hide_data: $hideDataButton.length
+          ? !$hideDataButton.hasClass('active')
+          : existingBlockOptions.hide_data === true,
         last_update: existingBlockOptions.last_update === true,
         show_title: $cfgModal
           .find('[data-block-option="show_title"]')

@@ -46,6 +46,18 @@ v4.0.4 beta (5-9-2026)
   space, so a right-aligned title now visibly sits at the tile's
   right edge - icon-left/title-right, like every other block.
 
+- Sunrise/sunset widget: added a Data toggle to its Widget Config
+  (hides the sunrise/sunset time row while keeping icon/title,
+  matching a device's Data option) - the only catalog widget whose
+  renderer actually reads it, so the button only appears there.
+
+- Every catalog widget's Config popup was missing the Background
+  toggle (#170) that Device Config already had.
+  ``js/components/button.js``'s ``enhancePopups()`` matched
+  ``#we-config-popup`` as a class selector (``.we-config-popup``)
+  instead of the id it actually is, so the toggle never got
+  injected into Widget Config at all.
+
 v4.0.3 beta (4-9-2026)
 ----------------------
 

@@ -1029,10 +1029,17 @@ var DT_simpleblock = (function () {
           '<strong class="dt_title title">' + me.block.title + '</strong>';
       html += '</div>';
     }
-    html +=
-      '<div class="sunrise-data">' +
-      '<em class="wi wi-sunrise"></em><span class="sunrise"></span><em class="wi wi-sunset"></em><span class="sunset"></span>' +
-      '</div></div>';
+    // Data toggle (#195-style, see _widgetBlockOptionsHtml() in
+    // js/widgeteditor.js): matches a device's hide_data, which hides its
+    // value while keeping icon/title - hides the sunrise/sunset time row
+    // the same way here.
+    if (!me.block.hide_data) {
+      html +=
+        '<div class="sunrise-data">' +
+        '<em class="wi wi-sunrise"></em><span class="sunrise"></span><em class="wi wi-sunset"></em><span class="sunset"></span>' +
+        '</div>';
+    }
+    html += '</div>';
     return html;
   }
 

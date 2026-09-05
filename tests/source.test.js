@@ -1207,9 +1207,13 @@ test('device and widget config editors share full widget config and preserve hid
   );
   assert.match(deviceEditor, /special\.showTitle = pendingShowTitle/);
   assert.match(deviceEditor, /deviceTitleVisible\[ck\] = pendingShowTitle/);
-  // Catalog Widget Config only exposes Icon and Title. Existing hide_data and
-  // last_update values remain hydrated, preserved and accepted by the writer;
-  // Device Config retains its separate Data/Updated controls above.
+  // Catalog Widget Config only exposes Icon and Title, except for Sunrise,
+  // which also gets Data (js/components/simpleblock.js's renderSunrise()
+  // hides its sunrise/sunset time row on hide_data, the only catalog widget
+  // that actually reads it - #followup to #195). Every other widget's
+  // hide_data and every widget's last_update values remain hydrated,
+  // preserved and accepted by the writer regardless; Device Config retains
+  // its separate Data/Updated controls above.
   const widgetOptionsStart = widgetEditor.indexOf(
     'function _widgetBlockOptionsHtml'
   );
@@ -1225,15 +1229,19 @@ test('device and widget config editors share full widget config and preserve hid
     widgetOptionsBody,
     /\['icon', _t\('icon', 'Icon'\), 'fas fa-image', options\.icon\]/
   );
+  assert.match(widgetOptionsBody, /if \(item\.id === 'sunrise'\)/);
+  assert.match(
+    widgetOptionsBody,
+    /'hide_data',\s*\n\s*_t\('data', 'Data'\),\s*\n\s*'fas fa-align-left',\s*\n\s*options\.hide_data !== true,/
+  );
   assert.match(
     widgetOptionsBody,
     /'show_title',\s*\n\s*_t\('show_title', 'Title'\),\s*\n\s*'fas fa-heading',\s*\n\s*options\.show_title,/
   );
-  assert.doesNotMatch(widgetOptionsBody, /data-block-option="hide_data"/);
   assert.doesNotMatch(widgetOptionsBody, /data-block-option="last_update"/);
   assert.match(
     widgetEditor,
-    /hide_data: existingBlockOptions\.hide_data === true/
+    /hide_data: \$hideDataButton\.length\s*\n\s*\? !\$hideDataButton\.hasClass\('active'\)\s*\n\s*: existingBlockOptions\.hide_data === true,/
   );
   assert.match(
     widgetEditor,
@@ -3422,6 +3430,11 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
   // icon/span inside both onto one line (a live screenshot showed icon,
   // title and the sunrise/sunset line all crammed side by side).
   assert.match(renderSunriseBody, /class="sunrise-data"/);
+  // Data toggle (#followup to #195): the Widget Config popup only exposes a
+  // Data button for Sunrise (see the Widget Config editor test above), and
+  // renderSunrise is the only place that actually has to honor it - hides
+  // the sunrise/sunset time row while keeping the icon+title header.
+  assert.match(renderSunriseBody, /if \(!me\.block\.hide_data\) \{/);
   assert.match(
     styles,
     /\.dt-grid-screen > \.dt-grid-layout > \.dt-grid-item > \.sunriseholder \{[\s\S]*?flex-direction: column;/
@@ -5830,6 +5843,32 @@ test('Slide button quick-add popup gets an Icon toggle and a Background icon but
   assert.match(
     button,
     /if \(!\$\('#dt-button-background'\)\.hasClass\('active'\)\)\s*\n\s*custom\.no_background = true;/
+  );
+});
+
+test('Widget Config popup gets the #170 Background toggle, not just Device Config', () => {
+  const button = fs.readFileSync(
+    path.join(root, 'js/components/button.js'),
+    'utf8'
+  );
+  // enhancePopups() matched '#we-config-popup' as a class selector
+  // (`.we-config-popup`) instead of the id js/widgeteditor.js's
+  // _buildConfigModalHtml() actually sets it with (id="we-config-popup"),
+  // so injectNoBackgroundIntoConfig() never ran for the Widget Config
+  // popup - every catalog widget (Sunrise included) was missing the
+  // Background toggle that Device Config already had. Both id selectors
+  // must be used consistently.
+  const enhancePopupsBody = button.slice(
+    button.indexOf('function enhancePopups'),
+    button.indexOf('function installAjaxPrefilter')
+  );
+  assert.match(
+    enhancePopupsBody,
+    /scope\.matches\('#de-config-popup, #we-config-popup'\)/
+  );
+  assert.match(
+    enhancePopupsBody,
+    /scope\.querySelectorAll\('#de-config-popup, #we-config-popup'\)/
   );
 });
 
