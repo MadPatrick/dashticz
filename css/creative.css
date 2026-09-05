@@ -3380,6 +3380,20 @@ div.big {
   font-size: var(--icon-font-size, 24px) !important;
 }
 
+/* .dt_block itself is display: flex (see .dt_block above), which is what
+   used to lay the day-forecast tiles (.weatherday, js/components/
+   weather.css) out side by side back when refreshOWM()/refreshOWM3()/
+   refreshKNMI() (js/components/weather.js) wrote them directly into
+   .dt_block - each declares width: 100% and relies on flex-shrink to
+   divide the row between them. Now that they're nested one level deeper,
+   inside .dt_state (so the icon/title fix above didn't get wiped out by
+   the next weather refresh), that flex row context no longer reaches
+   them - .dt_state has no display of its own, so its .weatherday children
+   just stack as ordinary blocks. Give .dt_state that same flex row back. */
+.weather.dt_block .dt_state {
+  display: flex;
+}
+
 select,
 select option {
   color: #000 !important;

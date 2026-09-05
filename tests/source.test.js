@@ -6440,6 +6440,25 @@ test('Weather widget forecast refresh no longer wipes the configured icon/title 
   assert.match(weather, /me\.\$block\.find\('\.dt_state \.icon'\);/);
 });
 
+test('Weather widget day-forecast tiles stay side by side after nesting them one level deeper into .dt_state', () => {
+  // .dt_block is display: flex (css/creative.css) - the day-forecast tiles
+  // (.weatherday, js/components/weather.css) used to lay out side by side
+  // purely because they were .dt_block's own direct flex-row children
+  // (each declares width: 100% and relies on flex-shrink to divide the
+  // row). The previous fix nested them one level deeper, inside .dt_state,
+  // to stop the icon/title from being wiped out on every refresh - but
+  // .dt_state has no display of its own, so its .weatherday children fell
+  // back to stacking as ordinary blocks instead, one per row. Give
+  // .dt_state that same flex row back so the tiles line up side by side
+  // again, confirmed with a headless-browser check (three .weatherday
+  // elements at the same y, increasing x).
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  assert.match(
+    styles,
+    /\.weather\.dt_block \.dt_state \{\s*\n\s*display: flex;\s*\n\s*\}/
+  );
+});
+
 test('Graph header icon and Sonarr icons follow theme icon size instead of a hardcoded size', () => {
   const graph = fs.readFileSync(
     path.join(root, 'js/components/graph.js'),

@@ -103,6 +103,11 @@ v4.0.4 beta (5-9-2026)
   the forecast tiles. It now only replaces its own forecast content,
   leaving the icon and title in place.
 
+- That fix left the Weather widget's forecast days stacked on top of
+  each other instead of side by side, since they'd relied on being
+  a direct child of the widget's own row layout to line up. They're
+  back in a row again.
+
 v4.0.3 beta (4-9-2026)
 ----------------------
 
