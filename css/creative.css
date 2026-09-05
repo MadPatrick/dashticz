@@ -3355,6 +3355,31 @@ div.big {
   min-width: 0;
 }
 
+/* The actual "Weather" widget catalog entry (type: 'weather') dispatches
+   to js/components/weather.js's DT_weather, a normal special block that
+   goes through the standard getContainer()/getColIcon()/renderTitle()
+   path (unlike js/components/simpleblock.js's own renderWeather above,
+   only ever reachable via the legacy type: 'wunderground'), so its
+   .col-icon/.dt_title are already there structurally. But DT_weather (and
+   the OWM widget, js/components/owmwidget.js) scales its own .dt_block's
+   font-size dynamically based on tile width, for its internal forecast
+   content - .col-icon .icon and .dt_title inherit that same font-size
+   chain via relative units (.dt_title's 150%) or, on the base/White
+   theme, no absolute override at all, so an early/zero-width refresh()
+   call (before layout has settled) could shrink them to an unreadable or
+   fully invisible size. Pin both to an absolute size immune to that
+   internal scaling; .col-icon .icon still honors a theme's own
+   --icon-font-size when set. */
+.weather.dt_block .dt_title,
+.owmwidget.dt_block .dt_title {
+  font-size: 16px !important;
+}
+
+.weather.dt_block .col-icon .icon,
+.owmwidget.dt_block .col-icon .icon {
+  font-size: var(--icon-font-size, 24px) !important;
+}
+
 select,
 select option {
   color: #000 !important;

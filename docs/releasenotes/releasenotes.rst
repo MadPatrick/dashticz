@@ -88,6 +88,15 @@ v4.0.4 beta (5-9-2026)
   field can be switched to an image instead, so picking one
   rendered nothing. All four now support both.
 
+- The real Weather widget's icon and title were still invisible in
+  practice, despite already being present in the markup: it scales
+  its own tile's font-size dynamically based on width for its
+  internal forecast content, and the icon/title inherited that same
+  font-size chain, so an early, still-zero-width layout pass could
+  shrink both down to nothing. The OWM widget does the same internal
+  scaling and had the identical risk. Both now pin their icon and
+  title to a stable size, unaffected by that internal scaling.
+
 v4.0.3 beta (4-9-2026)
 ----------------------
 

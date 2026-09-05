@@ -6375,6 +6375,38 @@ test('OWM widget stops wiping the framework-rendered .col-icon/.dt_title when it
   );
 });
 
+test('Weather widget (js/components/weather.js) and OWM widget icon/title stay visible despite their own dynamic .dt_block font-size', () => {
+  // The real "Weather" widget catalog entry (type: 'weather') dispatches
+  // to js/components/weather.js's DT_weather, not
+  // js/components/simpleblock.js's own renderWeather (only reachable via
+  // the legacy type: 'wunderground') - it already gets .col-icon/.dt_title
+  // structurally via the standard path. But DT_weather and the OWM widget
+  // both call $block.css('font-size', ...px) to scale their own internal
+  // content proportionally with tile width; .col-icon .icon/.dt_title
+  // inherit that same font-size chain (.dt_title's 150% is relative, and
+  // .col-icon .icon has no absolute size at all on the base/White theme),
+  // so an early/zero-width refresh() call could shrink them to invisible.
+  const weather = fs.readFileSync(
+    path.join(root, 'js/components/weather.js'),
+    'utf8'
+  );
+  const owm = fs.readFileSync(
+    path.join(root, 'js/components/owmwidget.js'),
+    'utf8'
+  );
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  assert.match(weather, /me\.\$block\.css\('font-size', fontSize \+ 'px'\);/);
+  assert.match(owm, /me\.\$block\.css\('font-size', fontSize \+ 'px'\);/);
+  assert.match(
+    styles,
+    /\.weather\.dt_block \.dt_title,\s*\n\.owmwidget\.dt_block \.dt_title \{\s*\n\s*font-size: 16px !important;\s*\n\s*\}/
+  );
+  assert.match(
+    styles,
+    /\.weather\.dt_block \.col-icon \.icon,\s*\n\.owmwidget\.dt_block \.col-icon \.icon \{\s*\n\s*font-size: var\(--icon-font-size, 24px\) !important;\s*\n\s*\}/
+  );
+});
+
 test('Graph header icon and Sonarr icons follow theme icon size instead of a hardcoded size', () => {
   const graph = fs.readFileSync(
     path.join(root, 'js/components/graph.js'),
