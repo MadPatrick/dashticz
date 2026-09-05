@@ -986,8 +986,12 @@ var DT_simpleblock = (function () {
     // carries the standard .dt_title class (own font-size/margin overridden
     // small in creative.css's .sunriseholder rules) so a theme's .dt_title
     // alignment rules - e.g. a theme that right-aligns titles - apply here
-    // exactly like they do on every other block, instead of this header
-    // silently staying left-aligned regardless of theme. The sunrise/sunset
+    // like they do on every other block. .sunrise-header is a flex row
+    // (creative.css) with .dt_title given flex: 1 so it actually spans the
+    // rest of the tile's width instead of shrink-wrapping to the title
+    // text - text-align: right has no visible effect on a box no wider
+    // than its own content, which is why the icon and title otherwise stay
+    // stuck together on the left regardless of theme. The sunrise/sunset
     // line is wrapped in its own .sunrise-data div so grid mode's
     // flex-direction: column on .sunriseholder stacks exactly two rows
     // (header, data) instead of flexing every individual icon/span in both
@@ -1019,7 +1023,7 @@ var DT_simpleblock = (function () {
     var html = '<div data-id="sunrise" class="' + classes + '">';
     if (hasHeader) {
       html += '<div class="sunrise-header">';
-      if (icon) html += '<em class="' + icon + '"></em> ';
+      if (icon) html += '<em class="' + icon + '"></em>';
       if (showTitle)
         html +=
           '<strong class="dt_title title">' + me.block.title + '</strong>';

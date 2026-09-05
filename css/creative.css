@@ -3268,28 +3268,42 @@ div.big {
 }
 
 .sunriseholder .sunrise-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
   margin-bottom: 5px;
   /* sunriseholder is text-center (for the sunrise/sunset line below, kept
      centered as before), but every other device/widget's icon+title sits
-     left-aligned at the top of the block, not centered - override just
-     this row back to that convention. align-self only matters on the grid
-     rule above (flex column): without it the header's own box, though
-     text-align: left inside it, would still be centered as a whole because
-     align-items: center there centers the shrink-to-fit box itself, not
-     just the text inside it. */
-  text-align: left;
-  align-self: flex-start;
+     flush at the top of the block, not centered - align-self: stretch
+     (instead of the shrink-to-fit default) makes this row span the full
+     tile width like every other block's icon+content row, both so it
+     doesn't end up centered as a whole (align-items: center on the grid
+     rule above centers a shrink-to-fit box, not just text inside it) and
+     so .dt_title below actually has room to align into - text-align has
+     no visible effect on a box no wider than its own content. */
+  align-self: stretch;
+}
+
+.sunriseholder .sunrise-header em {
+  margin-right: 5px;
 }
 
 /* The title reuses the standard .dt_title class (see renderSunrise() in
    js/components/simpleblock.js) purely so a theme's .dt_title rules -
    including title text-align - apply here like on every other block. Its
    150% font-size and 5px margin are sized for a full .dt_block header, not
-   this small single-line tile, so they're overridden back down here. */
+   this small single-line tile, so they're overridden back down here.
+   flex: 1 fills the rest of the now full-width .sunrise-header row (instead
+   of only the icon's own natural width), giving text-align: right (set per
+   theme - see e.g. themes/modern-dark/modern-dark.css) an actual gap to
+   align into, matching every other block's icon-left/title-right layout. */
 .sunriseholder .sunrise-header .dt_title {
+  flex: 1;
+  min-width: 0;
   font-size: inherit;
   font-weight: bold;
   margin: 0;
+  text-align: left;
 }
 
 .sunriseholder .wi-sunset {

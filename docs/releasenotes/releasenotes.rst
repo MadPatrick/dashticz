@@ -38,6 +38,14 @@ v4.0.4 beta (5-9-2026)
   theme files instead, matching the existing ``.slide .dt_title``
   override already there.
 
+- Sunrise/sunset widget: that theme override still had no visible
+  effect, because ``.sunrise-header`` shrank to fit just the
+  icon+title's own width, leaving ``text-align`` nothing to push
+  against. It's now a flex row stretched to the tile's full width,
+  with the title given ``flex: 1`` to actually fill the remaining
+  space, so a right-aligned title now visibly sits at the tile's
+  right edge - icon-left/title-right, like every other block.
+
 v4.0.3 beta (4-9-2026)
 ----------------------
 

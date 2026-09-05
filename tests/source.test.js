@@ -3428,15 +3428,22 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
   );
   // .sunriseholder is text-center (the sunrise/sunset line stays centered,
   // as before), but a live screenshot showed the icon+title header
-  // centered along with it instead of left-aligned at the top like every
-  // other device/widget's icon+title (e.g. a slide button). Override just
-  // that row back to flush top-left: text-align for column/classic mode,
-  // align-self for the grid rule's flex column (align-items: center there
-  // would otherwise still center the header's own shrink-to-fit box, not
-  // just the text inside it).
+  // centered along with it instead of flush at the top like every other
+  // device/widget's icon+title. .sunrise-header is a flex row stretched to
+  // the tile's full width (align-self: stretch, instead of shrink-to-fit)
+  // both to stop it from being centered as a whole (align-items: center on
+  // the grid rule above centers a shrink-to-fit box, not just the text
+  // inside it) and to give .dt_title's flex: 1 something to align into -
+  // text-align has no visible effect on a box no wider than its content, a
+  // second live screenshot showed the title still sitting flush against
+  // the icon on a theme that right-aligns it.
   assert.match(
     styles,
-    /\.sunriseholder \.sunrise-header \{[\s\S]*?text-align: left;[\s\S]*?align-self: flex-start;/
+    /\.sunriseholder \.sunrise-header \{[\s\S]*?display: flex;[\s\S]*?align-self: stretch;/
+  );
+  assert.match(
+    styles,
+    /\.sunriseholder \.sunrise-header \.dt_title \{[\s\S]*?flex: 1;/
   );
   // Pinning content to the top must only kick in when a header is actually
   // rendered - unconditionally forcing flex-start regressed the header-less
