@@ -6150,6 +6150,29 @@ test('the .mh.timeout tint works on the 3 new themes too, not just the default t
   });
 });
 
+test('Sunrise/sunset title is right-aligned on the 3 new themes, matching their .mh device-block convention', () => {
+  const themes = [
+    'themes/modern-dark/modern-dark.css',
+    'themes/liquid-glass-blue/liquid-glass-blue.css',
+    'themes/liquid-glass-grey/liquid-glass-grey.css',
+  ].map((file) => fs.readFileSync(path.join(root, file), 'utf8'));
+
+  themes.forEach((theme) => {
+    // These 3 themes right-align every device block's title via
+    // `.mh { text-align: right !important; }`, which cascades down into
+    // .dt_title. renderSunrise() (js/components/simpleblock.js) never
+    // carries .mh (adding it wholesale would also pull in .mh's forced
+    // block height, sized for a full device tile, not this compact
+    // widget), so its title stayed left-aligned on these themes regardless
+    // - explicitly right-align it here, same as the existing .slide
+    // .dt_title override right above this rule in each theme file.
+    assert.match(
+      theme,
+      /\.sunriseholder \.sunrise-header \.dt_title \{\s*\n\s*text-align: right !important;\s*\n\s*\}/
+    );
+  });
+});
+
 test("startSwiper() resets .swiper's scrollLeft on resize, so a viewport change can't leave the active screen scrolled off-screen", () => {
   // Swiper positions slides purely via CSS transform here (no cssMode
   // option is passed to `new Swiper(...)`), so the `.swiper` container's

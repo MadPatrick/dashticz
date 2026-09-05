@@ -407,6 +407,15 @@
   text-align: right !important;
 }
 
+/* Sunrise/sunset widget: its header (js/components/simpleblock.js's
+   renderSunrise()) never carries .mh (the class this theme keys its
+   text-align: right off of for every device block), so its .dt_title
+   stayed left-aligned regardless of theme. Match it explicitly, same as
+   .slide above. */
+.sunriseholder .sunrise-header .dt_title {
+  text-align: right !important;
+}
+
 .trash .state {
   text-align: right !important;
 }

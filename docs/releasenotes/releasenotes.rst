@@ -29,6 +29,15 @@ v4.0.4 beta (5-9-2026)
   apply here too, instead of the title always sitting left-aligned
   regardless of theme.
 
+- Sunrise/sunset widget: the title stayed left-aligned on Modern
+  Dark and both Liquid Glass themes even after the ``.dt_title``
+  fix above, since those themes actually right-align every device
+  block's title via ``.mh { text-align: right !important }``, not a
+  generic ``.dt_title`` rule - and Sunrise's header never carries
+  ``.mh``. Added an explicit title-alignment override to all 3
+  theme files instead, matching the existing ``.slide .dt_title``
+  override already there.
+
 v4.0.3 beta (4-9-2026)
 ----------------------
 
