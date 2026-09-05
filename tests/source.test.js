@@ -6407,6 +6407,39 @@ test('Weather widget (js/components/weather.js) and OWM widget icon/title stay v
   );
 });
 
+test('Weather widget forecast refresh no longer wipes the configured icon/title out of .dt_block', () => {
+  // The font-size fix above assumed .col-icon/.dt_title stayed in the DOM
+  // once rendered - they did not. refreshKNMI()/refreshOWM()/refreshOWM3()
+  // each replaced $(me.$block) - the whole .dt_block, icon/title included -
+  // with the tpl/weather*_*.tpl forecast template's own markup (pure
+  // content fragments with no outer container of their own) as soon as the
+  // first weather data came back, which is why a live dashboard showed the
+  // forecast tiles but never the widget's own icon or title. Fixed by
+  // targeting .dt_state (the framework's own content slot) instead.
+  const weather = fs.readFileSync(
+    path.join(root, 'js/components/weather.js'),
+    'utf8'
+  );
+  assert.doesNotMatch(weather, /\$\(me\.\$block\)\.html\(html\);/);
+  const htmlAssignments = weather.match(
+    /me\.\$block\.find\('\.dt_state'\)\.html\(html\);/g
+  );
+  assert.ok(
+    htmlAssignments && htmlAssignments.length === 3,
+    `expected refreshKNMI/refreshOWM/refreshOWM3 to each target .dt_state, found ${
+      htmlAssignments ? htmlAssignments.length : 0
+    }`
+  );
+  // addWeatherIcons() selected every ".icon" element in the whole mount
+  // point, which also matches the widget's own configured header icon
+  // (.col-icon .icon carries the same class, per getColIcon()) - it has no
+  // data-icon attribute for a weather condition to mount into, so it would
+  // get stomped on too. Scope it to just the forecast content just
+  // inserted into .dt_state.
+  assert.doesNotMatch(weather, /me\.\$mountPoint\.find\('\.icon'\);/);
+  assert.match(weather, /me\.\$block\.find\('\.dt_state \.icon'\);/);
+});
+
 test('Graph header icon and Sonarr icons follow theme icon size instead of a hardcoded size', () => {
   const graph = fs.readFileSync(
     path.join(root, 'js/components/graph.js'),

@@ -97,6 +97,12 @@ v4.0.4 beta (5-9-2026)
   scaling and had the identical risk. Both now pin their icon and
   title to a stable size, unaffected by that internal scaling.
 
+- The actual reason the Weather widget's icon and title never
+  appeared: as soon as forecast data arrived, its own refresh logic
+  replaced the entire widget - icon and title included - with just
+  the forecast tiles. It now only replaces its own forecast content,
+  leaving the icon and title in place.
+
 v4.0.3 beta (4-9-2026)
 ----------------------
 
