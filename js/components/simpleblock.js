@@ -149,6 +149,26 @@ var DT_simpleblock = (function () {
     if (addHTML) me.$mountPoint.html(addHTML);
   }
 
+  // Mirrors getColIcon() (js/dashticz.js) exactly - block.icon (a font-icon
+  // class) and block.image (a custom uploaded image, saved when the Widget
+  // Editor's Icon field is switched to its "Image" source) are two
+  // independent, mutually-exclusive ways to set a block's icon. Widgets
+  // below that build their own markup instead of going through getColIcon()
+  // only ever read block.icon, so picking "Image" for their Icon field
+  // saved block.image correctly but rendered nothing.
+  function _colIconHtml(block) {
+    var html = '';
+    if (block.icon)
+      html +=
+        '<div class="col-icon"><em class="' + block.icon + ' icon"></em></div>';
+    if (block.image)
+      html +=
+        '<div class="col-icon"><img src="img/' +
+        block.image +
+        '" class="icon"/></div>';
+    return html;
+  }
+
   function renderLogo(me) {
     var title = settings['app_title'] || 'Dashticz';
     return (
@@ -876,23 +896,20 @@ var DT_simpleblock = (function () {
         fixedHeight > 0
           ? ' style="height:' + fixedHeight + 'px !important"'
           : '';
-      var icon = me.block.icon;
       var showTitle = !me.block.hide_title && me.block.title;
       // Weather is in getWidgetTitle()'s titleKeys (js/dashticz.js), so the
       // Widget Editor's Icon/Title checkboxes save block.icon/block.title
-      // correctly, but this renderer replaced the whole mount point with a
-      // bare .containsweatherfull, silently dropping both. .col-icon/.icon
-      // and .dt_title reuse getColIcon()'s/renderTitle()'s own markup
-      // purely so a theme's icon-size/title rules apply here too - as
-      // siblings of .containsweatherfull (not inside it), since
-      // loadWeatherFull() below replaces that div's content wholesale on
-      // every refresh.
+      // (or block.image, for its Icon field's "Image" source) correctly,
+      // but this renderer replaced the whole mount point with a bare
+      // .containsweatherfull, silently dropping both. _colIconHtml()/
+      // .dt_title reuse getColIcon()'s/renderTitle()'s own markup purely
+      // so a theme's icon-size/title rules apply here too - as siblings of
+      // .containsweatherfull (not inside it), since loadWeatherFull()
+      // below replaces that div's content wholesale on every refresh.
       var header = '';
-      if (icon || showTitle) {
+      if (me.block.icon || me.block.image || showTitle) {
         header += '<div class="dt-simple-header">';
-        if (icon)
-          header +=
-            '<div class="col-icon"><em class="' + icon + ' icon"></em></div>';
+        header += _colIconHtml(me.block);
         if (showTitle)
           header += '<div class="dt_title">' + me.block.title + '</div>';
         header += '</div>';
@@ -1024,11 +1041,16 @@ var DT_simpleblock = (function () {
     // rows side by side.
     // Unlike iframe (which has no sensible icon to guess), Sunrise has an
     // obvious default ('fas fa-sun'), so unset (rather than explicitly
-    // cleared to '' by the Icon checkbox) now shows it by default.
-    var icon =
-      typeof me.block.icon === 'undefined' ? 'fas fa-sun' : me.block.icon;
+    // cleared to '' by the Icon checkbox) now shows it by default - unless
+    // an image was picked instead (the Widget Editor's Icon field can be
+    // switched to an uploaded image, saved as block.image instead of
+    // block.icon; the two are mutually exclusive, same as getColIcon()).
+    var hasCustomIcon =
+      typeof me.block.icon !== 'undefined' ||
+      typeof me.block.image !== 'undefined';
+    var icon = hasCustomIcon ? me.block.icon : 'fas fa-sun';
     var showTitle = !me.block.hide_title && me.block.title;
-    var hasHeader = !!(icon || showTitle);
+    var hasHeader = !!(icon || me.block.image || showTitle);
     // With no header, the sunrise/sunset line stays the block's only
     // content and should keep sitting vertically centered in a tall grid
     // cell (the original behaviour); only a header pins the block's
@@ -1049,14 +1071,7 @@ var DT_simpleblock = (function () {
     var html = '<div data-id="sunrise" class="' + classes + '">';
     if (hasHeader) {
       html += '<div class="sunrise-header">';
-      // .col-icon/.icon match getColIcon()'s (js/dashticz.js) own markup
-      // purely so a theme's icon-size rules (e.g. .col-icon .icon in
-      // themes/modern-dark/modern-dark.css) apply here too, instead of the
-      // icon staying stuck at creative.css's own hardcoded
-      // .sunriseholder font-size regardless of theme.
-      if (icon)
-        html +=
-          '<div class="col-icon"><em class="' + icon + ' icon"></em></div>';
+      html += _colIconHtml({ icon: icon, image: me.block.image });
       if (showTitle)
         html +=
           '<strong class="dt_title title">' + me.block.title + '</strong>';
@@ -1137,7 +1152,6 @@ var DT_simpleblock = (function () {
 
   function renderMoon(me) {
     me.block.btnimage = 'moon';
-    var icon = me.block.icon;
     var showTitle = !me.block.hide_title && me.block.title;
     var html =
       '<div class="col-xs-' +
@@ -1148,16 +1162,14 @@ var DT_simpleblock = (function () {
       '">';
     // Moon is in getWidgetTitle()'s titleKeys (js/dashticz.js), so the
     // Widget Editor's Icon/Title checkboxes save block.icon/block.title
-    // correctly, but nothing ever painted them - this renderer replaces the
-    // whole mount point with just the moon-phase image, silently dropping
-    // both. .col-icon/.icon and .dt_title reuse getColIcon()'s/
-    // renderTitle()'s own markup purely so a theme's icon-size/title rules
-    // apply here too.
-    if (icon || showTitle) {
+    // (or block.image, for its Icon field's "Image" source) correctly, but
+    // nothing ever painted them - this renderer replaces the whole mount
+    // point with just the moon-phase image, silently dropping both.
+    // _colIconHtml()/.dt_title reuse getColIcon()'s/renderTitle()'s own
+    // markup purely so a theme's icon-size/title rules apply here too.
+    if (me.block.icon || me.block.image || showTitle) {
       html += '<div class="dt-simple-header">';
-      if (icon)
-        html +=
-          '<div class="col-icon"><em class="' + icon + ' icon"></em></div>';
+      html += _colIconHtml(me.block);
       if (showTitle)
         html += '<div class="dt_title">' + me.block.title + '</div>';
       html += '</div>';

@@ -75,6 +75,19 @@ v4.0.4 beta (5-9-2026)
   custom styling (Graph's icon color, Sonarr's title position) is
   unchanged.
 
+- The title-alignment fix earlier only covered Sunrise. Any widget
+  rendered via the standard path (e.g. the 112/alarmmeldingen
+  widget) never carries the class only real Domoticz devices get,
+  so it still had no theme-driven title alignment. Replaced the
+  Sunrise-only override with a plain title-alignment default in all
+  3 theme files, which existing more specific title overrides still
+  take precedence over.
+
+- Sunrise, Moon, Weather and Spotify only ever read a plain font
+  icon, never a custom uploaded image - the Widget Editor's Icon
+  field can be switched to an image instead, so picking one
+  rendered nothing. All four now support both.
+
 v4.0.3 beta (4-9-2026)
 ----------------------
 

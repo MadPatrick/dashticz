@@ -3389,11 +3389,16 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
     simpleBlockSource.indexOf('function renderHorizon')
   );
   // Sunrise has an obvious default icon ('fas fa-sun'), so an unset
-  // block.icon now shows it by default; an explicitly cleared icon (the
-  // Icon checkbox switched off, which persists icon: '') still hides it.
+  // block.icon (and no image picked either) now shows it by default; an
+  // explicitly cleared icon (the Icon checkbox switched off, which
+  // persists icon: '') still hides it.
   assert.match(
     renderSunriseBody,
-    /var icon = typeof me\.block\.icon === 'undefined' \? 'fas fa-sun' : me\.block\.icon;/
+    /var hasCustomIcon =\s*\n\s*typeof me\.block\.icon !== 'undefined' \|\|\s*\n\s*typeof me\.block\.image !== 'undefined';/
+  );
+  assert.match(
+    renderSunriseBody,
+    /var icon = hasCustomIcon \? me\.block\.icon : 'fas fa-sun';/
   );
   assert.match(
     renderSunriseBody,
@@ -6196,7 +6201,7 @@ test('the .mh.timeout tint works on the 3 new themes too, not just the default t
   });
 });
 
-test('Sunrise/sunset title is right-aligned on the 3 new themes, matching their .mh device-block convention', () => {
+test('Every .dt_title is right-aligned by default on the 3 new themes, not just device blocks', () => {
   const themes = [
     'themes/modern-dark/modern-dark.css',
     'themes/liquid-glass-blue/liquid-glass-blue.css',
@@ -6206,15 +6211,19 @@ test('Sunrise/sunset title is right-aligned on the 3 new themes, matching their 
   themes.forEach((theme) => {
     // These 3 themes right-align every device block's title via
     // `.mh { text-align: right !important; }`, which cascades down into
-    // .dt_title. renderSunrise() (js/components/simpleblock.js) never
-    // carries .mh (adding it wholesale would also pull in .mh's forced
-    // block height, sized for a full device tile, not this compact
-    // widget), so its title stayed left-aligned on these themes regardless
-    // - explicitly right-align it here, same as the existing .slide
-    // .dt_title override right above this rule in each theme file.
+    // .dt_title only by inheritance. Any widget rendered via the standard
+    // getContainer()/getColIcon()/renderTitle() path (js/dashticz.js) -
+    // e.g. the 112/alarmmeldingen widget, js/components/alarmmeldingen.js -
+    // never carries .mh (that class is only added by the Domoticz device
+    // pipeline, js/blocks.js), so its title stayed left-aligned regardless
+    // of theme. A per-widget override (once added just for Sunrise here)
+    // doesn't scale to every such widget, so .dt_title itself now gets an
+    // explicit default, with .titlegroups/.blocktitle/.slide .dt_title
+    // above/below it in each theme file staying more specific overrides.
+    assert.doesNotMatch(theme, /\.sunriseholder \.sunrise-header \.dt_title/);
     assert.match(
       theme,
-      /\.sunriseholder \.sunrise-header \.dt_title \{\s*\n\s*text-align: right !important;\s*\n\s*\}/
+      /^\.dt_title \{\s*\n\s*text-align: right !important;\s*\n\s*\}/m
     );
   });
 });
@@ -6238,13 +6247,18 @@ test("startSwiper() resets .swiper's scrollLeft on resize, so a viewport change 
   );
 });
 
-test('Sunrise, Moon, Weather/Wunderground and Spotify icons follow theme icon size via .col-icon/.icon', () => {
+test('Sunrise, Moon, Weather/Wunderground and Spotify icons follow theme icon size and support an image icon source', () => {
   // These js/components/simpleblock.js (and js/spotify.js) renderers build
   // their own markup instead of going through getColIcon() (js/dashticz.js),
   // so their icon previously had no way to pick up a theme's icon-size
-  // rule (.col-icon .icon, e.g. themes/modern-dark/modern-dark.css). Each
-  // now wraps its icon in the exact same <div class="col-icon"><em
-  // class="... icon"> markup getColIcon() itself emits.
+  // rule (.col-icon .icon, e.g. themes/modern-dark/modern-dark.css), and
+  // only ever read block.icon - never block.image, the Widget Editor
+  // Icon field's alternative "Image" source - so switching a widget's
+  // Icon to a custom image rendered nothing. simpleblock.js's shared
+  // _colIconHtml() mirrors getColIcon() exactly (both block.icon and
+  // block.image, mutually exclusive); Sunrise, Moon and Weather all call
+  // it, and Spotify (a separate file, can't share it) inlines the same
+  // two branches.
   const simpleBlockSource = fs.readFileSync(
     path.join(root, 'js/components/simpleblock.js'),
     'utf8'
@@ -6253,17 +6267,22 @@ test('Sunrise, Moon, Weather/Wunderground and Spotify icons follow theme icon si
     path.join(root, 'js/spotify.js'),
     'utf8'
   );
-  const colIconRe =
-    /<div class="col-icon"><em class="' \+ icon \+ ' icon"><\/em><\/div>/;
-  assert.match(simpleBlockSource, colIconRe);
-  // Sunrise, Moon and Weather each build this markup independently -
-  // confirm it appears at least 3 times in simpleblock.js.
-  const matches = simpleBlockSource.match(new RegExp(colIconRe, 'g')) || [];
-  assert.ok(
-    matches.length >= 3,
-    `expected at least 3 .col-icon/.icon occurrences in simpleblock.js, found ${matches.length}`
+  assert.match(
+    simpleBlockSource,
+    /function _colIconHtml\(block\) \{[\s\S]*?if \(block\.icon\)[\s\S]*?<div class="col-icon"><em class="' \+ block\.icon \+ ' icon"><\/em><\/div>[\s\S]*?if \(block\.image\)[\s\S]*?<div class="col-icon"><img src="img\/' \+[\s\S]*?block\.image[\s\S]*?class="icon"\/><\/div>/
   );
-  assert.match(spotifySource, colIconRe);
+  // Sunrise, Moon and Weather each call the shared helper.
+  const callMatches = simpleBlockSource.match(/_colIconHtml\(/g) || [];
+  assert.ok(
+    callMatches.length >= 3,
+    `expected at least 3 _colIconHtml() calls in simpleblock.js, found ${callMatches.length}`
+  );
+  assert.match(spotifySource, /if \(block\.icon\)/);
+  assert.match(spotifySource, /if \(block\.image\)/);
+  assert.match(
+    spotifySource,
+    /<div class="col-icon"><img src="img\/' \+\s*\n\s*block\.image \+\s*\n\s*'" class="icon"\/><\/div>/
+  );
 });
 
 test('Moon widget paints its Icon/Title checkboxes instead of always dropping them', () => {
@@ -6282,12 +6301,16 @@ test('Moon widget paints its Icon/Title checkboxes instead of always dropping th
   // Editor's Icon/Title checkboxes save block.icon/block.title correctly,
   // but renderMoon() replaced the whole mount point with just the
   // moon-phase image, silently dropping both.
-  assert.match(renderMoonBody, /var icon = me\.block\.icon;/);
   assert.match(
     renderMoonBody,
     /var showTitle = !me\.block\.hide_title && me\.block\.title;/
   );
+  assert.match(
+    renderMoonBody,
+    /if \(me\.block\.icon \|\| me\.block\.image \|\| showTitle\) \{/
+  );
   assert.match(renderMoonBody, /class="dt-simple-header"/);
+  assert.match(renderMoonBody, /_colIconHtml\(me\.block\)/);
   assert.match(renderMoonBody, /class="dt_title">'\s*\+\s*me\.block\.title/);
 });
 
@@ -6300,8 +6323,12 @@ test('Weather/Wunderground widget paints its Icon/Title checkboxes, and loadWeat
     simpleBlockSource.indexOf('function renderWeather'),
     simpleBlockSource.indexOf('function renderCurrentWeather')
   );
-  assert.match(renderWeatherBody, /var icon = me\.block\.icon;/);
+  assert.match(
+    renderWeatherBody,
+    /if \(me\.block\.icon \|\| me\.block\.image \|\| showTitle\) \{/
+  );
   assert.match(renderWeatherBody, /class="dt-simple-header"/);
+  assert.match(renderWeatherBody, /_colIconHtml\(me\.block\)/);
   // .containsweatherfull must be a nested child, not the outer .dt_block
   // itself - js/weather.js's loadWeatherFull() replaces
   // div.containsweatherfull's content wholesale on every refresh, which
@@ -6321,10 +6348,13 @@ test('Spotify widget paints its Icon/Title checkboxes instead of always dropping
   // Spotify is in getWidgetTitle()'s titleKeys (js/dashticz.js), so the
   // Widget Editor's Icon/Title checkboxes save block.icon/block.title
   // correctly, but _getSpotify() never painted them at all.
-  assert.match(spotifySource, /var icon = block\.icon;/);
   assert.match(
     spotifySource,
     /var showTitle = !block\.hide_title && block\.title;/
+  );
+  assert.match(
+    spotifySource,
+    /if \(block\.icon \|\| block\.image \|\| showTitle\) \{/
   );
   assert.match(spotifySource, /class="dt-simple-header"/);
 });
