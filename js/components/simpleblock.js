@@ -982,13 +982,21 @@ var DT_simpleblock = (function () {
     // placement every other device/widget uses - instead of reusing
     // getColIcon()'s floated .col-icon (sized/positioned for a .dt_block's
     // flex layout, which sunriseholder deliberately isn't - see the
-    // .dt-grid-item > .sunriseholder rule in creative.css) or .dt_title
-    // (150% font-size, meant for a full-size widget header, not this small,
-    // single-line, centered tile). The sunrise/sunset line is wrapped in its
-    // own .sunrise-data div so grid mode's flex-direction: column on
-    // .sunriseholder stacks exactly two rows (header, data) instead of
-    // flexing every individual icon/span in both rows side by side.
-    var icon = me.block.icon;
+    // .dt-grid-item > .sunriseholder rule in creative.css). The title still
+    // carries the standard .dt_title class (own font-size/margin overridden
+    // small in creative.css's .sunriseholder rules) so a theme's .dt_title
+    // alignment rules - e.g. a theme that right-aligns titles - apply here
+    // exactly like they do on every other block, instead of this header
+    // silently staying left-aligned regardless of theme. The sunrise/sunset
+    // line is wrapped in its own .sunrise-data div so grid mode's
+    // flex-direction: column on .sunriseholder stacks exactly two rows
+    // (header, data) instead of flexing every individual icon/span in both
+    // rows side by side.
+    // Unlike iframe (which has no sensible icon to guess), Sunrise has an
+    // obvious default ('fas fa-sun'), so unset (rather than explicitly
+    // cleared to '' by the Icon checkbox) now shows it by default.
+    var icon =
+      typeof me.block.icon === 'undefined' ? 'fas fa-sun' : me.block.icon;
     var showTitle = !me.block.hide_title && me.block.title;
     var hasHeader = !!(icon || showTitle);
     // With no header, the sunrise/sunset line stays the block's only
@@ -997,12 +1005,24 @@ var DT_simpleblock = (function () {
     // content to the top like every other device/widget - see the
     // .sunriseholder.sunrise-has-header grid rule in creative.css.
     if (hasHeader) classes += ' sunrise-has-header';
+    // Every other block supports a custom block.addClass (js/dashticz.js's
+    // renderBlock()), but this renderer never goes through that function, so
+    // it was silently ignored here. Apply it directly, same as containerExtra
+    // is read directly by getContainer() for blocks that do use it.
+    if (me.block.addClass) {
+      classes +=
+        ' ' +
+        (typeof me.block.addClass === 'function'
+          ? me.block.addClass(me)
+          : me.block.addClass);
+    }
     var html = '<div data-id="sunrise" class="' + classes + '">';
     if (hasHeader) {
       html += '<div class="sunrise-header">';
       if (icon) html += '<em class="' + icon + '"></em> ';
       if (showTitle)
-        html += '<strong class="title">' + me.block.title + '</strong>';
+        html +=
+          '<strong class="dt_title title">' + me.block.title + '</strong>';
       html += '</div>';
     }
     html +=

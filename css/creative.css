@@ -3281,6 +3281,17 @@ div.big {
   align-self: flex-start;
 }
 
+/* The title reuses the standard .dt_title class (see renderSunrise() in
+   js/components/simpleblock.js) purely so a theme's .dt_title rules -
+   including title text-align - apply here like on every other block. Its
+   150% font-size and 5px margin are sized for a full .dt_block header, not
+   this small single-line tile, so they're overridden back down here. */
+.sunriseholder .sunrise-header .dt_title {
+  font-size: inherit;
+  font-weight: bold;
+  margin: 0;
+}
+
 .sunriseholder .wi-sunset {
   padding-left: 10px;
 }

@@ -6,6 +6,29 @@ For Dashticz's **beta** version Release Notes go to: https://dashticz.readthedoc
 For Dashticz's **master** version Release Notes go to: https://dashticz.readthedocs.io/en/master/releasenotes/index.html
 
 
+v4.0.4 beta (5-9-2026)
+----------------------
+
+* **Fixes**
+
+- Sunrise/sunset widget: a custom ``block.addClass`` was silently
+  ignored. ``renderSunrise()`` builds its own markup instead of
+  going through ``js/dashticz.js``'s ``renderBlock()`` (which every
+  other block relies on for this), so it never applied it - now
+  read and applied directly.
+
+- Sunrise/sunset widget: the Icon checkbox now defaults to on. It
+  has an obvious default icon (``fas fa-sun``), unlike iframe (which
+  has none to guess and keeps the old off-by-default behaviour for a
+  hand-written CONFIG.js block with no ``icon`` field).
+
+- Sunrise/sunset widget: the title now carries the standard
+  ``.dt_title`` class (its font-size/margin overridden back down to
+  this small tile's compact size) so a theme's ``.dt_title``
+  alignment rules - e.g. a theme that right-aligns block titles -
+  apply here too, instead of the title always sitting left-aligned
+  regardless of theme.
+
 v4.0.3 beta (4-9-2026)
 ----------------------
 

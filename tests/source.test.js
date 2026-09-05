@@ -3380,24 +3380,42 @@ test('Domoticz log, OWM, Sunrise/Sunset and Timegraph are added to the Widget Co
     simpleBlockSource.indexOf('function renderSunrise'),
     simpleBlockSource.indexOf('function renderHorizon')
   );
-  assert.match(renderSunriseBody, /var icon = me\.block\.icon;/);
+  // Sunrise has an obvious default icon ('fas fa-sun'), so an unset
+  // block.icon now shows it by default; an explicitly cleared icon (the
+  // Icon checkbox switched off, which persists icon: '') still hides it.
+  assert.match(
+    renderSunriseBody,
+    /var icon = typeof me\.block\.icon === 'undefined' \? 'fas fa-sun' : me\.block\.icon;/
+  );
   assert.match(
     renderSunriseBody,
     /var showTitle = !me\.block\.hide_title && me\.block\.title;/
   );
   assert.match(renderSunriseBody, /class="sunrise-header"/);
-  assert.match(renderSunriseBody, /class="title">'\s*\+\s*me\.block\.title/);
-  // A hand-written/legacy Sunrise block without `icon` must retain its old
-  // iconless appearance. Newly added Editor widgets still get the catalog
-  // icon, but it is persisted explicitly instead of becoming a runtime
-  // default for every existing CONFIG.js.
-  assert.doesNotMatch(simpleBlockSource, /cfg\.icon = 'fas fa-sun'/);
+  // The title carries the standard .dt_title class (compact size/margin
+  // overridden in creative.css's .sunriseholder rules) so a theme's
+  // .dt_title alignment rules apply here like on every other block.
+  assert.match(
+    renderSunriseBody,
+    /class="dt_title title">'\s*\+\s*me\.block\.title/
+  );
+  // renderSunrise never went through js/dashticz.js's renderBlock(), so a
+  // custom block.addClass (supported on every other block) was silently
+  // ignored here. Applied directly onto this renderer's own class string.
+  assert.match(renderSunriseBody, /if \(me\.block\.addClass\)/);
+  // iframe has no sensible icon to guess, so a hand-written/legacy iframe
+  // block without `icon` keeps its historical iconless appearance in the
+  // editor. Sunrise is excluded from that legacy quirk (it does have an
+  // obvious default), so its Icon checkbox now shows on by default too.
   assert.match(
     widgetEditor,
     /item\.id === 'iframe' \|\| item\.id === 'sunrise'/
   );
   assert.match(widgetEditor, /iconValue: explicitDefaultIcon/);
-  assert.match(widgetEditor, /var legacyImplicitIcon =/);
+  assert.match(
+    widgetEditor,
+    /var legacyImplicitIcon =\s*\n\s*item && item\.id === 'iframe' &&/
+  );
   // The sunrise/sunset line is its own .sunrise-data row, separate from
   // .sunrise-header, so grid mode's flex-direction: column (creative.css)
   // stacks exactly those two rows instead of flexing every individual

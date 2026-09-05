@@ -525,9 +525,11 @@ var DashticzWidgetEditor = (function () {
       : null;
     return {
       icon: true,
-      // iframe and Sunrise historically rendered without an icon when an old
-      // CONFIG.js omitted `icon`. New Editor-created widgets keep their newer
-      // appearance by persisting the catalog icon explicitly instead.
+      // A newly added iframe/Sunrise widget persists the catalog icon into
+      // its saved config explicitly, rather than leaving `icon` unset and
+      // relying on a runtime default, so the Icon picker always has a
+      // concrete value to show and future catalog-icon changes don't alter
+      // widgets already saved.
       iconValue: explicitDefaultIcon,
       hide_data: false,
       last_update: false,
@@ -622,9 +624,13 @@ var DashticzWidgetEditor = (function () {
 
   function _hydrateWidgetBlockOptions(item, definition) {
     var options = _defaultWidgetBlockOptions();
+    // iframe has no sensible icon to guess, so a hand-written/legacy iframe
+    // block without `icon` keeps its historical iconless appearance here.
+    // Sunrise does have an obvious default ('fas fa-sun' - see renderSunrise()
+    // in js/components/simpleblock.js), so it's excluded from this legacy
+    // quirk and shows the Icon checkbox on, same as any other widget.
     var legacyImplicitIcon =
-      _usesExplicitEditorDefaultIcon(item) &&
-      typeof definition.icon === 'undefined';
+      item && item.id === 'iframe' && typeof definition.icon === 'undefined';
     options.icon =
       (typeof definition.image === 'string' && definition.image !== '') ||
       (!legacyImplicitIcon && definition.icon !== '');
