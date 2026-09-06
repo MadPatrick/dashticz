@@ -3599,6 +3599,30 @@ var DashticzWidgetEditor = (function () {
         null,
         lwgt.traffic_custom_url_help || ''
       );
+      fields += _cfgField(
+        'maxDistance',
+        lwgt.traffic_max_distance || 'Max distance (km)',
+        'number',
+        tcfg.maxDistance,
+        { min: 0, step: 0.1 },
+        lwgt.traffic_max_distance_help || ''
+      );
+      fields += _cfgField(
+        'latitude',
+        lwgt.traffic_latitude || 'Latitude',
+        'text',
+        tcfg.latitude,
+        null,
+        lwgt.traffic_location_help || ''
+      );
+      fields += _cfgField(
+        'longitude',
+        lwgt.traffic_longitude || 'Longitude',
+        'text',
+        tcfg.longitude,
+        null,
+        lwgt.traffic_location_help || ''
+      );
     } else if (item.id === 'alarmmeldingen') {
       var acfg = widgetConfigs.alarmmeldingen || {};
       fields +=
@@ -5241,6 +5265,21 @@ var DashticzWidgetEditor = (function () {
       entry.rss = widgetConfigs.alarmmeldingen.rss;
       if (widgetConfigs.alarmmeldingen.filter)
         entry.filter = widgetConfigs.alarmmeldingen.filter;
+    }
+    if (item.id === 'trafficinfo') {
+      // Per-instance, unlike provider/anwb_apikey/traffic_custom_url above
+      // (global settings, shared by every trafficinfo widget) - different
+      // trafficinfo widgets on different screens may want different
+      // distances/locations. Left unset, js/components/trafficinfo.js falls
+      // back to Domoticz's own configured location for latitude/longitude,
+      // and applies no distance filtering at all when maxDistance is unset.
+      var trcfg = widgetConfigs.trafficinfo || {};
+      if (trcfg.maxDistance !== '' && typeof trcfg.maxDistance !== 'undefined')
+        entry.maxDistance = parseFloat(trcfg.maxDistance) || 0;
+      if (trcfg.latitude !== '' && typeof trcfg.latitude !== 'undefined')
+        entry.latitude = parseFloat(trcfg.latitude);
+      if (trcfg.longitude !== '' && typeof trcfg.longitude !== 'undefined')
+        entry.longitude = parseFloat(trcfg.longitude);
     }
     if (item.id === 'iframe') {
       var icfg = widgetConfigs.iframe || {};

@@ -6593,6 +6593,192 @@ test('savewidgets.php whitelists and validates traffic_provider/traffic_custom_u
   );
 });
 
+function loadTrafficInfoModule() {
+  const source = fs.readFileSync(
+    path.join(root, 'js/components/trafficinfo.js'),
+    'utf8'
+  );
+  const context = {
+    language: {
+      misc: {
+        loading: 'Loading',
+        no_traffic: 'No traffic announcements',
+        traffic_api_missing: 'ANWB API key is not configured.',
+        traffic_custom_url_missing: 'Custom traffic URL is not configured.',
+        last_update: 'Last update',
+      },
+    },
+    settings: {},
+    _CORS_PATH: '',
+    Domoticz: {
+      getAllDevices: () => ({
+        _settings: { Location: { Latitude: '52.0', Longitude: '5.0' } },
+      }),
+    },
+    Dashticz: { register: () => {}, setEmpty: () => {} },
+  };
+  vm.runInNewContext(source, context);
+  return context;
+}
+
+test('Trafficinfo widget config exposes Max distance/Latitude/Longitude, saved per-instance', () => {
+  // Unlike Provider/ANWB API key/Custom URL (global settings, shared by
+  // every trafficinfo widget), the distance filter is per-widget-instance:
+  // different trafficinfo widgets on different screens may want different
+  // distances/locations.
+  const widgetEditor = fs.readFileSync(
+    path.join(root, 'js/widgeteditor.js'),
+    'utf8'
+  );
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'maxDistance',/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'latitude',/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'longitude',/);
+  assert.match(
+    widgetEditor,
+    /entry\.maxDistance = parseFloat\(trcfg\.maxDistance\)/
+  );
+  assert.match(widgetEditor, /entry\.latitude = parseFloat\(trcfg\.latitude\)/);
+  assert.match(
+    widgetEditor,
+    /entry\.longitude = parseFloat\(trcfg\.longitude\)/
+  );
+  // These three must NOT be routed through the global-settings bridge
+  // (configWidgets/$allowedSettings) the way traffic_provider/anwb_apikey/
+  // traffic_custom_url are - they're per-block CONFIG.js properties.
+  assert.doesNotMatch(widgetEditor, /trafficinfo: \[[^\]]*maxDistance/);
+  const savewidgets = fs.readFileSync(
+    path.join(root, 'js/savewidgets.php'),
+    'utf8'
+  );
+  assert.doesNotMatch(savewidgets, /'maxDistance'/);
+});
+
+test('Trafficinfo distance filter: haversine math, fail-open behaviour, and RWS/custom filtering', () => {
+  const ctx = loadTrafficInfoModule();
+
+  // Amsterdam Dam Square to Utrecht Dom: actually about 35.7km straight-line.
+  const km = ctx._distanceKm(52.373, 4.8925, 52.0908, 5.1214);
+  assert.ok(km > 34 && km < 37, `expected ~35.7km, got ${km}`);
+
+  // No maxDistance configured -> filter inactive, everything kept.
+  assert.equal(ctx._hasDistanceFilter({ latitude: 52, longitude: 5 }), false);
+  assert.equal(
+    ctx._isWithinDistance({ latitude: 52, longitude: 5 }, 60, 10),
+    true
+  );
+
+  // maxDistance is configured but this item's own coordinates are unknown
+  // (NaN) - fail open, the item stays. This is what protects the widget
+  // from going silently empty if _rwsCoords ever guesses a wrong field name
+  // for live RWS data.
+  assert.equal(
+    ctx._isWithinDistance(
+      { latitude: 52, longitude: 5, maxDistance: 10 },
+      NaN,
+      NaN
+    ),
+    true
+  );
+
+  // Within range vs out of range.
+  const near = { latitude: 52.373, longitude: 4.8925, maxDistance: 10 };
+  assert.equal(ctx._isWithinDistance(near, 52.38, 4.9), true);
+  assert.equal(ctx._isWithinDistance(near, 52.09, 5.12), false);
+
+  // _rwsCoords tries several field-name shapes defensively. Compared
+  // field-by-field rather than with deepEqual: vm.runInNewContext() objects
+  // come from a different realm, so they're never reference-equal to a
+  // plain object literal here even with identical own properties.
+  function assertCoords(coords, expectedLat, expectedLon) {
+    assert.ok(coords, 'expected coordinates to be extracted');
+    assert.equal(coords.lat, expectedLat);
+    assert.equal(coords.lon, expectedLon);
+  }
+  assertCoords(ctx._rwsCoords({ lat: '52.1', lon: '5.2' }), 52.1, 5.2);
+  assertCoords(
+    ctx._rwsCoords({ latitude: '52.1', longitude: '5.2' }),
+    52.1,
+    5.2
+  );
+  assertCoords(
+    ctx._rwsCoords({ geometry: { coordinates: [5.2, 52.1] } }),
+    52.1,
+    5.2
+  );
+  assert.equal(ctx._rwsCoords({}), null);
+
+  // End-to-end through _buildRWSDataPart: a far-away jam is filtered out, a
+  // nearby one stays, and one with no coordinates at all is never hidden.
+  const me = {
+    block: {
+      trafficJams: true,
+      roadWorks: true,
+      radars: true,
+      results: 50,
+      latitude: 52.373,
+      longitude: 4.8925,
+      maxDistance: 10,
+    },
+  };
+  const result = ctx._buildRWSDataPart(me, {
+    obstructions: [
+      {
+        obstructionType: 4,
+        roadNumber: 'A2',
+        lat: 52.38,
+        lon: 4.9,
+        directionText: 'Amsterdam - Utrecht',
+      },
+      {
+        obstructionType: 4,
+        roadNumber: 'A27',
+        lat: 52.09,
+        lon: 5.12,
+        directionText: 'Utrecht - Hooipolder',
+      },
+      {
+        obstructionType: 4,
+        roadNumber: 'A9',
+        directionText: 'Alkmaar - Amsterdam',
+      },
+    ],
+  });
+  const roads = Object.keys(result.dataPart);
+  assert.ok(roads.includes('A2'), 'nearby jam should stay');
+  assert.ok(!roads.includes('A27'), 'far-away jam should be filtered out');
+  assert.ok(
+    roads.includes('A9'),
+    'a jam with no usable coordinates should never be hidden'
+  );
+
+  // A custom-provider item can also be distance filtered via its own
+  // lat/lon fields; one lacking them is kept regardless of maxDistance.
+  const customResult = ctx._buildCustomDataPart(me, [
+    { road: 'A2', type: 'jam', lat: 52.38, lon: 4.9 },
+    { road: 'A27', type: 'jam', lat: 52.09, lon: 5.12 },
+    { road: 'A9', type: 'jam' },
+  ]);
+  const customRoads = Object.keys(customResult.dataPart);
+  assert.ok(customRoads.includes('A2'));
+  assert.ok(!customRoads.includes('A27'));
+  assert.ok(customRoads.includes('A9'));
+});
+
+test("Trafficinfo defaultCfg falls back to Domoticz's own location, block override wins", () => {
+  const ctx = loadTrafficInfoModule();
+  const withoutOverride = ctx.DT_trafficinfo.defaultCfg({});
+  assert.equal(withoutOverride.latitude, 52.0);
+  assert.equal(withoutOverride.longitude, 5.0);
+  const withOverride = ctx.DT_trafficinfo.defaultCfg({
+    latitude: '51.5',
+    longitude: '4.5',
+    maxDistance: 25,
+  });
+  assert.equal(withOverride.latitude, 51.5);
+  assert.equal(withOverride.longitude, 4.5);
+  assert.equal(withOverride.maxDistance, 25);
+});
+
 test('Traffic info provider/custom URL translations exist in English and Dutch', () => {
   const english = JSON.parse(
     fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8')

@@ -51,6 +51,11 @@ Parameters
       | ``'custom'`` Your own JSON endpoint, set via ``customUrl``. See :ref:`trafficinfo_custom`.
   * - customUrl
     - URL of your own JSON endpoint, only used when ``provider`` is ``'custom'``. See :ref:`trafficinfo_custom`.
+  * - maxDistance
+    - | Only show items within this distance, in km straight-line, from ``latitude``/``longitude``. Leave unset to show everything (the default).
+      | Currently only filters the ``rws`` provider, and ``custom`` items that provide their own ``lat``/``lon``. Also configurable from the Widget editor's Traffic information quick-add.
+  * - latitude, longitude
+    - | Reference location for ``maxDistance``. Leave both unset to use Domoticz's own configured system location (Settings > System > Location) - only set these yourself if that isn't configured.
   * - icon
     - | The font-awesome icon (including ``fas fa-``)
       | ``'fas fa-car'``, ...
@@ -101,7 +106,9 @@ array of items, one per jam/roadwork/radar::
         "to": "Hooipolder",
         "delay": 12,
         "distance": 3.4,
-        "reason": "Ongeval"
+        "reason": "Ongeval",
+        "lat": 52.09,
+        "lon": 5.12
       },
       {
         "road": "A2",
@@ -133,6 +140,8 @@ array of items, one per jam/roadwork/radar::
     - Length in km (optional)
   * - reason
     - Free text reason/description (optional)
+  * - lat, lon
+    - Coordinates (optional) - only items that provide both can be filtered by the block's ``maxDistance``
 
 The endpoint is fetched the same way as the built-in providers (through Dashticz's CORS
 proxy), so it doesn't need to send permissive CORS headers itself.

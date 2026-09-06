@@ -18,6 +18,13 @@ v4.0.5 (6-9-2026)
   provider choice and custom URL are configurable in both Settings and the
   Widget editor's Traffic information quick-add.
 
+- Traffic info widget: added an optional ``maxDistance`` (km) filter for the
+  RWS provider (and ``custom`` items that provide their own coordinates),
+  since a nationwide list can get too long for the block. Configurable per
+  widget instance from the Widget editor's Traffic information quick-add,
+  alongside optional latitude/longitude overrides that default to
+  Domoticz's own configured system location.
+
 v4.0.4 (5-9-2026)
 ----------------------
 
