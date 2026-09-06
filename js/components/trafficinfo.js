@@ -2,7 +2,7 @@
 var DT_trafficinfo = {
   name: 'trafficinfo',
   canHandle: function (block) {
-    return block && (block.trafficJams || block.roadWorks);
+    return block && (block.trafficJams || block.roadWorks || block.radars);
   },
   defaultCfg: function (block) {
     if (block && block.refresh && parseFloat(block.refresh) < 60)
@@ -21,10 +21,12 @@ var DT_trafficinfo = {
       url: 'https://www.rwsverkeersinfo.nl/',
       newwindow: 1,
       clickHandler: true,
-      // Distance filtering: unset maxDistance means "show everything".
-      // latitude/longitude default to Domoticz's own location so most
-      // users need only set maxDistance.
-      maxDistance: block && block.maxDistance,
+      // Distance filtering: defaults to 40km. latitude/longitude default to
+      // Domoticz's own location so most users need only set maxDistance.
+      maxDistance:
+        block && typeof block.maxDistance !== 'undefined'
+          ? block.maxDistance
+          : 40,
       latitude:
         block && typeof block.latitude !== 'undefined'
           ? parseFloat(block.latitude)
@@ -33,11 +35,12 @@ var DT_trafficinfo = {
         block && typeof block.longitude !== 'undefined'
           ? parseFloat(block.longitude)
           : parseFloat(domoticzLocation.Longitude),
-      results: 50,
+      results: 5,
       showempty: showempty,
       showemptyroads: false,
       trafficJams: true,
       roadWorks: true,
+      radars: true,
       width: 4,
       height: 260,
     };

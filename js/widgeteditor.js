@@ -437,8 +437,15 @@ var DashticzWidgetEditor = (function () {
     },
     publictransport: { station: true, provider: true },
     trafficinfo: {
+      // provider is deliberately unmanaged-but-hidden: no field renders or
+      // collects it (see the fields builder and _buildWidgetPayloadEntry
+      // below), so a leftover provider from before the RWS-only switch
+      // just drops off the block on the next save instead of showing up
+      // as a stray "Extra fields" row with nothing to edit it.
+      provider: true,
       trafficJams: true,
       roadWorks: true,
+      radars: true,
       results: true,
       maxDistance: true,
       latitude: true,
@@ -1089,7 +1096,9 @@ var DashticzWidgetEditor = (function () {
       trafficinfo: {
         trafficJams: 1,
         roadWorks: 1,
-        results: 50,
+        radars: 1,
+        results: 5,
+        maxDistance: 40,
       },
       map: {
         gm_api: _s('gm_api'),
@@ -1382,6 +1391,9 @@ var DashticzWidgetEditor = (function () {
           }
           if (typeof definition.roadWorks !== 'undefined') {
             widgetConfigs.trafficinfo.roadWorks = definition.roadWorks ? 1 : 0;
+          }
+          if (typeof definition.radars !== 'undefined') {
+            widgetConfigs.trafficinfo.radars = definition.radars ? 1 : 0;
           }
           if (typeof definition.results !== 'undefined') {
             widgetConfigs.trafficinfo.results = definition.results;
@@ -1834,6 +1846,7 @@ var DashticzWidgetEditor = (function () {
       [
         ['trafficJams', 1],
         ['roadWorks', 1],
+        ['radars', 1],
       ].forEach(function (mapping) {
         var prop = mapping[0];
         widgetConfigs.trafficinfo[prop] =
@@ -1844,10 +1857,11 @@ var DashticzWidgetEditor = (function () {
               : 0;
       });
       widgetConfigs.trafficinfo.results =
-        typeof definition.results === 'undefined' ? 50 : definition.results;
-      if (typeof definition.maxDistance !== 'undefined') {
-        widgetConfigs.trafficinfo.maxDistance = definition.maxDistance;
-      }
+        typeof definition.results === 'undefined' ? 5 : definition.results;
+      widgetConfigs.trafficinfo.maxDistance =
+        typeof definition.maxDistance === 'undefined'
+          ? 40
+          : definition.maxDistance;
       if (typeof definition.latitude !== 'undefined') {
         widgetConfigs.trafficinfo.latitude = definition.latitude;
       }
@@ -3626,8 +3640,8 @@ var DashticzWidgetEditor = (function () {
       // Rijkswaterstaat only - no provider choice (see AGENTS.md-tracked
       // history: ANWB no longer issues API keys, and a Custom endpoint
       // added no real value without a second built-in provider to compare
-      // against). trafficJams/roadWorks/results/maxDistance/latitude/
-      // longitude are per-block CONFIG.js properties (see
+      // against). trafficJams/roadWorks/radars/results/maxDistance/
+      // latitude/longitude are per-block CONFIG.js properties (see
       // managedWidgetPropertiesById.trafficinfo and the hydration in
       // _readConfiguredWidgets()/_hydrateGridWidget() above).
       var tcfg = widgetConfigs.trafficinfo || {};
@@ -3649,10 +3663,18 @@ var DashticzWidgetEditor = (function () {
         lwgt.traffic_roadworks_help || ''
       );
       fields += _cfgField(
+        'radars',
+        lwgt.traffic_radars || 'Radars',
+        'checkbox',
+        typeof tcfg.radars === 'undefined' ? 1 : tcfg.radars,
+        null,
+        lwgt.traffic_radars_help || ''
+      );
+      fields += _cfgField(
         'results',
         lwgt.traffic_results || 'Max results',
         'number',
-        typeof tcfg.results === 'undefined' ? 50 : tcfg.results,
+        typeof tcfg.results === 'undefined' ? 5 : tcfg.results,
         { min: 1, step: 1 },
         lwgt.traffic_results_help || ''
       );
@@ -3660,7 +3682,7 @@ var DashticzWidgetEditor = (function () {
         'maxDistance',
         lwgt.traffic_max_distance || 'Max distance (km)',
         'number',
-        tcfg.maxDistance,
+        typeof tcfg.maxDistance === 'undefined' ? 40 : tcfg.maxDistance,
         { min: 0, step: 0.1 },
         lwgt.traffic_max_distance_help || ''
       );
@@ -5326,10 +5348,9 @@ var DashticzWidgetEditor = (function () {
     }
     if (item.id === 'trafficinfo') {
       // Per-instance: different trafficinfo widgets on different screens
-      // may want different distances/locations. Left unset,
-      // js/components/trafficinfo.js falls back to Domoticz's own
-      // configured location for latitude/longitude, and applies no distance
-      // filtering at all when maxDistance is unset.
+      // may want different distances/locations. maxDistance defaults to
+      // 40km; latitude/longitude default to Domoticz's own configured
+      // location when left blank.
       var trcfg = widgetConfigs.trafficinfo || {};
       entry.trafficJams = Number(
         typeof trcfg.trafficJams === 'undefined' ? 1 : trcfg.trafficJams
@@ -5341,9 +5362,13 @@ var DashticzWidgetEditor = (function () {
       )
         ? 1
         : 0;
-      entry.results = parseInt(trcfg.results, 10) || 50;
-      if (trcfg.maxDistance !== '' && typeof trcfg.maxDistance !== 'undefined')
-        entry.maxDistance = parseFloat(trcfg.maxDistance) || 0;
+      entry.radars = Number(
+        typeof trcfg.radars === 'undefined' ? 1 : trcfg.radars
+      )
+        ? 1
+        : 0;
+      entry.results = parseInt(trcfg.results, 10) || 5;
+      entry.maxDistance = parseFloat(trcfg.maxDistance) || 40;
       if (trcfg.latitude !== '' && typeof trcfg.latitude !== 'undefined')
         entry.latitude = parseFloat(trcfg.latitude);
       if (trcfg.longitude !== '' && typeof trcfg.longitude !== 'undefined')

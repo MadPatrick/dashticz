@@ -25,9 +25,9 @@ A traffic info block can be configured as follows::
 Using the Widget editor
 -----------------------
 
-In Wizard mode, ``trafficJams``, ``roadWorks``, ``results``, ``maxDistance``, ``latitude``
-and ``longitude`` can all be set from the Widget editor's Traffic information quick-add,
-without hand-writing a block.
+In Wizard mode, ``trafficJams``, ``roadWorks``, ``radars``, ``results``, ``maxDistance``,
+``latitude`` and ``longitude`` can all be set from the Widget editor's Traffic information
+quick-add, without hand-writing a block.
 
 
 Parameters
@@ -47,7 +47,7 @@ Parameters
   * - show_lastupdate
     - ``false`` , ``true``. To display the time of the last update.
   * - maxDistance
-    - | Only show items within this distance, in km straight-line, from ``latitude``/``longitude``. Leave unset to show everything (the default).
+    - Only show items within this distance, in km straight-line, from ``latitude``/``longitude``. Defaults to ``40``.
   * - latitude, longitude
     - | Reference location for ``maxDistance``. Leave both unset to use Domoticz's own configured system location (Settings > System > Location) - only set these yourself if that isn't configured.
   * - icon
@@ -56,13 +56,15 @@ Parameters
   * - refresh
     - time in seconds for refreshing the data
   * - results
-    - Number of results to show
+    - Number of results to show. Defaults to ``5``.
   * - width
     - To customize the width. It's not recommended to change the default value (``12``) because of the size of the output.
   * - trafficJams
     - ``false`` , ``true``.  To show traffic jam info
   * - roadWorks
     - ``false`` , ``true``.  To show road work info
+  * - radars
+    - ``false`` , ``true``.  To show radar info. RWS has no radar data, so this currently has no visible effect.
   * - showempty
     - | Control text to show in case of no traffic announcements
       | ``false``: Don't show a message in case of no traffic announcements

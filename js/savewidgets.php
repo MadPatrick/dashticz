@@ -519,13 +519,16 @@ foreach ($data['widgets'] as $entry) {
             || (bool)$entry['trafficJams'];
         $widget['roadWorks'] = !array_key_exists('roadWorks', $entry)
             || (bool)$entry['roadWorks'];
+        $widget['radars'] = !array_key_exists('radars', $entry)
+            || (bool)$entry['radars'];
         $results = isset($entry['results']) && is_numeric($entry['results'])
             ? (int)$entry['results']
-            : 50;
+            : 5;
         $widget['results'] = max(1, min(500, $results));
-        if (isset($entry['maxDistance']) && is_numeric($entry['maxDistance'])) {
-            $widget['maxDistance'] = (float)$entry['maxDistance'];
-        }
+        $maxDistance = isset($entry['maxDistance']) && is_numeric($entry['maxDistance'])
+            ? (float)$entry['maxDistance']
+            : 40;
+        $widget['maxDistance'] = $maxDistance;
         if (isset($entry['latitude']) && is_numeric($entry['latitude'])) {
             $widget['latitude'] = (float)$entry['latitude'];
         }
@@ -1093,10 +1096,9 @@ function _widgetBlockProps($widget)
             $props['title'] = 'Traffic';
             $props['trafficJams'] = $widget['trafficJams'];
             $props['roadWorks'] = $widget['roadWorks'];
+            $props['radars'] = $widget['radars'];
             $props['results'] = $widget['results'];
-            if (isset($widget['maxDistance'])) {
-                $props['maxDistance'] = $widget['maxDistance'];
-            }
+            $props['maxDistance'] = $widget['maxDistance'];
             if (isset($widget['latitude'])) {
                 $props['latitude'] = $widget['latitude'];
             }

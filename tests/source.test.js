@@ -6512,7 +6512,7 @@ test('Trafficinfo widget is RWS-only - no provider choice, no ANWB/Custom code p
   assert.doesNotMatch(trafficinfo, /_buildCustomDataPart/);
   assert.match(
     trafficinfo,
-    /canHandle: function \(block\) \{\s*\n\s*return block && \(block\.trafficJams \|\| block\.roadWorks\);/
+    /canHandle: function \(block\) \{\s*\n\s*return block && \(block\.trafficJams \|\| block\.roadWorks \|\| block\.radars\);/
   );
   assert.match(
     trafficinfo,
@@ -6526,9 +6526,15 @@ test('Trafficinfo widget is RWS-only - no provider choice, no ANWB/Custom code p
   assert.match(trafficinfo, /o\.description \|\| o\.locationText/);
   // RWS obstruction coordinates: flat latitude/longitude fields.
   assert.match(trafficinfo, /o\.latitude == null \|\| o\.longitude == null/);
+  // Defaults: 5 results, 40km max distance.
+  assert.match(trafficinfo, /results: 5,/);
+  assert.match(
+    trafficinfo,
+    /block && typeof block\.maxDistance !== 'undefined'\s*\n\s*\? block\.maxDistance\s*\n\s*: 40,/
+  );
 });
 
-test('Trafficinfo settings/Widget editor: no global settings, no provider selector, only trafficJams/roadWorks/results/maxDistance/latitude/longitude', () => {
+test('Trafficinfo settings/Widget editor: no global settings, no provider selector, trafficJams/roadWorks/radars toggles + results/maxDistance/latitude/longitude', () => {
   const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
   const widgetEditor = fs.readFileSync(
     path.join(root, 'js/widgeteditor.js'),
@@ -6539,25 +6545,42 @@ test('Trafficinfo settings/Widget editor: no global settings, no provider select
   assert.doesNotMatch(settings, /id: 'trafficinfo'/);
   assert.doesNotMatch(settings, /anwb_apikey/);
 
-  // No provider/customUrl/anwb_apikey/radars fields in the quick-add.
+  // No provider/customUrl/anwb_apikey fields in the quick-add: provider is
+  // gone for good (managed-but-unrendered, so a leftover value on an
+  // existing block drops off on the next save instead of dangling as an
+  // uneditable "Extra fields" row); customUrl/anwb_apikey never come back
+  // since there's no second provider to point them at.
   assert.doesNotMatch(widgetEditor, /_cfgField\(\s*\n\s*'provider',/);
   assert.doesNotMatch(widgetEditor, /_cfgField\(\s*\n\s*'customUrl',/);
   assert.doesNotMatch(widgetEditor, /_cfgField\(\s*\n\s*'anwb_apikey',/);
-  assert.doesNotMatch(widgetEditor, /_cfgField\(\s*\n\s*'radars',/);
   assert.doesNotMatch(widgetEditor, /trafficinfo: \['anwb_apikey'\]/);
 
-  // trafficJams/roadWorks are dedicated on/off toggles, results a number
-  // field - not raw rows in the generic "Extra fields" editor.
+  // trafficJams/roadWorks/radars are dedicated on/off toggles, results a
+  // number field - not raw rows in the generic "Extra fields" editor.
   assert.match(widgetEditor, /_cfgField\(\s*\n\s*'trafficJams',/);
   assert.match(widgetEditor, /_cfgField\(\s*\n\s*'roadWorks',/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'radars',/);
   assert.match(widgetEditor, /_cfgField\(\s*\n\s*'results',/);
-  const trafficJamsField = widgetEditor.slice(
-    widgetEditor.indexOf("_cfgField(\n        'trafficJams',")
-  );
-  assert.match(trafficJamsField.slice(0, 300), /'checkbox',/);
+  for (const key of ['trafficJams', 'roadWorks', 'radars']) {
+    const field = widgetEditor.slice(
+      widgetEditor.indexOf(`_cfgField(\n        '${key}',`)
+    );
+    assert.match(field.slice(0, 300), /'checkbox',/);
+  }
   assert.match(
     widgetEditor,
-    /trafficinfo: \{\s*\n\s*trafficJams: true,\s*\n\s*roadWorks: true,\s*\n\s*results: true,\s*\n\s*maxDistance: true,\s*\n\s*latitude: true,\s*\n\s*longitude: true,\s*\n\s*\},/
+    /trafficinfo: \{\s*\n[\s\S]{0,600}provider: true,\s*\n\s*trafficJams: true,\s*\n\s*roadWorks: true,\s*\n\s*radars: true,\s*\n\s*results: true,\s*\n\s*maxDistance: true,\s*\n\s*latitude: true,\s*\n\s*longitude: true,\s*\n\s*\},/
+  );
+
+  // Defaults: 5 results, 40km max distance shown in the field and used
+  // when creating a fresh widget.
+  assert.match(
+    widgetEditor,
+    /typeof tcfg\.results === 'undefined' \? 5 : tcfg\.results,/
+  );
+  assert.match(
+    widgetEditor,
+    /typeof tcfg\.maxDistance === 'undefined' \? 40 : tcfg\.maxDistance,/
   );
 
   // Hydrated from an existing widget's own saved block properties (both
@@ -6572,15 +6595,21 @@ test('Trafficinfo settings/Widget editor: no global settings, no provider select
       hydrationMatches ? hydrationMatches.length : 0
     }`
   );
-  assert.match(widgetEditor, /\['trafficJams', 1\],/);
+  assert.match(widgetEditor, /\['radars', 1\],/);
 
-  // The saved payload entry carries trafficJams/roadWorks/results directly
-  // (like publictransport's own provider) - no entry.provider/customUrl.
+  // The saved payload entry carries trafficJams/roadWorks/radars/results/
+  // maxDistance directly (like publictransport's own provider) - no
+  // entry.provider/customUrl anywhere.
   assert.match(widgetEditor, /entry\.trafficJams = Number\(/);
   assert.match(widgetEditor, /entry\.roadWorks = Number\(/);
+  assert.match(widgetEditor, /entry\.radars = Number\(/);
   assert.match(
     widgetEditor,
-    /entry\.results = parseInt\(trcfg\.results, 10\) \|\| 50;/
+    /entry\.results = parseInt\(trcfg\.results, 10\) \|\| 5;/
+  );
+  assert.match(
+    widgetEditor,
+    /entry\.maxDistance = parseFloat\(trcfg\.maxDistance\) \|\| 40;/
   );
   const entryBlockStart = widgetEditor.indexOf(
     "if (item.id === 'trafficinfo') {\n      // Per-instance"
@@ -6616,8 +6645,14 @@ test('savewidgets.php: trafficinfo save bug - the request handler had no case re
   );
   assert.match(extractBlock, /\$widget\['trafficJams'\]/);
   assert.match(extractBlock, /\$widget\['roadWorks'\]/);
-  assert.match(extractBlock, /\$widget\['results'\]/);
-  assert.match(extractBlock, /\$widget\['maxDistance'\]/);
+  assert.match(extractBlock, /\$widget\['radars'\]/);
+  assert.match(
+    extractBlock,
+    /\$widget\['results'\] = max\(1, min\(500, \$results\)\);/
+  );
+  assert.match(extractBlock, /: 5;/);
+  assert.match(extractBlock, /\$widget\['maxDistance'\] = \$maxDistance;/);
+  assert.match(extractBlock, /: 40;/);
   assert.match(extractBlock, /\$widget\['latitude'\]/);
   assert.match(extractBlock, /\$widget\['longitude'\]/);
 
@@ -6631,7 +6666,12 @@ test('savewidgets.php: trafficinfo save bug - the request handler had no case re
     /\$props\['trafficJams'\] = \$widget\['trafficJams'\];/
   );
   assert.match(caseBlock, /\$props\['roadWorks'\] = \$widget\['roadWorks'\];/);
+  assert.match(caseBlock, /\$props\['radars'\] = \$widget\['radars'\];/);
   assert.match(caseBlock, /\$props\['results'\] = \$widget\['results'\];/);
+  assert.match(
+    caseBlock,
+    /\$props\['maxDistance'\] = \$widget\['maxDistance'\];/
+  );
   assert.doesNotMatch(caseBlock, /\$props\['provider'\] = 'anwb';/);
   assert.doesNotMatch(caseBlock, /\$props\['trafficJams'\] = true;/);
 });
