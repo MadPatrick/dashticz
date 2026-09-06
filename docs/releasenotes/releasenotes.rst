@@ -1,6 +1,23 @@
 Release Notes
 =============
 
+v4.0.5 (6-9-2026)
+----------------------
+
+* **Enhancements**
+
+- Traffic info widget: added RWS (Rijkswaterstaat)'s public traffic API as
+  a new provider, requiring no API key, and made it the default - ANWB no
+  longer issues new API keys, and the widget had no error handling around
+  its ANWB request, so a failed/unauthorized call silently left it stuck
+  on "Loading" forever. ANWB stays available for existing API keys.
+
+- Traffic info widget: added a ``'custom'`` provider so a URL to your own
+  JSON endpoint can be used instead, for any other traffic source (see
+  ``docs/blocks/specials/trafficinfo.rst`` for the expected format). The
+  provider choice and custom URL are configurable in both Settings and the
+  Widget editor's Traffic information quick-add.
+
 v4.0.4 (5-9-2026)
 ----------------------
 

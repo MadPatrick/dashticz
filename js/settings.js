@@ -674,6 +674,32 @@ var widgetSettingTiles = [
     title: widgetEditorTranslations.trafficinfo_title || 'Traffic information',
     icon: 'fas fa-car',
     settings: {
+      traffic_provider: {
+        title:
+          (language.settings.widgets &&
+            language.settings.widgets.traffic_provider) ||
+          'Provider',
+        type: 'select',
+        noEmptyOption: true,
+        options: {
+          rws:
+            (language.settings.widgets &&
+              language.settings.widgets.traffic_provider_rws) ||
+            'RWS (Rijkswaterstaat)',
+          anwb:
+            (language.settings.widgets &&
+              language.settings.widgets.traffic_provider_anwb) ||
+            'ANWB',
+          custom:
+            (language.settings.widgets &&
+              language.settings.widgets.traffic_provider_custom) ||
+            'Custom',
+        },
+        help:
+          (language.settings.widgets &&
+            language.settings.widgets.traffic_provider_help) ||
+          "Traffic info provider. RWS (Rijkswaterstaat) needs no API key and is the default. ANWB needs the API key below, but no longer issues new keys. Custom reads your own JSON endpoint (see the Custom URL field's help).",
+      },
       anwb_apikey: {
         title:
           (language.settings.widgets &&
@@ -684,6 +710,17 @@ var widgetSettingTiles = [
           (language.settings.widgets &&
             language.settings.widgets.anwb_apikey_help) ||
           'API key for ANWB traffic info (trafficinfo widget).',
+      },
+      traffic_custom_url: {
+        title:
+          (language.settings.widgets &&
+            language.settings.widgets.traffic_custom_url) ||
+          'Custom URL',
+        type: 'text',
+        help:
+          (language.settings.widgets &&
+            language.settings.widgets.traffic_custom_url_help) ||
+          'Only used when Provider is Custom. URL returning a JSON array, e.g. [{"road":"A27","type":"jam","from":"Utrecht","to":"Hooipolder","delay":12,"distance":3.4,"reason":"Ongeval"}]. type is \'jam\', \'roadworks\' or \'radar\'.',
       },
     },
   },
@@ -927,6 +964,8 @@ var defaultSettings = {
   standby_after: 0,
   standby_background: '',
   anwb_apikey: '',
+  traffic_provider: 'rws',
+  traffic_custom_url: '',
   config_mode: 'wizard',
   selector_instead_of_buttons: 0,
   default_news_url: 'https://www.nu.nl/rss/Algemeen',

@@ -1,27 +1,29 @@
 .. _trafficinfo :
 
-Traffic info 
+Traffic info
 ################
 
-With a traffic info block you can show the ANWB (Dutch) traffic info. 
+With a traffic info block you can show Dutch traffic info, from RWS (Rijkswaterstaat, the
+default, no API key needed), ANWB (requires an API key, and ANWB no longer issues new ones),
+or your own custom JSON endpoint.
 
 For public transport info see :ref:`publictransport`.
 
 A traffic info block can be configured as follows::
 
     var trafficinfo = {}
-    trafficinfo.anwbA1 = {
+    trafficinfo.rwsA1 = {
         trafficJams: true,
         roadWorks: false,
         radars: false,
         road:'A1',
-        provider: 'anwb',
+        provider: 'rws',
         show_lastupdate:true,
         icon: 'fas fa-car',
         width:12,
         results: 100 };
 
-segStart and segEnd can also be provided to filter the results even more.
+segStart and segEnd can also be provided to filter the results even more (ANWB only).
 
 .. image :: img/trafficinfo.jpg
 
@@ -44,7 +46,11 @@ Parameters
     - ``false`` , ``true``. To display the time of the last update.
   * - provider
     - | Traffic info provider to use. Choose from
-      | ``'anwb'`` The Netherlands
+      | ``'rws'`` Rijkswaterstaat (the Netherlands, default, no API key needed, no radar data)
+      | ``'anwb'`` ANWB (the Netherlands, requires ``settings['anwb_apikey']``; ANWB no longer issues new API keys)
+      | ``'custom'`` Your own JSON endpoint, set via ``customUrl``. See :ref:`trafficinfo_custom`.
+  * - customUrl
+    - URL of your own JSON endpoint, only used when ``provider`` is ``'custom'``. See :ref:`trafficinfo_custom`.
   * - icon
     - | The font-awesome icon (including ``fas fa-``)
       | ``'fas fa-car'``, ...
@@ -59,7 +65,7 @@ Parameters
   * - roadWorks
     - ``false`` , ``true``.  To show road work info
   * - radars
-    - ``false`` , ``true``.  To show radar info
+    - ``false`` , ``true``.  To show radar info. Only supported by the ``anwb`` provider and a ``custom`` endpoint that reports ``type: 'radar'`` items - the ``rws`` provider has no radar data.
   * - showempty
     - | Control text to show in case of no traffic announcements
       | ``false``: Don't show a message in case of no traffic announcements
@@ -78,6 +84,58 @@ Parameters
       | ``2``: open in new frame (default, to prevent a breaking change in default behavior)
       | ``3``: no new window/frame (for intent handling, api calls). HTTP get request.
       | ``4``: no new window/frame (for intent handling, api calls). HTTP post request. (forcerefresh not supported)
+
+.. _trafficinfo_custom:
+
+Custom provider
+----------------
+
+With ``provider: 'custom'`` and ``customUrl`` set to your own URL, Dashticz expects a JSON
+array of items, one per jam/roadwork/radar::
+
+    [
+      {
+        "road": "A27",
+        "type": "jam",
+        "from": "Utrecht",
+        "to": "Hooipolder",
+        "delay": 12,
+        "distance": 3.4,
+        "reason": "Ongeval"
+      },
+      {
+        "road": "A2",
+        "type": "roadworks",
+        "from": "Vianen",
+        "to": "Everdingen",
+        "reason": "Wegwerkzaamheden"
+      }
+    ]
+
+.. list-table::
+  :header-rows: 1
+  :widths: 5, 30
+  :class: tight-table
+
+  * - Field
+    - Description
+  * - road
+    - Road name, matched against the block's ``road`` filter (e.g. ``"A27"``)
+  * - type
+    - ``'jam'``, ``'roadworks'`` or ``'radar'`` - matched against the ``trafficJams``/``roadWorks``/``radars`` toggles
+  * - from
+    - Start location (optional)
+  * - to
+    - End location (optional)
+  * - delay
+    - Delay in minutes (optional, typically only for jams)
+  * - distance
+    - Length in km (optional)
+  * - reason
+    - Free text reason/description (optional)
+
+The endpoint is fetched the same way as the built-in providers (through Dashticz's CORS
+proxy), so it doesn't need to send permissive CORS headers itself.
 
 Styling
 --------

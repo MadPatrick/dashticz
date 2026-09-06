@@ -1080,6 +1080,8 @@ var DashticzWidgetEditor = (function () {
       },
       trafficinfo: {
         anwb_apikey: _s('anwb_apikey'),
+        traffic_provider: _s('traffic_provider', 'rws'),
+        traffic_custom_url: _s('traffic_custom_url'),
       },
       map: {
         gm_api: _s('gm_api'),
@@ -3570,12 +3572,32 @@ var DashticzWidgetEditor = (function () {
       var tcfg = widgetConfigs.trafficinfo || {};
       var lwgt = lng.widgets || {};
       fields += _cfgField(
+        'traffic_provider',
+        lwgt.traffic_provider || 'Provider',
+        'select',
+        tcfg.traffic_provider || 'rws',
+        {
+          rws: lwgt.traffic_provider_rws || 'RWS (Rijkswaterstaat)',
+          anwb: lwgt.traffic_provider_anwb || 'ANWB',
+          custom: lwgt.traffic_provider_custom || 'Custom',
+        },
+        lwgt.traffic_provider_help || ''
+      );
+      fields += _cfgField(
         'anwb_apikey',
         lwgt.anwb_apikey || 'ANWB API key',
         'text',
         tcfg.anwb_apikey,
         null,
         lwgt.anwb_apikey_help || ''
+      );
+      fields += _cfgField(
+        'traffic_custom_url',
+        lwgt.traffic_custom_url || 'Custom URL',
+        'text',
+        tcfg.traffic_custom_url,
+        null,
+        lwgt.traffic_custom_url_help || ''
       );
     } else if (item.id === 'alarmmeldingen') {
       var acfg = widgetConfigs.alarmmeldingen || {};
@@ -5070,7 +5092,7 @@ var DashticzWidgetEditor = (function () {
       spotify: ['spot_clientid'],
       calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],
       secpanel: ['security_button_icons'],
-      trafficinfo: ['anwb_apikey'],
+      trafficinfo: ['anwb_apikey', 'traffic_provider', 'traffic_custom_url'],
       map: ['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude'],
       longfonds: ['waqi_city', 'waqi_layout'],
       moon: ['idx_moonpicture'],

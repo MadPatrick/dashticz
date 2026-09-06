@@ -16,8 +16,13 @@ var DT_trafficinfo = {
       url: 'https://www.anwb.nl/verkeer',
       newwindow: 1,
       clickHandler: true,
-      provider: 'anwb',
+      // RWS (Rijkswaterstaat) needs no API key and is always reachable, so
+      // it's the default; ANWB is kept for existing configs/API keys, and
+      // custom lets a user point at their own JSON endpoint (see
+      // docs/blocks/specials/trafficinfo.rst for the expected format).
+      provider: settings.traffic_provider || 'rws',
       apikey: settings.anwb_apikey || '',
+      customUrl: settings.traffic_custom_url || '',
       results: 50,
       showempty: showempty,
       showemptyroads: false,
@@ -30,160 +35,204 @@ var DT_trafficinfo = {
   },
   defaultContent: language.misc.loading,
   refresh: function (me) {
-    if (!me.block.apikey) {
-      me.$mountPoint
-        .find('.dt_state')
-        .text(
-          language.misc.traffic_api_missing || 'ANWB API key is not configured.'
-        );
-      return;
+    var provider = me.block.provider || 'rws';
+    if (provider === 'anwb') {
+      _refreshANWB(me);
+    } else if (provider === 'custom') {
+      _refreshCustom(me);
+    } else {
+      _refreshRWS(me);
     }
-    var dataURL =
-      _CORS_PATH +
-      'https://api.anwb.nl/v2/incidents?apikey=' +
-      encodeURIComponent(me.block.apikey);
+  },
+};
 
-    $.getJSON(dataURL, function (data) {
-      dataTrafficInfo(me, data);
-    });
+function _refreshANWB(me) {
+  if (!me.block.apikey) {
+    me.$mountPoint
+      .find('.dt_state')
+      .text(
+        language.misc.traffic_api_missing || 'ANWB API key is not configured.'
+      );
+    return;
+  }
+  var dataURL =
+    _CORS_PATH +
+    'https://api.anwb.nl/v2/incidents?apikey=' +
+    encodeURIComponent(me.block.apikey);
 
-    function dataTrafficInfo(me, data) {
-      var trafficobject = me.block;
-      var dataPart = {};
-      var i = 0;
-      var key;
-      var noData = true;
-      var roadArray = [];
-      if (typeof trafficobject.road != 'undefined') {
-        if (trafficobject.road.indexOf(',')) {
-          roadArray = trafficobject.road.split(/, |,/);
-        } else {
-          roadArray.push(trafficobject.road);
-        }
-        roadArray.sort();
-        if (trafficobject.showemptyroads) {
-          var showempty =
-            typeof trafficobject.showemptyroads === 'string'
-              ? trafficobject.showemptyroads
-              : language.misc.no_traffic || 'No traffic announcements';
-          for (var x = 0; x < roadArray.length; x++) {
-            key = roadArray[x];
-            var html =
-              '<div><b class="title">' +
-              key +
-              '</b><br>' +
-              showempty +
-              '<br></div>';
-            dataPart[key] = [html];
-          }
-        }
+  $.getJSON(dataURL, function (data) {
+    var result = _buildANWBDataPart(me, data);
+    _renderTrafficInfo(me, result.dataPart, result.noData);
+  });
+}
+
+function _refreshRWS(me) {
+  var dataURL = _CORS_PATH + 'https://api.rwsverkeersinfo.nl/api/traffic/';
+
+  $.getJSON(dataURL, function (data) {
+    var result = _buildRWSDataPart(me, data);
+    _renderTrafficInfo(me, result.dataPart, result.noData);
+  });
+}
+
+function _refreshCustom(me) {
+  if (!me.block.customUrl) {
+    me.$mountPoint
+      .find('.dt_state')
+      .text(
+        language.misc.traffic_custom_url_missing ||
+          'Custom traffic URL is not configured.'
+      );
+    return;
+  }
+  var dataURL = _CORS_PATH + me.block.customUrl;
+
+  $.getJSON(dataURL, function (data) {
+    var result = _buildCustomDataPart(me, data);
+    _renderTrafficInfo(me, result.dataPart, result.noData);
+  });
+}
+
+// Pre-seeds dataPart with an empty-road placeholder (showemptyroads) for
+// every configured road, and returns the parsed/sorted road filter list -
+// shared by all three providers since road filtering/showemptyroads is
+// provider-agnostic.
+function _seedEmptyRoads(trafficobject) {
+  var dataPart = {};
+  var roadArray = [];
+  if (typeof trafficobject.road != 'undefined') {
+    if (trafficobject.road.indexOf(',')) {
+      roadArray = trafficobject.road.split(/, |,/);
+    } else {
+      roadArray.push(trafficobject.road);
+    }
+    roadArray.sort();
+    if (trafficobject.showemptyroads) {
+      var showempty =
+        typeof trafficobject.showemptyroads === 'string'
+          ? trafficobject.showemptyroads
+          : language.misc.no_traffic || 'No traffic announcements';
+      for (var x = 0; x < roadArray.length; x++) {
+        var key = roadArray[x];
+        var html =
+          '<div><b class="title">' +
+          key +
+          '</b><br>' +
+          showempty +
+          '<br></div>';
+        dataPart[key] = [html];
       }
-      for (var d in data) {
-        if (d == 'roads') {
-          for (var t in data[d]) {
-            var roadId = data[d][t]['road'];
-            key = roadId;
-            if (
-              typeof trafficobject.road == 'undefined' ||
-              roadArray.indexOf(roadId) > -1
-            ) {
-              var segments = data[d][t]['segments'];
-              var header = '';
-              i = 0;
-              for (var segment in segments) {
-                for (var seg in segments[segment]) {
-                  if (
-                    (trafficobject.trafficJams && seg == 'jams') ||
-                    (trafficobject.roadWorks && seg == 'roadworks') ||
-                    (trafficobject.radars && seg == 'radars')
-                  ) {
-                    for (var s in segments[segment][seg]) {
-                      if (
-                        (typeof trafficobject.segStart == 'undefined' ||
-                          (typeof trafficobject.segStart != 'undefined' &&
-                            segments[segment]['start'] ==
-                              trafficobject.segStart)) &&
-                        (typeof trafficobject.segEnd == 'undefined' ||
-                          (typeof trafficobject.segEnd != 'undefined' &&
-                            segments[segment]['end'] == trafficobject.segEnd))
-                      ) {
-                        if (typeof dataPart[key] == 'undefined') {
-                          dataPart[key] = [];
-                        }
-                        //if (typeof (trafficobject.title) == 'undefined' || (typeof (trafficobject.title) != 'undefined' && typeof (trafficobject.road) == 'undefined')){
-                        if (key != header) {
-                          dataPart[key][i] =
-                            '<div><b class="title">' + roadId + '</b><br>';
-                          header = key;
-                        } else {
-                          dataPart[key][i] = '<div>';
-                        }
-                        //}
-                        if (segments[segment][seg][s]['from'] != null) {
-                          dataPart[key][i] +=
-                            '<b>' + segments[segment][seg][s]['from'] + '</b>';
-                        }
-                        if (
-                          segments[segment][seg][s]['to'] != null &&
-                          segments[segment][seg][s]['to'] !=
-                            segments[segment][seg][s]['from']
-                        ) {
-                          dataPart[key][i] +=
-                            '<b> - ' + segments[segment][seg][s]['to'] + '</b>';
-                        }
-                        if (
-                          segments[segment][seg][s]['from'] != null ||
-                          segments[segment][seg][s]['to'] != null
-                        ) {
-                          dataPart[key][i] += '<br>';
-                        }
-                        if (segments[segment][seg][s]['delay'] != null) {
-                          var delay = segments[segment][seg][s]['delay'] / 60;
-                          dataPart[key][i] += '+ ' + Math.round(delay) + 'min';
-                        }
-                        if (segments[segment][seg][s]['distance'] != null) {
-                          var distance =
-                            segments[segment][seg][s]['distance'] / 1000;
-                          dataPart[key][i] +=
-                            ' - ' + distance.toFixed(1) + 'km';
-                        }
-                        if (
-                          segments[segment][seg][s]['delay'] != null ||
-                          segments[segment][seg][s]['distance'] != null
-                        ) {
-                          dataPart[key][i] += '<br>';
-                        }
+    }
+  }
+  return { dataPart: dataPart, roadArray: roadArray };
+}
 
-                        if (
-                          seg == 'jams' &&
-                          segments[segment][seg][s]['reason'] == null
-                        ) {
-                          if (
-                            segments[segment][seg][s]['events'][0]['text'] !=
-                            null
-                          ) {
-                            dataPart[key][i] +=
-                              segments[segment][seg][s]['events'][0]['text'] +
-                              '<br>';
-                          }
-                        } else if (seg == 'radars') {
-                          dataPart[key][i] +=
-                            segments[segment][seg][s]['events'][0]['text'] +
-                            '. ' +
-                            segments[segment][seg][s]['reason'] +
-                            '<br>';
-                        } else if (
-                          segments[segment][seg][s]['reason'] != null
-                        ) {
-                          dataPart[key][i] +=
-                            segments[segment][seg][s]['reason'] + '<br>';
-                        }
-                        dataPart[key][i] += '</div>';
-                        if (dataPart[key][i] !== '<div></div>') {
-                          i++;
-                          noData = false;
-                        }
+function _buildANWBDataPart(me, data) {
+  var trafficobject = me.block;
+  var seed = _seedEmptyRoads(trafficobject);
+  var dataPart = seed.dataPart;
+  var roadArray = seed.roadArray;
+  var i = 0;
+  var key;
+  var noData = true;
+  for (var d in data) {
+    if (d == 'roads') {
+      for (var t in data[d]) {
+        var roadId = data[d][t]['road'];
+        key = roadId;
+        if (
+          typeof trafficobject.road == 'undefined' ||
+          roadArray.indexOf(roadId) > -1
+        ) {
+          var segments = data[d][t]['segments'];
+          var header = '';
+          i = 0;
+          for (var segment in segments) {
+            for (var seg in segments[segment]) {
+              if (
+                (trafficobject.trafficJams && seg == 'jams') ||
+                (trafficobject.roadWorks && seg == 'roadworks') ||
+                (trafficobject.radars && seg == 'radars')
+              ) {
+                for (var s in segments[segment][seg]) {
+                  if (
+                    (typeof trafficobject.segStart == 'undefined' ||
+                      (typeof trafficobject.segStart != 'undefined' &&
+                        segments[segment]['start'] ==
+                          trafficobject.segStart)) &&
+                    (typeof trafficobject.segEnd == 'undefined' ||
+                      (typeof trafficobject.segEnd != 'undefined' &&
+                        segments[segment]['end'] == trafficobject.segEnd))
+                  ) {
+                    if (typeof dataPart[key] == 'undefined') {
+                      dataPart[key] = [];
+                    }
+                    if (key != header) {
+                      dataPart[key][i] =
+                        '<div><b class="title">' + roadId + '</b><br>';
+                      header = key;
+                    } else {
+                      dataPart[key][i] = '<div>';
+                    }
+                    if (segments[segment][seg][s]['from'] != null) {
+                      dataPart[key][i] +=
+                        '<b>' + segments[segment][seg][s]['from'] + '</b>';
+                    }
+                    if (
+                      segments[segment][seg][s]['to'] != null &&
+                      segments[segment][seg][s]['to'] !=
+                        segments[segment][seg][s]['from']
+                    ) {
+                      dataPart[key][i] +=
+                        '<b> - ' + segments[segment][seg][s]['to'] + '</b>';
+                    }
+                    if (
+                      segments[segment][seg][s]['from'] != null ||
+                      segments[segment][seg][s]['to'] != null
+                    ) {
+                      dataPart[key][i] += '<br>';
+                    }
+                    if (segments[segment][seg][s]['delay'] != null) {
+                      var delay = segments[segment][seg][s]['delay'] / 60;
+                      dataPart[key][i] += '+ ' + Math.round(delay) + 'min';
+                    }
+                    if (segments[segment][seg][s]['distance'] != null) {
+                      var distance =
+                        segments[segment][seg][s]['distance'] / 1000;
+                      dataPart[key][i] += ' - ' + distance.toFixed(1) + 'km';
+                    }
+                    if (
+                      segments[segment][seg][s]['delay'] != null ||
+                      segments[segment][seg][s]['distance'] != null
+                    ) {
+                      dataPart[key][i] += '<br>';
+                    }
+
+                    if (
+                      seg == 'jams' &&
+                      segments[segment][seg][s]['reason'] == null
+                    ) {
+                      if (
+                        segments[segment][seg][s]['events'][0]['text'] != null
+                      ) {
+                        dataPart[key][i] +=
+                          segments[segment][seg][s]['events'][0]['text'] +
+                          '<br>';
                       }
+                    } else if (seg == 'radars') {
+                      dataPart[key][i] +=
+                        segments[segment][seg][s]['events'][0]['text'] +
+                        '. ' +
+                        segments[segment][seg][s]['reason'] +
+                        '<br>';
+                    } else if (segments[segment][seg][s]['reason'] != null) {
+                      dataPart[key][i] +=
+                        segments[segment][seg][s]['reason'] + '<br>';
+                    }
+                    dataPart[key][i] += '</div>';
+                    if (dataPart[key][i] !== '<div></div>') {
+                      i++;
+                      noData = false;
                     }
                   }
                 }
@@ -192,57 +241,179 @@ var DT_trafficinfo = {
           }
         }
       }
-      $(me.mountPoint + ' .dt_state').html('');
-      var c = 1;
-      Object.keys(dataPart).forEach(function (d) {
-        //Object.keys(dataPart).sort().forEach(function(d) {
-        for (var p in dataPart[d]) {
-          if (c <= trafficobject.results)
-            $(me.mountPoint + ' .dt_state').append(dataPart[d][p]);
-          c++;
-        }
-      });
-
-      if (noData && me.block.showempty) {
-        var emptyblock =
-          typeof me.block.showempty === 'string'
-            ? me.block.showempty
-            : language.misc.no_traffic || 'No traffic announcements';
-        $(me.mountPoint + ' .dt_state').append(
-          '<div class="empty">' + emptyblock + '</div>'
-        );
-      }
-
-      Dashticz.setEmpty(me, noData);
-
-      if (
-        typeof trafficobject.show_lastupdate !== 'undefined' &&
-        trafficobject.show_lastupdate == true
-      ) {
-        var dt = new Date();
-        $(me.mountPoint + ' .dt_state').append(
-          '<em>' +
-            language.misc.last_update +
-            ': ' +
-            addZero(dt.getHours()) +
-            ':' +
-            addZero(dt.getMinutes()) +
-            ':' +
-            addZero(dt.getSeconds()) +
-            '</em>'
-        );
-      }
     }
+  }
+  return { dataPart: dataPart, noData: noData };
+}
 
-    function addZero(input) {
-      if (input < 10) {
-        return '0' + input;
-      } else {
-        return input;
-      }
+// Rijkswaterstaat's public traffic API (no API key). Response shape:
+// { obstructions: [{ obstructionType, roadNumber, directionText, cause,
+//   title, delay, length, timeStart, timeEnd }, ...] }
+// obstructionType 1 = roadworks, 4 = jam. There is no speed-camera/radar
+// category in this API, so the radars toggle has no effect for this
+// provider.
+function _buildRWSDataPart(me, data) {
+  var trafficobject = me.block;
+  var seed = _seedEmptyRoads(trafficobject);
+  var dataPart = seed.dataPart;
+  var roadArray = seed.roadArray;
+  var noData = true;
+  var obstructions = (data && data.obstructions) || [];
+  var header = {};
+  for (var idx = 0; idx < obstructions.length; idx++) {
+    var o = obstructions[idx] || {};
+    var isJam = String(o.obstructionType) === '4';
+    var isRoadwork = String(o.obstructionType) === '1';
+    if (!(
+      (trafficobject.trafficJams && isJam) ||
+      (trafficobject.roadWorks && isRoadwork)
+    )) {
+      continue;
     }
-  },
-};
+    var roadId = o.roadNumber;
+    if (
+      typeof trafficobject.road != 'undefined' &&
+      roadArray.indexOf(roadId) === -1
+    ) {
+      continue;
+    }
+    if (typeof dataPart[roadId] == 'undefined') dataPart[roadId] = [];
+    var html;
+    if (!header[roadId]) {
+      html = '<div><b class="title">' + (roadId || '') + '</b><br>';
+      header[roadId] = true;
+    } else {
+      html = '<div>';
+    }
+    var direction = String(o.directionText || '')
+      .split(/\s*-\s*/)
+      .filter(Boolean);
+    if (direction[0]) html += '<b>' + direction[0] + '</b>';
+    if (direction[1] && direction[1] !== direction[0]) {
+      html += '<b> - ' + direction[1] + '</b>';
+    }
+    if (direction.length) html += '<br>';
+    if (isJam && o.delay != null) {
+      html += '+ ' + Math.round(o.delay) + 'min';
+    }
+    if (o.length != null) {
+      html +=
+        (isJam && o.delay != null ? ' - ' : '') +
+        (o.length / 1000).toFixed(1) +
+        'km';
+    }
+    if ((isJam && o.delay != null) || o.length != null) html += '<br>';
+    var reason = o.cause || o.title;
+    if (reason) html += reason + '<br>';
+    html += '</div>';
+    dataPart[roadId].push(html);
+    noData = false;
+  }
+  return { dataPart: dataPart, noData: noData };
+}
+
+// A custom endpoint (block.customUrl) must return a JSON array of items:
+// [{ road: 'A27', type: 'jam', from: 'Utrecht', to: 'Hooipolder',
+//    delay: 12, distance: 3.4, reason: 'Ongeval' }, ...]
+// type is one of 'jam', 'roadworks' or 'radar'. delay is in minutes,
+// distance in km. See docs/blocks/specials/trafficinfo.rst.
+function _buildCustomDataPart(me, data) {
+  var trafficobject = me.block;
+  var seed = _seedEmptyRoads(trafficobject);
+  var dataPart = seed.dataPart;
+  var roadArray = seed.roadArray;
+  var noData = true;
+  var items = Array.isArray(data) ? data : [];
+  var header = {};
+  for (var idx = 0; idx < items.length; idx++) {
+    var item = items[idx] || {};
+    if (!(
+      (trafficobject.trafficJams && item.type === 'jam') ||
+      (trafficobject.roadWorks && item.type === 'roadworks') ||
+      (trafficobject.radars && item.type === 'radar')
+    )) {
+      continue;
+    }
+    var roadId = item.road;
+    if (
+      typeof trafficobject.road != 'undefined' &&
+      roadArray.indexOf(roadId) === -1
+    ) {
+      continue;
+    }
+    if (typeof dataPart[roadId] == 'undefined') dataPart[roadId] = [];
+    var html;
+    if (!header[roadId]) {
+      html = '<div><b class="title">' + (roadId || '') + '</b><br>';
+      header[roadId] = true;
+    } else {
+      html = '<div>';
+    }
+    if (item.from) html += '<b>' + item.from + '</b>';
+    if (item.to && item.to !== item.from) html += '<b> - ' + item.to + '</b>';
+    if (item.from || item.to) html += '<br>';
+    if (item.delay != null) html += '+ ' + Math.round(item.delay) + 'min';
+    if (item.distance != null) {
+      html +=
+        (item.delay != null ? ' - ' : '') +
+        Number(item.distance).toFixed(1) +
+        'km';
+    }
+    if (item.delay != null || item.distance != null) html += '<br>';
+    if (item.reason) html += item.reason + '<br>';
+    html += '</div>';
+    dataPart[roadId].push(html);
+    noData = false;
+  }
+  return { dataPart: dataPart, noData: noData };
+}
+
+function _renderTrafficInfo(me, dataPart, noData) {
+  var trafficobject = me.block;
+  $(me.mountPoint + ' .dt_state').html('');
+  var c = 1;
+  Object.keys(dataPart).forEach(function (d) {
+    for (var p in dataPart[d]) {
+      if (c <= trafficobject.results)
+        $(me.mountPoint + ' .dt_state').append(dataPart[d][p]);
+      c++;
+    }
+  });
+
+  if (noData && me.block.showempty) {
+    var emptyblock =
+      typeof me.block.showempty === 'string'
+        ? me.block.showempty
+        : language.misc.no_traffic || 'No traffic announcements';
+    $(me.mountPoint + ' .dt_state').append(
+      '<div class="empty">' + emptyblock + '</div>'
+    );
+  }
+
+  Dashticz.setEmpty(me, noData);
+
+  if (
+    typeof trafficobject.show_lastupdate !== 'undefined' &&
+    trafficobject.show_lastupdate == true
+  ) {
+    var dt = new Date();
+    $(me.mountPoint + ' .dt_state').append(
+      '<em>' +
+        language.misc.last_update +
+        ': ' +
+        _addZeroTraffic(dt.getHours()) +
+        ':' +
+        _addZeroTraffic(dt.getMinutes()) +
+        ':' +
+        _addZeroTraffic(dt.getSeconds()) +
+        '</em>'
+    );
+  }
+}
+
+function _addZeroTraffic(input) {
+  return input < 10 ? '0' + input : input;
+}
 
 Dashticz.register(DT_trafficinfo);
 

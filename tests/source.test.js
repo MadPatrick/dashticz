@@ -6485,3 +6485,130 @@ test('Graph header icon and Sonarr icons follow theme icon size instead of a har
     /\.titlegroups h3 \.icon \{\s*\n\s*font-size: var\(--icon-font-size, inherit\) !important;\s*\n\s*\}/
   );
 });
+
+test('Trafficinfo widget defaults to RWS and adds a Custom provider alongside ANWB', () => {
+  // Issue reports (#1236) show the ANWB-only provider stuck on "Loading":
+  // ANWB no longer issues new API keys, and $.getJSON() has no .fail()
+  // handler, so any failed/unauthorized request just silently never
+  // updates .dt_state. RWS (Rijkswaterstaat) needs no API key at all, so
+  // it becomes the default; a 'custom' provider lets a user point at their
+  // own JSON endpoint (documented in trafficinfo.rst) for anything else.
+  const trafficinfo = fs.readFileSync(
+    path.join(root, 'js/components/trafficinfo.js'),
+    'utf8'
+  );
+  assert.match(trafficinfo, /provider: settings\.traffic_provider \|\| 'rws',/);
+  assert.match(trafficinfo, /customUrl: settings\.traffic_custom_url \|\| '',/);
+  assert.match(trafficinfo, /var provider = me\.block\.provider \|\| 'rws';/);
+  assert.match(trafficinfo, /function _refreshANWB\(me\) \{/);
+  assert.match(trafficinfo, /function _refreshRWS\(me\) \{/);
+  assert.match(trafficinfo, /function _refreshCustom\(me\) \{/);
+  // RWS's public traffic API needs no key and isn't gated the way ANWB's
+  // apikey check is.
+  assert.match(
+    trafficinfo,
+    /'https:\/\/api\.rwsverkeersinfo\.nl\/api\/traffic\/'/
+  );
+  const rwsFnMatch = trafficinfo.match(
+    /function _refreshRWS\(me\) \{[\s\S]*?\n\}/
+  );
+  assert.ok(rwsFnMatch, '_refreshRWS() function body not found');
+  assert.doesNotMatch(rwsFnMatch[0], /apikey/);
+  // obstructionType 1 = roadworks, 4 = jam (Rijkswaterstaat's own schema);
+  // there's no radar/speed-camera category in that API.
+  assert.match(trafficinfo, /String\(o\.obstructionType\) === '4'/);
+  assert.match(trafficinfo, /String\(o\.obstructionType\) === '1'/);
+  // A custom endpoint uses Dashticz's own documented {road, type, from, to,
+  // delay, distance, reason} item shape, type being jam/roadworks/radar.
+  assert.match(trafficinfo, /item\.type === 'jam'/);
+  assert.match(trafficinfo, /item\.type === 'roadworks'/);
+  assert.match(trafficinfo, /item\.type === 'radar'/);
+  // Road-filter/showemptyroads seeding and the final render/empty-state/
+  // last-update tail are shared helpers, not tripled across providers.
+  // 1 definition + 3 call sites (one per provider).
+  const seedMatches = trafficinfo.match(/_seedEmptyRoads\(trafficobject\)/g);
+  assert.ok(
+    seedMatches && seedMatches.length === 4,
+    `expected the definition plus all 3 providers to reuse _seedEmptyRoads(), found ${
+      seedMatches ? seedMatches.length : 0
+    }`
+  );
+  const renderMatches = trafficinfo.match(
+    /_renderTrafficInfo\(me, result\.dataPart, result\.noData\);/g
+  );
+  assert.ok(
+    renderMatches && renderMatches.length === 3,
+    `expected all 3 providers to reuse _renderTrafficInfo(), found ${
+      renderMatches ? renderMatches.length : 0
+    }`
+  );
+});
+
+test('Trafficinfo settings screen and Widget editor expose Provider/Custom URL alongside the ANWB API key', () => {
+  const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
+  const widgetEditor = fs.readFileSync(
+    path.join(root, 'js/widgeteditor.js'),
+    'utf8'
+  );
+  assert.match(settings, /traffic_provider: 'rws',/);
+  assert.match(settings, /traffic_custom_url: '',/);
+  const trafficSettings = settings.slice(
+    settings.indexOf("id: 'trafficinfo'"),
+    settings.indexOf("id: 'map'")
+  );
+  assert.match(trafficSettings, /traffic_provider: \{/);
+  assert.match(trafficSettings, /type: 'select',/);
+  assert.match(trafficSettings, /noEmptyOption: true,/);
+  assert.match(trafficSettings, /rws:/);
+  assert.match(trafficSettings, /anwb:/);
+  assert.match(trafficSettings, /custom:/);
+  assert.match(trafficSettings, /traffic_custom_url: \{/);
+  assert.match(
+    widgetEditor,
+    /traffic_provider: _s\('traffic_provider', 'rws'\),/
+  );
+  assert.match(widgetEditor, /traffic_custom_url: _s\('traffic_custom_url'\),/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'traffic_provider',/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'traffic_custom_url',/);
+  assert.match(
+    widgetEditor,
+    /trafficinfo: \['anwb_apikey', 'traffic_provider', 'traffic_custom_url'\],/
+  );
+});
+
+test('savewidgets.php whitelists and validates traffic_provider/traffic_custom_url', () => {
+  const savewidgets = fs.readFileSync(
+    path.join(root, 'js/savewidgets.php'),
+    'utf8'
+  );
+  assert.match(savewidgets, /'traffic_provider'\s*=>\s*'traffic_provider',/);
+  assert.match(savewidgets, /'traffic_custom_url'\s*=>\s*'string',/);
+  assert.match(
+    savewidgets,
+    /\$allowedTrafficProviders = \['rws', 'anwb', 'custom'\];/
+  );
+  assert.match(
+    savewidgets,
+    /\$type === 'traffic_provider'[\s\S]{0,120}in_array\(\(string\)\$value, \$allowedTrafficProviders, true\)/
+  );
+});
+
+test('Traffic info provider/custom URL translations exist in English and Dutch', () => {
+  const english = JSON.parse(
+    fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8')
+  );
+  const dutch = JSON.parse(
+    fs.readFileSync(path.join(root, 'lang/nl_NL.json'), 'utf8')
+  );
+  for (const lang of [english, dutch]) {
+    assert.ok(lang.settings.widgets.traffic_provider);
+    assert.ok(lang.settings.widgets.traffic_provider_rws);
+    assert.ok(lang.settings.widgets.traffic_provider_anwb);
+    assert.ok(lang.settings.widgets.traffic_provider_custom);
+    assert.ok(lang.settings.widgets.traffic_custom_url);
+    assert.ok(lang.settings.widgets.traffic_custom_url_help);
+    assert.ok(lang.misc.traffic_custom_url_missing);
+  }
+  assert.match(english.settings.widgets.traffic_provider_rws, /RWS/);
+  assert.match(dutch.settings.widgets.traffic_provider_rws, /RWS/);
+});
