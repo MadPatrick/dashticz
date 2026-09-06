@@ -91,8 +91,6 @@ $allowedSettings = [
     // security panel
     'security_button_icons'  => 'bool',
     'security_panel_lock'    => 'security_panel_lock',
-    // traffic info
-    'anwb_apikey'            => 'string',
     // google maps
     'gm_api'                 => 'string',
     'gm_zoomlevel'           => 'number',
@@ -509,6 +507,31 @@ foreach ($data['widgets'] as $entry) {
         }
         $widget['station'] = $station;
         $widget['provider'] = $provider;
+    }
+
+    if ($id === 'trafficinfo') {
+        // Previously _widgetBlockProps() below hardcoded these instead of
+        // reading them here, so nothing the client sent (Provider, the
+        // trafficJams/roadWorks toggles, results, maxDistance/latitude/
+        // longitude) ever actually got saved - every save silently
+        // rewrote the widget back to its old defaults.
+        $widget['trafficJams'] = !array_key_exists('trafficJams', $entry)
+            || (bool)$entry['trafficJams'];
+        $widget['roadWorks'] = !array_key_exists('roadWorks', $entry)
+            || (bool)$entry['roadWorks'];
+        $results = isset($entry['results']) && is_numeric($entry['results'])
+            ? (int)$entry['results']
+            : 50;
+        $widget['results'] = max(1, min(500, $results));
+        if (isset($entry['maxDistance']) && is_numeric($entry['maxDistance'])) {
+            $widget['maxDistance'] = (float)$entry['maxDistance'];
+        }
+        if (isset($entry['latitude']) && is_numeric($entry['latitude'])) {
+            $widget['latitude'] = (float)$entry['latitude'];
+        }
+        if (isset($entry['longitude']) && is_numeric($entry['longitude'])) {
+            $widget['longitude'] = (float)$entry['longitude'];
+        }
     }
 
     if ($id === 'camera') {
@@ -1068,11 +1091,18 @@ function _widgetBlockProps($widget)
             break;
         case 'trafficinfo':
             $props['title'] = 'Traffic';
-            $props['provider'] = 'anwb';
-            $props['trafficJams'] = true;
-            $props['roadWorks'] = true;
-            $props['radars'] = true;
-            $props['results'] = 50;
+            $props['trafficJams'] = $widget['trafficJams'];
+            $props['roadWorks'] = $widget['roadWorks'];
+            $props['results'] = $widget['results'];
+            if (isset($widget['maxDistance'])) {
+                $props['maxDistance'] = $widget['maxDistance'];
+            }
+            if (isset($widget['latitude'])) {
+                $props['latitude'] = $widget['latitude'];
+            }
+            if (isset($widget['longitude'])) {
+                $props['longitude'] = $widget['longitude'];
+            }
             break;
         case 'alarmmeldingen':
             $props['type'] = 'alarmmeldingen';

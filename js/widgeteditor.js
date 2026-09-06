@@ -86,7 +86,7 @@ var DashticzWidgetEditor = (function () {
       id: 'trafficinfo',
       blockKey: 'widget_trafficinfo',
       title: 'Traffic information',
-      description: 'ANWB traffic jams, roadworks and speed cameras.',
+      description: 'RWS traffic jams and roadworks.',
       icon: 'fas fa-car',
       width: 3,
       height: 160,
@@ -437,11 +437,8 @@ var DashticzWidgetEditor = (function () {
     },
     publictransport: { station: true, provider: true },
     trafficinfo: {
-      provider: true,
-      customUrl: true,
       trafficJams: true,
       roadWorks: true,
-      radars: true,
       results: true,
       maxDistance: true,
       latitude: true,
@@ -1090,12 +1087,8 @@ var DashticzWidgetEditor = (function () {
         cameras: _defaultCameraConfigs(),
       },
       trafficinfo: {
-        anwb_apikey: _s('anwb_apikey'),
-        provider: 'rws',
-        customUrl: '',
         trafficJams: 1,
         roadWorks: 1,
-        radars: 1,
         results: 50,
       },
       map: {
@@ -1382,12 +1375,6 @@ var DashticzWidgetEditor = (function () {
           }
         }
         if (item.id === 'trafficinfo') {
-          if (typeof definition.provider === 'string') {
-            widgetConfigs.trafficinfo.provider = definition.provider;
-          }
-          if (typeof definition.customUrl === 'string') {
-            widgetConfigs.trafficinfo.customUrl = definition.customUrl;
-          }
           if (typeof definition.trafficJams !== 'undefined') {
             widgetConfigs.trafficinfo.trafficJams = definition.trafficJams
               ? 1
@@ -1395,9 +1382,6 @@ var DashticzWidgetEditor = (function () {
           }
           if (typeof definition.roadWorks !== 'undefined') {
             widgetConfigs.trafficinfo.roadWorks = definition.roadWorks ? 1 : 0;
-          }
-          if (typeof definition.radars !== 'undefined') {
-            widgetConfigs.trafficinfo.radars = definition.radars ? 1 : 0;
           }
           if (typeof definition.results !== 'undefined') {
             widgetConfigs.trafficinfo.results = definition.results;
@@ -1847,12 +1831,9 @@ var DashticzWidgetEditor = (function () {
       widgetConfigs.publictransport.station = definition.station || 'UT';
       widgetConfigs.publictransport.provider = definition.provider || 'treinen';
     } else if (item.id === 'trafficinfo') {
-      widgetConfigs.trafficinfo.provider = definition.provider || 'rws';
-      widgetConfigs.trafficinfo.customUrl = definition.customUrl || '';
       [
         ['trafficJams', 1],
         ['roadWorks', 1],
-        ['radars', 1],
       ].forEach(function (mapping) {
         var prop = mapping[0];
         widgetConfigs.trafficinfo[prop] =
@@ -3642,41 +3623,15 @@ var DashticzWidgetEditor = (function () {
         _t('station_help', 'For example UT for Utrecht Centraal (trains).') +
         '</div></div>';
     } else if (item.id === 'trafficinfo') {
-      // provider/customUrl/trafficJams/roadWorks/radars/results/maxDistance/
-      // latitude/longitude are all per-block CONFIG.js properties (see
+      // Rijkswaterstaat only - no provider choice (see AGENTS.md-tracked
+      // history: ANWB no longer issues API keys, and a Custom endpoint
+      // added no real value without a second built-in provider to compare
+      // against). trafficJams/roadWorks/results/maxDistance/latitude/
+      // longitude are per-block CONFIG.js properties (see
       // managedWidgetPropertiesById.trafficinfo and the hydration in
-      // _readConfiguredWidgets()/_hydrateGridWidget() above) - only the API
-      // key is a genuine shared, global secret (settings['anwb_apikey']).
+      // _readConfiguredWidgets()/_hydrateGridWidget() above).
       var tcfg = widgetConfigs.trafficinfo || {};
       var lwgt = lng.widgets || {};
-      fields += _cfgField(
-        'provider',
-        lwgt.traffic_provider || 'Provider',
-        'select',
-        tcfg.provider || 'rws',
-        {
-          rws: lwgt.traffic_provider_rws || 'RWS (Rijkswaterstaat)',
-          anwb: lwgt.traffic_provider_anwb || 'ANWB',
-          custom: lwgt.traffic_provider_custom || 'Custom',
-        },
-        lwgt.traffic_provider_help || ''
-      );
-      fields += _cfgField(
-        'anwb_apikey',
-        lwgt.anwb_apikey || 'ANWB API key',
-        'text',
-        tcfg.anwb_apikey,
-        null,
-        lwgt.anwb_apikey_help || ''
-      );
-      fields += _cfgField(
-        'customUrl',
-        lwgt.traffic_custom_url || 'Custom URL',
-        'text',
-        tcfg.customUrl,
-        null,
-        lwgt.traffic_custom_url_help || ''
-      );
       fields += _cfgField(
         'trafficJams',
         lwgt.traffic_jams || 'Traffic jams',
@@ -3692,14 +3647,6 @@ var DashticzWidgetEditor = (function () {
         typeof tcfg.roadWorks === 'undefined' ? 1 : tcfg.roadWorks,
         null,
         lwgt.traffic_roadworks_help || ''
-      );
-      fields += _cfgField(
-        'radars',
-        lwgt.traffic_radars || 'Radars',
-        'checkbox',
-        typeof tcfg.radars === 'undefined' ? 1 : tcfg.radars,
-        null,
-        lwgt.traffic_radars_help || ''
       );
       fields += _cfgField(
         'results',
@@ -5226,9 +5173,8 @@ var DashticzWidgetEditor = (function () {
       spotify: ['spot_clientid'],
       calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],
       secpanel: ['security_button_icons'],
-      // provider/customUrl/etc. are per-block (see _buildWidgetPayloadEntry)
-      // - only the API key is a real global/shared setting.
-      trafficinfo: ['anwb_apikey'],
+      // trafficinfo has no global settings of its own - everything (see
+      // _buildWidgetPayloadEntry) is a per-block CONFIG.js property.
       map: ['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude'],
       longfonds: ['waqi_city', 'waqi_layout'],
       moon: ['idx_moonpicture'],
@@ -5379,15 +5325,12 @@ var DashticzWidgetEditor = (function () {
         entry.filter = widgetConfigs.alarmmeldingen.filter;
     }
     if (item.id === 'trafficinfo') {
-      // Per-instance (unlike anwb_apikey, a genuine shared/global secret) -
-      // different trafficinfo widgets on different screens may want
-      // different providers/distances/locations. Left unset,
+      // Per-instance: different trafficinfo widgets on different screens
+      // may want different distances/locations. Left unset,
       // js/components/trafficinfo.js falls back to Domoticz's own
       // configured location for latitude/longitude, and applies no distance
       // filtering at all when maxDistance is unset.
       var trcfg = widgetConfigs.trafficinfo || {};
-      entry.provider = trcfg.provider || 'rws';
-      if (trcfg.customUrl) entry.customUrl = trcfg.customUrl;
       entry.trafficJams = Number(
         typeof trcfg.trafficJams === 'undefined' ? 1 : trcfg.trafficJams
       )
@@ -5395,11 +5338,6 @@ var DashticzWidgetEditor = (function () {
         : 0;
       entry.roadWorks = Number(
         typeof trcfg.roadWorks === 'undefined' ? 1 : trcfg.roadWorks
-      )
-        ? 1
-        : 0;
-      entry.radars = Number(
-        typeof trcfg.radars === 'undefined' ? 1 : trcfg.radars
       )
         ? 1
         : 0;

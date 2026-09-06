@@ -1,8 +1,8 @@
-/* global  Dashticz language settings _CORS_PATH Domoticz*/
+/* global  Dashticz language _CORS_PATH Domoticz*/
 var DT_trafficinfo = {
   name: 'trafficinfo',
   canHandle: function (block) {
-    return block && (block.trafficJams || block.roadWorks || block.radars);
+    return block && (block.trafficJams || block.roadWorks);
   },
   defaultCfg: function (block) {
     if (block && block.refresh && parseFloat(block.refresh) < 60)
@@ -18,24 +18,12 @@ var DT_trafficinfo = {
       icon: 'fas fa-car',
       containerClass: 'trafficinforow',
       refresh: 300,
-      url: 'https://www.anwb.nl/verkeer',
+      url: 'https://www.rwsverkeersinfo.nl/',
       newwindow: 1,
       clickHandler: true,
-      // RWS (Rijkswaterstaat) needs no API key and is always reachable, so
-      // it's the default; ANWB is kept for existing configs/API keys, and
-      // custom lets a user point at their own JSON endpoint (see
-      // docs/blocks/specials/trafficinfo.rst for the expected format).
-      // provider/customUrl are per-block, like road/trafficJams below (the
-      // Widget editor's Traffic information quick-add writes them straight
-      // onto the block, matching how it already does for publictransport's
-      // own provider) - only the API key is a genuine shared, global secret.
-      provider: 'rws',
-      apikey: settings.anwb_apikey || '',
-      customUrl: '',
-      // Distance filtering (RWS, and custom items that provide lat/lon):
-      // unset maxDistance means "show everything", matching the old
-      // behaviour. latitude/longitude default to Domoticz's own location so
-      // most users need only set maxDistance.
+      // Distance filtering: unset maxDistance means "show everything".
+      // latitude/longitude default to Domoticz's own location so most
+      // users need only set maxDistance.
       maxDistance: block && block.maxDistance,
       latitude:
         block && typeof block.latitude !== 'undefined'
@@ -50,75 +38,23 @@ var DT_trafficinfo = {
       showemptyroads: false,
       trafficJams: true,
       roadWorks: true,
-      radars: true,
       width: 4,
       height: 260,
     };
   },
   defaultContent: language.misc.loading,
   refresh: function (me) {
-    var provider = me.block.provider || 'rws';
-    if (provider === 'anwb') {
-      _refreshANWB(me);
-    } else if (provider === 'custom') {
-      _refreshCustom(me);
-    } else {
-      _refreshRWS(me);
-    }
+    var dataURL = _CORS_PATH + 'https://api.rwsverkeersinfo.nl/api/traffic/';
+
+    $.getJSON(dataURL, function (data) {
+      var result = _buildRWSDataPart(me, data);
+      _renderTrafficInfo(me, result.dataPart, result.noData);
+    });
   },
 };
 
-function _refreshANWB(me) {
-  if (!me.block.apikey) {
-    me.$mountPoint
-      .find('.dt_state')
-      .text(
-        language.misc.traffic_api_missing || 'ANWB API key is not configured.'
-      );
-    return;
-  }
-  var dataURL =
-    _CORS_PATH +
-    'https://api.anwb.nl/v2/incidents?apikey=' +
-    encodeURIComponent(me.block.apikey);
-
-  $.getJSON(dataURL, function (data) {
-    var result = _buildANWBDataPart(me, data);
-    _renderTrafficInfo(me, result.dataPart, result.noData);
-  });
-}
-
-function _refreshRWS(me) {
-  var dataURL = _CORS_PATH + 'https://api.rwsverkeersinfo.nl/api/traffic/';
-
-  $.getJSON(dataURL, function (data) {
-    var result = _buildRWSDataPart(me, data);
-    _renderTrafficInfo(me, result.dataPart, result.noData);
-  });
-}
-
-function _refreshCustom(me) {
-  if (!me.block.customUrl) {
-    me.$mountPoint
-      .find('.dt_state')
-      .text(
-        language.misc.traffic_custom_url_missing ||
-          'Custom traffic URL is not configured.'
-      );
-    return;
-  }
-  var dataURL = _CORS_PATH + me.block.customUrl;
-
-  $.getJSON(dataURL, function (data) {
-    var result = _buildCustomDataPart(me, data);
-    _renderTrafficInfo(me, result.dataPart, result.noData);
-  });
-}
-
 // Pre-seeds dataPart with an empty-road placeholder (showemptyroads) for
-// every configured road, and returns the parsed/sorted road filter list -
-// shared by all three providers since road filtering/showemptyroads is
-// provider-agnostic.
+// every configured road, and returns the parsed/sorted road filter list.
 function _seedEmptyRoads(trafficobject) {
   var dataPart = {};
   var roadArray = [];
@@ -147,125 +83,6 @@ function _seedEmptyRoads(trafficobject) {
     }
   }
   return { dataPart: dataPart, roadArray: roadArray };
-}
-
-function _buildANWBDataPart(me, data) {
-  var trafficobject = me.block;
-  var seed = _seedEmptyRoads(trafficobject);
-  var dataPart = seed.dataPart;
-  var roadArray = seed.roadArray;
-  var i = 0;
-  var key;
-  var noData = true;
-  for (var d in data) {
-    if (d == 'roads') {
-      for (var t in data[d]) {
-        var roadId = data[d][t]['road'];
-        key = roadId;
-        if (
-          typeof trafficobject.road == 'undefined' ||
-          roadArray.indexOf(roadId) > -1
-        ) {
-          var segments = data[d][t]['segments'];
-          var header = '';
-          i = 0;
-          for (var segment in segments) {
-            for (var seg in segments[segment]) {
-              if (
-                (trafficobject.trafficJams && seg == 'jams') ||
-                (trafficobject.roadWorks && seg == 'roadworks') ||
-                (trafficobject.radars && seg == 'radars')
-              ) {
-                for (var s in segments[segment][seg]) {
-                  if (
-                    (typeof trafficobject.segStart == 'undefined' ||
-                      (typeof trafficobject.segStart != 'undefined' &&
-                        segments[segment]['start'] ==
-                          trafficobject.segStart)) &&
-                    (typeof trafficobject.segEnd == 'undefined' ||
-                      (typeof trafficobject.segEnd != 'undefined' &&
-                        segments[segment]['end'] == trafficobject.segEnd))
-                  ) {
-                    if (typeof dataPart[key] == 'undefined') {
-                      dataPart[key] = [];
-                    }
-                    if (key != header) {
-                      dataPart[key][i] =
-                        '<div><b class="title">' + roadId + '</b><br>';
-                      header = key;
-                    } else {
-                      dataPart[key][i] = '<div>';
-                    }
-                    if (segments[segment][seg][s]['from'] != null) {
-                      dataPart[key][i] +=
-                        '<b>' + segments[segment][seg][s]['from'] + '</b>';
-                    }
-                    if (
-                      segments[segment][seg][s]['to'] != null &&
-                      segments[segment][seg][s]['to'] !=
-                        segments[segment][seg][s]['from']
-                    ) {
-                      dataPart[key][i] +=
-                        '<b> - ' + segments[segment][seg][s]['to'] + '</b>';
-                    }
-                    if (
-                      segments[segment][seg][s]['from'] != null ||
-                      segments[segment][seg][s]['to'] != null
-                    ) {
-                      dataPart[key][i] += '<br>';
-                    }
-                    if (segments[segment][seg][s]['delay'] != null) {
-                      var delay = segments[segment][seg][s]['delay'] / 60;
-                      dataPart[key][i] += '+ ' + Math.round(delay) + 'min';
-                    }
-                    if (segments[segment][seg][s]['distance'] != null) {
-                      var distance =
-                        segments[segment][seg][s]['distance'] / 1000;
-                      dataPart[key][i] += ' - ' + distance.toFixed(1) + 'km';
-                    }
-                    if (
-                      segments[segment][seg][s]['delay'] != null ||
-                      segments[segment][seg][s]['distance'] != null
-                    ) {
-                      dataPart[key][i] += '<br>';
-                    }
-
-                    if (
-                      seg == 'jams' &&
-                      segments[segment][seg][s]['reason'] == null
-                    ) {
-                      if (
-                        segments[segment][seg][s]['events'][0]['text'] != null
-                      ) {
-                        dataPart[key][i] +=
-                          segments[segment][seg][s]['events'][0]['text'] +
-                          '<br>';
-                      }
-                    } else if (seg == 'radars') {
-                      dataPart[key][i] +=
-                        segments[segment][seg][s]['events'][0]['text'] +
-                        '. ' +
-                        segments[segment][seg][s]['reason'] +
-                        '<br>';
-                    } else if (segments[segment][seg][s]['reason'] != null) {
-                      dataPart[key][i] +=
-                        segments[segment][seg][s]['reason'] + '<br>';
-                    }
-                    dataPart[key][i] += '</div>';
-                    if (dataPart[key][i] !== '<div></div>') {
-                      i++;
-                      noData = false;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  return { dataPart: dataPart, noData: noData };
 }
 
 // Whether maxDistance filtering is actually configured and usable (a
@@ -322,8 +139,7 @@ function _rwsCoords(o) {
 //   description, locationText, latitude, longitude, delay, length,
 //   timeStart, timeEnd }, ...] }
 // obstructionType 1 = roadworks, 4 = jam. There is no speed-camera/radar
-// category in this API, so the radars toggle has no effect for this
-// provider.
+// category in this API.
 function _buildRWSDataPart(me, data) {
   var trafficobject = me.block;
   var seed = _seedEmptyRoads(trafficobject);
@@ -381,75 +197,6 @@ function _buildRWSDataPart(me, data) {
     if ((isJam && o.delay != null) || o.length != null) html += '<br>';
     var reason = o.description || o.locationText;
     if (reason) html += reason + '<br>';
-    html += '</div>';
-    dataPart[roadId].push(html);
-    noData = false;
-  }
-  return { dataPart: dataPart, noData: noData };
-}
-
-// A custom endpoint (block.customUrl) must return a JSON array of items:
-// [{ road: 'A27', type: 'jam', from: 'Utrecht', to: 'Hooipolder',
-//    delay: 12, distance: 3.4, reason: 'Ongeval', lat: 52.09, lon: 5.12 },
-//    ...]
-// type is one of 'jam', 'roadworks' or 'radar'. delay is in minutes,
-// distance in km. lat/lon are optional - only items that provide them can
-// be filtered by maxDistance. See docs/blocks/specials/trafficinfo.rst.
-function _buildCustomDataPart(me, data) {
-  var trafficobject = me.block;
-  var seed = _seedEmptyRoads(trafficobject);
-  var dataPart = seed.dataPart;
-  var roadArray = seed.roadArray;
-  var noData = true;
-  var items = Array.isArray(data) ? data : [];
-  var header = {};
-  for (var idx = 0; idx < items.length; idx++) {
-    var item = items[idx] || {};
-    if (!(
-      (trafficobject.trafficJams && item.type === 'jam') ||
-      (trafficobject.roadWorks && item.type === 'roadworks') ||
-      (trafficobject.radars && item.type === 'radar')
-    )) {
-      continue;
-    }
-    var roadId = item.road;
-    if (
-      typeof trafficobject.road != 'undefined' &&
-      roadArray.indexOf(roadId) === -1
-    ) {
-      continue;
-    }
-    if (
-      item.lat != null &&
-      item.lon != null &&
-      !_isWithinDistance(
-        trafficobject,
-        parseFloat(item.lat),
-        parseFloat(item.lon)
-      )
-    ) {
-      continue;
-    }
-    if (typeof dataPart[roadId] == 'undefined') dataPart[roadId] = [];
-    var html;
-    if (!header[roadId]) {
-      html = '<div><b class="title">' + (roadId || '') + '</b><br>';
-      header[roadId] = true;
-    } else {
-      html = '<div>';
-    }
-    if (item.from) html += '<b>' + item.from + '</b>';
-    if (item.to && item.to !== item.from) html += '<b> - ' + item.to + '</b>';
-    if (item.from || item.to) html += '<br>';
-    if (item.delay != null) html += '+ ' + Math.round(item.delay) + 'min';
-    if (item.distance != null) {
-      html +=
-        (item.delay != null ? ' - ' : '') +
-        Number(item.distance).toFixed(1) +
-        'km';
-    }
-    if (item.delay != null || item.distance != null) html += '<br>';
-    if (item.reason) html += item.reason + '<br>';
     html += '</div>';
     dataPart[roadId].push(html);
     noData = false;

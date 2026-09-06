@@ -1725,19 +1725,27 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
     'clock',
     'calendar',
     'secpanel',
-    'trafficinfo',
     'map',
     'longfonds',
     'news',
   ]) {
     assert.match(settings, new RegExp(`id: '${id}'`));
   }
-  for (const id of ['publictransport', 'alarmmeldingen', 'camera', 'moon']) {
+  for (const id of [
+    'publictransport',
+    'trafficinfo',
+    'alarmmeldingen',
+    'camera',
+    'moon',
+  ]) {
+    // trafficinfo has no global settings of its own any more (see the
+    // dedicated Trafficinfo tests below) - everything moved to per-block
+    // properties, like publictransport's own provider already was.
     assert.doesNotMatch(settings, new RegExp(`id: '${id}'`));
   }
   const securitySettings = settings.slice(
     settings.indexOf("id: 'secpanel'"),
-    settings.indexOf("id: 'trafficinfo'")
+    settings.indexOf("id: 'map'")
   );
   assert.match(securitySettings, /security_panel_lock:/);
   assert.match(securitySettings, /type: 'select'/);
@@ -1821,7 +1829,7 @@ test('widget editor exposes the supported catalog and keeps legacy options out o
     settings,
     /settingList\.general = \{[^}]*default_news_url:/
   );
-  assert.match(settings, /anwb_apikey:/);
+  assert.doesNotMatch(settings, /anwb_apikey/);
   assert.match(settings, /id: 'news'[\s\S]*default_news_url:/);
   assert.match(widgetEditor, /OpenWeather/);
   assert.match(widgetEditor, /Weather Underground/);
@@ -6486,141 +6494,146 @@ test('Graph header icon and Sonarr icons follow theme icon size instead of a har
   );
 });
 
-test('Trafficinfo widget defaults to RWS and adds a Custom provider alongside ANWB', () => {
-  // Issue reports (#1236) show the ANWB-only provider stuck on "Loading":
-  // ANWB no longer issues new API keys, and $.getJSON() has no .fail()
-  // handler, so any failed/unauthorized request just silently never
-  // updates .dt_state. RWS (Rijkswaterstaat) needs no API key at all, so
-  // it becomes the default; a 'custom' provider lets a user point at their
-  // own JSON endpoint (documented in trafficinfo.rst) for anything else.
+test('Trafficinfo widget is RWS-only - no provider choice, no ANWB/Custom code paths', () => {
+  // ANWB no longer issues API keys, and a Custom endpoint added no real
+  // value without a second built-in provider to compare against - the
+  // widget always uses RWS (Rijkswaterstaat)'s public traffic API now,
+  // which needs no key at all.
   const trafficinfo = fs.readFileSync(
     path.join(root, 'js/components/trafficinfo.js'),
     'utf8'
   );
-  assert.match(trafficinfo, /provider: 'rws',/);
-  assert.match(trafficinfo, /customUrl: '',/);
-  assert.match(trafficinfo, /var provider = me\.block\.provider \|\| 'rws';/);
-  assert.match(trafficinfo, /function _refreshANWB\(me\) \{/);
-  assert.match(trafficinfo, /function _refreshRWS\(me\) \{/);
-  assert.match(trafficinfo, /function _refreshCustom\(me\) \{/);
-  // RWS's public traffic API needs no key and isn't gated the way ANWB's
-  // apikey check is.
+  assert.doesNotMatch(trafficinfo, /provider/i);
+  assert.doesNotMatch(trafficinfo, /apikey/i);
+  assert.doesNotMatch(trafficinfo, /customUrl/);
+  assert.doesNotMatch(trafficinfo, /_refreshANWB/);
+  assert.doesNotMatch(trafficinfo, /_refreshCustom/);
+  assert.doesNotMatch(trafficinfo, /_buildANWBDataPart/);
+  assert.doesNotMatch(trafficinfo, /_buildCustomDataPart/);
+  assert.match(
+    trafficinfo,
+    /canHandle: function \(block\) \{\s*\n\s*return block && \(block\.trafficJams \|\| block\.roadWorks\);/
+  );
   assert.match(
     trafficinfo,
     /'https:\/\/api\.rwsverkeersinfo\.nl\/api\/traffic\/'/
   );
-  const rwsFnMatch = trafficinfo.match(
-    /function _refreshRWS\(me\) \{[\s\S]*?\n\}/
-  );
-  assert.ok(rwsFnMatch, '_refreshRWS() function body not found');
-  assert.doesNotMatch(rwsFnMatch[0], /apikey/);
-  // obstructionType 1 = roadworks, 4 = jam (Rijkswaterstaat's own schema);
-  // there's no radar/speed-camera category in that API.
+  // obstructionType 1 = roadworks, 4 = jam (Rijkswaterstaat's own schema).
   assert.match(trafficinfo, /String\(o\.obstructionType\) === '4'/);
   assert.match(trafficinfo, /String\(o\.obstructionType\) === '1'/);
-  // A custom endpoint uses Dashticz's own documented {road, type, from, to,
-  // delay, distance, reason} item shape, type being jam/roadworks/radar.
-  assert.match(trafficinfo, /item\.type === 'jam'/);
-  assert.match(trafficinfo, /item\.type === 'roadworks'/);
-  assert.match(trafficinfo, /item\.type === 'radar'/);
-  // Road-filter/showemptyroads seeding and the final render/empty-state/
-  // last-update tail are shared helpers, not tripled across providers.
-  // 1 definition + 3 call sites (one per provider).
-  const seedMatches = trafficinfo.match(/_seedEmptyRoads\(trafficobject\)/g);
-  assert.ok(
-    seedMatches && seedMatches.length === 4,
-    `expected the definition plus all 3 providers to reuse _seedEmptyRoads(), found ${
-      seedMatches ? seedMatches.length : 0
-    }`
-  );
-  const renderMatches = trafficinfo.match(
-    /_renderTrafficInfo\(me, result\.dataPart, result\.noData\);/g
-  );
-  assert.ok(
-    renderMatches && renderMatches.length === 3,
-    `expected all 3 providers to reuse _renderTrafficInfo(), found ${
-      renderMatches ? renderMatches.length : 0
-    }`
-  );
+  // Confirmed against a live obstruction object: the reason text is
+  // 'description' (falling back to 'locationText').
+  assert.match(trafficinfo, /o\.description \|\| o\.locationText/);
+  // RWS obstruction coordinates: flat latitude/longitude fields.
+  assert.match(trafficinfo, /o\.latitude == null \|\| o\.longitude == null/);
 });
 
-test('Trafficinfo: provider/customUrl/trafficJams/roadWorks/radars/results are per-block, only the API key is global', () => {
-  // #1264 follow-up: a widget hand-configured (or saved before this UI
-  // existed) with its own explicit `provider: 'anwb'` kept using ANWB even
-  // after switching the (then-global) Provider setting to RWS, because a
-  // per-block property always wins over a global default - the dropdown
-  // just had no effect. provider/customUrl now live on the block itself
-  // (like publictransport's own provider), so there's no longer two
-  // conflicting sources of truth.
+test('Trafficinfo settings/Widget editor: no global settings, no provider selector, only trafficJams/roadWorks/results/maxDistance/latitude/longitude', () => {
   const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
   const widgetEditor = fs.readFileSync(
     path.join(root, 'js/widgeteditor.js'),
     'utf8'
   );
-  assert.doesNotMatch(settings, /traffic_provider/);
-  assert.doesNotMatch(settings, /traffic_custom_url/);
-  const trafficSettings = settings.slice(
-    settings.indexOf("id: 'trafficinfo'"),
-    settings.indexOf("id: 'map'")
-  );
-  assert.match(trafficSettings, /anwb_apikey: \{/);
-  assert.doesNotMatch(trafficSettings, /type: 'select',/);
+  // trafficinfo has no global settings at all any more (like
+  // publictransport/alarmmeldingen/camera/moon) - no Settings screen entry.
+  assert.doesNotMatch(settings, /id: 'trafficinfo'/);
+  assert.doesNotMatch(settings, /anwb_apikey/);
 
-  // The quick-add popup renders dedicated fields for all of them.
-  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'provider',/);
-  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'customUrl',/);
+  // No provider/customUrl/anwb_apikey/radars fields in the quick-add.
+  assert.doesNotMatch(widgetEditor, /_cfgField\(\s*\n\s*'provider',/);
+  assert.doesNotMatch(widgetEditor, /_cfgField\(\s*\n\s*'customUrl',/);
+  assert.doesNotMatch(widgetEditor, /_cfgField\(\s*\n\s*'anwb_apikey',/);
+  assert.doesNotMatch(widgetEditor, /_cfgField\(\s*\n\s*'radars',/);
+  assert.doesNotMatch(widgetEditor, /trafficinfo: \['anwb_apikey'\]/);
+
+  // trafficJams/roadWorks are dedicated on/off toggles, results a number
+  // field - not raw rows in the generic "Extra fields" editor.
   assert.match(widgetEditor, /_cfgField\(\s*\n\s*'trafficJams',/);
   assert.match(widgetEditor, /_cfgField\(\s*\n\s*'roadWorks',/);
-  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'radars',/);
   assert.match(widgetEditor, /_cfgField\(\s*\n\s*'results',/);
   const trafficJamsField = widgetEditor.slice(
     widgetEditor.indexOf("_cfgField(\n        'trafficJams',")
   );
-  assert.match(trafficJamsField.slice(0, 400), /'checkbox',/);
-
-  // They're excluded from the generic "Extra fields" editor...
+  assert.match(trafficJamsField.slice(0, 300), /'checkbox',/);
   assert.match(
     widgetEditor,
-    /trafficinfo: \{\s*\n\s*provider: true,\s*\n\s*customUrl: true,\s*\n\s*trafficJams: true,\s*\n\s*roadWorks: true,\s*\n\s*radars: true,\s*\n\s*results: true,\s*\n\s*maxDistance: true,\s*\n\s*latitude: true,\s*\n\s*longitude: true,\s*\n\s*\},/
+    /trafficinfo: \{\s*\n\s*trafficJams: true,\s*\n\s*roadWorks: true,\s*\n\s*results: true,\s*\n\s*maxDistance: true,\s*\n\s*latitude: true,\s*\n\s*longitude: true,\s*\n\s*\},/
   );
-  // ...and instead hydrated from an existing widget's own saved block
-  // properties (both scan paths: column-mode and grid-mode screens), so
-  // reopening an already-placed widget's config shows what's actually
-  // configured on it, not just a global/catalog default.
+
+  // Hydrated from an existing widget's own saved block properties (both
+  // scan paths: column-mode and grid-mode screens), so reopening an
+  // already-placed widget's config shows what's actually configured on it.
   const hydrationMatches = widgetEditor.match(
-    /widgetConfigs\.trafficinfo\.provider = definition\.provider/g
+    /widgetConfigs\.trafficinfo\.trafficJams = definition\.trafficJams/g
   );
   assert.ok(
-    hydrationMatches && hydrationMatches.length === 2,
-    `expected both hydration paths to read back an existing block's provider, found ${
+    hydrationMatches && hydrationMatches.length === 1,
+    `expected the column-mode scan to read back trafficJams, found ${
       hydrationMatches ? hydrationMatches.length : 0
     }`
   );
+  assert.match(widgetEditor, /\['trafficJams', 1\],/);
 
-  // Only anwb_apikey still bridges to a global setting.
-  assert.match(widgetEditor, /trafficinfo: \['anwb_apikey'\],/);
-
-  // The saved payload entry carries provider/customUrl/trafficJams/
-  // roadWorks/radars/results directly, like publictransport's own provider.
-  assert.match(widgetEditor, /entry\.provider = trcfg\.provider \|\| 'rws';/);
+  // The saved payload entry carries trafficJams/roadWorks/results directly
+  // (like publictransport's own provider) - no entry.provider/customUrl.
   assert.match(widgetEditor, /entry\.trafficJams = Number\(/);
   assert.match(widgetEditor, /entry\.roadWorks = Number\(/);
-  assert.match(widgetEditor, /entry\.radars = Number\(/);
   assert.match(
     widgetEditor,
     /entry\.results = parseInt\(trcfg\.results, 10\) \|\| 50;/
   );
+  const entryBlockStart = widgetEditor.indexOf(
+    "if (item.id === 'trafficinfo') {\n      // Per-instance"
+  );
+  assert.notEqual(entryBlockStart, -1);
+  const entryBlockEnd = widgetEditor.indexOf(
+    "if (item.id === 'iframe') {",
+    entryBlockStart
+  );
+  const entryBlock = widgetEditor.slice(entryBlockStart, entryBlockEnd);
+  assert.doesNotMatch(entryBlock, /entry\.provider/);
+  assert.doesNotMatch(entryBlock, /entry\.customUrl/);
 });
 
-test('savewidgets.php no longer whitelists traffic_provider/traffic_custom_url as global settings', () => {
+test('savewidgets.php: trafficinfo save bug - the request handler had no case reading the submitted widget fields at all', () => {
+  // The actual root cause of "choosing RWS/toggling Traffic jams doesn't
+  // save": every other widget type has an `if ($id === '<type>')` block
+  // here that validates and copies its own fields from $entry into
+  // $widget; trafficinfo had none, so _widgetBlockProps() below had
+  // nothing to read and fell back to hardcoded (ANWB-era) defaults on
+  // every single save, discarding whatever was actually configured.
   const savewidgets = fs.readFileSync(
     path.join(root, 'js/savewidgets.php'),
     'utf8'
   );
-  assert.doesNotMatch(savewidgets, /'traffic_provider'/);
-  assert.doesNotMatch(savewidgets, /'traffic_custom_url'/);
+  assert.doesNotMatch(savewidgets, /anwb_apikey/);
   assert.doesNotMatch(savewidgets, /allowedTrafficProviders/);
-  assert.match(savewidgets, /'anwb_apikey'\s*=>\s*'string',/);
+  assert.match(savewidgets, /if \(\$id === 'trafficinfo'\) \{/);
+  const extractStart = savewidgets.indexOf("if (\$id === 'trafficinfo') {");
+  const extractBlock = savewidgets.slice(
+    extractStart,
+    savewidgets.indexOf("if (\$id === 'camera') {", extractStart)
+  );
+  assert.match(extractBlock, /\$widget\['trafficJams'\]/);
+  assert.match(extractBlock, /\$widget\['roadWorks'\]/);
+  assert.match(extractBlock, /\$widget\['results'\]/);
+  assert.match(extractBlock, /\$widget\['maxDistance'\]/);
+  assert.match(extractBlock, /\$widget\['latitude'\]/);
+  assert.match(extractBlock, /\$widget\['longitude'\]/);
+
+  const caseStart = savewidgets.indexOf("case 'trafficinfo':");
+  const caseBlock = savewidgets.slice(
+    caseStart,
+    savewidgets.indexOf('break;', caseStart)
+  );
+  assert.match(
+    caseBlock,
+    /\$props\['trafficJams'\] = \$widget\['trafficJams'\];/
+  );
+  assert.match(caseBlock, /\$props\['roadWorks'\] = \$widget\['roadWorks'\];/);
+  assert.match(caseBlock, /\$props\['results'\] = \$widget\['results'\];/);
+  assert.doesNotMatch(caseBlock, /\$props\['provider'\] = 'anwb';/);
+  assert.doesNotMatch(caseBlock, /\$props\['trafficJams'\] = true;/);
 });
 
 function loadTrafficInfoModule() {
@@ -6633,12 +6646,9 @@ function loadTrafficInfoModule() {
       misc: {
         loading: 'Loading',
         no_traffic: 'No traffic announcements',
-        traffic_api_missing: 'ANWB API key is not configured.',
-        traffic_custom_url_missing: 'Custom traffic URL is not configured.',
         last_update: 'Last update',
       },
     },
-    settings: {},
     _CORS_PATH: '',
     Domoticz: {
       getAllDevices: () => ({
@@ -6651,39 +6661,7 @@ function loadTrafficInfoModule() {
   return context;
 }
 
-test('Trafficinfo widget config exposes Max distance/Latitude/Longitude, saved per-instance', () => {
-  // Unlike Provider/ANWB API key/Custom URL (global settings, shared by
-  // every trafficinfo widget), the distance filter is per-widget-instance:
-  // different trafficinfo widgets on different screens may want different
-  // distances/locations.
-  const widgetEditor = fs.readFileSync(
-    path.join(root, 'js/widgeteditor.js'),
-    'utf8'
-  );
-  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'maxDistance',/);
-  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'latitude',/);
-  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'longitude',/);
-  assert.match(
-    widgetEditor,
-    /entry\.maxDistance = parseFloat\(trcfg\.maxDistance\)/
-  );
-  assert.match(widgetEditor, /entry\.latitude = parseFloat\(trcfg\.latitude\)/);
-  assert.match(
-    widgetEditor,
-    /entry\.longitude = parseFloat\(trcfg\.longitude\)/
-  );
-  // These three must NOT be routed through the global-settings bridge
-  // (configWidgets/$allowedSettings) the way traffic_provider/anwb_apikey/
-  // traffic_custom_url are - they're per-block CONFIG.js properties.
-  assert.doesNotMatch(widgetEditor, /trafficinfo: \[[^\]]*maxDistance/);
-  const savewidgets = fs.readFileSync(
-    path.join(root, 'js/savewidgets.php'),
-    'utf8'
-  );
-  assert.doesNotMatch(savewidgets, /'maxDistance'/);
-});
-
-test('Trafficinfo distance filter: haversine math, fail-open behaviour, and RWS/custom filtering', () => {
+test('Trafficinfo distance filter: haversine math, fail-open behaviour, and RWS filtering', () => {
   const ctx = loadTrafficInfoModule();
 
   // Amsterdam Dam Square to Utrecht Dom: actually about 35.7km straight-line.
@@ -6716,10 +6694,7 @@ test('Trafficinfo distance filter: haversine math, fail-open behaviour, and RWS/
   assert.equal(ctx._isWithinDistance(near, 52.09, 5.12), false);
 
   // _rwsCoords reads the confirmed flat latitude/longitude fields (verified
-  // against a live obstruction object). Compared field-by-field rather than
-  // with deepEqual: vm.runInNewContext() objects come from a different
-  // realm, so they're never reference-equal to a plain object literal here
-  // even with identical own properties.
+  // against a live obstruction object).
   function assertCoords(coords, expectedLat, expectedLon) {
     assert.ok(coords, 'expected coordinates to be extracted');
     assert.equal(coords.lat, expectedLat);
@@ -6738,7 +6713,6 @@ test('Trafficinfo distance filter: haversine math, fail-open behaviour, and RWS/
     block: {
       trafficJams: true,
       roadWorks: true,
-      radars: true,
       results: 50,
       latitude: 52.373,
       longitude: 4.8925,
@@ -6783,18 +6757,6 @@ test('Trafficinfo distance filter: haversine math, fail-open behaviour, and RWS/
     result.dataPart.A2.join('').includes('Ongeval op de rijbaan.'),
     'reason text should come from the description field'
   );
-
-  // A custom-provider item can also be distance filtered via its own
-  // lat/lon fields; one lacking them is kept regardless of maxDistance.
-  const customResult = ctx._buildCustomDataPart(me, [
-    { road: 'A2', type: 'jam', lat: 52.38, lon: 4.9 },
-    { road: 'A27', type: 'jam', lat: 52.09, lon: 5.12 },
-    { road: 'A9', type: 'jam' },
-  ]);
-  const customRoads = Object.keys(customResult.dataPart);
-  assert.ok(customRoads.includes('A2'));
-  assert.ok(!customRoads.includes('A27'));
-  assert.ok(customRoads.includes('A9'));
 });
 
 test("Trafficinfo defaultCfg falls back to Domoticz's own location, block override wins", () => {
@@ -6812,7 +6774,7 @@ test("Trafficinfo defaultCfg falls back to Domoticz's own location, block overri
   assert.equal(withOverride.maxDistance, 25);
 });
 
-test('Traffic info provider/custom URL translations exist in English and Dutch', () => {
+test('Traffic info translations: no ANWB/provider keys left, jams/roadworks/results/distance keys exist', () => {
   const english = JSON.parse(
     fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8')
   );
@@ -6820,14 +6782,19 @@ test('Traffic info provider/custom URL translations exist in English and Dutch',
     fs.readFileSync(path.join(root, 'lang/nl_NL.json'), 'utf8')
   );
   for (const lang of [english, dutch]) {
-    assert.ok(lang.settings.widgets.traffic_provider);
-    assert.ok(lang.settings.widgets.traffic_provider_rws);
-    assert.ok(lang.settings.widgets.traffic_provider_anwb);
-    assert.ok(lang.settings.widgets.traffic_provider_custom);
-    assert.ok(lang.settings.widgets.traffic_custom_url);
-    assert.ok(lang.settings.widgets.traffic_custom_url_help);
-    assert.ok(lang.misc.traffic_custom_url_missing);
+    assert.equal(typeof lang.settings.widgets.anwb_apikey, 'undefined');
+    assert.equal(typeof lang.settings.widgets.traffic_provider, 'undefined');
+    assert.equal(typeof lang.settings.widgets.traffic_custom_url, 'undefined');
+    assert.equal(typeof lang.misc.traffic_api_missing, 'undefined');
+    assert.ok(lang.settings.widgets.traffic_jams);
+    assert.ok(lang.settings.widgets.traffic_roadworks);
+    assert.ok(lang.settings.widgets.traffic_results);
+    assert.ok(lang.settings.widgets.traffic_max_distance);
+    assert.ok(lang.settings.widgets.traffic_latitude);
+    assert.ok(lang.settings.widgets.traffic_longitude);
   }
-  assert.match(english.settings.widgets.traffic_provider_rws, /RWS/);
-  assert.match(dutch.settings.widgets.traffic_provider_rws, /RWS/);
+  assert.doesNotMatch(
+    english.settings.widgeteditor.trafficinfo_description || '',
+    /ANWB/
+  );
 });

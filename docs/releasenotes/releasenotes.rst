@@ -6,38 +6,32 @@ v4.0.5 (6-9-2026)
 
 * **Enhancements**
 
-- Traffic info widget: added RWS (Rijkswaterstaat)'s public traffic API as
-  a new provider, requiring no API key, and made it the default - ANWB no
-  longer issues new API keys, and the widget had no error handling around
-  its ANWB request, so a failed/unauthorized call silently left it stuck
-  on "Loading" forever. ANWB stays available for existing API keys.
+- Traffic info widget: switched to RWS (Rijkswaterstaat)'s public traffic
+  API - it needs no API key at all, unlike ANWB's traffic API, which no
+  longer issues new keys. There is no longer a provider choice; the widget
+  always uses RWS.
 
-- Traffic info widget: added a ``'custom'`` provider so a URL to your own
-  JSON endpoint can be used instead, for any other traffic source (see
-  ``docs/blocks/specials/trafficinfo.rst`` for the expected format). The
-  provider choice and custom URL are configurable in both Settings and the
-  Widget editor's Traffic information quick-add.
+- Traffic info widget: added an optional ``maxDistance`` (km) filter, since
+  a nationwide list can get too long for the block. Configurable per widget
+  instance from the Widget editor's Traffic information quick-add, alongside
+  optional latitude/longitude overrides that default to Domoticz's own
+  configured system location.
 
-- Traffic info widget: added an optional ``maxDistance`` (km) filter for the
-  RWS provider (and ``custom`` items that provide their own coordinates),
-  since a nationwide list can get too long for the block. Configurable per
-  widget instance from the Widget editor's Traffic information quick-add,
-  alongside optional latitude/longitude overrides that default to
-  Domoticz's own configured system location.
+- Traffic info widget: the Traffic jams and Roadworks toggles, and the Max
+  results field, are now dedicated controls (the toggles as on/off
+  switches) in the Widget editor's Traffic information quick-add, instead
+  of showing up as raw rows in the generic Extra fields editor.
 
 * **Fixes**
 
-- Traffic info widget: choosing RWS in the Provider dropdown had no effect
-  for a widget that already had its own explicit ``provider`` set (e.g. a
-  hand-written or previously-saved ``provider: 'anwb'`` block), since that
-  per-block value always overrides a global default. ``provider``,
-  ``customUrl``, ``trafficJams``, ``roadWorks``, ``radars`` and ``results``
-  are now per-block properties, each with a dedicated field (the three
-  toggles as on/off switches, results as a number field) in the Widget
-  editor's Traffic information quick-add, instead of showing up as raw rows
-  in the generic Extra fields editor. Re-opening an already-placed widget's
-  config now also correctly reads these back from its own saved block. Only
-  the ANWB API key remains a global Settings entry.
+- Traffic info widget: none of a widget's Traffic jams/Roadworks/Max results
+  settings were actually saved - ``js/savewidgets.php``'s request handler
+  had no case reading these fields from the submitted widget at all, so
+  ``_widgetBlockProps()`` fell back to its own hardcoded (ANWB-era) defaults
+  on every single save, silently discarding whatever was actually
+  configured. Re-opening an already-placed widget's config now also
+  correctly reads its current settings back from its own saved block,
+  instead of only ever showing catalog defaults.
 
 v4.0.4 (5-9-2026)
 ----------------------
