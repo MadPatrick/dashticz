@@ -6497,8 +6497,8 @@ test('Trafficinfo widget defaults to RWS and adds a Custom provider alongside AN
     path.join(root, 'js/components/trafficinfo.js'),
     'utf8'
   );
-  assert.match(trafficinfo, /provider: settings\.traffic_provider \|\| 'rws',/);
-  assert.match(trafficinfo, /customUrl: settings\.traffic_custom_url \|\| '',/);
+  assert.match(trafficinfo, /provider: 'rws',/);
+  assert.match(trafficinfo, /customUrl: '',/);
   assert.match(trafficinfo, /var provider = me\.block\.provider \|\| 'rws';/);
   assert.match(trafficinfo, /function _refreshANWB\(me\) \{/);
   assert.match(trafficinfo, /function _refreshRWS\(me\) \{/);
@@ -6544,53 +6544,83 @@ test('Trafficinfo widget defaults to RWS and adds a Custom provider alongside AN
   );
 });
 
-test('Trafficinfo settings screen and Widget editor expose Provider/Custom URL alongside the ANWB API key', () => {
+test('Trafficinfo: provider/customUrl/trafficJams/roadWorks/radars/results are per-block, only the API key is global', () => {
+  // #1264 follow-up: a widget hand-configured (or saved before this UI
+  // existed) with its own explicit `provider: 'anwb'` kept using ANWB even
+  // after switching the (then-global) Provider setting to RWS, because a
+  // per-block property always wins over a global default - the dropdown
+  // just had no effect. provider/customUrl now live on the block itself
+  // (like publictransport's own provider), so there's no longer two
+  // conflicting sources of truth.
   const settings = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
   const widgetEditor = fs.readFileSync(
     path.join(root, 'js/widgeteditor.js'),
     'utf8'
   );
-  assert.match(settings, /traffic_provider: 'rws',/);
-  assert.match(settings, /traffic_custom_url: '',/);
+  assert.doesNotMatch(settings, /traffic_provider/);
+  assert.doesNotMatch(settings, /traffic_custom_url/);
   const trafficSettings = settings.slice(
     settings.indexOf("id: 'trafficinfo'"),
     settings.indexOf("id: 'map'")
   );
-  assert.match(trafficSettings, /traffic_provider: \{/);
-  assert.match(trafficSettings, /type: 'select',/);
-  assert.match(trafficSettings, /noEmptyOption: true,/);
-  assert.match(trafficSettings, /rws:/);
-  assert.match(trafficSettings, /anwb:/);
-  assert.match(trafficSettings, /custom:/);
-  assert.match(trafficSettings, /traffic_custom_url: \{/);
-  assert.match(
-    widgetEditor,
-    /traffic_provider: _s\('traffic_provider', 'rws'\),/
+  assert.match(trafficSettings, /anwb_apikey: \{/);
+  assert.doesNotMatch(trafficSettings, /type: 'select',/);
+
+  // The quick-add popup renders dedicated fields for all of them.
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'provider',/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'customUrl',/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'trafficJams',/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'roadWorks',/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'radars',/);
+  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'results',/);
+  const trafficJamsField = widgetEditor.slice(
+    widgetEditor.indexOf("_cfgField(\n        'trafficJams',")
   );
-  assert.match(widgetEditor, /traffic_custom_url: _s\('traffic_custom_url'\),/);
-  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'traffic_provider',/);
-  assert.match(widgetEditor, /_cfgField\(\s*\n\s*'traffic_custom_url',/);
+  assert.match(trafficJamsField.slice(0, 400), /'checkbox',/);
+
+  // They're excluded from the generic "Extra fields" editor...
   assert.match(
     widgetEditor,
-    /trafficinfo: \['anwb_apikey', 'traffic_provider', 'traffic_custom_url'\],/
+    /trafficinfo: \{\s*\n\s*provider: true,\s*\n\s*customUrl: true,\s*\n\s*trafficJams: true,\s*\n\s*roadWorks: true,\s*\n\s*radars: true,\s*\n\s*results: true,\s*\n\s*maxDistance: true,\s*\n\s*latitude: true,\s*\n\s*longitude: true,\s*\n\s*\},/
+  );
+  // ...and instead hydrated from an existing widget's own saved block
+  // properties (both scan paths: column-mode and grid-mode screens), so
+  // reopening an already-placed widget's config shows what's actually
+  // configured on it, not just a global/catalog default.
+  const hydrationMatches = widgetEditor.match(
+    /widgetConfigs\.trafficinfo\.provider = definition\.provider/g
+  );
+  assert.ok(
+    hydrationMatches && hydrationMatches.length === 2,
+    `expected both hydration paths to read back an existing block's provider, found ${
+      hydrationMatches ? hydrationMatches.length : 0
+    }`
+  );
+
+  // Only anwb_apikey still bridges to a global setting.
+  assert.match(widgetEditor, /trafficinfo: \['anwb_apikey'\],/);
+
+  // The saved payload entry carries provider/customUrl/trafficJams/
+  // roadWorks/radars/results directly, like publictransport's own provider.
+  assert.match(widgetEditor, /entry\.provider = trcfg\.provider \|\| 'rws';/);
+  assert.match(widgetEditor, /entry\.trafficJams = Number\(/);
+  assert.match(widgetEditor, /entry\.roadWorks = Number\(/);
+  assert.match(widgetEditor, /entry\.radars = Number\(/);
+  assert.match(
+    widgetEditor,
+    /entry\.results = parseInt\(trcfg\.results, 10\) \|\| 50;/
   );
 });
 
-test('savewidgets.php whitelists and validates traffic_provider/traffic_custom_url', () => {
+test('savewidgets.php no longer whitelists traffic_provider/traffic_custom_url as global settings', () => {
   const savewidgets = fs.readFileSync(
     path.join(root, 'js/savewidgets.php'),
     'utf8'
   );
-  assert.match(savewidgets, /'traffic_provider'\s*=>\s*'traffic_provider',/);
-  assert.match(savewidgets, /'traffic_custom_url'\s*=>\s*'string',/);
-  assert.match(
-    savewidgets,
-    /\$allowedTrafficProviders = \['rws', 'anwb', 'custom'\];/
-  );
-  assert.match(
-    savewidgets,
-    /\$type === 'traffic_provider'[\s\S]{0,120}in_array\(\(string\)\$value, \$allowedTrafficProviders, true\)/
-  );
+  assert.doesNotMatch(savewidgets, /'traffic_provider'/);
+  assert.doesNotMatch(savewidgets, /'traffic_custom_url'/);
+  assert.doesNotMatch(savewidgets, /allowedTrafficProviders/);
+  assert.match(savewidgets, /'anwb_apikey'\s*=>\s*'string',/);
 });
 
 function loadTrafficInfoModule() {
@@ -6685,23 +6715,18 @@ test('Trafficinfo distance filter: haversine math, fail-open behaviour, and RWS/
   assert.equal(ctx._isWithinDistance(near, 52.38, 4.9), true);
   assert.equal(ctx._isWithinDistance(near, 52.09, 5.12), false);
 
-  // _rwsCoords tries several field-name shapes defensively. Compared
-  // field-by-field rather than with deepEqual: vm.runInNewContext() objects
-  // come from a different realm, so they're never reference-equal to a
-  // plain object literal here even with identical own properties.
+  // _rwsCoords reads the confirmed flat latitude/longitude fields (verified
+  // against a live obstruction object). Compared field-by-field rather than
+  // with deepEqual: vm.runInNewContext() objects come from a different
+  // realm, so they're never reference-equal to a plain object literal here
+  // even with identical own properties.
   function assertCoords(coords, expectedLat, expectedLon) {
     assert.ok(coords, 'expected coordinates to be extracted');
     assert.equal(coords.lat, expectedLat);
     assert.equal(coords.lon, expectedLon);
   }
-  assertCoords(ctx._rwsCoords({ lat: '52.1', lon: '5.2' }), 52.1, 5.2);
   assertCoords(
     ctx._rwsCoords({ latitude: '52.1', longitude: '5.2' }),
-    52.1,
-    5.2
-  );
-  assertCoords(
-    ctx._rwsCoords({ geometry: { coordinates: [5.2, 52.1] } }),
     52.1,
     5.2
   );
@@ -6725,15 +6750,17 @@ test('Trafficinfo distance filter: haversine math, fail-open behaviour, and RWS/
       {
         obstructionType: 4,
         roadNumber: 'A2',
-        lat: 52.38,
-        lon: 4.9,
+        latitude: 52.38,
+        longitude: 4.9,
         directionText: 'Amsterdam - Utrecht',
+        description: 'Ongeval op de rijbaan.',
+        locationText: 'Tussen Vianen (10) en Everdingen (11).',
       },
       {
         obstructionType: 4,
         roadNumber: 'A27',
-        lat: 52.09,
-        lon: 5.12,
+        latitude: 52.09,
+        longitude: 5.12,
         directionText: 'Utrecht - Hooipolder',
       },
       {
@@ -6749,6 +6776,12 @@ test('Trafficinfo distance filter: haversine math, fail-open behaviour, and RWS/
   assert.ok(
     roads.includes('A9'),
     'a jam with no usable coordinates should never be hidden'
+  );
+  // Confirmed against a live obstruction object: the reason text is
+  // 'description' (falling back to 'locationText'), not 'cause'/'title'.
+  assert.ok(
+    result.dataPart.A2.join('').includes('Ongeval op de rijbaan.'),
+    'reason text should come from the description field'
   );
 
   // A custom-provider item can also be distance filtered via its own

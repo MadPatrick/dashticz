@@ -25,9 +25,13 @@ var DT_trafficinfo = {
       // it's the default; ANWB is kept for existing configs/API keys, and
       // custom lets a user point at their own JSON endpoint (see
       // docs/blocks/specials/trafficinfo.rst for the expected format).
-      provider: settings.traffic_provider || 'rws',
+      // provider/customUrl are per-block, like road/trafficJams below (the
+      // Widget editor's Traffic information quick-add writes them straight
+      // onto the block, matching how it already does for publictransport's
+      // own provider) - only the API key is a genuine shared, global secret.
+      provider: 'rws',
       apikey: settings.anwb_apikey || '',
-      customUrl: settings.traffic_custom_url || '',
+      customUrl: '',
       // Distance filtering (RWS, and custom items that provide lat/lon):
       // unset maxDistance means "show everything", matching the old
       // behaviour. latitude/longitude default to Domoticz's own location so
@@ -305,40 +309,18 @@ function _isWithinDistance(trafficobject, lat, lon) {
   );
 }
 
-// RWS obstruction coordinates. The API's exact field for this isn't fully
-// confirmed against live data yet, so several common shapes are tried
-// defensively; none matching just means this item can't be distance
-// filtered (see _isWithinDistance's fail-open behaviour above).
+// RWS obstruction coordinates: confirmed against a live obstruction object
+// (flat latitude/longitude fields, e.g. { latitude: 53.181267,
+// longitude: 5.921848, ... }) - no nesting, no GeoJSON.
 function _rwsCoords(o) {
-  if (o.lat != null && (o.lon != null || o.lng != null)) {
-    return {
-      lat: parseFloat(o.lat),
-      lon: parseFloat(o.lon != null ? o.lon : o.lng),
-    };
-  }
-  if (o.latitude != null && o.longitude != null) {
-    return { lat: parseFloat(o.latitude), lon: parseFloat(o.longitude) };
-  }
-  if (o.location && o.location.lat != null) {
-    var lon = o.location.lon != null ? o.location.lon : o.location.lng;
-    return { lat: parseFloat(o.location.lat), lon: parseFloat(lon) };
-  }
-  if (
-    o.geometry &&
-    Array.isArray(o.geometry.coordinates) &&
-    o.geometry.coordinates.length >= 2
-  ) {
-    return {
-      lat: parseFloat(o.geometry.coordinates[1]),
-      lon: parseFloat(o.geometry.coordinates[0]),
-    };
-  }
-  return null;
+  if (o.latitude == null || o.longitude == null) return null;
+  return { lat: parseFloat(o.latitude), lon: parseFloat(o.longitude) };
 }
 
 // Rijkswaterstaat's public traffic API (no API key). Response shape:
-// { obstructions: [{ obstructionType, roadNumber, directionText, cause,
-//   title, delay, length, timeStart, timeEnd }, ...] }
+// { obstructions: [{ obstructionType, roadNumber, directionText,
+//   description, locationText, latitude, longitude, delay, length,
+//   timeStart, timeEnd }, ...] }
 // obstructionType 1 = roadworks, 4 = jam. There is no speed-camera/radar
 // category in this API, so the radars toggle has no effect for this
 // provider.
@@ -397,7 +379,7 @@ function _buildRWSDataPart(me, data) {
         'km';
     }
     if ((isJam && o.delay != null) || o.length != null) html += '<br>';
-    var reason = o.cause || o.title;
+    var reason = o.description || o.locationText;
     if (reason) html += reason + '<br>';
     html += '</div>';
     dataPart[roadId].push(html);

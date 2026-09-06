@@ -436,6 +436,17 @@ var DashticzWidgetEditor = (function () {
       secondhandbehavior: true,
     },
     publictransport: { station: true, provider: true },
+    trafficinfo: {
+      provider: true,
+      customUrl: true,
+      trafficJams: true,
+      roadWorks: true,
+      radars: true,
+      results: true,
+      maxDistance: true,
+      latitude: true,
+      longitude: true,
+    },
     camera: { imageUrl: true, videoUrl: true, cameras: true },
     alarmmeldingen: { rss: true, filter: true },
     iframe: {
@@ -1080,8 +1091,12 @@ var DashticzWidgetEditor = (function () {
       },
       trafficinfo: {
         anwb_apikey: _s('anwb_apikey'),
-        traffic_provider: _s('traffic_provider', 'rws'),
-        traffic_custom_url: _s('traffic_custom_url'),
+        provider: 'rws',
+        customUrl: '',
+        trafficJams: 1,
+        roadWorks: 1,
+        radars: 1,
+        results: 50,
       },
       map: {
         gm_api: _s('gm_api'),
@@ -1364,6 +1379,37 @@ var DashticzWidgetEditor = (function () {
           }
           if (typeof definition.provider === 'string') {
             widgetConfigs.publictransport.provider = definition.provider;
+          }
+        }
+        if (item.id === 'trafficinfo') {
+          if (typeof definition.provider === 'string') {
+            widgetConfigs.trafficinfo.provider = definition.provider;
+          }
+          if (typeof definition.customUrl === 'string') {
+            widgetConfigs.trafficinfo.customUrl = definition.customUrl;
+          }
+          if (typeof definition.trafficJams !== 'undefined') {
+            widgetConfigs.trafficinfo.trafficJams = definition.trafficJams
+              ? 1
+              : 0;
+          }
+          if (typeof definition.roadWorks !== 'undefined') {
+            widgetConfigs.trafficinfo.roadWorks = definition.roadWorks ? 1 : 0;
+          }
+          if (typeof definition.radars !== 'undefined') {
+            widgetConfigs.trafficinfo.radars = definition.radars ? 1 : 0;
+          }
+          if (typeof definition.results !== 'undefined') {
+            widgetConfigs.trafficinfo.results = definition.results;
+          }
+          if (typeof definition.maxDistance !== 'undefined') {
+            widgetConfigs.trafficinfo.maxDistance = definition.maxDistance;
+          }
+          if (typeof definition.latitude !== 'undefined') {
+            widgetConfigs.trafficinfo.latitude = definition.latitude;
+          }
+          if (typeof definition.longitude !== 'undefined') {
+            widgetConfigs.trafficinfo.longitude = definition.longitude;
           }
         }
         if (item.id === 'camera') {
@@ -1800,6 +1846,33 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'publictransport') {
       widgetConfigs.publictransport.station = definition.station || 'UT';
       widgetConfigs.publictransport.provider = definition.provider || 'treinen';
+    } else if (item.id === 'trafficinfo') {
+      widgetConfigs.trafficinfo.provider = definition.provider || 'rws';
+      widgetConfigs.trafficinfo.customUrl = definition.customUrl || '';
+      [
+        ['trafficJams', 1],
+        ['roadWorks', 1],
+        ['radars', 1],
+      ].forEach(function (mapping) {
+        var prop = mapping[0];
+        widgetConfigs.trafficinfo[prop] =
+          typeof definition[prop] === 'undefined'
+            ? mapping[1]
+            : Number(definition[prop])
+              ? 1
+              : 0;
+      });
+      widgetConfigs.trafficinfo.results =
+        typeof definition.results === 'undefined' ? 50 : definition.results;
+      if (typeof definition.maxDistance !== 'undefined') {
+        widgetConfigs.trafficinfo.maxDistance = definition.maxDistance;
+      }
+      if (typeof definition.latitude !== 'undefined') {
+        widgetConfigs.trafficinfo.latitude = definition.latitude;
+      }
+      if (typeof definition.longitude !== 'undefined') {
+        widgetConfigs.trafficinfo.longitude = definition.longitude;
+      }
     } else if (item.id === 'camera') {
       if (Array.isArray(definition.cameras) && definition.cameras.length) {
         widgetConfigs.camera.cameras = definition.cameras;
@@ -3569,13 +3642,18 @@ var DashticzWidgetEditor = (function () {
         _t('station_help', 'For example UT for Utrecht Centraal (trains).') +
         '</div></div>';
     } else if (item.id === 'trafficinfo') {
+      // provider/customUrl/trafficJams/roadWorks/radars/results/maxDistance/
+      // latitude/longitude are all per-block CONFIG.js properties (see
+      // managedWidgetPropertiesById.trafficinfo and the hydration in
+      // _readConfiguredWidgets()/_hydrateGridWidget() above) - only the API
+      // key is a genuine shared, global secret (settings['anwb_apikey']).
       var tcfg = widgetConfigs.trafficinfo || {};
       var lwgt = lng.widgets || {};
       fields += _cfgField(
-        'traffic_provider',
+        'provider',
         lwgt.traffic_provider || 'Provider',
         'select',
-        tcfg.traffic_provider || 'rws',
+        tcfg.provider || 'rws',
         {
           rws: lwgt.traffic_provider_rws || 'RWS (Rijkswaterstaat)',
           anwb: lwgt.traffic_provider_anwb || 'ANWB',
@@ -3592,12 +3670,44 @@ var DashticzWidgetEditor = (function () {
         lwgt.anwb_apikey_help || ''
       );
       fields += _cfgField(
-        'traffic_custom_url',
+        'customUrl',
         lwgt.traffic_custom_url || 'Custom URL',
         'text',
-        tcfg.traffic_custom_url,
+        tcfg.customUrl,
         null,
         lwgt.traffic_custom_url_help || ''
+      );
+      fields += _cfgField(
+        'trafficJams',
+        lwgt.traffic_jams || 'Traffic jams',
+        'checkbox',
+        typeof tcfg.trafficJams === 'undefined' ? 1 : tcfg.trafficJams,
+        null,
+        lwgt.traffic_jams_help || ''
+      );
+      fields += _cfgField(
+        'roadWorks',
+        lwgt.traffic_roadworks || 'Roadworks',
+        'checkbox',
+        typeof tcfg.roadWorks === 'undefined' ? 1 : tcfg.roadWorks,
+        null,
+        lwgt.traffic_roadworks_help || ''
+      );
+      fields += _cfgField(
+        'radars',
+        lwgt.traffic_radars || 'Radars',
+        'checkbox',
+        typeof tcfg.radars === 'undefined' ? 1 : tcfg.radars,
+        null,
+        lwgt.traffic_radars_help || ''
+      );
+      fields += _cfgField(
+        'results',
+        lwgt.traffic_results || 'Max results',
+        'number',
+        typeof tcfg.results === 'undefined' ? 50 : tcfg.results,
+        { min: 1, step: 1 },
+        lwgt.traffic_results_help || ''
       );
       fields += _cfgField(
         'maxDistance',
@@ -5116,7 +5226,9 @@ var DashticzWidgetEditor = (function () {
       spotify: ['spot_clientid'],
       calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],
       secpanel: ['security_button_icons'],
-      trafficinfo: ['anwb_apikey', 'traffic_provider', 'traffic_custom_url'],
+      // provider/customUrl/etc. are per-block (see _buildWidgetPayloadEntry)
+      // - only the API key is a real global/shared setting.
+      trafficinfo: ['anwb_apikey'],
       map: ['gm_api', 'gm_zoomlevel', 'gm_latitude', 'gm_longitude'],
       longfonds: ['waqi_city', 'waqi_layout'],
       moon: ['idx_moonpicture'],
@@ -5267,13 +5379,31 @@ var DashticzWidgetEditor = (function () {
         entry.filter = widgetConfigs.alarmmeldingen.filter;
     }
     if (item.id === 'trafficinfo') {
-      // Per-instance, unlike provider/anwb_apikey/traffic_custom_url above
-      // (global settings, shared by every trafficinfo widget) - different
-      // trafficinfo widgets on different screens may want different
-      // distances/locations. Left unset, js/components/trafficinfo.js falls
-      // back to Domoticz's own configured location for latitude/longitude,
-      // and applies no distance filtering at all when maxDistance is unset.
+      // Per-instance (unlike anwb_apikey, a genuine shared/global secret) -
+      // different trafficinfo widgets on different screens may want
+      // different providers/distances/locations. Left unset,
+      // js/components/trafficinfo.js falls back to Domoticz's own
+      // configured location for latitude/longitude, and applies no distance
+      // filtering at all when maxDistance is unset.
       var trcfg = widgetConfigs.trafficinfo || {};
+      entry.provider = trcfg.provider || 'rws';
+      if (trcfg.customUrl) entry.customUrl = trcfg.customUrl;
+      entry.trafficJams = Number(
+        typeof trcfg.trafficJams === 'undefined' ? 1 : trcfg.trafficJams
+      )
+        ? 1
+        : 0;
+      entry.roadWorks = Number(
+        typeof trcfg.roadWorks === 'undefined' ? 1 : trcfg.roadWorks
+      )
+        ? 1
+        : 0;
+      entry.radars = Number(
+        typeof trcfg.radars === 'undefined' ? 1 : trcfg.radars
+      )
+        ? 1
+        : 0;
+      entry.results = parseInt(trcfg.results, 10) || 50;
       if (trcfg.maxDistance !== '' && typeof trcfg.maxDistance !== 'undefined')
         entry.maxDistance = parseFloat(trcfg.maxDistance) || 0;
       if (trcfg.latitude !== '' && typeof trcfg.latitude !== 'undefined')

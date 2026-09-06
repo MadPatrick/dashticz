@@ -25,6 +25,20 @@ v4.0.5 (6-9-2026)
   alongside optional latitude/longitude overrides that default to
   Domoticz's own configured system location.
 
+* **Fixes**
+
+- Traffic info widget: choosing RWS in the Provider dropdown had no effect
+  for a widget that already had its own explicit ``provider`` set (e.g. a
+  hand-written or previously-saved ``provider: 'anwb'`` block), since that
+  per-block value always overrides a global default. ``provider``,
+  ``customUrl``, ``trafficJams``, ``roadWorks``, ``radars`` and ``results``
+  are now per-block properties, each with a dedicated field (the three
+  toggles as on/off switches, results as a number field) in the Widget
+  editor's Traffic information quick-add, instead of showing up as raw rows
+  in the generic Extra fields editor. Re-opening an already-placed widget's
+  config now also correctly reads these back from its own saved block. Only
+  the ANWB API key remains a global Settings entry.
+
 v4.0.4 (5-9-2026)
 ----------------------
 

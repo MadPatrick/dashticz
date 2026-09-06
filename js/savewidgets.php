@@ -93,8 +93,6 @@ $allowedSettings = [
     'security_panel_lock'    => 'security_panel_lock',
     // traffic info
     'anwb_apikey'            => 'string',
-    'traffic_provider'       => 'traffic_provider',
-    'traffic_custom_url'     => 'string',
     // google maps
     'gm_api'                 => 'string',
     'gm_zoomlevel'           => 'number',
@@ -140,8 +138,6 @@ $allowedWeatherIcons = ['line', 'linestatic', 'fill', 'static', 'meteo'];
 
 $allowedWaqiLayouts = ['xsmall', 'small', 'large', 'xlarge', 'xxl'];
 
-$allowedTrafficProviders = ['rws', 'anwb', 'custom'];
-
 // Process optional config settings
 $configSettings = [];
 if (isset($data['settings']) && is_array($data['settings'])) {
@@ -171,10 +167,6 @@ if (isset($data['settings']) && is_array($data['settings'])) {
             }
         } elseif ($type === 'waqi_layout') {
             if (in_array((string)$value, $allowedWaqiLayouts, true)) {
-                $configSettings[$key] = (string)$value;
-            }
-        } elseif ($type === 'traffic_provider') {
-            if (in_array((string)$value, $allowedTrafficProviders, true)) {
                 $configSettings[$key] = (string)$value;
             }
         } elseif ($type === 'security_panel_lock') {

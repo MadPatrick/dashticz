@@ -27,6 +27,14 @@ segStart and segEnd can also be provided to filter the results even more (ANWB o
 
 .. image :: img/trafficinfo.jpg
 
+Using the Widget editor
+-----------------------
+
+In Wizard mode, ``provider``, ``customUrl``, ``trafficJams``, ``roadWorks``, ``radars``,
+``results``, ``maxDistance``, ``latitude`` and ``longitude`` can all be set from the Widget
+editor's Traffic information quick-add, without hand-writing a block. The ANWB API key is
+set separately, in Settings, since it's shared by every trafficinfo widget.
+
 
 Parameters
 ----------
@@ -53,7 +61,7 @@ Parameters
     - URL of your own JSON endpoint, only used when ``provider`` is ``'custom'``. See :ref:`trafficinfo_custom`.
   * - maxDistance
     - | Only show items within this distance, in km straight-line, from ``latitude``/``longitude``. Leave unset to show everything (the default).
-      | Currently only filters the ``rws`` provider, and ``custom`` items that provide their own ``lat``/``lon``. Also configurable from the Widget editor's Traffic information quick-add.
+      | Currently only filters the ``rws`` provider, and ``custom`` items that provide their own ``lat``/``lon``.
   * - latitude, longitude
     - | Reference location for ``maxDistance``. Leave both unset to use Domoticz's own configured system location (Settings > System > Location) - only set these yourself if that isn't configured.
   * - icon
