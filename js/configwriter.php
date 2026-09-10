@@ -1689,9 +1689,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
         if (isset($block['idx']) && $block['idx'] !== null && $block['idx'] !== '') {
             $props['idx'] = (int)$block['idx'];
         }
@@ -1708,9 +1711,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
     } elseif ($kind === 'iframe') {
         // js/components/frame.js dispatches on a truthy frameurl alone - no
         // `type` of its own, same convention as html above. frameurl itself
@@ -1725,9 +1731,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
     } elseif ($kind === 'calendar') {
         // js/components/calendar.js dispatches on a truthy icalurl string
         // alone - no `type` of its own, same convention as html/iframe
@@ -1742,9 +1751,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
     } elseif ($kind === 'publictransport') {
         // js/components/publictransport.js dispatches on a truthy station
         // or tpc alone - no `type` of its own, same convention as
@@ -1760,9 +1772,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
     } elseif ($kind === 'timegraph') {
         // js/components/timegraph.js dispatches on an explicit
         // type: 'timegraph' alone - unlike html/iframe/calendar/
@@ -1780,9 +1795,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
     } elseif ($kind === 'xmltvguide') {
         // js/components/xmltvguide.js dispatches on a truthy xmltvurl
         // alone - no `type` of its own, same convention as
@@ -1798,9 +1816,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
     } elseif ($kind === 'camera') {
         // js/components/camera.js dispatches on an explicit type: 'camera'
         // alone - unlike html/iframe/calendar/publictransport/xmltvguide
@@ -1818,9 +1839,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
     } elseif ($kind === 'news') {
         // js/components/news.js dispatches on a truthy feed alone - no
         // `type` of its own, same convention as html/iframe/calendar/
@@ -1836,9 +1860,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
     } elseif ($kind === 'graph') {
         // js/components/graph.js dispatches on a truthy devices array alone -
         // no `type` of its own, same convention as html/iframe/calendar/
@@ -1855,9 +1882,12 @@ function configwriter_special_block_props($block)
         if (array_key_exists('icon', $block) && $block['icon'] !== null) {
             $props['icon'] = (string)$block['icon'];
         }
-        if (!empty($block['last_update'])) {
-            $props['last_update'] = true;
-        }
+        // Written as an explicit true/false (not omitted when unchecked) so
+        // it can override settings['last_update']'s global default in either
+        // direction - see js/blocks.js's showUpdateInformation() last-update
+        // check, which only ever suppresses the global default when this
+        // property is present and explicitly false.
+        $props['last_update'] = !empty($block['last_update']);
     } elseif ($kind === 'lms') {
         // js/components/lms.js dispatches on type: 'lms' - unlike html/group
         // above, always written, the same as group's own type: 'group'
