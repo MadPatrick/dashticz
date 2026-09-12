@@ -4199,11 +4199,11 @@ img.icon {
   bottom: -8px !important;
 }
 
-/* An oval handle spanning the full track width, not a small round dot.
-   left: 0/right: 0 with width: auto stretches it to the track's own
-   width instead of a fixed px size, so border-radius: 50% renders it as
-   an ellipse (CSS's usual trick for an oval: 50% radius on a box wider
-   than it is tall). height !important: jQuery UI's own bundled default
+/* A rounded-rectangle handle spanning the full track width, not a small
+   round dot. left: 0/right: 0 with width: auto stretches it to the
+   track's own width instead of a fixed px size; border-radius stays a
+   flat 6px (not 50%, which would draw an ellipse instead of a
+   rectangle). height !important: jQuery UI's own bundled default
    theme sizes the handle via its own em-based rule (.ui-slider
    .ui-slider-handle), which this already outranks on specificity, but
    pin it anyway. jQuery UI positions the handle with "bottom: value%",
@@ -4240,7 +4240,7 @@ img.icon {
   margin-top: 0 !important;
   margin-bottom: -8px !important;
   border: 2px solid rgba(255, 255, 255, 0.95) !important;
-  border-radius: 50% !important;
+  border-radius: 6px !important;
   background: #1c1c22 !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   cursor: grab;
