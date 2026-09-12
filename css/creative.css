@@ -1560,26 +1560,49 @@ next css sets the default height of the frame popup
 /* Screen Editor add menu */
 .dt-screeneditor-add-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(100px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(5, minmax(76px, 1fr));
+  gap: 10px;
 }
 
 .dt-screeneditor-add-tile {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-width: 100px;
-  min-height: 100px;
+  min-width: 76px;
+  min-height: 76px;
   aspect-ratio: 1 / 1;
-  padding: 12px 8px;
+  padding: 8px 6px;
   border: 1px solid #ced4da;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #f8f9fa;
   color: #212529;
   text-align: center;
   cursor: pointer;
+}
+
+.dt-screeneditor-add-tile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  transform: skewX(-20deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(237, 233, 224, 0.25),
+    transparent
+  );
+}
+
+.dt-screeneditor-add-tile:hover::before {
+  left: 120%;
+  transition: left 0.9s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .dt-screeneditor-add-tile:hover,
@@ -1590,12 +1613,12 @@ next css sets the default height of the frame popup
 }
 
 .dt-screeneditor-add-tile i {
-  margin: 0 0 8px !important;
-  font-size: 28px !important;
+  margin: 0 0 6px !important;
+  font-size: 22px !important;
 }
 
 .dt-screeneditor-add-tile span {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -2388,7 +2411,7 @@ body.dle-active {
 
 @media (max-width: 575.98px) {
   .dt-screeneditor-add-grid {
-    grid-template-columns: repeat(2, minmax(100px, 1fr));
+    grid-template-columns: repeat(3, minmax(76px, 1fr));
   }
 
   .de-custom-field-row,
