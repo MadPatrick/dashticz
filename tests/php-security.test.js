@@ -758,6 +758,17 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
     source,
     /A cluster block\\'s titles map values must be non-empty strings\./
   );
+  /* Cluster's optional switchScale field (js/components/cluster.js sets
+     --cluster-switch-scale from it): must be a number within the same
+     0.3-3 range js/deviceeditor.js's own input already clamps to
+     client-side - a hand-crafted request could otherwise send an
+     arbitrary/non-numeric value straight into a CSS custom property. */
+  assert.match(source, /isset\(\$customFields\['switchScale'\]\)/);
+  assert.match(source, /A cluster block\\'s switchScale must be a number\./);
+  assert.match(
+    source,
+    /A cluster block\\'s switchScale must be between 0\.3 and 3\./
+  );
   /* Lyrion Music Server block: server/port/player validated, credentials
      never echoed back in an error message. */
   assert.match(source, /kind === 'lms'/);

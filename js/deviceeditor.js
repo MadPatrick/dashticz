@@ -270,6 +270,9 @@ var DashticzDeviceEditor = (function () {
         cluster_mode_temperature: 'Temperature',
         cluster_mode_locked_help:
           "Row type can't be changed after the cluster has been saved.",
+        cluster_switch_scale: 'Switch size',
+        cluster_switch_scale_help:
+          'Scale factor for the on/off toggle (e.g. 1.5 for 150%). Leave empty for the default size.',
         invalid_cluster_name: 'Enter a valid unique cluster name.',
         invalid_cluster_devices: 'Add at least one device.',
         html_block: 'HTML Block',
@@ -3686,6 +3689,45 @@ var DashticzDeviceEditor = (function () {
     return html;
   }
 
+  // Cluster's switch-size field: only meaningful in Switch mode (Temperature
+  // rows have no toggle), so callers re-render this via idPrefix + '-switch-
+  // scale-wrap' whenever mode changes instead of always showing it. Stored
+  // as the block's optional switchScale custom field (js/components/
+  // cluster.js reads it into --cluster-switch-scale, css/creative.css's
+  // .cluster-row-switch scales itself with it) - value is the field's
+  // current text (empty string means "use the default size").
+  function _clusterSwitchScaleFieldHtml(idPrefix, t, mode, value) {
+    if (mode === 'temperature') return '';
+    return (
+      '<div class="mb-3" id="' +
+      _esc(idPrefix) +
+      '-switch-scale-wrap"><label class="form-label" for="' +
+      _esc(idPrefix) +
+      '-switch-scale">' +
+      _esc(t.cluster_switch_scale) +
+      '</label>' +
+      '<input type="number" class="form-control" id="' +
+      _esc(idPrefix) +
+      '-switch-scale" min="0.3" max="3" step="0.1" placeholder="1" value="' +
+      _esc(value || '') +
+      '" autocomplete="off">' +
+      '<div class="form-text">' +
+      _esc(t.cluster_switch_scale_help) +
+      '</div></div>'
+    );
+  }
+
+  // Parses/clamps the switch-size field's raw text into a number saveblocks
+  // .php will accept (0.3-3), or null when it should be left unset (empty,
+  // non-numeric, or <= 0 - meaning "use the default size").
+  function _readClusterSwitchScale(rawValue) {
+    var text = $.trim(String(rawValue || ''));
+    if (!text) return null;
+    var num = parseFloat(text);
+    if (!(num > 0)) return null;
+    return Math.round(Math.min(3, Math.max(0.3, num)) * 100) / 100;
+  }
+
   /* Cluster: a fixed list of Domoticz devices shown as individually-
    * switchable rows in one block (js/components/cluster.js), rather than
    * Group's single combined toggle. Saved as its own specialType
@@ -3698,6 +3740,7 @@ var DashticzDeviceEditor = (function () {
     $('#clusterblockpopup').remove();
 
     var clusterMode = '';
+    var clusterSwitchScaleValue = '';
     var deviceList = _clusterAvailableDeviceList();
     var usageList = _clusterUsageDeviceList();
     var pendingDevices = [];
@@ -3754,6 +3797,10 @@ var DashticzDeviceEditor = (function () {
     html +=
       '<input type="text" class="form-control" id="cl-device-title" autocomplete="off"></div>';
     html += _clusterModeButtonsHtml(t, clusterMode);
+    html +=
+      '<div id="cl-switch-scale-container">' +
+      _clusterSwitchScaleFieldHtml('cl', t, clusterMode, '') +
+      '</div>';
     html +=
       '<div class="mb-3"><label class="form-label" for="cl-device-select">' +
       _esc(t.cluster_devices) +
@@ -3832,6 +3879,10 @@ var DashticzDeviceEditor = (function () {
       if (target) target.title = title;
     });
 
+    $popup.on('input', '#cl-switch-scale', function () {
+      clusterSwitchScaleValue = String($(this).val() || '');
+    });
+
     $popup.on('click', '.cl-mode-button', function () {
       var mode = String($(this).attr('data-cluster-mode') || '');
       if (mode === clusterMode) return;
@@ -3853,6 +3904,14 @@ var DashticzDeviceEditor = (function () {
       $('#cl-device-select').html(deviceOptionsHtml());
       $('#cl-device-pending').html(pendingListHtml());
       $('#cl-device-help').text(devicesHelpText());
+      $('#cl-switch-scale-container').html(
+        _clusterSwitchScaleFieldHtml(
+          'cl',
+          t,
+          clusterMode,
+          clusterSwitchScaleValue
+        )
+      );
     });
 
     $('#cl-save-btn').on('click', function () {
@@ -3916,6 +3975,16 @@ var DashticzDeviceEditor = (function () {
           setting: JSON.stringify(titlesMap),
           value: titlesMap,
         });
+      }
+      if (clusterMode !== 'temperature') {
+        var switchScale = _readClusterSwitchScale($('#cl-switch-scale').val());
+        if (switchScale !== null) {
+          customRows.push({
+            field: 'switchScale',
+            setting: String(switchScale),
+            value: switchScale,
+          });
+        }
       }
       if (clusterMode === 'temperature') {
         customRows.push({
@@ -6921,6 +6990,7 @@ var DashticzDeviceEditor = (function () {
     var clusterUsageList = null;
     var clusterPendingDevices = [];
     var clusterMode = '';
+    var clusterSwitchScaleValue = '';
     if (isClusterBlock) {
       var clusterValues = {};
       customRows.forEach(function (row) {
@@ -6928,6 +6998,10 @@ var DashticzDeviceEditor = (function () {
         if (field) clusterValues[field] = row.value;
       });
       clusterMode = clusterValues.mode === 'temperature' ? 'temperature' : '';
+      clusterSwitchScaleValue =
+        typeof clusterValues.switchscale === 'number'
+          ? String(clusterValues.switchscale)
+          : '';
       var clusterDeviceIdxList = Array.isArray(clusterValues.devices)
         ? clusterValues.devices
         : [];
@@ -6962,7 +7036,8 @@ var DashticzDeviceEditor = (function () {
           field !== 'devices' &&
           field !== 'usage' &&
           field !== 'mode' &&
-          field !== 'titles'
+          field !== 'titles' &&
+          field !== 'switchscale'
         );
       });
     }
@@ -7346,6 +7421,16 @@ var DashticzDeviceEditor = (function () {
       html += _graphFieldsHtml('de-config', graphFields);
     } else if (isClusterBlock) {
       html += _clusterModeButtonsHtml(t, clusterMode, true);
+      // Unlike the quick-add popup, mode is locked here (see the 'locked'
+      // arg above) and never changes, so this can render once from the
+      // current mode instead of needing the create popup's re-render-on-
+      // toggle wrapper.
+      html += _clusterSwitchScaleFieldHtml(
+        'de-config',
+        t,
+        clusterMode,
+        clusterSwitchScaleValue
+      );
       html += _clusterFieldsHtml(
         'de-config',
         t,
@@ -7726,6 +7811,7 @@ var DashticzDeviceEditor = (function () {
         customKeys.usage = true;
         customKeys.mode = true;
         customKeys.titles = true;
+        customKeys.switchscale = true;
       }
       if (isGraphBlock) {
         customKeys.graph = true;
@@ -8084,6 +8170,18 @@ var DashticzDeviceEditor = (function () {
             setting: JSON.stringify(clusterTitlesOut),
             value: clusterTitlesOut,
           });
+        }
+        if (clusterMode !== 'temperature') {
+          var editSwitchScale = _readClusterSwitchScale(
+            $('#de-config-switch-scale').val()
+          );
+          if (editSwitchScale !== null) {
+            storedRows.push({
+              field: 'switchScale',
+              setting: String(editSwitchScale),
+              value: editSwitchScale,
+            });
+          }
         }
         if (clusterMode === 'temperature') {
           storedRows.push({

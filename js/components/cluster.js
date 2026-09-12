@@ -152,6 +152,17 @@ var DT_cluster = (function () {
     });
     html += '</div>';
     me.$mountPoint.find('.dt_state').html(html);
+    // Optional block.switchScale resizes .cluster-row-switch (css/
+    // creative.css reads --cluster-switch-scale with a var() fallback of
+    // 1, so this only needs to be set when an override is actually
+    // configured); set on every refresh, not just run(), so a live config
+    // update (Dashticz.subscribeBlock -> special.refresh, no special.run)
+    // still picks up a changed value.
+    var switchScale = parseFloat(me.block.switchScale);
+    me.$mountPoint.css(
+      '--cluster-switch-scale',
+      switchScale > 0 ? switchScale : ''
+    );
 
     if (me.mode === 'temperature') return;
 

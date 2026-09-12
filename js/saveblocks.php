@@ -410,6 +410,21 @@ foreach ($data['devices'] as $entry) {
                         }
                     }
                 }
+                // switchScale (optional): resizes the switch toggle
+                // (js/components/cluster.js sets --cluster-switch-scale
+                // from it, read by css/creative.css's .cluster-row-switch).
+                // Absent means the default size; js/deviceeditor.js's own
+                // input already clamps to this same 0.3-3 range, but that's
+                // client-side only.
+                if (isset($customFields['switchScale'])) {
+                    $clusterSwitchScale = $customFields['switchScale'];
+                    if (!is_int($clusterSwitchScale) && !is_float($clusterSwitchScale)) {
+                        dashticz_json_error(400, 'A cluster block\'s switchScale must be a number.');
+                    }
+                    if ($clusterSwitchScale < 0.3 || $clusterSwitchScale > 3) {
+                        dashticz_json_error(400, 'A cluster block\'s switchScale must be between 0.3 and 3.');
+                    }
+                }
             }
         } elseif ($kind === 'timegraph') {
             // Only Icon and Last update apply (no Data/Switch/Dial - see

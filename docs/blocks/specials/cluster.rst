@@ -67,6 +67,10 @@ Block parameters
         between the two, so this is picked per row in the Cluster popup
         rather than auto-detected.
       | ``{ 12: 13 }``: Device 12's row also shows device 13's consumption
+  * - switchScale
+    - | Switch mode only. Optional: a scale factor (``0.3``-``3``) resizing
+        the on/off toggle. Absent (the default) means the normal size.
+      | ``1.5``: Toggles render at 150% size
 
 Example
 -------
@@ -78,7 +82,8 @@ A switch cluster::
       title: 'Living room lights',
       devices: [12, 14, 16],
       titles: { 12: 'Ceiling light' },
-      usage: { 12: 13 }
+      usage: { 12: 13 },
+      switchScale: 1.5
     }
 
 A temperature cluster::
