@@ -5744,7 +5744,7 @@ test('a saved Cluster block can actually be re-opened and saved from the Layout 
   // saved Cluster block impossible to edit.
   assert.match(
     deviceEditor,
-    /if \(isClusterBlock\) \{[\s\S]{0,1400}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return field !== 'devices' && field !== 'usage';[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
+    /if \(isClusterBlock\) \{[\s\S]{0,1700}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return field !== 'devices' && field !== 'usage' && field !== 'mode';[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
   );
 
   // A dedicated add/remove device picker (mirroring _showClusterPopup's own)
@@ -5869,7 +5869,7 @@ test("Cluster rows can show a companion device's power consumption", () => {
   );
   assert.match(
     deviceEditor,
-    /return field !== 'devices' && field !== 'usage';/
+    /return field !== 'devices' && field !== 'usage' && field !== 'mode';/
   );
 
   // js/components/cluster.js: subscribes to each referenced companion
@@ -5877,7 +5877,10 @@ test("Cluster rows can show a companion device's power consumption", () => {
   // stays on) and reads the right field per Domoticz Type - a plain
   // 'Usage' device's current reading is in .Data, while a kWh meter's .Data
   // is its cumulative energy instead, with the *current* wattage in .Usage.
-  assert.match(cluster, /me\.usageMap = me\.block\.usage \|\| \{\};/);
+  assert.match(
+    cluster,
+    /me\.usageMap = me\.mode === 'switch' \? me\.block\.usage \|\| \{\} : \{\};/
+  );
   assert.match(cluster, /Dashticz\.subscribeDevice\(me, usageIdx, false,/);
   assert.match(cluster, /usageDevice\.Type === 'Usage'/);
   assert.match(cluster, /cluster-row-usage/);
@@ -5887,6 +5890,72 @@ test("Cluster rows can show a companion device's power consumption", () => {
   assert.match(saveblocks, /isset\(\$customFields\['usage'\]\)/);
 
   assert.match(css, /\.cluster-row-usage \{/);
+});
+
+test('Cluster rows can be Switch or Temperature, never mixed', () => {
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+  const cluster = fs.readFileSync(
+    path.join(root, 'js/components/cluster.js'),
+    'utf8'
+  );
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const saveblocks = fs.readFileSync(
+    path.join(root, 'js/saveblocks.php'),
+    'utf8'
+  );
+
+  // The candidate list for Temperature mode is restricted to plain
+  // temperature-reporting Domoticz Types, built independently of
+  // _getAvailableDevices() (whose sub-value expansion would otherwise hide
+  // a whole Temp+Humidity+Baro device behind un-offerable idx_1/2/3
+  // entries - see the function's own comment).
+  assert.match(deviceEditor, /function _clusterTemperatureDeviceList\(\) \{/);
+  assert.match(deviceEditor, /'Temp \+ Humidity \+ Baro': true,/);
+
+  // A shared mode-button pair (mirroring the existing Dial/Bar/Needle
+  // mutually-exclusive button-group pattern already used elsewhere in this
+  // same popup) is rendered in both the quick-add popup and the Device
+  // Config popup's own Cluster section, and clicking it clears whatever
+  // was picked under the other mode - the two device sets never overlap.
+  assert.match(deviceEditor, /function _clusterModeButtonsHtml\(/);
+  assert.match(deviceEditor, /cl-mode-button/);
+  assert.match(
+    deviceEditor,
+    /pendingDevices = \[\];\s*\n\s*deviceList =\s*\n\s*clusterMode === 'temperature'/
+  );
+  assert.match(
+    deviceEditor,
+    /clusterPendingDevices = \[\];\s*\n\s*clusterDeviceList =\s*\n\s*clusterMode === 'temperature'/
+  );
+
+  // Persisted as an optional 'mode' custom field (temperature-only;
+  // absent means the default switch rows) - filtered out of the generic
+  // custom-fields list like devices/usage, and reserved so a hand-typed
+  // 'mode' field can't collide with it.
+  assert.match(deviceEditor, /customKeys\.mode = true;/);
+  assert.match(
+    deviceEditor,
+    /field !== 'devices' && field !== 'usage' && field !== 'mode';/
+  );
+  assert.match(deviceEditor, /field: 'mode',\s*\n\s*setting: 'temperature',/);
+
+  // js/components/cluster.js: temperature rows read the device's own .Temp
+  // field directly (no companion device, unlike switch mode's usage map)
+  // and never wire a switch click handler.
+  assert.match(
+    cluster,
+    /me\.mode = me\.block\.mode === 'temperature' \? 'temperature' : 'switch';/
+  );
+  assert.match(cluster, /function temperatureRowHtml\(/);
+  assert.match(cluster, /device\.Temp\.toFixed\(1\) \+ _TEMP_SYMBOL/);
+  assert.match(cluster, /if \(me\.mode === 'temperature'\) return;/);
+  assert.match(css, /\.cluster-row-temp \{/);
+
+  // Server-side: only 'temperature' (or absent) is a valid mode.
+  assert.match(saveblocks, /\$customFields\['mode'\] !== 'temperature'/);
 });
 
 test('rendered Graph blocks keep the Layout Editor config cog and open their own config', () => {

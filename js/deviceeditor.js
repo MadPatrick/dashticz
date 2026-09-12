@@ -258,9 +258,14 @@ var DashticzDeviceEditor = (function () {
         cluster_devices: 'Devices',
         cluster_devices_help:
           'Pick a device and click + to add it to the cluster. Each device gets its own on/off toggle.',
+        cluster_devices_help_temperature:
+          'Pick a device and click + to add it to the cluster. Each device shows its own temperature reading.',
         cluster_no_devices: 'No devices added yet.',
         cluster_usage: 'Consumption',
         cluster_usage_none: '— No consumption —',
+        cluster_mode: 'Row type',
+        cluster_mode_switch: 'Switch',
+        cluster_mode_temperature: 'Temperature',
         invalid_cluster_name: 'Enter a valid unique cluster name.',
         invalid_cluster_devices: 'Add at least one device.',
         html_block: 'HTML Block',
@@ -3577,6 +3582,85 @@ var DashticzDeviceEditor = (function () {
     return html;
   }
 
+  // Candidate list for Temperature mode: plain temperature-reporting
+  // devices (Domoticz Type 'Temp', or one of the Temp+Humidity/Baro combo
+  // types js/blocktypes.js groups under the same THB display shape),
+  // picked directly by their own idx - unlike the switch picker, this does
+  // NOT go through _getAvailableDevices()'s sub-value expansion (a
+  // Temp+Humidity+Baro device has 3 Dashticz "sub-values", which would
+  // otherwise hide the whole device behind three un-offerable idx_1/2/3
+  // entries): a Cluster row here reads a device's own .Temp field directly
+  // off its single base idx. Like _clusterUsageDeviceList(), does not
+  // exclude devices already used elsewhere on the current screen.
+  function _clusterTemperatureDeviceList() {
+    var TEMP_TYPES = {
+      Temp: true,
+      'Temp + Humidity': true,
+      'Temp + Baro': true,
+      'Temp + Humidity + Baro': true,
+    };
+    var allDevices = Domoticz.getAllDevices();
+    var list = [];
+    Object.keys(allDevices).forEach(function (key) {
+      if (!key || key[0] === '_') return;
+      var idx = parseInt(key, 10);
+      if (!(idx > 0 && String(idx) === key)) return;
+      var d = allDevices[key];
+      if (!TEMP_TYPES[d.Type]) return;
+      list.push({ idx: idx, name: d.Name || 'Device ' + idx });
+    });
+    return list;
+  }
+
+  // Switch vs Temperature mode buttons, shared between the quick-add popup
+  // and the Device Config popup's own Cluster section. A Cluster's rows
+  // are either all switches (with an optional consumption companion) or
+  // all temperature readings, never mixed - see cluster.js. mode is
+  // '' (falsy) or 'temperature'; anything else, including absent, means
+  // the default switch mode.
+  function _clusterModeButtonsHtml(t, mode) {
+    var html =
+      '<div class="mb-3"><label class="form-label">' +
+      _esc(t.cluster_mode) +
+      '</label><div>';
+    html +=
+      '<div class="btn-group" role="group" aria-label="' +
+      _esc(t.cluster_mode) +
+      '">';
+    [
+      {
+        mode: '',
+        label: t.cluster_mode_switch,
+        icon: 'fas fa-toggle-on',
+      },
+      {
+        mode: 'temperature',
+        label: t.cluster_mode_temperature,
+        icon: 'fas fa-thermometer-half',
+      },
+    ].forEach(function (item) {
+      var active = (mode || '') === item.mode;
+      html +=
+        '<button type="button" class="btn btn-outline-secondary cl-mode-button' +
+        (active ? ' active' : '') +
+        '" data-cluster-mode="' +
+        item.mode +
+        '" aria-pressed="' +
+        (active ? 'true' : 'false') +
+        '" title="' +
+        _esc(item.label) +
+        '" style="min-width:96px;">' +
+        '<i class="' +
+        item.icon +
+        '" aria-hidden="true"></i>' +
+        '<span class="d-block small">' +
+        _esc(item.label) +
+        '</span></button>';
+    });
+    html += '</div></div></div>';
+    return html;
+  }
+
   /* Cluster: a fixed list of Domoticz devices shown as individually-
    * switchable rows in one block (js/components/cluster.js), rather than
    * Group's single combined toggle. Saved as its own specialType
@@ -3588,6 +3672,7 @@ var DashticzDeviceEditor = (function () {
     var t = _translations();
     $('#clusterblockpopup').remove();
 
+    var clusterMode = '';
     var deviceList = _clusterAvailableDeviceList();
     var usageList = _clusterUsageDeviceList();
     var pendingDevices = [];
@@ -3597,7 +3682,17 @@ var DashticzDeviceEditor = (function () {
     }
 
     function pendingListHtml() {
-      return _clusterPendingListHtml(t, pendingDevices, usageList);
+      return _clusterPendingListHtml(
+        t,
+        pendingDevices,
+        clusterMode === 'temperature' ? null : usageList
+      );
+    }
+
+    function devicesHelpText() {
+      return clusterMode === 'temperature'
+        ? t.cluster_devices_help_temperature
+        : t.cluster_devices_help;
     }
 
     var html =
@@ -3633,6 +3728,7 @@ var DashticzDeviceEditor = (function () {
       '</label>';
     html +=
       '<input type="text" class="form-control" id="cl-device-title" autocomplete="off"></div>';
+    html += _clusterModeButtonsHtml(t, clusterMode);
     html +=
       '<div class="mb-3"><label class="form-label" for="cl-device-select">' +
       _esc(t.cluster_devices) +
@@ -3646,7 +3742,10 @@ var DashticzDeviceEditor = (function () {
       '<button type="button" class="btn btn-success btn-sm" id="cl-add-device-btn">' +
       '<i class="fas fa-plus" aria-hidden="true"></i></button>';
     html += '</div>';
-    html += '<div class="form-text">' + _esc(t.cluster_devices_help) + '</div>';
+    html +=
+      '<div class="form-text" id="cl-device-help">' +
+      _esc(devicesHelpText()) +
+      '</div>';
     html +=
       '<div id="cl-device-pending" class="mt-2">' +
       pendingListHtml() +
@@ -3697,6 +3796,29 @@ var DashticzDeviceEditor = (function () {
         return d.idx === idx;
       });
       if (target) target.usageIdx = usageIdx;
+    });
+
+    $popup.on('click', '.cl-mode-button', function () {
+      var mode = String($(this).attr('data-cluster-mode') || '');
+      if (mode === clusterMode) return;
+      clusterMode = mode;
+      $popup.find('.cl-mode-button').each(function () {
+        var active = String($(this).attr('data-cluster-mode') || '') === mode;
+        $(this)
+          .toggleClass('active', active)
+          .attr('aria-pressed', active ? 'true' : 'false');
+      });
+      // Switch and temperature device sets don't overlap - a pick made
+      // under the previous mode would no longer make sense, so clear it
+      // rather than leave a stale, now-invalid mix.
+      pendingDevices = [];
+      deviceList =
+        clusterMode === 'temperature'
+          ? _clusterTemperatureDeviceList()
+          : _clusterAvailableDeviceList();
+      $('#cl-device-select').html(deviceOptionsHtml());
+      $('#cl-device-pending').html(pendingListHtml());
+      $('#cl-device-help').text(devicesHelpText());
     });
 
     $('#cl-save-btn').on('click', function () {
@@ -3750,16 +3872,24 @@ var DashticzDeviceEditor = (function () {
         setting: JSON.stringify(deviceIdxList),
         value: deviceIdxList,
       });
-      var usageMap = {};
-      pendingDevices.forEach(function (d) {
-        if (d.usageIdx) usageMap[d.idx] = d.usageIdx;
-      });
-      if (Object.keys(usageMap).length) {
+      if (clusterMode === 'temperature') {
         customRows.push({
-          field: 'usage',
-          setting: JSON.stringify(usageMap),
-          value: usageMap,
+          field: 'mode',
+          setting: 'temperature',
+          value: 'temperature',
         });
+      } else {
+        var usageMap = {};
+        pendingDevices.forEach(function (d) {
+          if (d.usageIdx) usageMap[d.idx] = d.usageIdx;
+        });
+        if (Object.keys(usageMap).length) {
+          customRows.push({
+            field: 'usage',
+            setting: JSON.stringify(usageMap),
+            value: usageMap,
+          });
+        }
       }
 
       var orderKey = _specialOrderKey(reference);
@@ -6120,7 +6250,8 @@ var DashticzDeviceEditor = (function () {
     t,
     deviceList,
     pendingDevices,
-    usageList
+    usageList,
+    mode
   ) {
     var html =
       '<div class="de-cluster-fields" data-cluster-prefix="' +
@@ -6139,7 +6270,16 @@ var DashticzDeviceEditor = (function () {
       _esc(prefix) +
       '-cluster-add-btn"><i class="fas fa-plus" aria-hidden="true"></i></button>';
     html += '</div>';
-    html += '<div class="form-text">' + _esc(t.cluster_devices_help) + '</div>';
+    html +=
+      '<div class="form-text" id="' +
+      _esc(prefix) +
+      '-cluster-help">' +
+      _esc(
+        mode === 'temperature'
+          ? t.cluster_devices_help_temperature
+          : t.cluster_devices_help
+      ) +
+      '</div>';
     html +=
       '<div id="' +
       _esc(prefix) +
@@ -6735,12 +6875,14 @@ var DashticzDeviceEditor = (function () {
     var clusterDeviceList = null;
     var clusterUsageList = null;
     var clusterPendingDevices = [];
+    var clusterMode = '';
     if (isClusterBlock) {
       var clusterValues = {};
       customRows.forEach(function (row) {
         var field = _normaliseCustomFieldName(row && row.field).toLowerCase();
         if (field) clusterValues[field] = row.value;
       });
+      clusterMode = clusterValues.mode === 'temperature' ? 'temperature' : '';
       var clusterDeviceIdxList = Array.isArray(clusterValues.devices)
         ? clusterValues.devices
         : [];
@@ -6758,11 +6900,14 @@ var DashticzDeviceEditor = (function () {
           usageIdx: usageIdx,
         };
       });
-      clusterDeviceList = _clusterAvailableDeviceList();
+      clusterDeviceList =
+        clusterMode === 'temperature'
+          ? _clusterTemperatureDeviceList()
+          : _clusterAvailableDeviceList();
       clusterUsageList = _clusterUsageDeviceList();
       customRows = customRows.filter(function (row) {
         var field = _normaliseCustomFieldName(row && row.field).toLowerCase();
-        return field !== 'devices' && field !== 'usage';
+        return field !== 'devices' && field !== 'usage' && field !== 'mode';
       });
     }
 
@@ -7144,12 +7289,14 @@ var DashticzDeviceEditor = (function () {
     } else if (isGraphBlock) {
       html += _graphFieldsHtml('de-config', graphFields);
     } else if (isClusterBlock) {
+      html += _clusterModeButtonsHtml(t, clusterMode);
       html += _clusterFieldsHtml(
         'de-config',
         t,
         clusterDeviceList,
         clusterPendingDevices,
-        clusterUsageList
+        clusterMode === 'temperature' ? null : clusterUsageList,
+        clusterMode
       );
     }
     html +=
@@ -7196,6 +7343,13 @@ var DashticzDeviceEditor = (function () {
     var $popup = $('#de-config-popup');
     if (isLmsBlock) _wireLmsFields('de-config', $popup);
     if (isClusterBlock) {
+      function clusterEditPendingListHtml() {
+        return _clusterPendingListHtml(
+          t,
+          clusterPendingDevices,
+          clusterMode === 'temperature' ? null : clusterUsageList
+        );
+      }
       $popup.on('click', '#de-config-cluster-add-btn', function () {
         var $select = $popup.find('#de-config-cluster-select');
         var idx = parseInt($select.val(), 10);
@@ -7208,9 +7362,7 @@ var DashticzDeviceEditor = (function () {
         );
         $popup
           .find('#de-config-cluster-pending')
-          .html(
-            _clusterPendingListHtml(t, clusterPendingDevices, clusterUsageList)
-          );
+          .html(clusterEditPendingListHtml());
       });
       $popup.on(
         'click',
@@ -7231,13 +7383,7 @@ var DashticzDeviceEditor = (function () {
             );
           $popup
             .find('#de-config-cluster-pending')
-            .html(
-              _clusterPendingListHtml(
-                t,
-                clusterPendingDevices,
-                clusterUsageList
-              )
-            );
+            .html(clusterEditPendingListHtml());
         }
       );
       $popup.on(
@@ -7252,6 +7398,44 @@ var DashticzDeviceEditor = (function () {
           if (target) target.usageIdx = usageIdx;
         }
       );
+      $popup.on('click', '.cl-mode-button', function () {
+        var mode = String($(this).attr('data-cluster-mode') || '');
+        if (mode === clusterMode) return;
+        clusterMode = mode;
+        $popup.find('.cl-mode-button').each(function () {
+          var active = String($(this).attr('data-cluster-mode') || '') === mode;
+          $(this)
+            .toggleClass('active', active)
+            .attr('aria-pressed', active ? 'true' : 'false');
+        });
+        // Switch and temperature device sets don't overlap - a pick made
+        // under the previous mode would no longer make sense, so clear it
+        // rather than leave a stale, now-invalid mix.
+        clusterPendingDevices = [];
+        clusterDeviceList =
+          clusterMode === 'temperature'
+            ? _clusterTemperatureDeviceList()
+            : _clusterAvailableDeviceList();
+        $popup
+          .find('#de-config-cluster-select')
+          .html(
+            _clusterDeviceOptionsHtml(
+              t,
+              clusterDeviceList,
+              clusterPendingDevices
+            )
+          );
+        $popup
+          .find('#de-config-cluster-pending')
+          .html(clusterEditPendingListHtml());
+        $popup
+          .find('#de-config-cluster-help')
+          .text(
+            clusterMode === 'temperature'
+              ? t.cluster_devices_help_temperature
+              : t.cluster_devices_help
+          );
+      });
     }
     function refreshCustomFieldButtons() {
       var removable = $popup.find(
@@ -7469,6 +7653,7 @@ var DashticzDeviceEditor = (function () {
       }
       if (isClusterBlock) {
         customKeys.usage = true;
+        customKeys.mode = true;
       }
       if (isGraphBlock) {
         customKeys.graph = true;
@@ -7817,16 +8002,24 @@ var DashticzDeviceEditor = (function () {
           setting: JSON.stringify(clusterDeviceIdxOut),
           value: clusterDeviceIdxOut,
         });
-        var clusterUsageOut = {};
-        clusterPendingDevices.forEach(function (d) {
-          if (d.usageIdx) clusterUsageOut[d.idx] = d.usageIdx;
-        });
-        if (Object.keys(clusterUsageOut).length) {
+        if (clusterMode === 'temperature') {
           storedRows.push({
-            field: 'usage',
-            setting: JSON.stringify(clusterUsageOut),
-            value: clusterUsageOut,
+            field: 'mode',
+            setting: 'temperature',
+            value: 'temperature',
           });
+        } else {
+          var clusterUsageOut = {};
+          clusterPendingDevices.forEach(function (d) {
+            if (d.usageIdx) clusterUsageOut[d.idx] = d.usageIdx;
+          });
+          if (Object.keys(clusterUsageOut).length) {
+            storedRows.push({
+              field: 'usage',
+              setting: JSON.stringify(clusterUsageOut),
+              value: clusterUsageOut,
+            });
+          }
         }
       }
       if (pendingValues) {

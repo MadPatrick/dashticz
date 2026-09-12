@@ -4413,6 +4413,17 @@ img.icon {
   color: var(--text-muted);
 }
 
+/* Temperature mode's own row value (js/components/cluster.js) - unlike
+   the usage span, this is the row's primary value (there is no toggle
+   next to it), so it keeps the row's normal text color instead of the
+   muted one .cluster-row-usage uses for its secondary annotation. */
+.cluster-row-temp {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: var(--font-device-title);
+  font-weight: 600;
+}
+
 .cluster-row-switch {
   position: relative;
   flex: 0 0 auto;

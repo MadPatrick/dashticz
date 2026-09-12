@@ -1,21 +1,25 @@
-/* global Dashticz Domoticz DT_function createDelayedFunction getIconStatusClass switchDevice */
+/* global Dashticz Domoticz DT_function createDelayedFunction getIconStatusClass switchDevice _TEMP_SYMBOL */
 //# sourceURL=js/components/cluster.js
 /* Cluster: a Dashticz-only block that renders a fixed list of Domoticz
- * devices as individual rows - name plus its own on/off toggle - inside
- * one tile, added via the Screen Editor's "Add items" -> Cluster quick-add
- * popup (js/deviceeditor.js's _showClusterPopup()). Unlike Group
- * (js/components/group.js), which shows one combined status/icon and
- * switches every member device to the same new state together, each row
- * here switches only its own device - deliberately kept as a separate
- * block type rather than a Group mode, per the user request this was
- * built from. See docs/blocks/specials/cluster.rst.
+ * devices as individual rows inside one tile, added via the Screen
+ * Editor's "Add items" -> Cluster quick-add popup (js/deviceeditor.js's
+ * _showClusterPopup()). Two mutually exclusive row types (block.mode,
+ * chosen once per cluster in that popup - a cluster is never a mix of
+ * both):
  *
- * A row's own device idx has no wattage of its own - many switches
- * (Shelly/Zigbee2MQTT/Sonoff plugs, etc.) instead report their consumption
- * through a separate companion Domoticz device (Type 'Usage', or Type
- * 'General'/SubType 'kWh'), picked per row via the optional block.usage map
- * (switch idx -> companion device idx) built by js/deviceeditor.js's
- * Cluster popups.
+ * - Switch (block.mode absent/'switch', the default): name plus its own
+ *   on/off toggle. Unlike Group (js/components/group.js), which shows one
+ *   combined status/icon and switches every member device to the same new
+ *   state together, each row here switches only its own device. A row's
+ *   own device idx has no wattage of its own - many switches
+ *   (Shelly/Zigbee2MQTT/Sonoff plugs, etc.) instead report their
+ *   consumption through a separate companion Domoticz device (Type
+ *   'Usage', or Type 'General'/SubType 'kWh'), picked per row via the
+ *   optional block.usage map (switch idx -> companion device idx).
+ * - Temperature (block.mode === 'temperature'): name plus that device's
+ *   own .Temp reading, no toggle - these are plain sensors, not switches.
+ *
+ * See docs/blocks/specials/cluster.rst.
  */
 var DT_cluster = (function () {
   return {
@@ -28,8 +32,9 @@ var DT_cluster = (function () {
       };
     },
     run: function (me) {
+      me.mode = me.block.mode === 'temperature' ? 'temperature' : 'switch';
       me.devices = me.block.devices || [];
-      me.usageMap = me.block.usage || {};
+      me.usageMap = me.mode === 'switch' ? me.block.usage || {} : {};
       me.devices.forEach(function (idx) {
         Dashticz.subscribeDevice(me, idx, false, function () {
           return refresh(me);
@@ -78,6 +83,45 @@ var DT_cluster = (function () {
     return String(raw).replace(/\bWatt\b/, 'W');
   }
 
+  function temperatureRowHtml(idx, device) {
+    var reading =
+      typeof device.Temp === 'number'
+        ? device.Temp.toFixed(1) + _TEMP_SYMBOL
+        : '';
+    return (
+      '<div class="cluster-row" data-idx="' +
+      idx +
+      '">' +
+      '<span class="cluster-row-title">' +
+      (device.Name || idx) +
+      '</span>' +
+      (reading ? '<span class="cluster-row-temp">' + reading + '</span>' : '') +
+      '</div>'
+    );
+  }
+
+  function switchRowHtml(idx, device, usage) {
+    var status = getIconStatusClass(device.Status);
+    return (
+      '<div class="cluster-row ' +
+      status +
+      '" data-idx="' +
+      idx +
+      '">' +
+      '<span class="cluster-row-title">' +
+      (device.Name || idx) +
+      '</span>' +
+      (usage ? '<span class="cluster-row-usage">' + usage + '</span>' : '') +
+      '<label class="cluster-row-switch">' +
+      '<input type="checkbox" class="cluster-row-checkbox"' +
+      (status === 'on' ? ' checked' : '') +
+      '>' +
+      '<span class="cluster-row-slider"></span>' +
+      '</label>' +
+      '</div>'
+    );
+  }
+
   function doRefresh(me) {
     var allDevices = Domoticz.getAllDevices();
     // Cluster is a normal special block: js/dashticz.js's renderBlock()
@@ -90,28 +134,17 @@ var DT_cluster = (function () {
     me.devices.forEach(function (idx) {
       var device = allDevices[idx];
       if (!device) return;
-      var status = getIconStatusClass(device.Status);
-      var usage = usageText(allDevices[me.usageMap[idx]]);
-      html +=
-        '<div class="cluster-row ' +
-        status +
-        '" data-idx="' +
-        idx +
-        '">' +
-        '<span class="cluster-row-title">' +
-        (device.Name || idx) +
-        '</span>' +
-        (usage ? '<span class="cluster-row-usage">' + usage + '</span>' : '') +
-        '<label class="cluster-row-switch">' +
-        '<input type="checkbox" class="cluster-row-checkbox"' +
-        (status === 'on' ? ' checked' : '') +
-        '>' +
-        '<span class="cluster-row-slider"></span>' +
-        '</label>' +
-        '</div>';
+      if (me.mode === 'temperature') {
+        html += temperatureRowHtml(idx, device);
+      } else {
+        var usage = usageText(allDevices[me.usageMap[idx]]);
+        html += switchRowHtml(idx, device, usage);
+      }
     });
     html += '</div>';
     me.$mountPoint.find('.dt_state').html(html);
+
+    if (me.mode === 'temperature') return;
 
     me.$mountPoint
       .find('.cluster-row-switch')

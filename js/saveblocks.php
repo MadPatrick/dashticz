@@ -380,6 +380,13 @@ foreach ($data['devices'] as $entry) {
                         }
                     }
                 }
+                // mode (optional): 'temperature' switches every row from a
+                // toggle to a plain .Temp reading (js/components/cluster.js);
+                // absent/anything else means the default switch rows. The
+                // only value js/deviceeditor.js's Cluster popups ever send.
+                if (isset($customFields['mode']) && $customFields['mode'] !== 'temperature') {
+                    dashticz_json_error(400, 'A cluster block\'s mode must be \'temperature\' if set.');
+                }
             }
         } elseif ($kind === 'timegraph') {
             // Only Icon and Last update apply (no Data/Switch/Dial - see

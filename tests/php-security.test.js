@@ -737,6 +737,14 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
     source,
     /A cluster block\\'s usage map values must be positive integer device idx values\./
   );
+  /* Cluster's optional mode field (js/components/cluster.js): switches
+     every row from a toggle to a plain temperature reading. Only
+     'temperature' is a valid value - anything else (including a hand-typed
+     string) is rejected rather than silently ignored. */
+  assert.match(
+    source,
+    /isset\(\$customFields\['mode'\]\) && \$customFields\['mode'\] !== 'temperature'/
+  );
   /* Lyrion Music Server block: server/port/player validated, credentials
      never echoed back in an error message. */
   assert.match(source, /kind === 'lms'/);
