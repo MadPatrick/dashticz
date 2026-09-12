@@ -20,7 +20,13 @@ buttons filter that list to match: Switch to plain on/off switches
 (Domoticz's ``On/Off`` switch type - a cluster row is only ever a simple
 toggle), Temperature to plain temperature-reporting devices (Domoticz Type
 ``Temp``, or one of the Temp+Humidity/Baro combo types). Switching row type
-clears any devices already picked, since the two device sets don't overlap.
+clears any devices already picked, since the two device sets don't overlap -
+row type can only be set while creating a cluster; once it has been saved
+with devices, the buttons are locked.
+
+Each row's name defaults to that device's own Domoticz name, but can be
+overridden per row in either popup - the same as a normal device's own Title
+field when adding a device.
 
 Block parameters
 ----------------
@@ -42,6 +48,10 @@ Block parameters
   * - devices
     - | Domoticz device id's shown as rows in this cluster (required, at least one)
       | ``[ 1, 3, 5]``: Devices 1, 3 and 5 are each shown as their own row
+  * - titles
+    - | Optional: overrides a row's displayed name (the device's own
+        Domoticz name is used when absent).
+      | ``{ 12: 'Ceiling light' }``: Device 12's row shows "Ceiling light"
   * - mode
     - | Optional: ``'temperature'`` switches every row to a plain
         temperature reading instead of a toggle. Absent (the default) means
@@ -57,6 +67,10 @@ Block parameters
         between the two, so this is picked per row in the Cluster popup
         rather than auto-detected.
       | ``{ 12: 13 }``: Device 12's row also shows device 13's consumption
+  * - switchScale
+    - | Switch mode only. Optional: a scale factor (``0.3``-``3``) resizing
+        the on/off toggle. Absent (the default) means the normal size.
+      | ``1.5``: Toggles render at 150% size
 
 Example
 -------
@@ -67,7 +81,9 @@ A switch cluster::
       type: 'cluster',
       title: 'Living room lights',
       devices: [12, 14, 16],
-      usage: { 12: 13 }
+      titles: { 12: 'Ceiling light' },
+      usage: { 12: 13 },
+      switchScale: 1.5
     }
 
 A temperature cluster::

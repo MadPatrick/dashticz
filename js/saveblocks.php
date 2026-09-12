@@ -387,6 +387,44 @@ foreach ($data['devices'] as $entry) {
                 if (isset($customFields['mode']) && $customFields['mode'] !== 'temperature') {
                     dashticz_json_error(400, 'A cluster block\'s mode must be \'temperature\' if set.');
                 }
+                // titles (optional): overrides a row's displayed name
+                // (js/components/cluster.js falls back to the device's own
+                // Name when absent). Same shape/reasoning as usage above -
+                // each key must be one of this block's own devices, each
+                // value a non-empty string.
+                if (isset($customFields['titles'])) {
+                    $clusterTitles = $customFields['titles'];
+                    if (is_object($clusterTitles)) {
+                        $clusterTitles = get_object_vars($clusterTitles);
+                    }
+                    if (!is_array($clusterTitles)) {
+                        dashticz_json_error(400, 'A cluster block\'s titles map must be an object.');
+                    }
+                    $clusterDeviceIdxSet = array_flip(array_map('strval', $clusterDevices));
+                    foreach ($clusterTitles as $clusterTitleKey => $clusterTitleValue) {
+                        if (!isset($clusterDeviceIdxSet[(string)$clusterTitleKey])) {
+                            dashticz_json_error(400, 'A cluster block\'s titles map key must be one of its own devices.');
+                        }
+                        if (!is_string($clusterTitleValue) || $clusterTitleValue === '') {
+                            dashticz_json_error(400, 'A cluster block\'s titles map values must be non-empty strings.');
+                        }
+                    }
+                }
+                // switchScale (optional): resizes the switch toggle
+                // (js/components/cluster.js sets --cluster-switch-scale
+                // from it, read by css/creative.css's .cluster-row-switch).
+                // Absent means the default size; js/deviceeditor.js's own
+                // input already clamps to this same 0.3-3 range, but that's
+                // client-side only.
+                if (isset($customFields['switchScale'])) {
+                    $clusterSwitchScale = $customFields['switchScale'];
+                    if (!is_int($clusterSwitchScale) && !is_float($clusterSwitchScale)) {
+                        dashticz_json_error(400, 'A cluster block\'s switchScale must be a number.');
+                    }
+                    if ($clusterSwitchScale < 0.3 || $clusterSwitchScale > 3) {
+                        dashticz_json_error(400, 'A cluster block\'s switchScale must be between 0.3 and 3.');
+                    }
+                }
             }
         } elseif ($kind === 'timegraph') {
             // Only Icon and Last update apply (no Data/Switch/Dial - see

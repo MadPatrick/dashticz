@@ -19,6 +19,11 @@
  * - Temperature (block.mode === 'temperature'): name plus that device's
  *   own .Temp reading, no toggle - these are plain sensors, not switches.
  *
+ * Either mode's row name defaults to the device's own Domoticz Name, but
+ * can be overridden per row via the optional block.titles map (device idx
+ * -> custom name), same popups as above - "net zo als bij een device
+ * toevoegen" (same as a normal device's own Title field).
+ *
  * See docs/blocks/specials/cluster.rst.
  */
 var DT_cluster = (function () {
@@ -35,6 +40,7 @@ var DT_cluster = (function () {
       me.mode = me.block.mode === 'temperature' ? 'temperature' : 'switch';
       me.devices = me.block.devices || [];
       me.usageMap = me.mode === 'switch' ? me.block.usage || {} : {};
+      me.titlesMap = me.block.titles || {};
       me.devices.forEach(function (idx) {
         Dashticz.subscribeDevice(me, idx, false, function () {
           return refresh(me);
@@ -83,7 +89,7 @@ var DT_cluster = (function () {
     return String(raw).replace(/\bWatt\b/, 'W');
   }
 
-  function temperatureRowHtml(idx, device) {
+  function temperatureRowHtml(idx, device, title) {
     var reading =
       typeof device.Temp === 'number'
         ? device.Temp.toFixed(1) + _TEMP_SYMBOL
@@ -93,14 +99,14 @@ var DT_cluster = (function () {
       idx +
       '">' +
       '<span class="cluster-row-title">' +
-      (device.Name || idx) +
+      title +
       '</span>' +
       (reading ? '<span class="cluster-row-temp">' + reading + '</span>' : '') +
       '</div>'
     );
   }
 
-  function switchRowHtml(idx, device, usage) {
+  function switchRowHtml(idx, device, usage, title) {
     var status = getIconStatusClass(device.Status);
     return (
       '<div class="cluster-row ' +
@@ -109,14 +115,16 @@ var DT_cluster = (function () {
       idx +
       '">' +
       '<span class="cluster-row-title">' +
-      (device.Name || idx) +
+      title +
       '</span>' +
       (usage ? '<span class="cluster-row-usage">' + usage + '</span>' : '') +
       '<label class="cluster-row-switch">' +
       '<input type="checkbox" class="cluster-row-checkbox"' +
       (status === 'on' ? ' checked' : '') +
       '>' +
-      '<span class="cluster-row-slider"></span>' +
+      '<span class="cluster-row-track">' +
+      '<span class="cluster-row-thumb"></span>' +
+      '</span>' +
       '</label>' +
       '</div>'
     );
@@ -134,15 +142,27 @@ var DT_cluster = (function () {
     me.devices.forEach(function (idx) {
       var device = allDevices[idx];
       if (!device) return;
+      var title = me.titlesMap[idx] || device.Name || idx;
       if (me.mode === 'temperature') {
-        html += temperatureRowHtml(idx, device);
+        html += temperatureRowHtml(idx, device, title);
       } else {
         var usage = usageText(allDevices[me.usageMap[idx]]);
-        html += switchRowHtml(idx, device, usage);
+        html += switchRowHtml(idx, device, usage, title);
       }
     });
     html += '</div>';
     me.$mountPoint.find('.dt_state').html(html);
+    // Optional block.switchScale resizes .cluster-row-switch (css/
+    // creative.css reads --cluster-switch-scale with a var() fallback of
+    // 1, so this only needs to be set when an override is actually
+    // configured); set on every refresh, not just run(), so a live config
+    // update (Dashticz.subscribeBlock -> special.refresh, no special.run)
+    // still picks up a changed value.
+    var switchScale = parseFloat(me.block.switchScale);
+    me.$mountPoint.css(
+      '--cluster-switch-scale',
+      switchScale > 0 ? switchScale : ''
+    );
 
     if (me.mode === 'temperature') return;
 
