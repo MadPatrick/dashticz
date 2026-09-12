@@ -5744,7 +5744,7 @@ test('a saved Cluster block can actually be re-opened and saved from the Layout 
   // saved Cluster block impossible to edit.
   assert.match(
     deviceEditor,
-    /if \(isClusterBlock\) \{[\s\S]{0,1700}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return field !== 'devices' && field !== 'usage' && field !== 'mode';[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
+    /if \(isClusterBlock\) \{[\s\S]{0,2200}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles'\s*\);[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
   );
 
   // A dedicated add/remove device picker (mirroring _showClusterPopup's own)
@@ -5869,7 +5869,7 @@ test("Cluster rows can show a companion device's power consumption", () => {
   );
   assert.match(
     deviceEditor,
-    /return field !== 'devices' && field !== 'usage' && field !== 'mode';/
+    /return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles'\s*\);/
   );
 
   // js/components/cluster.js: subscribes to each referenced companion
@@ -5938,7 +5938,7 @@ test('Cluster rows can be Switch or Temperature, never mixed', () => {
   assert.match(deviceEditor, /customKeys\.mode = true;/);
   assert.match(
     deviceEditor,
-    /field !== 'devices' && field !== 'usage' && field !== 'mode';/
+    /field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles'/
   );
   assert.match(deviceEditor, /field: 'mode',\s*\n\s*setting: 'temperature',/);
 
@@ -5956,6 +5956,98 @@ test('Cluster rows can be Switch or Temperature, never mixed', () => {
 
   // Server-side: only 'temperature' (or absent) is a valid mode.
   assert.match(saveblocks, /\$customFields\['mode'\] !== 'temperature'/);
+});
+
+test('Cluster row type is locked once the cluster has been saved', () => {
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+
+  // The Device Config popup only ever edits an already-saved cluster (a
+  // pending, not-yet-saved block never gets a cog - see
+  // openLayoutConfig()), so switching mode there would silently orphan its
+  // already-picked devices instead of clearing a pending pick the way the
+  // quick-add popup (never locked) does - _clusterModeButtonsHtml's own
+  // `locked` param disables both buttons, and the click handler still
+  // guards against it defensively.
+  assert.match(
+    deviceEditor,
+    /function _clusterModeButtonsHtml\(t, mode, locked\) \{/
+  );
+  assert.match(deviceEditor, /\(locked \? ' disabled' : ''\)/);
+  assert.match(
+    deviceEditor,
+    /_clusterModeButtonsHtml\(t, clusterMode, true\);/
+  );
+  assert.match(
+    deviceEditor,
+    /if \(\$\(this\)\.prop\('disabled'\)\) return;\s*\n\s*var mode = String\(\$\(this\)\.attr\('data-cluster-mode'\)/
+  );
+
+  // The quick-add popup's own call passes no third argument, i.e. stays
+  // unlocked (nothing is saved yet there).
+  const createPopupCall = deviceEditor.match(
+    /html \+= _clusterModeButtonsHtml\([^)]*\);/
+  );
+  assert.ok(createPopupCall, 'expected the quick-add popup call to exist');
+  assert.doesNotMatch(createPopupCall[0], /true/);
+});
+
+test('Cluster row names can be customized per device, like a normal device Title', () => {
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+  const cluster = fs.readFileSync(
+    path.join(root, 'js/components/cluster.js'),
+    'utf8'
+  );
+  const saveblocks = fs.readFileSync(
+    path.join(root, 'js/saveblocks.php'),
+    'utf8'
+  );
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  // The row's device name in the pending list is now an editable input
+  // (placeholder shows the live Domoticz name so an empty value visibly
+  // means "use the device name"), not a static span.
+  assert.match(deviceEditor, /cl-name-input/);
+  assert.match(deviceEditor, /placeholder="' \+\s*\n\s*_esc\(d\.name\) \+/);
+
+  // Persisted as an optional 'titles' map (device idx -> custom name),
+  // same shape/reasoning as 'usage' - filtered out of the generic
+  // custom-fields list and reserved, wired into both popups' save
+  // handlers and the quick-add popup's own live state.
+  assert.match(deviceEditor, /customKeys\.titles = true;/);
+  assert.match(deviceEditor, /field !== 'titles'/);
+  assert.match(deviceEditor, /if \(d\.title\) titlesMap\[d\.idx\] = d\.title;/);
+  assert.match(
+    deviceEditor,
+    /if \(d\.title\) clusterTitlesOut\[d\.idx\] = d\.title;/
+  );
+
+  // js/components/cluster.js: falls back to the device's own Domoticz
+  // Name when no override is set - never blank.
+  assert.match(cluster, /me\.titlesMap = me\.block\.titles \|\| \{\};/);
+  assert.match(
+    cluster,
+    /var title = me\.titlesMap\[idx\] \|\| device\.Name \|\| idx;/
+  );
+
+  // Server-side: keys must be one of the block's own devices, values
+  // non-empty strings.
+  assert.match(saveblocks, /isset\(\$customFields\['titles'\]\)/);
+  assert.match(
+    saveblocks,
+    /A cluster block\\'s titles map key must be one of its own devices\./
+  );
+  assert.match(
+    saveblocks,
+    /A cluster block\\'s titles map values must be non-empty strings\./
+  );
+
+  assert.match(css, /\.cl-name-input \{/);
 });
 
 test('rendered Graph blocks keep the Layout Editor config cog and open their own config', () => {

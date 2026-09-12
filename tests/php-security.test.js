@@ -745,6 +745,19 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
     source,
     /isset\(\$customFields\['mode'\]\) && \$customFields\['mode'\] !== 'temperature'/
   );
+  /* Cluster's optional titles map (device idx -> custom row name,
+     js/components/cluster.js): same key/value shape as usage above - each
+     key must be one of the block's own devices, each value a non-empty
+     string. */
+  assert.match(source, /isset\(\$customFields\['titles'\]\)/);
+  assert.match(
+    source,
+    /A cluster block\\'s titles map key must be one of its own devices\./
+  );
+  assert.match(
+    source,
+    /A cluster block\\'s titles map values must be non-empty strings\./
+  );
   /* Lyrion Music Server block: server/port/player validated, credentials
      never echoed back in an error message. */
   assert.match(source, /kind === 'lms'/);

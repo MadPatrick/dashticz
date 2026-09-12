@@ -261,11 +261,15 @@ var DashticzDeviceEditor = (function () {
         cluster_devices_help_temperature:
           'Pick a device and click + to add it to the cluster. Each device shows its own temperature reading.',
         cluster_no_devices: 'No devices added yet.',
+        cluster_row_name:
+          'Custom name for this row (leave empty to use the device name).',
         cluster_usage: 'Consumption',
         cluster_usage_none: '— No consumption —',
         cluster_mode: 'Row type',
         cluster_mode_switch: 'Switch',
         cluster_mode_temperature: 'Temperature',
+        cluster_mode_locked_help:
+          "Row type can't be changed after the cluster has been saved.",
         invalid_cluster_name: 'Enter a valid unique cluster name.',
         invalid_cluster_devices: 'Add at least one device.',
         html_block: 'HTML Block',
@@ -3475,11 +3479,20 @@ var DashticzDeviceEditor = (function () {
           '<div class="de-device-item cl-pending-item" data-idx="' +
           _esc(d.idx) +
           '">' +
-          '<span class="de-device-name">' +
+          '<span class="cl-pending-name-group">' +
+          '<input type="text" class="form-control form-control-sm cl-name-input" data-idx="' +
+          _esc(d.idx) +
+          '" value="' +
+          _esc(d.title || '') +
+          '" placeholder="' +
           _esc(d.name) +
-          ' (IDX ' +
+          '" title="' +
+          _esc(t.cluster_row_name) +
+          '">' +
+          '<span class="cl-pending-idx">IDX ' +
           d.idx +
-          ')</span>' +
+          '</span>' +
+          '</span>' +
           usageSelect +
           '<button type="button" class="btn btn-danger btn-sm cl-remove-btn ms-auto" data-idx="' +
           _esc(d.idx) +
@@ -3617,8 +3630,13 @@ var DashticzDeviceEditor = (function () {
   // are either all switches (with an optional consumption companion) or
   // all temperature readings, never mixed - see cluster.js. mode is
   // '' (falsy) or 'temperature'; anything else, including absent, means
-  // the default switch mode.
-  function _clusterModeButtonsHtml(t, mode) {
+  // the default switch mode. locked disables both buttons: the Device
+  // Config popup only ever edits an already-saved cluster (a pending,
+  // not-yet-saved block never gets a cog - see openLayoutConfig()), whose
+  // devices were picked for one specific mode, so switching there would
+  // silently orphan them instead of clearing a pending pick the way the
+  // quick-add popup (never locked) does.
+  function _clusterModeButtonsHtml(t, mode, locked) {
     var html =
       '<div class="mb-3"><label class="form-label">' +
       _esc(t.cluster_mode) +
@@ -3645,10 +3663,12 @@ var DashticzDeviceEditor = (function () {
         (active ? ' active' : '') +
         '" data-cluster-mode="' +
         item.mode +
-        '" aria-pressed="' +
+        '"' +
+        (locked ? ' disabled' : '') +
+        ' aria-pressed="' +
         (active ? 'true' : 'false') +
         '" title="' +
-        _esc(item.label) +
+        _esc(locked ? t.cluster_mode_locked_help : item.label) +
         '" style="min-width:96px;">' +
         '<i class="' +
         item.icon +
@@ -3657,7 +3677,12 @@ var DashticzDeviceEditor = (function () {
         _esc(item.label) +
         '</span></button>';
     });
-    html += '</div></div></div>';
+    html += '</div>';
+    if (locked) {
+      html +=
+        '<div class="form-text">' + _esc(t.cluster_mode_locked_help) + '</div>';
+    }
+    html += '</div></div>';
     return html;
   }
 
@@ -3798,6 +3823,15 @@ var DashticzDeviceEditor = (function () {
       if (target) target.usageIdx = usageIdx;
     });
 
+    $('#cl-device-pending').on('input', '.cl-name-input', function () {
+      var idx = parseInt($(this).attr('data-idx'), 10);
+      var title = $.trim(String($(this).val() || ''));
+      var target = pendingDevices.find(function (d) {
+        return d.idx === idx;
+      });
+      if (target) target.title = title;
+    });
+
     $popup.on('click', '.cl-mode-button', function () {
       var mode = String($(this).attr('data-cluster-mode') || '');
       if (mode === clusterMode) return;
@@ -3872,6 +3906,17 @@ var DashticzDeviceEditor = (function () {
         setting: JSON.stringify(deviceIdxList),
         value: deviceIdxList,
       });
+      var titlesMap = {};
+      pendingDevices.forEach(function (d) {
+        if (d.title) titlesMap[d.idx] = d.title;
+      });
+      if (Object.keys(titlesMap).length) {
+        customRows.push({
+          field: 'titles',
+          setting: JSON.stringify(titlesMap),
+          value: titlesMap,
+        });
+      }
       if (clusterMode === 'temperature') {
         customRows.push({
           field: 'mode',
@@ -6890,14 +6935,20 @@ var DashticzDeviceEditor = (function () {
         clusterValues.usage && typeof clusterValues.usage === 'object'
           ? clusterValues.usage
           : {};
+      var clusterTitlesMap =
+        clusterValues.titles && typeof clusterValues.titles === 'object'
+          ? clusterValues.titles
+          : {};
       var allDevicesForCluster = Domoticz.getAllDevices();
       clusterPendingDevices = clusterDeviceIdxList.map(function (idx) {
         var live = allDevicesForCluster ? allDevicesForCluster[idx] : null;
         var usageIdx = parseInt(clusterUsageMap[idx], 10) || null;
+        var customTitle = String(clusterTitlesMap[idx] || '');
         return {
           idx: idx,
           name: (live && live.Name) || String(idx),
           usageIdx: usageIdx,
+          title: customTitle,
         };
       });
       clusterDeviceList =
@@ -6907,7 +6958,12 @@ var DashticzDeviceEditor = (function () {
       clusterUsageList = _clusterUsageDeviceList();
       customRows = customRows.filter(function (row) {
         var field = _normaliseCustomFieldName(row && row.field).toLowerCase();
-        return field !== 'devices' && field !== 'usage' && field !== 'mode';
+        return (
+          field !== 'devices' &&
+          field !== 'usage' &&
+          field !== 'mode' &&
+          field !== 'titles'
+        );
       });
     }
 
@@ -7289,7 +7345,7 @@ var DashticzDeviceEditor = (function () {
     } else if (isGraphBlock) {
       html += _graphFieldsHtml('de-config', graphFields);
     } else if (isClusterBlock) {
-      html += _clusterModeButtonsHtml(t, clusterMode);
+      html += _clusterModeButtonsHtml(t, clusterMode, true);
       html += _clusterFieldsHtml(
         'de-config',
         t,
@@ -7398,7 +7454,22 @@ var DashticzDeviceEditor = (function () {
           if (target) target.usageIdx = usageIdx;
         }
       );
+      $popup.on(
+        'input',
+        '#de-config-cluster-pending .cl-name-input',
+        function () {
+          var idx = parseInt($(this).attr('data-idx'), 10);
+          var title = $.trim(String($(this).val() || ''));
+          var target = clusterPendingDevices.find(function (d) {
+            return d.idx === idx;
+          });
+          if (target) target.title = title;
+        }
+      );
       $popup.on('click', '.cl-mode-button', function () {
+        // Always disabled here (see _clusterModeButtonsHtml's locked
+        // param) - this popup only ever edits an already-saved cluster.
+        if ($(this).prop('disabled')) return;
         var mode = String($(this).attr('data-cluster-mode') || '');
         if (mode === clusterMode) return;
         clusterMode = mode;
@@ -7654,6 +7725,7 @@ var DashticzDeviceEditor = (function () {
       if (isClusterBlock) {
         customKeys.usage = true;
         customKeys.mode = true;
+        customKeys.titles = true;
       }
       if (isGraphBlock) {
         customKeys.graph = true;
@@ -8002,6 +8074,17 @@ var DashticzDeviceEditor = (function () {
           setting: JSON.stringify(clusterDeviceIdxOut),
           value: clusterDeviceIdxOut,
         });
+        var clusterTitlesOut = {};
+        clusterPendingDevices.forEach(function (d) {
+          if (d.title) clusterTitlesOut[d.idx] = d.title;
+        });
+        if (Object.keys(clusterTitlesOut).length) {
+          storedRows.push({
+            field: 'titles',
+            setting: JSON.stringify(clusterTitlesOut),
+            value: clusterTitlesOut,
+          });
+        }
         if (clusterMode === 'temperature') {
           storedRows.push({
             field: 'mode',

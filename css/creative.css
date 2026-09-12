@@ -2183,14 +2183,31 @@ body.dle-active {
   white-space: nowrap;
 }
 
-/* Cluster popup pending-device row: a companion "consumption" device
-   <select> sits between the name and the remove button, so the name needs
-   to actually shrink (a flex item's default min-width:auto ignores
-   overflow:hidden/text-overflow otherwise) instead of pushing the select
-   off the edge of the row. */
-.cl-pending-item .de-device-name {
+/* Cluster popup pending-device row: an editable name (defaults to the
+   device's own Domoticz name via its placeholder) plus its IDX, and - in
+   Switch mode - a companion "consumption" device <select>, all between the
+   remove button and the row's edge. The name group needs to actually
+   shrink (a flex item's default min-width:auto ignores overflow:hidden/
+   text-overflow otherwise) instead of pushing everything else off the
+   edge of the row. */
+.cl-pending-name-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.cl-name-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cl-pending-idx {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .cl-usage-select {
@@ -4415,13 +4432,14 @@ img.icon {
 
 /* Temperature mode's own row value (js/components/cluster.js) - unlike
    the usage span, this is the row's primary value (there is no toggle
-   next to it), so it keeps the row's normal text color instead of the
-   muted one .cluster-row-usage uses for its secondary annotation. */
+   next to it), so it keeps its own status color instead of the muted one
+   .cluster-row-usage uses for its secondary annotation. */
 .cluster-row-temp {
   flex: 0 0 auto;
   white-space: nowrap;
   font-size: var(--font-device-title);
   font-weight: 600;
+  color: var(--text-status);
 }
 
 .cluster-row-switch {
