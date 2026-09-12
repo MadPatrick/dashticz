@@ -3417,6 +3417,70 @@ var DashticzDeviceEditor = (function () {
     ).show();
   }
 
+  // Cluster device picker markup, shared between the quick-add popup
+  // (_showClusterPopup) and the generic Device Config popup's own Cluster
+  // section (_showConfigPopup's isClusterBlock branch), so adding/removing
+  // rows looks and behaves identically whether creating or editing.
+  function _clusterDeviceOptionsHtml(t, deviceList, pendingDevices) {
+    var picked = {};
+    pendingDevices.forEach(function (d) {
+      picked[d.idx] = true;
+    });
+    var html = '<option value="">— ' + _esc(t.select_item) + ' —</option>';
+    deviceList.forEach(function (d) {
+      if (picked[d.idx]) return;
+      html +=
+        '<option value="' +
+        _esc(d.idx) +
+        '" data-name="' +
+        _esc(d.plainName || d.name) +
+        '">' +
+        _esc(d.name) +
+        ' (IDX ' +
+        d.idx +
+        ')</option>';
+    });
+    return html;
+  }
+
+  function _clusterPendingListHtml(t, pendingDevices) {
+    if (!pendingDevices.length) {
+      return '<div class="de-empty">' + _esc(t.cluster_no_devices) + '</div>';
+    }
+    return pendingDevices
+      .map(function (d) {
+        return (
+          '<div class="de-device-item cl-pending-item" data-idx="' +
+          _esc(d.idx) +
+          '">' +
+          '<span class="de-device-name">' +
+          _esc(d.name) +
+          ' (IDX ' +
+          d.idx +
+          ')</span>' +
+          '<button type="button" class="btn btn-danger btn-sm cl-remove-btn ms-auto" data-idx="' +
+          _esc(d.idx) +
+          '" title="' +
+          _esc(t.remove) +
+          '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
+          '</div>'
+        );
+      })
+      .join('');
+  }
+
+  // Excludes Groups/Scenes (idx-less devices, not a plain integer idx a
+  // cluster row can switch) and sub-devices (e.g. a TempHumBar's 3 separate
+  // data channels, which all share their parent's numeric idx - offering
+  // each as a separately "addable" option would let two rows end up
+  // pointing at the exact same device, and a sub-device isn't independently
+  // switchable in the first place).
+  function _clusterAvailableDeviceList() {
+    return _getAvailableDevices(managedDevices).filter(function (d) {
+      return !_isGroupCk(d.key) && !d.subidx;
+    });
+  }
+
   /* Cluster: a fixed list of Domoticz devices shown as individually-
    * switchable rows in one block (js/components/cluster.js), rather than
    * Group's single combined toggle. Saved as its own specialType
@@ -3428,63 +3492,15 @@ var DashticzDeviceEditor = (function () {
     var t = _translations();
     $('#clusterblockpopup').remove();
 
-    // Excludes Groups/Scenes (idx-less devices, not a plain integer idx a
-    // cluster row can switch) and sub-devices (e.g. a TempHumBar's 3
-    // separate data channels, which all share their parent's numeric idx -
-    // offering each as a separately "addable" option would let two rows
-    // end up pointing at the exact same device, and a sub-device isn't
-    // independently switchable in the first place).
-    var deviceList = _getAvailableDevices(managedDevices).filter(function (d) {
-      return !_isGroupCk(d.key) && !d.subidx;
-    });
+    var deviceList = _clusterAvailableDeviceList();
     var pendingDevices = [];
 
     function deviceOptionsHtml() {
-      var picked = {};
-      pendingDevices.forEach(function (d) {
-        picked[d.idx] = true;
-      });
-      var html = '<option value="">— ' + _esc(t.select_item) + ' —</option>';
-      deviceList.forEach(function (d) {
-        if (picked[d.idx]) return;
-        html +=
-          '<option value="' +
-          _esc(d.idx) +
-          '" data-name="' +
-          _esc(d.plainName || d.name) +
-          '">' +
-          _esc(d.name) +
-          ' (IDX ' +
-          d.idx +
-          ')</option>';
-      });
-      return html;
+      return _clusterDeviceOptionsHtml(t, deviceList, pendingDevices);
     }
 
     function pendingListHtml() {
-      if (!pendingDevices.length) {
-        return '<div class="de-empty">' + _esc(t.cluster_no_devices) + '</div>';
-      }
-      return pendingDevices
-        .map(function (d) {
-          return (
-            '<div class="de-device-item cl-pending-item" data-idx="' +
-            _esc(d.idx) +
-            '">' +
-            '<span class="de-device-name">' +
-            _esc(d.name) +
-            ' (IDX ' +
-            d.idx +
-            ')</span>' +
-            '<button type="button" class="btn btn-danger btn-sm cl-remove-btn ms-auto" data-idx="' +
-            _esc(d.idx) +
-            '" title="' +
-            _esc(t.remove) +
-            '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
-            '</div>'
-          );
-        })
-        .join('');
+      return _clusterPendingListHtml(t, pendingDevices);
     }
 
     var html =
@@ -5976,6 +5992,40 @@ var DashticzDeviceEditor = (function () {
     return html;
   }
 
+  // Cluster's own devices section for the generic Device Config popup
+  // (_showConfigPopup), reusing the same add/remove picker markup as the
+  // quick-add popup (_showClusterPopup) via _clusterDeviceOptionsHtml/
+  // _clusterPendingListHtml. Add/remove clicks are wired inline in
+  // _showConfigPopup itself (see isClusterBlock there), which mutates the
+  // same clusterPendingDevices array the Save handler reads back.
+  function _clusterFieldsHtml(prefix, t, deviceList, pendingDevices) {
+    var html =
+      '<div class="de-cluster-fields" data-cluster-prefix="' +
+      _esc(prefix) +
+      '">';
+    html += '<h6 class="de-section-title">' + _esc(t.cluster_devices) + '</h6>';
+    html += '<div class="d-flex gap-2">';
+    html +=
+      '<select class="form-select" id="' +
+      _esc(prefix) +
+      '-cluster-select">' +
+      _clusterDeviceOptionsHtml(t, deviceList, pendingDevices) +
+      '</select>';
+    html +=
+      '<button type="button" class="btn btn-success btn-sm" id="' +
+      _esc(prefix) +
+      '-cluster-add-btn"><i class="fas fa-plus" aria-hidden="true"></i></button>';
+    html += '</div>';
+    html += '<div class="form-text">' + _esc(t.cluster_devices_help) + '</div>';
+    html +=
+      '<div id="' +
+      _esc(prefix) +
+      '-cluster-pending" class="mt-2">' +
+      _clusterPendingListHtml(t, pendingDevices) +
+      '</div></div>';
+    return html;
+  }
+
   function _readGraphFields(prefix) {
     var rawDevices = $.trim(
       String($('#' + prefix + '-graph-devices').val() || '')
@@ -6552,6 +6602,35 @@ var DashticzDeviceEditor = (function () {
       });
     }
 
+    // Cluster's 'devices' field gets the same add/remove device picker as
+    // its own quick-add popup (_showClusterPopup), rather than showing the
+    // raw idx array as an editable generic custom field - which, besides
+    // being a poor editing experience, collided with 'devices' being
+    // reserved below (customKeys.devices) and made every save fail with
+    // "duplicate field", leaving a saved Cluster block impossible to edit.
+    var clusterDeviceList = null;
+    var clusterPendingDevices = [];
+    if (isClusterBlock) {
+      var clusterValues = {};
+      customRows.forEach(function (row) {
+        var field = _normaliseCustomFieldName(row && row.field).toLowerCase();
+        if (field) clusterValues[field] = row.value;
+      });
+      var clusterDeviceIdxList = Array.isArray(clusterValues.devices)
+        ? clusterValues.devices
+        : [];
+      var allDevicesForCluster = Domoticz.getAllDevices();
+      clusterPendingDevices = clusterDeviceIdxList.map(function (idx) {
+        var live = allDevicesForCluster ? allDevicesForCluster[idx] : null;
+        return { idx: idx, name: (live && live.Name) || String(idx) };
+      });
+      clusterDeviceList = _clusterAvailableDeviceList();
+      customRows = customRows.filter(function (row) {
+        var field = _normaliseCustomFieldName(row && row.field).toLowerCase();
+        return field !== 'devices';
+      });
+    }
+
     // A Multi Device's 'values' custom field is JSON produced by the Multi
     // Device popup (or hand-written in the same shape). Editing that as raw
     // JSON text made this popup look like a plain device editor instead of
@@ -6929,6 +7008,13 @@ var DashticzDeviceEditor = (function () {
       });
     } else if (isGraphBlock) {
       html += _graphFieldsHtml('de-config', graphFields);
+    } else if (isClusterBlock) {
+      html += _clusterFieldsHtml(
+        'de-config',
+        t,
+        clusterDeviceList,
+        clusterPendingDevices
+      );
     }
     html +=
       '<div class="de-custom-fields-section"><h6 class="de-section-title mt-3">' +
@@ -6973,6 +7059,44 @@ var DashticzDeviceEditor = (function () {
 
     var $popup = $('#de-config-popup');
     if (isLmsBlock) _wireLmsFields('de-config', $popup);
+    if (isClusterBlock) {
+      $popup.on('click', '#de-config-cluster-add-btn', function () {
+        var $select = $popup.find('#de-config-cluster-select');
+        var idx = parseInt($select.val(), 10);
+        if (!(idx > 0)) return;
+        var selectedOption = $select.find('option:selected');
+        var name = selectedOption.attr('data-name') || String(idx);
+        clusterPendingDevices.push({ idx: idx, name: name });
+        $select.html(
+          _clusterDeviceOptionsHtml(t, clusterDeviceList, clusterPendingDevices)
+        );
+        $popup
+          .find('#de-config-cluster-pending')
+          .html(_clusterPendingListHtml(t, clusterPendingDevices));
+      });
+      $popup.on(
+        'click',
+        '#de-config-cluster-pending .cl-remove-btn',
+        function () {
+          var idx = parseInt($(this).attr('data-idx'), 10);
+          clusterPendingDevices = clusterPendingDevices.filter(function (d) {
+            return d.idx !== idx;
+          });
+          $popup
+            .find('#de-config-cluster-select')
+            .html(
+              _clusterDeviceOptionsHtml(
+                t,
+                clusterDeviceList,
+                clusterPendingDevices
+              )
+            );
+          $popup
+            .find('#de-config-cluster-pending')
+            .html(_clusterPendingListHtml(t, clusterPendingDevices));
+        }
+      );
+    }
     function refreshCustomFieldButtons() {
       var removable = $popup.find(
         '.de-custom-field-row:not(.de-system-field-row)'
@@ -7274,6 +7398,13 @@ var DashticzDeviceEditor = (function () {
           $('#de-config-graph-devices').trigger('focus');
         }
       }
+      if (isClusterBlock && !clusterPendingDevices.length) {
+        valid = false;
+        $popup
+          .find('.de-config-message')
+          .addClass('text-danger')
+          .text(t.invalid_cluster_devices);
+      }
       // [data-option]: excludes button.js's injected Background toggle,
       // which reuses .de-config-option purely for its click-to-toggle
       // .active styling/behavior and reads its own state independently via
@@ -7517,6 +7648,16 @@ var DashticzDeviceEditor = (function () {
             value: pendingGraph.groupBy,
           });
         }
+      }
+      if (isClusterBlock) {
+        var clusterDeviceIdxOut = clusterPendingDevices.map(function (d) {
+          return d.idx;
+        });
+        storedRows.push({
+          field: 'devices',
+          setting: JSON.stringify(clusterDeviceIdxOut),
+          value: clusterDeviceIdxOut,
+        });
       }
       if (pendingValues) {
         storedRows.push({

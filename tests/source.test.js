@@ -5724,6 +5724,61 @@ test('Cluster block gets its own Layout Editor config (cog) control and renders 
   );
 });
 
+test('a saved Cluster block can actually be re-opened and saved from the Layout Editor cog', () => {
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+  const cluster = fs.readFileSync(
+    path.join(root, 'js/components/cluster.js'),
+    'utf8'
+  );
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  // _showConfigPopup() (reached via openLayoutConfig(), i.e. the Layout
+  // Editor's own cog) must strip the 'devices' row out of the generic
+  // custom-fields list for a Cluster block, exactly like it already does
+  // for Graph. Without this, the raw 'devices' row stayed rendered AND
+  // reserved (customKeys.devices = true below), so every save - even with
+  // zero changes - failed immediately with "duplicate field", making a
+  // saved Cluster block impossible to edit.
+  assert.match(
+    deviceEditor,
+    /if \(isClusterBlock\) \{[\s\S]{0,900}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return field !== 'devices';[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
+  );
+
+  // A dedicated add/remove device picker (mirroring _showClusterPopup's own)
+  // replaces that raw field, and is actually wired into the popup markup
+  // and the Save handler's persisted output.
+  assert.match(deviceEditor, /function _clusterFieldsHtml\(/);
+  assert.match(deviceEditor, /_clusterFieldsHtml\(\s*'de-config',/);
+  assert.match(
+    deviceEditor,
+    /isClusterBlock && !clusterPendingDevices\.length/
+  );
+  assert.match(
+    deviceEditor,
+    /if \(isClusterBlock\) \{\s*\n\s*var clusterDeviceIdxOut = clusterPendingDevices\.map/
+  );
+
+  // The row title must be allowed to shrink inside its flex row (a flex
+  // item's default min-width:auto ignores overflow:hidden/text-overflow,
+  // so a long device name pushed the whole block width instead of eliding -
+  // forcing an unwanted horizontal scrollbar on the tile).
+  assert.match(
+    css,
+    /\.cluster-row-title \{[\s\S]{0,60}?min-width: 0;[\s\S]{0,120}?text-overflow: ellipsis;/
+  );
+
+  // The 'mh' container class carries div.mh:not(.multiline) { height: 85px }
+  // (a single-line device-tile height), which clipped/collapsed a Cluster
+  // block down to almost nothing once it held more than one or two rows.
+  // Cluster's row count is inherently variable, so it must not opt into
+  // that fixed single-line height the way Group (always exactly one row)
+  // legitimately does.
+  assert.doesNotMatch(cluster, /containerClass:\s*'mh'/);
+});
+
 test('rendered Graph blocks keep the Layout Editor config cog and open their own config', () => {
   const layoutEditor = fs.readFileSync(
     path.join(root, 'js/layouteditor.js'),

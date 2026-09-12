@@ -17,7 +17,6 @@ var DT_cluster = (function () {
       return {
         width: 4,
         refresh: 3600,
-        containerClass: 'mh',
       };
     },
     run: function (me) {
