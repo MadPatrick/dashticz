@@ -122,7 +122,9 @@ var DT_cluster = (function () {
       '<input type="checkbox" class="cluster-row-checkbox"' +
       (status === 'on' ? ' checked' : '') +
       '>' +
-      '<span class="cluster-row-slider"></span>' +
+      '<span class="cluster-row-track">' +
+      '<span class="cluster-row-thumb"></span>' +
+      '</span>' +
       '</label>' +
       '</div>'
     );
