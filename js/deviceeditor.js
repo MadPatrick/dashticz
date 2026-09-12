@@ -3716,7 +3716,7 @@ var DashticzDeviceEditor = (function () {
     if (mode === 'temperature') return '';
     // Compact inline label+input (not a stacked mb-3 block like most
     // fields here) meant to sit right next to the Switch/Temperature
-    // buttons this sizes - see _clusterModeButtonsHtml. 5 characters wide
+    // buttons this sizes - see _clusterModeButtonsHtml. 10 characters wide
     // per request; the help text moves to a title tooltip instead of a
     // permanent form-text line to keep the pair visually small.
     return (
@@ -3730,7 +3730,7 @@ var DashticzDeviceEditor = (function () {
       '</label>' +
       '<input type="number" class="form-control form-control-sm" id="' +
       _esc(idPrefix) +
-      '-switch-scale" style="width:5ch;flex:0 0 auto;" min="0.3" max="3" step="0.1" placeholder="1" value="' +
+      '-switch-scale" style="width:10ch;flex:0 0 auto;" min="0.3" max="3" step="0.1" placeholder="1" value="' +
       _esc(value || '') +
       '" title="' +
       _esc(t.cluster_switch_scale_help) +

@@ -6071,7 +6071,7 @@ test('Cluster switch can be resized via a switchScale field next to the Row type
   // mode (no switches there to size).
   assert.match(deviceEditor, /function _clusterSwitchScaleFieldHtml\(/);
   assert.match(deviceEditor, /if \(mode === 'temperature'\) return '';/);
-  assert.match(deviceEditor, /width:5ch/);
+  assert.match(deviceEditor, /width:10ch/);
   assert.match(
     deviceEditor,
     /_clusterSwitchScaleFieldHtml\(idPrefix, t, mode, switchScaleValue\)/
