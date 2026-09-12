@@ -4408,7 +4408,9 @@ img.icon {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  /* Scales with --cluster-switch-scale (see .cluster-row-switch below) so
+     a bigger switch doesn't crowd into the usage text next to it. */
+  gap: calc(8px * var(--cluster-switch-scale, 1));
 }
 
 .cluster-row-title {
@@ -4443,18 +4445,21 @@ img.icon {
 }
 
 .cluster-row-switch {
-  /* Theme tokens, e.g. --cluster-switch-scale to resize the whole switch
-     via transform (default 1). Deliberately read with a var() fallback
-     rather than declared here: a declaration on this same selector would
-     always win over one set on an ancestor (custom.css, a theme, or
-     .cluster-block itself), regardless of specificity, which would make
-     such overrides silently do nothing. */
+  /* --cluster-switch-scale (default 1) resizes the whole switch - .cluster
+     -row-track/-thumb below scale their actual box size via calc() rather
+     than a transform: scale() on this element, so the row's own height
+     (flex align-items: center sizes to its tallest child) and the gap to
+     .cluster-row-usage (see .cluster-row above) grow with it too, instead
+     of the switch visually overlapping its neighbours while its layout
+     box stays the original size. Read with a var() fallback rather than
+     declared here: a declaration on this same selector would always win
+     over one set on an ancestor (custom.css, a theme, or .cluster-block
+     itself), regardless of specificity, which would make such overrides
+     silently do nothing. */
   position: relative;
   flex: 0 0 auto;
   display: inline-flex;
   cursor: pointer;
-  transform: scale(var(--cluster-switch-scale, 1));
-  transform-origin: center right;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -4467,12 +4472,14 @@ img.icon {
 
 .cluster-row-track {
   position: relative;
-  width: 54px;
-  height: 30px;
+  width: calc(54px * var(--cluster-switch-scale, 1));
+  height: calc(30px * var(--cluster-switch-scale, 1));
   border-radius: 9999px;
   background: var(--cluster-switch-off, rgba(255, 255, 255, 0.25));
-  border: 1px solid var(--cluster-switch-border, rgba(255, 255, 255, 0.3));
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+  border: calc(1px * var(--cluster-switch-scale, 1)) solid
+    var(--cluster-switch-border, rgba(255, 255, 255, 0.3));
+  box-shadow: inset 0 calc(1px * var(--cluster-switch-scale, 1))
+    calc(2px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.15);
   transition:
     background 0.2s ease,
     border-color 0.2s ease;
@@ -4483,29 +4490,29 @@ img.icon {
   position: absolute;
   top: 0;
   bottom: 0;
-  right: 7px;
+  right: calc(7px * var(--cluster-switch-scale, 1));
   display: flex;
   align-items: center;
-  font:
-    800 10px/1 -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: calc(10px * var(--cluster-switch-scale, 1));
+  font-weight: 800;
+  line-height: 1;
   letter-spacing: 0.04em;
   color: var(--cluster-switch-label, rgba(255, 255, 255, 0.7));
 }
 
 .cluster-row-thumb {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 24px;
-  height: 24px;
+  top: calc(3px * var(--cluster-switch-scale, 1));
+  left: calc(3px * var(--cluster-switch-scale, 1));
+  width: calc(24px * var(--cluster-switch-scale, 1));
+  height: calc(24px * var(--cluster-switch-scale, 1));
   border-radius: 50%;
   background: var(--cluster-switch-thumb, #fff);
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(0, 0, 0, 0.04);
+    0 calc(1px * var(--cluster-switch-scale, 1))
+      calc(3px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.35),
+    0 0 0 calc(1px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.04);
   transition:
     transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
     background 0.2s ease;
@@ -4521,14 +4528,15 @@ img.icon {
 .cluster-row-checkbox:checked + .cluster-row-track::after {
   content: 'ON';
   right: auto;
-  left: 8px;
+  left: calc(8px * var(--cluster-switch-scale, 1));
   color: var(--cluster-switch-label-on, rgba(255, 255, 255, 0.95));
 }
 
 .cluster-row-checkbox:checked + .cluster-row-track .cluster-row-thumb {
   /* 54px track, 1px border eaten by border-box, 24px thumb, 3px padding
-     each side: 54 - 2(border) - 24 - 2(3px padding) = 22. */
-  transform: translateX(22px);
+     each side: 54 - 2(border) - 24 - 2(3px padding) = 22, scaled the same
+     as every other dimension here. */
+  transform: translateX(calc(22px * var(--cluster-switch-scale, 1)));
 }
 
 .cluster-row-checkbox:focus-visible + .cluster-row-track {
