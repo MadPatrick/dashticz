@@ -1592,10 +1592,15 @@ next css sets the default height of the frame popup
   width: 60%;
   height: 100%;
   transform: skewX(-20deg);
+  /* The tile's own background (#f8f9fa, #eef5ff on hover) is already very
+     light, so the originally-requested rgba(237,233,224,0.25) had almost no
+     luminance difference to read against it - confirmed invisible in a
+     screenshot scan across the full sweep. A brighter, more opaque white
+     keeps the same diagonal-sweep shape but actually shows up here. */
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(237, 233, 224, 0.25),
+    rgba(255, 255, 255, 0.85),
     transparent
   );
 }
