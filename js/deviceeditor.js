@@ -259,6 +259,8 @@ var DashticzDeviceEditor = (function () {
         cluster_devices_help:
           'Pick a device and click + to add it to the cluster. Each device gets its own on/off toggle.',
         cluster_no_devices: 'No devices added yet.',
+        cluster_usage: 'Consumption',
+        cluster_usage_none: '— No consumption —',
         invalid_cluster_name: 'Enter a valid unique cluster name.',
         invalid_cluster_devices: 'Add at least one device.',
         html_block: 'HTML Block',
@@ -3443,12 +3445,27 @@ var DashticzDeviceEditor = (function () {
     return html;
   }
 
-  function _clusterPendingListHtml(t, pendingDevices) {
+  function _clusterPendingListHtml(t, pendingDevices, usageList) {
     if (!pendingDevices.length) {
       return '<div class="de-empty">' + _esc(t.cluster_no_devices) + '</div>';
     }
     return pendingDevices
       .map(function (d) {
+        var usageSelect =
+          usageList && usageList.length
+            ? '<select class="form-select form-select-sm cl-usage-select" data-idx="' +
+              _esc(d.idx) +
+              '" title="' +
+              _esc(t.cluster_usage) +
+              '">' +
+              _clusterUsageOptionsHtml(
+                t,
+                usageList,
+                d.name,
+                d.usageIdx || null
+              ) +
+              '</select>'
+            : '';
         return (
           '<div class="de-device-item cl-pending-item" data-idx="' +
           _esc(d.idx) +
@@ -3458,6 +3475,7 @@ var DashticzDeviceEditor = (function () {
           ' (IDX ' +
           d.idx +
           ')</span>' +
+          usageSelect +
           '<button type="button" class="btn btn-danger btn-sm cl-remove-btn ms-auto" data-idx="' +
           _esc(d.idx) +
           '" title="' +
@@ -3487,6 +3505,78 @@ var DashticzDeviceEditor = (function () {
     });
   }
 
+  // Candidate list for a row's optional companion "consumption" device.
+  // Many switches (Shelly/Zigbee2MQTT/Sonoff plugs, etc.) report their
+  // wattage through a SEPARATE Domoticz device rather than a field on the
+  // switch itself - Domoticz's own Type: 'Usage', or Type: 'General' with
+  // SubType: 'kWh' (a combined current-usage + cumulative-energy meter,
+  // js/blocktypes.js's SubType.kWh). There is no reliable idx relationship
+  // between a switch and its companion device (some gateways happen to
+  // create it at switch idx + 1, but that's a gateway convention, not a
+  // Domoticz guarantee), so this is picked per row, not auto-detected.
+  function _clusterUsageDeviceList() {
+    var allDevices = Domoticz.getAllDevices();
+    var list = [];
+    Object.keys(allDevices).forEach(function (key) {
+      if (!key || key[0] === '_') return;
+      var idx = parseInt(key, 10);
+      if (!(idx > 0 && String(idx) === key)) return;
+      var d = allDevices[key];
+      var isUsage =
+        d.Type === 'Usage' || (d.Type === 'General' && d.SubType === 'kWh');
+      if (!isUsage) return;
+      list.push({ idx: idx, name: d.Name || 'Device ' + idx });
+    });
+    return list;
+  }
+
+  // Sorts usage-device candidates so ones whose name shares the longest
+  // prefix with the switch's own name come first (e.g. "Shelly -
+  // shellyswitch-55C83E-1" -> "Shelly - shellyswitch-55C83E-energy") - most
+  // gateways name a switch and its companion energy device with a shared
+  // prefix, so this is a helpful default ordering, not a strict filter.
+  function _clusterSortUsageCandidates(candidates, switchName) {
+    var name = String(switchName || '').toLowerCase();
+    function commonPrefixLength(otherName) {
+      var other = String(otherName || '').toLowerCase();
+      var max = Math.min(name.length, other.length);
+      var i = 0;
+      while (i < max && name[i] === other[i]) i++;
+      return i;
+    }
+    return candidates
+      .map(function (c) {
+        return { device: c, score: commonPrefixLength(c.name) };
+      })
+      .sort(function (a, b) {
+        if (b.score !== a.score) return b.score - a.score;
+        return a.device.name.localeCompare(b.device.name);
+      })
+      .map(function (c) {
+        return c.device;
+      });
+  }
+
+  // <option> list for one row's companion-device <select>, sorted by name
+  // match to that row's own switch (see _clusterSortUsageCandidates above).
+  function _clusterUsageOptionsHtml(t, usageList, switchName, selectedIdx) {
+    var sorted = _clusterSortUsageCandidates(usageList, switchName);
+    var html = '<option value="">' + _esc(t.cluster_usage_none) + '</option>';
+    sorted.forEach(function (d) {
+      html +=
+        '<option value="' +
+        _esc(d.idx) +
+        '"' +
+        (selectedIdx === d.idx ? ' selected' : '') +
+        '>' +
+        _esc(d.name) +
+        ' (IDX ' +
+        d.idx +
+        ')</option>';
+    });
+    return html;
+  }
+
   /* Cluster: a fixed list of Domoticz devices shown as individually-
    * switchable rows in one block (js/components/cluster.js), rather than
    * Group's single combined toggle. Saved as its own specialType
@@ -3499,6 +3589,7 @@ var DashticzDeviceEditor = (function () {
     $('#clusterblockpopup').remove();
 
     var deviceList = _clusterAvailableDeviceList();
+    var usageList = _clusterUsageDeviceList();
     var pendingDevices = [];
 
     function deviceOptionsHtml() {
@@ -3506,7 +3597,7 @@ var DashticzDeviceEditor = (function () {
     }
 
     function pendingListHtml() {
-      return _clusterPendingListHtml(t, pendingDevices);
+      return _clusterPendingListHtml(t, pendingDevices, usageList);
     }
 
     var html =
@@ -3599,6 +3690,15 @@ var DashticzDeviceEditor = (function () {
       $('#cl-device-pending').html(pendingListHtml());
     });
 
+    $('#cl-device-pending').on('change', '.cl-usage-select', function () {
+      var idx = parseInt($(this).attr('data-idx'), 10);
+      var usageIdx = parseInt($(this).val(), 10) || null;
+      var target = pendingDevices.find(function (d) {
+        return d.idx === idx;
+      });
+      if (target) target.usageIdx = usageIdx;
+    });
+
     $('#cl-save-btn').on('click', function () {
       var $message = $popup
         .find('.cd-custom-message')
@@ -3650,6 +3750,17 @@ var DashticzDeviceEditor = (function () {
         setting: JSON.stringify(deviceIdxList),
         value: deviceIdxList,
       });
+      var usageMap = {};
+      pendingDevices.forEach(function (d) {
+        if (d.usageIdx) usageMap[d.idx] = d.usageIdx;
+      });
+      if (Object.keys(usageMap).length) {
+        customRows.push({
+          field: 'usage',
+          setting: JSON.stringify(usageMap),
+          value: usageMap,
+        });
+      }
 
       var orderKey = _specialOrderKey(reference);
       managedSpecials[orderKey] = {
@@ -6004,7 +6115,13 @@ var DashticzDeviceEditor = (function () {
   // _clusterPendingListHtml. Add/remove clicks are wired inline in
   // _showConfigPopup itself (see isClusterBlock there), which mutates the
   // same clusterPendingDevices array the Save handler reads back.
-  function _clusterFieldsHtml(prefix, t, deviceList, pendingDevices) {
+  function _clusterFieldsHtml(
+    prefix,
+    t,
+    deviceList,
+    pendingDevices,
+    usageList
+  ) {
     var html =
       '<div class="de-cluster-fields" data-cluster-prefix="' +
       _esc(prefix) +
@@ -6027,7 +6144,7 @@ var DashticzDeviceEditor = (function () {
       '<div id="' +
       _esc(prefix) +
       '-cluster-pending" class="mt-2">' +
-      _clusterPendingListHtml(t, pendingDevices) +
+      _clusterPendingListHtml(t, pendingDevices, usageList) +
       '</div></div>';
     return html;
   }
@@ -6608,13 +6725,15 @@ var DashticzDeviceEditor = (function () {
       });
     }
 
-    // Cluster's 'devices' field gets the same add/remove device picker as
-    // its own quick-add popup (_showClusterPopup), rather than showing the
-    // raw idx array as an editable generic custom field - which, besides
-    // being a poor editing experience, collided with 'devices' being
-    // reserved below (customKeys.devices) and made every save fail with
-    // "duplicate field", leaving a saved Cluster block impossible to edit.
+    // Cluster's 'devices' (and optional 'usage') fields get the same
+    // add/remove device picker as the quick-add popup (_showClusterPopup),
+    // rather than showing the raw idx array/map as editable generic custom
+    // fields - which, besides being a poor editing experience, collided
+    // with 'devices' being reserved below (customKeys.devices) and made
+    // every save fail with "duplicate field", leaving a saved Cluster
+    // block impossible to edit.
     var clusterDeviceList = null;
+    var clusterUsageList = null;
     var clusterPendingDevices = [];
     if (isClusterBlock) {
       var clusterValues = {};
@@ -6625,15 +6744,25 @@ var DashticzDeviceEditor = (function () {
       var clusterDeviceIdxList = Array.isArray(clusterValues.devices)
         ? clusterValues.devices
         : [];
+      var clusterUsageMap =
+        clusterValues.usage && typeof clusterValues.usage === 'object'
+          ? clusterValues.usage
+          : {};
       var allDevicesForCluster = Domoticz.getAllDevices();
       clusterPendingDevices = clusterDeviceIdxList.map(function (idx) {
         var live = allDevicesForCluster ? allDevicesForCluster[idx] : null;
-        return { idx: idx, name: (live && live.Name) || String(idx) };
+        var usageIdx = parseInt(clusterUsageMap[idx], 10) || null;
+        return {
+          idx: idx,
+          name: (live && live.Name) || String(idx),
+          usageIdx: usageIdx,
+        };
       });
       clusterDeviceList = _clusterAvailableDeviceList();
+      clusterUsageList = _clusterUsageDeviceList();
       customRows = customRows.filter(function (row) {
         var field = _normaliseCustomFieldName(row && row.field).toLowerCase();
-        return field !== 'devices';
+        return field !== 'devices' && field !== 'usage';
       });
     }
 
@@ -7019,7 +7148,8 @@ var DashticzDeviceEditor = (function () {
         'de-config',
         t,
         clusterDeviceList,
-        clusterPendingDevices
+        clusterPendingDevices,
+        clusterUsageList
       );
     }
     html +=
@@ -7078,7 +7208,9 @@ var DashticzDeviceEditor = (function () {
         );
         $popup
           .find('#de-config-cluster-pending')
-          .html(_clusterPendingListHtml(t, clusterPendingDevices));
+          .html(
+            _clusterPendingListHtml(t, clusterPendingDevices, clusterUsageList)
+          );
       });
       $popup.on(
         'click',
@@ -7099,7 +7231,25 @@ var DashticzDeviceEditor = (function () {
             );
           $popup
             .find('#de-config-cluster-pending')
-            .html(_clusterPendingListHtml(t, clusterPendingDevices));
+            .html(
+              _clusterPendingListHtml(
+                t,
+                clusterPendingDevices,
+                clusterUsageList
+              )
+            );
+        }
+      );
+      $popup.on(
+        'change',
+        '#de-config-cluster-pending .cl-usage-select',
+        function () {
+          var idx = parseInt($(this).attr('data-idx'), 10);
+          var usageIdx = parseInt($(this).val(), 10) || null;
+          var target = clusterPendingDevices.find(function (d) {
+            return d.idx === idx;
+          });
+          if (target) target.usageIdx = usageIdx;
         }
       );
     }
@@ -7316,6 +7466,9 @@ var DashticzDeviceEditor = (function () {
       var customKeys = multiDeviceValues ? { values: true } : {};
       if (isGraphBlock || isClusterBlock) {
         customKeys.devices = true;
+      }
+      if (isClusterBlock) {
+        customKeys.usage = true;
       }
       if (isGraphBlock) {
         customKeys.graph = true;
@@ -7664,6 +7817,17 @@ var DashticzDeviceEditor = (function () {
           setting: JSON.stringify(clusterDeviceIdxOut),
           value: clusterDeviceIdxOut,
         });
+        var clusterUsageOut = {};
+        clusterPendingDevices.forEach(function (d) {
+          if (d.usageIdx) clusterUsageOut[d.idx] = d.usageIdx;
+        });
+        if (Object.keys(clusterUsageOut).length) {
+          storedRows.push({
+            field: 'usage',
+            setting: JSON.stringify(clusterUsageOut),
+            value: clusterUsageOut,
+          });
+        }
       }
       if (pendingValues) {
         storedRows.push({

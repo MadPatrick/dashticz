@@ -317,6 +317,8 @@
       "cluster_devices": "Devices",
       "cluster_devices_help": "Kies een device en klik op + om het aan het cluster toe te voegen. Elk device krijgt zijn eigen aan/uit-schakelaar.",
       "cluster_no_devices": "Nog geen devices toegevoegd.",
+      "cluster_usage": "Verbruik",
+      "cluster_usage_none": "— Geen verbruik —",
       "invalid_cluster_name": "Vul een geldige unieke clusternaam in.",
       "invalid_cluster_devices": "Voeg minstens één device toe.",
       "html_block": "HTML Block",

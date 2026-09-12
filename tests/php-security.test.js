@@ -723,6 +723,20 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
   );
   assert.match(writer, /\$kind === 'cluster'/);
   assert.match(writer, /'type' => 'cluster'/);
+  /* Cluster's optional usage map (switch idx -> companion consumption
+     device idx, js/components/cluster.js): each key must be one of the
+     block's own devices, each value a positive integer idx - otherwise a
+     hand-crafted request could point a row's "consumption" at an arbitrary
+     idx it was never actually given. */
+  assert.match(source, /isset\(\$customFields\['usage'\]\)/);
+  assert.match(
+    source,
+    /A cluster block\\'s usage map key must be one of its own devices\./
+  );
+  assert.match(
+    source,
+    /A cluster block\\'s usage map values must be positive integer device idx values\./
+  );
   /* Lyrion Music Server block: server/port/player validated, credentials
      never echoed back in an error message. */
   assert.match(source, /kind === 'lms'/);

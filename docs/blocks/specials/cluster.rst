@@ -33,6 +33,15 @@ Block parameters
   * - devices
     - | Domoticz device id's shown as rows in this cluster (required, at least one)
       | ``[ 1, 3, 5]``: Devices 1, 3 and 5 are each shown as their own row
+  * - usage
+    - | Optional: maps a device's own idx to a companion Domoticz device that
+        reports its power consumption, shown next to that row. Many switches
+        (Shelly/Zigbee2MQTT/Sonoff plugs, etc.) report their wattage through
+        a *separate* Domoticz device (Type ``Usage``, or Type ``General``
+        with SubType ``kWh``) rather than a field on the switch itself -
+        there is no reliable idx relationship between the two, so this is
+        picked per row in the Cluster popup rather than auto-detected.
+      | ``{ 12: 13 }``: Device 12's row also shows device 13's consumption
 
 Example
 -------
@@ -42,5 +51,6 @@ An example of a cluster block::
     blocks['mycluster'] = {
       type: 'cluster',
       title: 'Living room lights',
-      devices: [12, 14, 16]
+      devices: [12, 14, 16],
+      usage: { 12: 13 }
     }

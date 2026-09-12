@@ -357,6 +357,29 @@ foreach ($data['devices'] as $entry) {
                         dashticz_json_error(400, 'A cluster block requires positive integer device idx values.');
                     }
                 }
+                // usage (optional): maps a switch's own idx to a companion
+                // consumption device's idx (js/components/cluster.js reads
+                // it to show that device's wattage next to the row). Each
+                // key must be one of this block's own devices, and each
+                // value a positive integer idx.
+                if (isset($customFields['usage'])) {
+                    $clusterUsage = $customFields['usage'];
+                    if (is_object($clusterUsage)) {
+                        $clusterUsage = get_object_vars($clusterUsage);
+                    }
+                    if (!is_array($clusterUsage)) {
+                        dashticz_json_error(400, 'A cluster block\'s usage map must be an object.');
+                    }
+                    $clusterDeviceIdxSet = array_flip(array_map('strval', $clusterDevices));
+                    foreach ($clusterUsage as $clusterUsageKey => $clusterUsageIdx) {
+                        if (!isset($clusterDeviceIdxSet[(string)$clusterUsageKey])) {
+                            dashticz_json_error(400, 'A cluster block\'s usage map key must be one of its own devices.');
+                        }
+                        if (!is_int($clusterUsageIdx) || $clusterUsageIdx < 1) {
+                            dashticz_json_error(400, 'A cluster block\'s usage map values must be positive integer device idx values.');
+                        }
+                    }
+                }
             }
         } elseif ($kind === 'timegraph') {
             // Only Icon and Last update apply (no Data/Switch/Dial - see

@@ -5744,7 +5744,7 @@ test('a saved Cluster block can actually be re-opened and saved from the Layout 
   // saved Cluster block impossible to edit.
   assert.match(
     deviceEditor,
-    /if \(isClusterBlock\) \{[\s\S]{0,900}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return field !== 'devices';[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
+    /if \(isClusterBlock\) \{[\s\S]{0,1400}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return field !== 'devices' && field !== 'usage';[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
   );
 
   // A dedicated add/remove device picker (mirroring _showClusterPopup's own)
@@ -5823,6 +5823,70 @@ test('Cluster device picker only offers plain on/off switches', () => {
     deviceEditor,
     /function _clusterAvailableDeviceList\(\) \{[\s\S]{0,400}?live\.SwitchType === 'On\/Off';[\s\S]{0,20}?\}/
   );
+});
+
+test("Cluster rows can show a companion device's power consumption", () => {
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+  const cluster = fs.readFileSync(
+    path.join(root, 'js/components/cluster.js'),
+    'utf8'
+  );
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const saveblocks = fs.readFileSync(
+    path.join(root, 'js/saveblocks.php'),
+    'utf8'
+  );
+
+  // A switch's own idx has no wattage of its own - many switches
+  // (Shelly/Zigbee2MQTT/Sonoff plugs) report it through a separate
+  // companion device instead (Domoticz Type 'Usage', or 'General'/'kWh').
+  // The candidate list is restricted to those two shapes, never the
+  // switches themselves.
+  assert.match(deviceEditor, /function _clusterUsageDeviceList\(\) \{/);
+  assert.match(
+    deviceEditor,
+    /d\.Type === 'Usage' \|\| \(d\.Type === 'General' && d\.SubType === 'kWh'\)/
+  );
+
+  // Candidates are sorted so a name sharing a long prefix with the switch's
+  // own name (e.g. a Shelly's own "-1" vs its paired "-energy" device) is
+  // offered first - a convenience default, not a strict filter.
+  assert.match(deviceEditor, /function _clusterSortUsageCandidates\(/);
+
+  // The picker is wired into both the quick-add popup and the Device
+  // Config popup's own Cluster section, and both persist the pick as an
+  // idx->idx 'usage' map alongside 'devices' - not raw-editable generic
+  // custom fields, same reasoning as 'devices' itself (see the
+  // duplicate-field regression this mirrors).
+  assert.match(deviceEditor, /cl-usage-select/);
+  assert.match(deviceEditor, /customKeys\.usage = true;/);
+  assert.match(
+    deviceEditor,
+    /field: 'usage',\s*\n\s*setting: JSON\.stringify\(/
+  );
+  assert.match(
+    deviceEditor,
+    /return field !== 'devices' && field !== 'usage';/
+  );
+
+  // js/components/cluster.js: subscribes to each referenced companion
+  // device (so its own updates trigger a re-render even while the switch
+  // stays on) and reads the right field per Domoticz Type - a plain
+  // 'Usage' device's current reading is in .Data, while a kWh meter's .Data
+  // is its cumulative energy instead, with the *current* wattage in .Usage.
+  assert.match(cluster, /me\.usageMap = me\.block\.usage \|\| \{\};/);
+  assert.match(cluster, /Dashticz\.subscribeDevice\(me, usageIdx, false,/);
+  assert.match(cluster, /usageDevice\.Type === 'Usage'/);
+  assert.match(cluster, /cluster-row-usage/);
+
+  // Server-side: the usage map is validated, not trusted verbatim (see the
+  // php-security.test.js counterpart for the exact error strings).
+  assert.match(saveblocks, /isset\(\$customFields\['usage'\]\)/);
+
+  assert.match(css, /\.cluster-row-usage \{/);
 });
 
 test('rendered Graph blocks keep the Layout Editor config cog and open their own config', () => {

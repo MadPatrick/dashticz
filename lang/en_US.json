@@ -321,6 +321,8 @@
       "cluster_devices": "Devices",
       "cluster_devices_help": "Pick a device and click + to add it to the cluster. Each device gets its own on/off toggle.",
       "cluster_no_devices": "No devices added yet.",
+      "cluster_usage": "Consumption",
+      "cluster_usage_none": "— No consumption —",
       "invalid_cluster_name": "Enter a valid unique cluster name.",
       "invalid_cluster_devices": "Add at least one device.",
       "html_block": "HTML Block",

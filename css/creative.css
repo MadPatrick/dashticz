@@ -2183,6 +2183,22 @@ body.dle-active {
   white-space: nowrap;
 }
 
+/* Cluster popup pending-device row: a companion "consumption" device
+   <select> sits between the name and the remove button, so the name needs
+   to actually shrink (a flex item's default min-width:auto ignores
+   overflow:hidden/text-overflow otherwise) instead of pushing the select
+   off the edge of the row. */
+.cl-pending-item .de-device-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cl-usage-select {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 180px;
+}
+
 .de-device-type {
   align-self: flex-start;
   font-size: 11px;
@@ -4388,6 +4404,13 @@ img.icon {
      user request. */
   font-size: var(--font-device-title);
   font-weight: normal;
+}
+
+.cluster-row-usage {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: var(--font-device-title);
+  color: var(--text-muted);
 }
 
 .cluster-row-switch {
