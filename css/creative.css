@@ -4239,9 +4239,9 @@ img.icon {
   margin-left: 0;
   margin-top: 0 !important;
   margin-bottom: -8px !important;
-  border: 2px solid rgba(255, 255, 255, 0.95) !important;
+  border: 2px solid rgba(255, 255, 255, 0.75) !important;
   border-radius: 6px !important;
-  background: #1c1c22 !important;
+  background: #1a331c !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
   cursor: grab;
 }
