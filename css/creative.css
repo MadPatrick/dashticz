@@ -1607,7 +1607,13 @@ next css sets the default height of the frame popup
 
 .dt-screeneditor-add-tile:hover::before {
   left: 120%;
-  transition: left 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+  /* The original cubic-bezier(0.65, 0, 0.35, 1) keeps the animated value
+     near its start for roughly the first quarter of the transition, which
+     reads as a delay before the sweep appears - confirmed with screenshots
+     at 50ms steps showing nothing moving until ~250ms in. ease-out starts
+     moving immediately instead, and a shorter duration makes the whole
+     sweep feel snappy rather than a slow drift. */
+  transition: left 0.45s ease-out;
 }
 
 .dt-screeneditor-add-tile:hover,
