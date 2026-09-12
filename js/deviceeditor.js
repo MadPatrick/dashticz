@@ -3474,10 +3474,16 @@ var DashticzDeviceEditor = (function () {
   // data channels, which all share their parent's numeric idx - offering
   // each as a separately "addable" option would let two rows end up
   // pointing at the exact same device, and a sub-device isn't independently
-  // switchable in the first place).
+  // switchable in the first place). Also restricted to plain on/off
+  // switches (Domoticz's own SwitchType: 'On/Off') - a cluster row is only
+  // ever a plain toggle, so e.g. Dimmers, Blinds, Selectors and sensors
+  // would offer an "addable" option that doesn't actually behave like one.
   function _clusterAvailableDeviceList() {
+    var allDevices = Domoticz.getAllDevices();
     return _getAvailableDevices(managedDevices).filter(function (d) {
-      return !_isGroupCk(d.key) && !d.subidx;
+      if (_isGroupCk(d.key) || d.subidx) return false;
+      var live = allDevices[d.idx];
+      return !!live && live.SwitchType === 'On/Off';
     });
   }
 

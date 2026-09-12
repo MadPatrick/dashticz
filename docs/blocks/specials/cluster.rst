@@ -9,7 +9,9 @@ shows one combined status and switches every member device to the same new
 state together, each row in a Cluster switches only its own device.
 
 Added via the Screen Editor's "Add items" menu -> Cluster, by picking
-devices from the same device list used to add a normal device.
+devices from the same device list used to add a normal device, filtered to
+plain on/off switches (Domoticz's ``On/Off`` switch type) - a cluster row is
+only ever a simple toggle.
 
 Block parameters
 ----------------

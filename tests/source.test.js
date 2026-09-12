@@ -5807,6 +5807,24 @@ test('Cluster keeps its framework-painted icon/title and sizes rows like a devic
   );
 });
 
+test('Cluster device picker only offers plain on/off switches', () => {
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+
+  // A cluster row is only ever a simple toggle, so the shared picker list
+  // (_clusterAvailableDeviceList - used by both the quick-add popup and the
+  // Device Config popup's own Cluster section) must restrict candidates to
+  // Domoticz's own SwitchType: 'On/Off', excluding Dimmers, Blinds,
+  // Selectors, sensors and other switch types that don't behave like a
+  // plain toggle.
+  assert.match(
+    deviceEditor,
+    /function _clusterAvailableDeviceList\(\) \{[\s\S]{0,400}?live\.SwitchType === 'On\/Off';[\s\S]{0,20}?\}/
+  );
+});
+
 test('rendered Graph blocks keep the Layout Editor config cog and open their own config', () => {
   const layoutEditor = fs.readFileSync(
     path.join(root, 'js/layouteditor.js'),
