@@ -706,12 +706,23 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
      the pattern) only touches this one array. */
   assert.match(
     source,
-    /\$specialBlockKinds = \['dummy', 'title', 'custom', 'group', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'xmltvguide', 'lms', 'camera', 'news', 'graph'\];/
+    /\$specialBlockKinds = \['dummy', 'title', 'custom', 'group', 'cluster', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'xmltvguide', 'lms', 'camera', 'news', 'graph'\];/
   );
   assert.match(
     source,
     /in_array\(\$entry\['kind'\], \$specialBlockKinds, true\)/
   );
+  /* Cluster block: requires a non-empty devices array of positive integer
+     idx values (js/components/cluster.js), same shape as Graph's own
+     requirement, and always writes type: 'cluster' server-side. */
+  assert.match(source, /kind === 'cluster'/);
+  assert.match(source, /A cluster block requires at least one device\./);
+  assert.match(
+    source,
+    /A cluster block requires positive integer device idx values\./
+  );
+  assert.match(writer, /\$kind === 'cluster'/);
+  assert.match(writer, /'type' => 'cluster'/);
   /* Lyrion Music Server block: server/port/player validated, credentials
      never echoed back in an error message. */
   assert.match(source, /kind === 'lms'/);

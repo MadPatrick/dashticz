@@ -4980,7 +4980,10 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   // component left out of that list is dead code: Dashticz.register() for
   // it never runs, so components['lms'] never exists and every LMS block
   // silently falls through to the default/button dispatch instead.
-  assert.match(dashticz, /'group',\s*\n\s*'waqi',\s*\n\s*'lms',\s*\n\s*\];/);
+  assert.match(
+    dashticz,
+    /'group',\s*\n\s*'cluster',\s*\n\s*'waqi',\s*\n\s*'lms',\s*\n\s*\];/
+  );
 
   // The component itself: dispatches on type: 'lms' (like js/components/group.js
   // dispatches on type: 'group'), never sends an LMS control command, and
@@ -5657,7 +5660,67 @@ test('Group block gets the Layout Editor config (cog) control, like HTML/LMS blo
   // only needs to be re-checked for 'group' itself.
   assert.match(
     layoutEditor,
-    /var REFERENCE_BASED_SPECIAL_KINDS = \[[\s\S]{0,400}?'group'[\s\S]{0,50}?\];/
+    /var REFERENCE_BASED_SPECIAL_KINDS = \[[\s\S]{0,400}?'group'[\s\S]{0,150}?\];/
+  );
+});
+
+test('Cluster block gets its own Layout Editor config (cog) control and renders individually-switchable rows', () => {
+  const layoutEditor = fs.readFileSync(
+    path.join(root, 'js/layouteditor.js'),
+    'utf8'
+  );
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+  const cluster = fs.readFileSync(
+    path.join(root, 'js/components/cluster.js'),
+    'utf8'
+  );
+  const dashticz = fs.readFileSync(path.join(root, 'js/dashticz.js'), 'utf8');
+  const switches = fs.readFileSync(path.join(root, 'js/switches.js'), 'utf8');
+
+  // Loaded (and therefore registered) at startup, same as every other
+  // component in js/dashticz.js's own `specials` list.
+  assert.match(dashticz, /'cluster',/);
+
+  // _resolveBlock() dispatches on type: 'cluster', same shape as Group's
+  // own type: 'group' check - without this a cluster block fell through
+  // to the untyped 'grid' fallback kind, which only gets a drag handle,
+  // never the cog.
+  assert.match(
+    layoutEditor,
+    /String\(definition\.type \|\| ''\)\.toLowerCase\(\) === 'cluster'/
+  );
+  assert.match(layoutEditor, /kind: 'cluster',/);
+  assert.match(
+    layoutEditor,
+    /var REFERENCE_BASED_SPECIAL_KINDS = \[[\s\S]{0,400}?'cluster'[\s\S]{0,150}?\];/
+  );
+
+  // js/deviceeditor.js's own _specialFromReference() recognizes the same
+  // type: 'cluster' shape, and the quick-add popup exists.
+  assert.match(
+    deviceEditor,
+    /String\(definition\.type \|\| ''\)\.toLowerCase\(\) === 'cluster'/
+  );
+  assert.match(deviceEditor, /function _showClusterPopup\(/);
+  assert.match(deviceEditor, /function openCluster\(\)/);
+  assert.match(deviceEditor, /openCluster: openCluster,/);
+
+  // The component itself: one row per device, each with its own toggle,
+  // not one combined status like Group.
+  assert.match(cluster, /name: 'cluster',/);
+  assert.match(cluster, /cluster-row/);
+  assert.match(cluster, /switchDevice\(/);
+
+  // switchDevice() must treat a cluster row's own computed newState the
+  // same way it already treats Group's - passed straight through, not
+  // re-derived from .icon/.fa-toggle-on DOM classes a cluster row's own
+  // markup never carries.
+  assert.match(
+    switches,
+    /block\.type === 'group' \|\| block\.type === 'cluster'/
   );
 });
 

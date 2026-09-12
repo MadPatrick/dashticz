@@ -4315,6 +4315,82 @@ img.icon {
   font-weight: 800;
 }
 
+/* Cluster (js/components/cluster.js): a fixed list of devices shown as
+   individually-switchable rows in one block, unlike Group's single
+   combined toggle. Deliberately plain/theme-neutral (unlike the blinds
+   slider handle above, this isn't themed per-theme) so it reads
+   consistently regardless of the active theme. */
+.cluster-block {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+}
+
+.cluster-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.cluster-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cluster-row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cluster-row-switch {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+}
+
+.cluster-row-switch .cluster-row-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.cluster-row-slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  transition: background 0.15s ease;
+}
+
+.cluster-row-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 2px;
+  top: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+
+.cluster-row-checkbox:checked + .cluster-row-slider {
+  background: #4cd964;
+}
+
+.cluster-row-checkbox:checked + .cluster-row-slider::before {
+  transform: translateX(18px);
+}
+
 @media (max-width: 975px) {
   div.mh {
     height: 75px;

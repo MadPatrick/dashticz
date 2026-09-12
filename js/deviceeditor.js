@@ -28,6 +28,7 @@ var DashticzDeviceEditor = (function () {
   var IDX_LESS_SPECIAL_KINDS = [
     'title',
     'slidebutton',
+    'cluster',
     'html',
     'iframe',
     'calendar',
@@ -43,6 +44,7 @@ var DashticzDeviceEditor = (function () {
   var TITLE_OPTIONAL_SPECIAL_KINDS = [
     'custom',
     'group',
+    'cluster',
     'html',
     'iframe',
     'calendar',
@@ -59,6 +61,7 @@ var DashticzDeviceEditor = (function () {
   // default - their content needs more horizontal room.
   var WIDE_DEFAULT_SPECIAL_KINDS = [
     'lms',
+    'cluster',
     'iframe',
     'calendar',
     'timegraph',
@@ -71,6 +74,7 @@ var DashticzDeviceEditor = (function () {
   // Switch) - every special except a plain dummy/custom device.
   var NO_DIAL_SPECIAL_KINDS = [
     'group',
+    'cluster',
     'html',
     'iframe',
     'calendar',
@@ -93,6 +97,7 @@ var DashticzDeviceEditor = (function () {
   // through custom_fields instead of a dedicated top-level property.
   var SIMPLE_ICON_PAYLOAD_KINDS = [
     'group',
+    'cluster',
     'html',
     'iframe',
     'calendar',
@@ -246,6 +251,16 @@ var DashticzDeviceEditor = (function () {
         invalid_group_name: 'Enter a valid unique group name.',
         invalid_group_devices:
           'Enter a Group/Scene IDX or at least one valid device ID.',
+        cluster_block: 'Cluster',
+        cluster_name: 'Cluster name',
+        cluster_name_help: 'Used as the blocks[...] key in CONFIG.js.',
+        cluster_title: 'Title',
+        cluster_devices: 'Devices',
+        cluster_devices_help:
+          'Pick a device and click + to add it to the cluster. Each device gets its own on/off toggle.',
+        cluster_no_devices: 'No devices added yet.',
+        invalid_cluster_name: 'Enter a valid unique cluster name.',
+        invalid_cluster_devices: 'Add at least one device.',
         html_block: 'HTML Block',
         html_block_name: 'Block name',
         html_block_name_help: 'Used as the blocks[...] key in CONFIG.js.',
@@ -429,6 +444,15 @@ var DashticzDeviceEditor = (function () {
     _init();
     _prepareManagedDeviceState();
     _showGroupPopup();
+  }
+
+  /** Open the dedicated Cluster block popup used by the Screen Editor add menu. */
+  function openCluster() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showClusterPopup();
   }
 
   /** Open the dedicated HTML Block popup used by the Screen Editor add menu. */
@@ -869,6 +893,16 @@ var DashticzDeviceEditor = (function () {
       // not the plain Domoticz Group/Scene device the normal Add device dropdown
       // already offers.
       kind = 'group';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      String(definition.type || '').toLowerCase() === 'cluster'
+    ) {
+      // Cluster (js/components/cluster.js): a fixed list of devices shown
+      // as individually-switchable rows in one block, dispatched on
+      // type: 'cluster' like Group's type: 'group' just above. Always has
+      // a devices array (no optional idx like Group), validated by
+      // saveblocks.php's own 'cluster' branch.
+      kind = 'cluster';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       !definition.type &&
@@ -1553,6 +1587,7 @@ var DashticzDeviceEditor = (function () {
       if (special.specialType === 'slidebutton') return 'fas fa-home';
       if (special.specialType === 'custom') return 'fas fa-cube';
       if (special.specialType === 'group') return 'fas fa-object-group';
+      if (special.specialType === 'cluster') return 'fas fa-list-check';
       if (special.specialType === 'html') return 'fas fa-code';
       if (special.specialType === 'iframe') return 'fas fa-window-maximize';
       if (special.specialType === 'calendar') return 'fas fa-calendar-alt';
@@ -3379,6 +3414,253 @@ var DashticzDeviceEditor = (function () {
     });
     window.bootstrap.Modal.getOrCreateInstance(
       document.getElementById('groupblockpopup')
+    ).show();
+  }
+
+  /* Cluster: a fixed list of Domoticz devices shown as individually-
+   * switchable rows in one block (js/components/cluster.js), rather than
+   * Group's single combined toggle. Saved as its own specialType
+   * 'cluster' - devices (required, at least one) is its only parameter
+   * unique to it; width/title/icon/last update/title-visibility all reuse
+   * the same shared options every other quick-add popup on this screen
+   * uses. See docs/blocks/specials/cluster.rst. */
+  function _showClusterPopup() {
+    var t = _translations();
+    $('#clusterblockpopup').remove();
+
+    // Excludes Groups/Scenes (idx-less devices, not a plain integer idx a
+    // cluster row can switch) and sub-devices (e.g. a TempHumBar's 3
+    // separate data channels, which all share their parent's numeric idx -
+    // offering each as a separately "addable" option would let two rows
+    // end up pointing at the exact same device, and a sub-device isn't
+    // independently switchable in the first place).
+    var deviceList = _getAvailableDevices(managedDevices).filter(function (d) {
+      return !_isGroupCk(d.key) && !d.subidx;
+    });
+    var pendingDevices = [];
+
+    function deviceOptionsHtml() {
+      var picked = {};
+      pendingDevices.forEach(function (d) {
+        picked[d.idx] = true;
+      });
+      var html = '<option value="">— ' + _esc(t.select_item) + ' —</option>';
+      deviceList.forEach(function (d) {
+        if (picked[d.idx]) return;
+        html +=
+          '<option value="' +
+          _esc(d.idx) +
+          '" data-name="' +
+          _esc(d.plainName || d.name) +
+          '">' +
+          _esc(d.name) +
+          ' (IDX ' +
+          d.idx +
+          ')</option>';
+      });
+      return html;
+    }
+
+    function pendingListHtml() {
+      if (!pendingDevices.length) {
+        return '<div class="de-empty">' + _esc(t.cluster_no_devices) + '</div>';
+      }
+      return pendingDevices
+        .map(function (d) {
+          return (
+            '<div class="de-device-item cl-pending-item" data-idx="' +
+            _esc(d.idx) +
+            '">' +
+            '<span class="de-device-name">' +
+            _esc(d.name) +
+            ' (IDX ' +
+            d.idx +
+            ')</span>' +
+            '<button type="button" class="btn btn-danger btn-sm cl-remove-btn ms-auto" data-idx="' +
+            _esc(d.idx) +
+            '" title="' +
+            _esc(t.remove) +
+            '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
+            '</div>'
+          );
+        })
+        .join('');
+    }
+
+    var html =
+      '<div class="modal fade" id="clusterblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-list-check me-2" aria-hidden="true"></i>' +
+      _esc(t.cluster_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    html += _quickOptionsHtml('cl', {
+      icon: true,
+      iconValue: 'fas fa-list-check',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cl-device-name">' +
+      _esc(t.cluster_name) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="cl-device-name" autocomplete="off">';
+    html +=
+      '<div class="form-text">' + _esc(t.cluster_name_help) + '</div></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cl-device-title">' +
+      _esc(t.cluster_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="cl-device-title" autocomplete="off"></div>';
+    html +=
+      '<div class="mb-3"><label class="form-label" for="cl-device-select">' +
+      _esc(t.cluster_devices) +
+      '</label>';
+    html += '<div class="d-flex gap-2">';
+    html +=
+      '<select class="form-select" id="cl-device-select">' +
+      deviceOptionsHtml() +
+      '</select>';
+    html +=
+      '<button type="button" class="btn btn-success btn-sm" id="cl-add-device-btn">' +
+      '<i class="fas fa-plus" aria-hidden="true"></i></button>';
+    html += '</div>';
+    html += '<div class="form-text">' + _esc(t.cluster_devices_help) + '</div>';
+    html +=
+      '<div id="cl-device-pending" class="mt-2">' +
+      pendingListHtml() +
+      '</div>';
+    html += '</div>';
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="cl-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#clusterblockpopup');
+    _wireQuickOptions('cl', $popup);
+    _wireBackButton('clusterblockpopup');
+
+    $('#cl-add-device-btn').on('click', function () {
+      var $select = $('#cl-device-select');
+      var idx = parseInt($select.val(), 10);
+      if (!(idx > 0)) return;
+      var selectedOption = $select.find('option:selected');
+      var name = selectedOption.attr('data-name') || String(idx);
+      pendingDevices.push({ idx: idx, name: name });
+      $select.html(deviceOptionsHtml());
+      $('#cl-device-pending').html(pendingListHtml());
+    });
+
+    $('#cl-device-pending').on('click', '.cl-remove-btn', function () {
+      var idx = parseInt($(this).attr('data-idx'), 10);
+      pendingDevices = pendingDevices.filter(function (d) {
+        return d.idx !== idx;
+      });
+      $('#cl-device-select').html(deviceOptionsHtml());
+      $('#cl-device-pending').html(pendingListHtml());
+    });
+
+    $('#cl-save-btn').on('click', function () {
+      var $message = $popup
+        .find('.cd-custom-message')
+        .removeClass('text-danger')
+        .text('');
+      var reference = $.trim(String($('#cl-device-name').val() || ''));
+      var title = $.trim(String($('#cl-device-title').val() || ''));
+      if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
+        $message.addClass('text-danger').text(t.invalid_cluster_name);
+        $('#cl-device-name').trigger('focus');
+        return;
+      }
+      if (
+        (typeof blocks !== 'undefined' && blocks[reference]) ||
+        managedSpecials[_specialOrderKey(reference)]
+      ) {
+        $message.addClass('text-danger').text(t.invalid_cluster_name);
+        $('#cl-device-name').trigger('focus');
+        return;
+      }
+      if (!pendingDevices.length) {
+        $message.addClass('text-danger').text(t.invalid_cluster_devices);
+        return;
+      }
+
+      var quickOptions = _readQuickOptions('cl');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+      var deviceIdxList = pendingDevices.map(function (d) {
+        return d.idx;
+      });
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      customRows.push({
+        field: 'devices',
+        setting: JSON.stringify(deviceIdxList),
+        value: deviceIdxList,
+      });
+
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'cluster',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: null,
+        title: title,
+        width: 4,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      window.bootstrap.Modal.getInstance(
+        document.getElementById('clusterblockpopup')
+      ).hide();
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('clusterblockpopup')
     ).show();
   }
 
@@ -6185,6 +6467,7 @@ var DashticzDeviceEditor = (function () {
     var isTitle = special && special.specialType === 'title';
     var isCustom = special && special.specialType === 'custom';
     var isGroupBlock = special && special.specialType === 'group';
+    var isClusterBlock = special && special.specialType === 'cluster';
     var isLmsBlock = special && special.specialType === 'lms';
     var isGraphBlock = special && special.specialType === 'graph';
     // No Dial/Bar/Slider mode, and a restricted display-options set (see
@@ -6901,8 +7184,10 @@ var DashticzDeviceEditor = (function () {
       // generic custom field, so a hand-typed 'values' field name in the
       // generic list must still be rejected as a duplicate.
       var customKeys = multiDeviceValues ? { values: true } : {};
-      if (isGraphBlock) {
+      if (isGraphBlock || isClusterBlock) {
         customKeys.devices = true;
+      }
+      if (isGraphBlock) {
         customKeys.graph = true;
         customKeys.legend = true;
         customKeys.groupby = true;
@@ -7488,6 +7773,7 @@ var DashticzDeviceEditor = (function () {
     var isCustom = special.specialType === 'custom';
     var isSlideButton = special.specialType === 'slidebutton';
     var isGroupBlock = special.specialType === 'group';
+    var isClusterBlock = special.specialType === 'cluster';
     var isHtmlBlock = special.specialType === 'html';
     var isIframeBlock = special.specialType === 'iframe';
     var isCalendarBlock = special.specialType === 'calendar';
@@ -7514,6 +7800,7 @@ var DashticzDeviceEditor = (function () {
             ? t.slide_button
             : t.dummy_device;
     if (isGroupBlock) label = t.group_block;
+    else if (isClusterBlock) label = t.cluster_block;
     else if (isHtmlBlock) label = t.html_block;
     else if (isIframeBlock) label = t.iframe_block;
     else if (isCalendarBlock) label = t.calendar_block;
@@ -7570,26 +7857,28 @@ var DashticzDeviceEditor = (function () {
           ? special.idx
             ? 'IDX\u00a0' + special.idx
             : special.reference
-          : isHtmlBlock
-            ? (htmlFileRow && htmlFileRow.setting) || special.reference
-            : isIframeBlock
-              ? (frameurlRow && frameurlRow.setting) || special.reference
-              : isCalendarBlock
-                ? (icalurlRow && icalurlRow.setting) || special.reference
-                : isPublicTransportBlock
-                  ? (stationRow && stationRow.setting) || special.reference
-                  : isTimegraphBlock
-                    ? 'IDX ' + special.idx
-                    : isXmltvguideBlock
-                      ? (xmltvurlRow && xmltvurlRow.setting) ||
-                        special.reference
-                      : isLmsBlock
-                        ? special.lmsPlayerLabel ||
-                          special.lmsPlayer ||
+          : isClusterBlock
+            ? special.reference
+            : isHtmlBlock
+              ? (htmlFileRow && htmlFileRow.setting) || special.reference
+              : isIframeBlock
+                ? (frameurlRow && frameurlRow.setting) || special.reference
+                : isCalendarBlock
+                  ? (icalurlRow && icalurlRow.setting) || special.reference
+                  : isPublicTransportBlock
+                    ? (stationRow && stationRow.setting) || special.reference
+                    : isTimegraphBlock
+                      ? 'IDX ' + special.idx
+                      : isXmltvguideBlock
+                        ? (xmltvurlRow && xmltvurlRow.setting) ||
                           special.reference
-                        : isCustom
-                          ? special.reference + ' · IDX\u00a0' + special.idx
-                          : 'IDX\u00a0' + special.idx;
+                        : isLmsBlock
+                          ? special.lmsPlayerLabel ||
+                            special.lmsPlayer ||
+                            special.reference
+                          : isCustom
+                            ? special.reference + ' · IDX\u00a0' + special.idx
+                            : 'IDX\u00a0' + special.idx;
     var specialIconClass = isTitle
       ? 'fa-divide'
       : isSlideButton
@@ -7598,6 +7887,7 @@ var DashticzDeviceEditor = (function () {
           ? 'fa-layer-group'
           : 'fa-cube';
     if (isGroupBlock) specialIconClass = 'fa-object-group';
+    else if (isClusterBlock) specialIconClass = 'fa-list-check';
     else if (isHtmlBlock) specialIconClass = 'fa-code';
     else if (isIframeBlock) specialIconClass = 'fa-window-maximize';
     else if (isCalendarBlock) specialIconClass = 'fa-calendar-alt';
@@ -8970,6 +9260,7 @@ var DashticzDeviceEditor = (function () {
     openCustom: openCustom,
     openMultiDevice: openMultiDevice,
     openGroup: openGroup,
+    openCluster: openCluster,
     openHtmlBlock: openHtmlBlock,
     openIframe: openIframe,
     openCalendar: openCalendar,
