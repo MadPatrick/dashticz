@@ -5973,25 +5973,24 @@ test('Cluster row type is locked once the cluster has been saved', () => {
   // guards against it defensively.
   assert.match(
     deviceEditor,
-    /function _clusterModeButtonsHtml\(t, mode, locked\) \{/
+    /function _clusterModeButtonsHtml\(\s*idPrefix,\s*t,\s*mode,\s*locked,\s*switchScaleValue\s*\)\s*\{/
   );
   assert.match(deviceEditor, /\(locked \? ' disabled' : ''\)/);
   assert.match(
     deviceEditor,
-    /_clusterModeButtonsHtml\(t, clusterMode, true\);/
+    /_clusterModeButtonsHtml\(\s*'de-config',\s*t,\s*clusterMode,\s*true,\s*clusterSwitchScaleValue\s*\);/
   );
   assert.match(
     deviceEditor,
     /if \(\$\(this\)\.prop\('disabled'\)\) return;\s*\n\s*var mode = String\(\$\(this\)\.attr\('data-cluster-mode'\)/
   );
 
-  // The quick-add popup's own call passes no third argument, i.e. stays
+  // The quick-add popup's own call passes locked: false, i.e. stays
   // unlocked (nothing is saved yet there).
-  const createPopupCall = deviceEditor.match(
-    /html \+= _clusterModeButtonsHtml\([^)]*\);/
+  assert.match(
+    deviceEditor,
+    /html \+= _clusterModeButtonsHtml\(\s*'cl',\s*t,\s*clusterMode,\s*false,\s*clusterSwitchScaleValue\s*\);/
   );
-  assert.ok(createPopupCall, 'expected the quick-add popup call to exist');
-  assert.doesNotMatch(createPopupCall[0], /true/);
 });
 
 test('Cluster row names can be customized per device, like a normal device Title', () => {
@@ -6048,6 +6047,81 @@ test('Cluster row names can be customized per device, like a normal device Title
   );
 
   assert.match(css, /\.cl-name-input \{/);
+});
+
+test('Cluster switch can be resized via a switchScale field next to the Row type buttons', () => {
+  const deviceEditor = fs.readFileSync(
+    path.join(root, 'js/deviceeditor.js'),
+    'utf8'
+  );
+  const cluster = fs.readFileSync(
+    path.join(root, 'js/components/cluster.js'),
+    'utf8'
+  );
+  const saveblocks = fs.readFileSync(
+    path.join(root, 'js/saveblocks.php'),
+    'utf8'
+  );
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  // Rendered inline (a 5-character-wide input per request, not a stacked
+  // mb-3 block) right next to the Switch/Temperature buttons -
+  // _clusterModeButtonsHtml calls it itself rather than callers rendering
+  // it as a separate field below, and it's hidden entirely in Temperature
+  // mode (no switches there to size).
+  assert.match(deviceEditor, /function _clusterSwitchScaleFieldHtml\(/);
+  assert.match(deviceEditor, /if \(mode === 'temperature'\) return '';/);
+  assert.match(deviceEditor, /width:5ch/);
+  assert.match(
+    deviceEditor,
+    /_clusterSwitchScaleFieldHtml\(idPrefix, t, mode, switchScaleValue\)/
+  );
+
+  // Parsed/clamped client-side to the same 0.3-3 range saveblocks.php
+  // enforces server-side, read back from both popups' own inputs and
+  // reserved so a hand-typed 'switchScale' custom field can't collide.
+  assert.match(deviceEditor, /function _readClusterSwitchScale\(/);
+  assert.match(deviceEditor, /customKeys\.switchscale = true;/);
+  assert.match(deviceEditor, /field !== 'switchscale'/);
+  assert.match(
+    deviceEditor,
+    /field: 'switchScale',\s*\n\s*setting: String\(switchScale\),/
+  );
+  assert.match(
+    deviceEditor,
+    /field: 'switchScale',\s*\n\s*setting: String\(editSwitchScale\),/
+  );
+
+  // js/components/cluster.js applies it as a CSS custom property on every
+  // refresh (not just run()), so a live config update without a full page
+  // reload still picks up a changed value.
+  assert.match(
+    cluster,
+    /var switchScale = parseFloat\(me\.block\.switchScale\);/
+  );
+  assert.match(
+    cluster,
+    /'--cluster-switch-scale',\s*\n\s*switchScale > 0 \? switchScale : ''/
+  );
+
+  // css/creative.css: every scaled dimension is read with a var()
+  // fallback of 1 (never declared on the same selector - see
+  // .cluster-row-switch's own comment) so the switch renders at normal
+  // size when unset, and the row's own gap to .cluster-row-usage scales
+  // the same way so a bigger switch doesn't crowd its neighbour.
+  assert.match(css, /width: calc\(66px \* var\(--cluster-switch-scale, 1\)\);/);
+  assert.match(css, /gap: calc\(8px \* var\(--cluster-switch-scale, 1\)\);/);
+
+  // Server-side: must be a number within 0.3-3.
+  assert.match(saveblocks, /isset\(\$customFields\['switchScale'\]\)/);
+  assert.match(
+    saveblocks,
+    /A cluster block\\'s switchScale must be a number\./
+  );
+  assert.match(
+    saveblocks,
+    /A cluster block\\'s switchScale must be between 0\.3 and 3\./
+  );
 });
 
 test('rendered Graph blocks keep the Layout Editor config cog and open their own config', () => {

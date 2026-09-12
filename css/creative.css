@@ -4400,7 +4400,7 @@ img.icon {
 .cluster-rows {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding: 4px 0;
 }
 
@@ -4472,7 +4472,9 @@ img.icon {
 
 .cluster-row-track {
   position: relative;
-  width: calc(54px * var(--cluster-switch-scale, 1));
+  /* Wider than tall (66x30, vs. a more typical ~2:1 pill) so ON/OFF has
+     more breathing room next to the thumb and reads more easily. */
+  width: calc(66px * var(--cluster-switch-scale, 1));
   height: calc(30px * var(--cluster-switch-scale, 1));
   border-radius: 9999px;
   background: var(--cluster-switch-off, rgba(255, 255, 255, 0.25));
@@ -4533,10 +4535,10 @@ img.icon {
 }
 
 .cluster-row-checkbox:checked + .cluster-row-track .cluster-row-thumb {
-  /* 54px track, 1px border eaten by border-box, 24px thumb, 3px padding
-     each side: 54 - 2(border) - 24 - 2(3px padding) = 22, scaled the same
+  /* 66px track, 1px border eaten by border-box, 24px thumb, 3px padding
+     each side: 66 - 2(border) - 24 - 2(3px padding) = 34, scaled the same
      as every other dimension here. */
-  transform: translateX(calc(22px * var(--cluster-switch-scale, 1)));
+  transform: translateX(calc(34px * var(--cluster-switch-scale, 1)));
 }
 
 .cluster-row-checkbox:focus-visible + .cluster-row-track {

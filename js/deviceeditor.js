@@ -3629,21 +3629,30 @@ var DashticzDeviceEditor = (function () {
   }
 
   // Switch vs Temperature mode buttons, shared between the quick-add popup
-  // and the Device Config popup's own Cluster section. A Cluster's rows
-  // are either all switches (with an optional consumption companion) or
-  // all temperature readings, never mixed - see cluster.js. mode is
-  // '' (falsy) or 'temperature'; anything else, including absent, means
-  // the default switch mode. locked disables both buttons: the Device
-  // Config popup only ever edits an already-saved cluster (a pending,
-  // not-yet-saved block never gets a cog - see openLayoutConfig()), whose
-  // devices were picked for one specific mode, so switching there would
-  // silently orphan them instead of clearing a pending pick the way the
-  // quick-add popup (never locked) does.
-  function _clusterModeButtonsHtml(t, mode, locked) {
+  // and the Device Config popup's own Cluster section, plus (Switch mode
+  // only) the switch-size field inline next to them - see
+  // _clusterSwitchScaleFieldHtml. A Cluster's rows are either all switches
+  // (with an optional consumption companion) or all temperature readings,
+  // never mixed - see cluster.js. mode is '' (falsy) or 'temperature';
+  // anything else, including absent, means the default switch mode.
+  // locked disables both buttons: the Device Config popup only ever edits
+  // an already-saved cluster (a pending, not-yet-saved block never gets a
+  // cog - see openLayoutConfig()), whose devices were picked for one
+  // specific mode, so switching there would silently orphan them instead
+  // of clearing a pending pick the way the quick-add popup (never locked)
+  // does.
+  function _clusterModeButtonsHtml(
+    idPrefix,
+    t,
+    mode,
+    locked,
+    switchScaleValue
+  ) {
     var html =
       '<div class="mb-3"><label class="form-label">' +
       _esc(t.cluster_mode) +
       '</label><div>';
+    html += '<div class="d-flex align-items-center gap-3 flex-wrap">';
     html +=
       '<div class="btn-group" role="group" aria-label="' +
       _esc(t.cluster_mode) +
@@ -3681,6 +3690,13 @@ var DashticzDeviceEditor = (function () {
         '</span></button>';
     });
     html += '</div>';
+    html +=
+      '<span id="' +
+      _esc(idPrefix) +
+      '-switch-scale-slot">' +
+      _clusterSwitchScaleFieldHtml(idPrefix, t, mode, switchScaleValue) +
+      '</span>';
+    html += '</div>';
     if (locked) {
       html +=
         '<div class="form-text">' + _esc(t.cluster_mode_locked_help) + '</div>';
@@ -3698,22 +3714,28 @@ var DashticzDeviceEditor = (function () {
   // current text (empty string means "use the default size").
   function _clusterSwitchScaleFieldHtml(idPrefix, t, mode, value) {
     if (mode === 'temperature') return '';
+    // Compact inline label+input (not a stacked mb-3 block like most
+    // fields here) meant to sit right next to the Switch/Temperature
+    // buttons this sizes - see _clusterModeButtonsHtml. 5 characters wide
+    // per request; the help text moves to a title tooltip instead of a
+    // permanent form-text line to keep the pair visually small.
     return (
-      '<div class="mb-3" id="' +
+      '<span class="d-flex align-items-center gap-2" id="' +
       _esc(idPrefix) +
-      '-switch-scale-wrap"><label class="form-label" for="' +
+      '-switch-scale-wrap">' +
+      '<label class="form-label mb-0 small" for="' +
       _esc(idPrefix) +
       '-switch-scale">' +
       _esc(t.cluster_switch_scale) +
       '</label>' +
-      '<input type="number" class="form-control" id="' +
+      '<input type="number" class="form-control form-control-sm" id="' +
       _esc(idPrefix) +
-      '-switch-scale" min="0.3" max="3" step="0.1" placeholder="1" value="' +
+      '-switch-scale" style="width:5ch;flex:0 0 auto;" min="0.3" max="3" step="0.1" placeholder="1" value="' +
       _esc(value || '') +
-      '" autocomplete="off">' +
-      '<div class="form-text">' +
+      '" title="' +
       _esc(t.cluster_switch_scale_help) +
-      '</div></div>'
+      '" autocomplete="off">' +
+      '</span>'
     );
   }
 
@@ -3796,11 +3818,13 @@ var DashticzDeviceEditor = (function () {
       '</label>';
     html +=
       '<input type="text" class="form-control" id="cl-device-title" autocomplete="off"></div>';
-    html += _clusterModeButtonsHtml(t, clusterMode);
-    html +=
-      '<div id="cl-switch-scale-container">' +
-      _clusterSwitchScaleFieldHtml('cl', t, clusterMode, '') +
-      '</div>';
+    html += _clusterModeButtonsHtml(
+      'cl',
+      t,
+      clusterMode,
+      false,
+      clusterSwitchScaleValue
+    );
     html +=
       '<div class="mb-3"><label class="form-label" for="cl-device-select">' +
       _esc(t.cluster_devices) +
@@ -3904,7 +3928,7 @@ var DashticzDeviceEditor = (function () {
       $('#cl-device-select').html(deviceOptionsHtml());
       $('#cl-device-pending').html(pendingListHtml());
       $('#cl-device-help').text(devicesHelpText());
-      $('#cl-switch-scale-container').html(
+      $('#cl-switch-scale-slot').html(
         _clusterSwitchScaleFieldHtml(
           'cl',
           t,
@@ -7420,15 +7444,15 @@ var DashticzDeviceEditor = (function () {
     } else if (isGraphBlock) {
       html += _graphFieldsHtml('de-config', graphFields);
     } else if (isClusterBlock) {
-      html += _clusterModeButtonsHtml(t, clusterMode, true);
       // Unlike the quick-add popup, mode is locked here (see the 'locked'
-      // arg above) and never changes, so this can render once from the
-      // current mode instead of needing the create popup's re-render-on-
-      // toggle wrapper.
-      html += _clusterSwitchScaleFieldHtml(
+      // arg below) and never changes, so the switch-size field it embeds
+      // (see _clusterModeButtonsHtml) never needs the create popup's
+      // re-render-on-toggle handling.
+      html += _clusterModeButtonsHtml(
         'de-config',
         t,
         clusterMode,
+        true,
         clusterSwitchScaleValue
       );
       html += _clusterFieldsHtml(
