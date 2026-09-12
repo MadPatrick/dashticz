@@ -17,6 +17,7 @@ var DT_cluster = (function () {
       return {
         width: 4,
         refresh: 3600,
+        containerClass: 'cluster-block',
       };
     },
     run: function (me) {
@@ -40,12 +41,13 @@ var DT_cluster = (function () {
 
   function doRefresh(me) {
     var allDevices = Domoticz.getAllDevices();
-    var title = me.block.title || me.key;
-    var html = '<div class="dt_content cluster-block">';
-    if (me.block.showTitle !== false && title) {
-      html += '<div class="dt_title">' + title + '</div>';
-    }
-    html += '<div class="cluster-rows">';
+    // Cluster is a normal special block: js/dashticz.js's renderBlock()
+    // already painted .dt_block's own .col-icon/.dt_title (from the block's
+    // configured icon/title) before run()/refresh() ever runs. Writing into
+    // .dt_state - the framework's own content slot, same as e.g. OWM/Weather
+    // - instead of replacing .dt_block wholesale keeps that icon/title
+    // intact instead of wiping it every refresh.
+    var html = '<div class="cluster-rows">';
     me.devices.forEach(function (idx) {
       var device = allDevices[idx];
       if (!device) return;
@@ -67,8 +69,8 @@ var DT_cluster = (function () {
         '</label>' +
         '</div>';
     });
-    html += '</div></div>';
-    me.$mountPoint.find('.dt_block').html(html);
+    html += '</div>';
+    me.$mountPoint.find('.dt_state').html(html);
 
     me.$mountPoint
       .find('.cluster-row-switch')

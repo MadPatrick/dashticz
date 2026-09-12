@@ -4319,11 +4319,14 @@ img.icon {
    individually-switchable rows in one block, unlike Group's single
    combined toggle. Deliberately plain/theme-neutral (unlike the blinds
    slider handle above, this isn't themed per-theme) so it reads
-   consistently regardless of the active theme. */
-.cluster-block {
+   consistently regardless of the active theme. Rows are painted into
+   .dt_state (js/dashticz.js's own content slot), so the block's configured
+   icon/.dt_title - painted once by the framework itself - stay untouched;
+   containerClass: 'cluster-block' (js/components/cluster.js) is only a
+   scoping hook here, same idea as e.g. .weather_1/.weather_2. */
+.cluster-block .dt_state {
   display: flex;
   flex-direction: column;
-  height: 100%;
   overflow: auto;
 }
 
@@ -4347,6 +4350,10 @@ img.icon {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Same size as the block's own title (.dt_title), just not bold - per
+     user request. */
+  font-size: var(--font-device-title);
+  font-weight: normal;
 }
 
 .cluster-row-switch {

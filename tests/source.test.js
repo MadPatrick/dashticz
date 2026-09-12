@@ -5779,6 +5779,34 @@ test('a saved Cluster block can actually be re-opened and saved from the Layout 
   assert.doesNotMatch(cluster, /containerClass:\s*'mh'/);
 });
 
+test('Cluster keeps its framework-painted icon/title and sizes rows like a device title', () => {
+  const cluster = fs.readFileSync(
+    path.join(root, 'js/components/cluster.js'),
+    'utf8'
+  );
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  // js/dashticz.js's renderBlock() already paints .dt_block's own
+  // .col-icon/.dt_title (from the block's configured icon/title) before
+  // run()/refresh() ever runs. doRefresh() must write into .dt_state - the
+  // framework's own content slot, same as e.g. OWM/Weather - rather than
+  // replacing .dt_block wholesale, which wiped that icon/title out on every
+  // refresh (leaving a Cluster block's own configured icon never visible).
+  assert.doesNotMatch(cluster, /find\('\.dt_block'\)\.html\(/);
+  assert.match(cluster, /find\('\.dt_state'\)\.html\(/);
+  // No longer hand-rolls its own .dt_title - the framework's renderTitle()
+  // (gated on the same hide_title the Title checkbox writes) already
+  // renders one.
+  assert.doesNotMatch(cluster, /class="dt_title"/);
+
+  // Row names read like a normal device title elsewhere in the dashboard
+  // (--font-device-title), just not bold, per user request.
+  assert.match(
+    css,
+    /\.cluster-row-title \{[\s\S]{0,300}?font-size: var\(--font-device-title\);[\s\S]{0,60}?font-weight: normal;/
+  );
+});
+
 test('rendered Graph blocks keep the Layout Editor config cog and open their own config', () => {
   const layoutEditor = fs.readFileSync(
     path.join(root, 'js/layouteditor.js'),
