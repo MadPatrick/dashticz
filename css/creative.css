@@ -1592,17 +1592,28 @@ next css sets the default height of the frame popup
   width: 60%;
   height: 100%;
   transform: skewX(-20deg);
+  /* The tile's own background (#f8f9fa, #eef5ff on hover) is already very
+     light, so the originally-requested rgba(237,233,224,0.25) had almost no
+     luminance difference to read against it - confirmed invisible in a
+     screenshot scan across the full sweep. A brighter, more opaque white
+     keeps the same diagonal-sweep shape but actually shows up here. */
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(237, 233, 224, 0.25),
+    rgba(255, 255, 255, 0.85),
     transparent
   );
 }
 
 .dt-screeneditor-add-tile:hover::before {
   left: 120%;
-  transition: left 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+  /* The original cubic-bezier(0.65, 0, 0.35, 1) keeps the animated value
+     near its start for roughly the first quarter of the transition, which
+     reads as a delay before the sweep appears - confirmed with screenshots
+     at 50ms steps showing nothing moving until ~250ms in. ease-out starts
+     moving immediately instead, and a shorter duration makes the whole
+     sweep feel snappy rather than a slow drift. */
+  transition: left 0.45s ease-out;
 }
 
 .dt-screeneditor-add-tile:hover,
@@ -2170,6 +2181,22 @@ body.dle-active {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Cluster popup pending-device row: a companion "consumption" device
+   <select> sits between the name and the remove button, so the name needs
+   to actually shrink (a flex item's default min-width:auto ignores
+   overflow:hidden/text-overflow otherwise) instead of pushing the select
+   off the edge of the row. */
+.cl-pending-item .de-device-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cl-usage-select {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 180px;
 }
 
 .de-device-type {
@@ -4336,6 +4363,109 @@ img.icon {
 .slider-tick-active span {
   color: #9ae58b;
   font-weight: 800;
+}
+
+/* Cluster (js/components/cluster.js): a fixed list of devices shown as
+   individually-switchable rows in one block, unlike Group's single
+   combined toggle. Deliberately plain/theme-neutral (unlike the blinds
+   slider handle above, this isn't themed per-theme) so it reads
+   consistently regardless of the active theme. Rows are painted into
+   .dt_state (js/dashticz.js's own content slot), so the block's configured
+   icon/.dt_title - painted once by the framework itself - stay untouched;
+   containerClass: 'cluster-block' (js/components/cluster.js) is only a
+   scoping hook here, same idea as e.g. .weather_1/.weather_2. */
+.cluster-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.cluster-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.cluster-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cluster-row-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* Same size as the block's own title (.dt_title), just not bold - per
+     user request. */
+  font-size: var(--font-device-title);
+  font-weight: normal;
+}
+
+.cluster-row-usage {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: var(--font-device-title);
+  color: var(--text-muted);
+}
+
+/* Temperature mode's own row value (js/components/cluster.js) - unlike
+   the usage span, this is the row's primary value (there is no toggle
+   next to it), so it keeps the row's normal text color instead of the
+   muted one .cluster-row-usage uses for its secondary annotation. */
+.cluster-row-temp {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: var(--font-device-title);
+  font-weight: 600;
+}
+
+.cluster-row-switch {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+}
+
+.cluster-row-switch .cluster-row-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.cluster-row-slider {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  transition: background 0.15s ease;
+}
+
+.cluster-row-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 2px;
+  top: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+
+.cluster-row-checkbox:checked + .cluster-row-slider {
+  background: #4cd964;
+}
+
+.cluster-row-checkbox:checked + .cluster-row-slider::before {
+  transform: translateX(18px);
 }
 
 @media (max-width: 975px) {
