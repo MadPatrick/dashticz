@@ -8,10 +8,10 @@
 :root {
   --main-bg: linear-gradient(
     157deg,
-    rgba(32, 33, 42, 0.4) 3%,
+    rgba(32, 33, 42, 0.4) 1%,
     rgba(42, 94, 151, 0.4) 11%,
     rgba(32, 33, 42, 0.4) 71%,
-    rgba(90, 90, 199, 0.3) 96%
+    rgba(90, 90, 199, 0.2) 96%
   );
   --main-border-width: 1px;
   --block-gap: 0px;
