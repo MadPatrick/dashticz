@@ -336,10 +336,64 @@
 .dt_block {
   display: flex;
   align-items: flex-start;
+  position: relative;
   background: var(--main-bg);
   background-clip: padding-box;
   border: var(--block-gap) solid var(--border-color-block);
   padding: 5px !important;
+  transition: border-color 0.2s ease;
+}
+
+/* Same shine-sweep hover as the Screen Editor's own Add-items tiles
+   (.dt-screeneditor-add-tile below), but themed instead of hardcoded:
+   var(--button-active)/var(--border-color-active) already vary per theme
+   (see e.g. themes/modern-dark, themes/liquid-glass-*), the same pair an
+   active/pressed .transbg button already uses further down. Implemented
+   as a second background layer with an animated background-position,
+   not a translated element, on purpose: .dt_block hosts every kind of
+   block (dials, graphs, dropdowns, camera popups, ...) and some rely on
+   their own content overflowing its box, so this must never need
+   `overflow: hidden` on .dt_block itself - a background is always
+   clipped to the element's own box regardless of that element's own
+   overflow setting, unlike the add-tile's translated ::before, which
+   only stays inside its tile because that tile sets overflow: hidden
+   itself (safe there - an Add-items tile has no overflowing content).
+
+   background-position on a background-size: 200% image moves at
+   (1 - 2) * pct/100 = -pct/100 box-widths, i.e. a full box-width per 100
+   points of position change - a naive "0% -> -100% -> back" (mirroring
+   the add-tile's own -120%/120% *element position* numbers directly)
+   sweeps the band past the visible viewport in a fraction of the
+   transition (confirmed empirically: only ~1/7th of the transition
+   actually showed it, far too fast to see). -50% -> 150% keeps the band
+   (42%-58% of the image) fully hidden at both ends while still crossing
+   the viewport for ~60% of the transition's own duration - recompute
+   both numbers together if the band width or background-size changes. */
+.dt_block::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+    100deg,
+    transparent 42%,
+    var(--dt-block-shine, var(--button-active)) 50%,
+    transparent 58%
+  );
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  background-position: -50% 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dt_block:hover {
+    border-color: var(--border-color-active);
+  }
+
+  .dt_block:hover::before {
+    background-position: 150% 0;
+    transition: background-position 0.45s ease-out;
+  }
 }
 
 /* dirty fix for group component ... */

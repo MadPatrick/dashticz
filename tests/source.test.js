@@ -7314,3 +7314,40 @@ test('Traffic info translations: no ANWB/provider keys left, jams/roadworks/resu
     /ANWB/
   );
 });
+
+test('Dashboard blocks get a themed shine-sweep hover, without overflow: hidden', () => {
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  // .dt_block hosts every kind of block (dials, graphs, dropdowns, camera
+  // popups, ...), and some rely on their own content overflowing its box
+  // (see e.g. .dle-block's own overflow: visible !important while the
+  // Layout Editor is open) - the shine is a second background layer with
+  // an animated background-position rather than a translated element
+  // like the Add-items tile's own version, specifically so it never needs
+  // overflow: hidden on .dt_block itself (a background is always clipped
+  // to the element's own box regardless of the element's own overflow
+  // setting).
+  const blockRuleMatch = css.match(/\.dt_block \{[\s\S]{0,400}?\n\}/);
+  assert.ok(blockRuleMatch, 'expected to find the base .dt_block rule');
+  assert.match(blockRuleMatch[0], /position: relative;/);
+  assert.doesNotMatch(blockRuleMatch[0], /overflow:\s*hidden/);
+
+  assert.match(css, /\.dt_block::before \{/);
+  const beforeRuleMatch = css.match(/\.dt_block::before \{[\s\S]{0,600}?\n\}/);
+  assert.ok(beforeRuleMatch, 'expected to find the .dt_block::before rule');
+  assert.doesNotMatch(beforeRuleMatch[0], /overflow:\s*hidden/);
+  assert.match(beforeRuleMatch[0], /background-size: 200% 100%;/);
+
+  // Themed, not hardcoded: var(--button-active)/var(--border-color-active)
+  // already vary per theme (themes/modern-dark, themes/liquid-glass-*),
+  // the same pair an active/pressed .transbg button already uses.
+  assert.match(css, /var\(--dt-block-shine, var\(--button-active\)\)/);
+  assert.match(
+    css,
+    /@media \(hover: hover\) and \(pointer: fine\) \{\s*\n\s*\.dt_block:hover \{\s*\n\s*border-color: var\(--border-color-active\);/
+  );
+  assert.match(
+    css,
+    /\.dt_block:hover::before \{\s*\n\s*background-position: 150% 0;/
+  );
+});
