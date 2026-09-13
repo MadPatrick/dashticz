@@ -7522,44 +7522,39 @@ test('Weergave settings offer a target screen resolution, and its panel renders 
   );
 });
 
-test('Layout Editor marks the configured target resolution while editing a grid screen', () => {
+test('Layout Editor draws a dashed boundary line at the target screen height while editing a grid screen', () => {
   const layoutEditor = fs.readFileSync(
     path.join(root, 'js/layouteditor.js'),
     'utf8'
   );
   const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
 
-  // Dimensions are optional and independently validated. Like every other
-  // settings field here, there is no stored default, so an install that
-  // never touches either field sees no target-resolution guide at all.
+  // Only drawn when Settings > Weergave's targetScreenHeight is actually
+  // set - like every other settings field here, there is no stored
+  // default, so an install that never touches it sees no line at all.
   assert.match(
     layoutEditor,
-    /function _targetScreenDimension\(settingName\) \{[\s\S]{0,250}?return isFinite\(value\) && value > 0 \? value : null;/
-  );
-  assert.match(
-    layoutEditor,
-    /function _targetScreenWidth\(\) \{\s*\n\s*return _targetScreenDimension\('targetScreenWidth'\);/
-  );
-  assert.match(
-    layoutEditor,
-    /function _targetScreenHeight\(\) \{\s*\n\s*return _targetScreenDimension\('targetScreenHeight'\);/
+    /function _targetScreenHeight\(\) \{\s*\n\s*return typeof settings !== 'undefined' && settings\.targetScreenHeight > 0/
   );
 
   const prepareGridCanvas = layoutEditor.match(
     /function _prepareGridCanvas\(\$grid\) \{[\s\S]*?\n {2}\}/
   );
   assert.ok(prepareGridCanvas, 'expected to find _prepareGridCanvas()');
+  // Just the target height divided by the row height, rounded to the
+  // nearest whole row - snaps the line to a grid line instead of cutting
+  // through the middle of one.
   assert.match(
     prepareGridCanvas[0],
-    /if \(targetWidth\) \{\s*\n\s*\$grid\[0\]\.style\.setProperty\('--dle-target-width', targetWidth \+ 'px'\);/
+    /targetHeightRows = Math\.round\(targetHeight \/ gridConfig\.rowHeight\);/
   );
   assert.match(
     prepareGridCanvas[0],
-    /if \(targetHeight\) \{\s*\n\s*\$grid\[0\]\.style\.setProperty\('--dle-target-height', targetHeight \+ 'px'\);\s*\n\s*\$canvas\.addClass\('dle-has-target-height'\);/
+    /var targetHeightPx =\s*\n\s*targetHeightRows \* \(gridConfig\.rowHeight \+ gridConfig\.gap\);/
   );
   assert.match(
     prepareGridCanvas[0],
-    /\$canvas\.toggleClass\(\s*\n\s*'dle-has-target-resolution',\s*\n\s*Boolean\(targetWidth \|\| targetHeight\)\s*\n\s*\);/
+    /if \(targetHeight\) \{[\s\S]{0,700}?\$grid\[0\]\.style\.setProperty\('--dle-target-height', targetHeightPx \+ 'px'\);\s*\n\s*\$canvas\.addClass\('dle-has-target-height'\);/
   );
   // The canvas is grown tall enough to actually scroll down to the line,
   // even on a near-empty grid screen or a short browser window.
@@ -7574,23 +7569,7 @@ test('Layout Editor marks the configured target resolution while editing a grid 
   );
   assert.match(
     layoutEditor,
-    /\$canvas\.removeClass\('dle-has-target-resolution'\)/
-  );
-  assert.match(
-    layoutEditor,
-    /\$canvas\[0\]\.style\.removeProperty\('--dle-target-width'\)/
-  );
-  assert.match(
-    layoutEditor,
     /\$canvas\[0\]\.style\.removeProperty\('--dle-target-height'\)/
-  );
-
-  // A transparent top-left quadrant leaves the usable screen area unchanged;
-  // the other three quadrants tint everything right of or below it. The
-  // pseudo-element is above tile content but below editor controls.
-  assert.match(
-    styles,
-    /\.dt-grid-layout\.dle-grid-canvas\.dle-has-target-resolution::before \{[\s\S]{0,500}?inset: 0;[\s\S]{0,500}?from 0deg at var\(--dle-target-width, 100%\) var\(--dle-target-height, 100%\),\s*\n\s*rgba\(231, 76, 60, 0\.18\) 0deg 270deg,\s*\n\s*transparent 270deg 360deg[\s\S]{0,200}?pointer-events: none;/
   );
 
   // A thick dashed line, positioned absolutely (so it's not itself treated
