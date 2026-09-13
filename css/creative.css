@@ -1910,6 +1910,23 @@ body.dle-active {
   overscroll-behavior: contain;
 }
 
+/* Settings > Weergave's optional target screen height, drawn as a thick
+   dashed line across the grid canvas - everything below it needs scrolling
+   on a screen that tall. --dle-target-height (px, measured from the top of
+   the grid) is only set by the Layout Editor when that setting has a
+   value, so the line is simply absent on installs that never set one. */
+.dt-grid-layout.dle-grid-canvas.dle-has-target-height::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--dle-target-height);
+  height: 0;
+  border-top: 4px dashed #e74c3c;
+  pointer-events: none;
+  z-index: 5;
+}
+
 .dt-grid-layout.dle-grid-canvas > .dt-grid-item {
   /* Allow overflow so the delete and resize editor controls remain visible
      even when a grid item is resized very small or its content overflows. */

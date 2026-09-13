@@ -144,16 +144,20 @@ settingList['screen']['vertical_scroll'] = {
   help: language.settings.screen.vertical_scroll_help,
 };
 
+// This block's order is not just document order: the Weergave panel's
+// .settings-fields-grid renders as a plain 2-column, row-major CSS grid
+// (see js/settings.js's renderSettingsCategories()), so item N and item
+// N+2 land in the same column, one row apart, while N and N+1 sit side by
+// side in the same row. gridColumns/rowHeight and targetScreenWidth/
+// targetScreenHeight are meant to read as two stacked pairs, not four
+// fields on a diagonal - hence interleaving them here (columns, width,
+// rowHeight, height) instead of the more obvious columns/rowHeight/width/
+// height grouping. Inserting another field anywhere in this block reflows
+// every later field's column, so re-check the pairing after any change.
 settingList['screen']['gridColumns'] = {
   title: language.settings.screen.gridColumns,
   type: 'text',
   help: language.settings.screen.gridColumns_help,
-};
-
-settingList['screen']['rowHeight'] = {
-  title: language.settings.screen.rowHeight,
-  type: 'text',
-  help: language.settings.screen.rowHeight_help,
 };
 
 settingList['screen']['targetScreenWidth'] = {
@@ -164,6 +168,12 @@ settingList['screen']['targetScreenWidth'] = {
   help:
     language.settings.screen.targetScreenWidth_help ||
     'The width of the screen you design the grid for. Used to show which part of the grid fits on this screen.',
+};
+
+settingList['screen']['rowHeight'] = {
+  title: language.settings.screen.rowHeight,
+  type: 'text',
+  help: language.settings.screen.rowHeight_help,
 };
 
 settingList['screen']['targetScreenHeight'] = {

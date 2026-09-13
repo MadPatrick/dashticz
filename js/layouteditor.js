@@ -721,6 +721,15 @@ var DashticzLayoutEditor = (function () {
       : 20;
   }
 
+  // Settings > Weergave's optional target screen height, in px - undefined
+  // (no boundary line drawn) unless the user has actually set one, like
+  // every other settings field's "no stored default" convention.
+  function _targetScreenHeight() {
+    return typeof settings !== 'undefined' && settings.targetScreenHeight > 0
+      ? Number(settings.targetScreenHeight)
+      : null;
+  }
+
   function _emptyGridConversion(screenNumber) {
     return {
       empty: true,
@@ -1821,7 +1830,23 @@ var DashticzLayoutEditor = (function () {
       Math.max(0, window.innerHeight - $grid[0].getBoundingClientRect().top) /
         (gridConfig.rowHeight + gridConfig.gap)
     );
-    _ensureGridCanvasRows(Math.max(occupiedRows + 10, viewportRows + 6));
+    var targetHeightRows = 0;
+    var targetHeight = _targetScreenHeight();
+    if (targetHeight) {
+      $grid[0].style.setProperty('--dle-target-height', targetHeight + 'px');
+      $canvas.addClass('dle-has-target-height');
+      // Make sure the canvas is tall enough to actually scroll down to the
+      // line, even on a near-empty grid screen or a short browser window.
+      targetHeightRows = Math.ceil(
+        targetHeight / (gridConfig.rowHeight + gridConfig.gap)
+      );
+    } else {
+      $grid[0].style.removeProperty('--dle-target-height');
+      $canvas.removeClass('dle-has-target-height');
+    }
+    _ensureGridCanvasRows(
+      Math.max(occupiedRows + 10, viewportRows + 6, targetHeightRows + 4)
+    );
     _refreshGridOverlaps();
   }
 
@@ -2864,7 +2889,9 @@ var DashticzLayoutEditor = (function () {
     if (gridMode) _refreshGridOverlaps();
     if ($canvas) $canvas.removeClass('dle-canvas');
     if ($canvas) $canvas.removeClass('dle-grid-canvas');
+    if ($canvas) $canvas.removeClass('dle-has-target-height');
     if ($canvas) $canvas[0].style.removeProperty('--dle-grid-column-stride');
+    if ($canvas) $canvas[0].style.removeProperty('--dle-target-height');
     if ($canvas)
       $canvas[0].style.removeProperty('--dle-grid-editor-min-height');
     if ($editingScreen) $editingScreen.removeClass('dle-grid-screen-editing');

@@ -7511,4 +7511,61 @@ test('Weergave settings offer a target screen resolution, and its panel renders 
     nlLang.settings.screen.targetScreenHeight,
     'Doel schermhoogte (px)'
   );
+
+  // .settings-fields-grid is a plain 2-column, row-major grid, so stacking
+  // gridColumns under rowHeight (and targetScreenWidth under
+  // targetScreenHeight) needs the definitions interleaved in this exact
+  // order - see js/settings.js's own comment above this block.
+  assert.match(
+    settingsJs,
+    /settingList\['screen'\]\['gridColumns'\] = \{[\s\S]{0,600}?settingList\['screen'\]\['targetScreenWidth'\] = \{[\s\S]{0,600}?settingList\['screen'\]\['rowHeight'\] = \{[\s\S]{0,600}?settingList\['screen'\]\['targetScreenHeight'\] = \{/
+  );
+});
+
+test('Layout Editor draws a dashed boundary line at the target screen height while editing a grid screen', () => {
+  const layoutEditor = fs.readFileSync(
+    path.join(root, 'js/layouteditor.js'),
+    'utf8'
+  );
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  // Only drawn when Settings > Weergave's targetScreenHeight is actually
+  // set - like every other settings field here, there is no stored
+  // default, so an install that never touches it sees no line at all.
+  assert.match(
+    layoutEditor,
+    /function _targetScreenHeight\(\) \{\s*\n\s*return typeof settings !== 'undefined' && settings\.targetScreenHeight > 0/
+  );
+
+  const prepareGridCanvas = layoutEditor.match(
+    /function _prepareGridCanvas\(\$grid\) \{[\s\S]*?\n {2}\}/
+  );
+  assert.ok(prepareGridCanvas, 'expected to find _prepareGridCanvas()');
+  assert.match(
+    prepareGridCanvas[0],
+    /if \(targetHeight\) \{\s*\n\s*\$grid\[0\]\.style\.setProperty\('--dle-target-height', targetHeight \+ 'px'\);\s*\n\s*\$canvas\.addClass\('dle-has-target-height'\);/
+  );
+  // The canvas is grown tall enough to actually scroll down to the line,
+  // even on a near-empty grid screen or a short browser window.
+  assert.match(prepareGridCanvas[0], /targetHeightRows \+ 4/);
+
+  // Cleanup on close/cancel removes both the class and the CSS var, so a
+  // screen without its own target height never inherits a stale line from
+  // a previously edited screen in the same editing round.
+  assert.match(
+    layoutEditor,
+    /\$canvas\.removeClass\('dle-has-target-height'\)/
+  );
+  assert.match(
+    layoutEditor,
+    /\$canvas\[0\]\.style\.removeProperty\('--dle-target-height'\)/
+  );
+
+  // A thick dashed line, positioned absolutely (so it's not itself treated
+  // as a grid item by the CSS Grid canvas it's drawn over) at the stored
+  // pixel offset from the grid's own top.
+  assert.match(
+    styles,
+    /\.dt-grid-layout\.dle-grid-canvas\.dle-has-target-height::after \{\s*\n\s*content: '';\s*\n\s*position: absolute;\s*\n\s*left: 0;\s*\n\s*right: 0;\s*\n\s*top: var\(--dle-target-height\);\s*\n\s*height: 0;\s*\n\s*border-top: 4px dashed #e74c3c;\s*\n\s*pointer-events: none;/
+  );
 });
