@@ -2717,16 +2717,18 @@ test('modern dark theme is portable and documented', () => {
     theme,
     /\.transbg select:focus,[\s\S]*border-color: var\(--border-color-selector\) !important/
   );
-  // One deliberate exception to this theme's otherwise gradient-free
-  // convention: the blinds/dimmer slider's track fill, matching
-  // creative.css's own gradient default for the same element. Assert
-  // it's still the *only* gradient in the file, so any future one
-  // creeping in elsewhere still fails this test.
+  // Two deliberate gradients in this theme: the blinds/dimmer slider's
+  // track fill (matching creative.css's own gradient default for the same
+  // element), and --main-bg itself (every .dt_block/.transbg tile's own
+  // background - requested by the user for this theme specifically).
+  // Assert there are exactly these two, so any future one creeping in
+  // elsewhere still fails this test.
   assert.match(
     theme,
     /\.blinds-slider-wrap \.slider \.ui-slider-range \{\s*\n\s*background: linear-gradient\(/
   );
-  assert.strictEqual((theme.match(/linear-gradient/g) || []).length, 1);
+  assert.match(theme, /--main-bg: linear-gradient\(\s*\n\s*157deg,/);
+  assert.strictEqual((theme.match(/linear-gradient/g) || []).length, 2);
   assert.match(theme, /\.mh \.btn\.active/);
   assert.match(
     theme,
@@ -7349,5 +7351,34 @@ test('Dashboard blocks get a themed shine-sweep hover, without overflow: hidden'
   assert.match(
     css,
     /\.dt_block:hover::before \{\s*\n\s*background-position: 150% 0;/
+  );
+});
+
+test('--main-bg stays gradient-safe wherever creative.css consumes it', () => {
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+
+  // --main-bg is a plain color in most themes, but themes/modern-dark now
+  // sets it to a linear-gradient() (per user request) - a background-
+  // color: var(--main-bg) declaration would be invalid wherever that's
+  // the *only* background rule for that selector (gradients aren't valid
+  // <color> values), silently dropping to transparent in that theme. Every
+  // such standalone use in creative.css was switched to the background
+  // shorthand instead, which accepts both a plain color and a gradient.
+  for (const selectorComment of [
+    /\.security-panel \{[\s\S]{0,200}?background: var\(--main-bg\);/,
+    /\.dialbtn\.middle \{\s*\n\s*background: var\(--main-bg\);/,
+    /\.colorpicker \.cp-buttonsOnOff \{\s*\n\s*background: var\(--main-bg\);/,
+  ]) {
+    assert.match(css, selectorComment);
+  }
+
+  // .dt_block/.transbg are the one deliberate exception: each already has
+  // an *earlier* full `background: var(--main-bg); background-clip:
+  // padding-box;` rule, so this later, shared rule only needs to refine
+  // background-color - switching it to the full shorthand too would reset
+  // that earlier background-clip back to its own initial (border-box).
+  assert.match(
+    css,
+    /\.transbg,\s*\n\.dt_block \{[\s\S]{0,600}?background-color: var\(--main-bg\);/
   );
 });

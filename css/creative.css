@@ -5804,7 +5804,7 @@ canvas {
   justify-content: center;
   height: inherit;
   color: #bebebe;
-  background-color: var(--main-bg);
+  background: var(--main-bg);
 }
 
 .sec-modal .sec-frame {
@@ -7445,7 +7445,7 @@ canvas {
 }
 
 .dialbtn.middle {
-  background-color: var(--main-bg);
+  background: var(--main-bg);
   align-items: center;
   clip: rect(2.8em, 10em, 5.7em, 0px);
   display: flex;
@@ -7620,7 +7620,7 @@ canvas {
 }
 
 .colorpicker .cp-buttonsOnOff {
-  background-color: var(--main-bg);
+  background: var(--main-bg);
 }
 
 .colorpicker .cp-buttonsOnOff .btn {
@@ -7934,6 +7934,13 @@ canvas {
 /* Page / panel backgrounds */
 .transbg,
 .dt_block {
+  /* background-color, not the full shorthand: both selectors already get
+     their background-image (a plain color or, per theme, a gradient - see
+     themes/modern-dark's own --main-bg) from an earlier full `background:
+     var(--main-bg);` rule (.dt_block itself above, .transbg further up)
+     that also sets background-clip: padding-box. The full shorthand here
+     would reset that clip back to its own initial (border-box) instead of
+     refining just the color the way this rule intends. */
   background-color: var(--main-bg);
 }
 
