@@ -721,13 +721,20 @@ var DashticzLayoutEditor = (function () {
       : 20;
   }
 
-  // Settings > Weergave's optional target screen height, in px - undefined
-  // (no boundary line drawn) unless the user has actually set one, like
-  // every other settings field's "no stored default" convention.
+  // Settings > Weergave's optional target screen resolution, in px. Keep an
+  // unset or invalid dimension null so either guide can also work on its own.
+  function _targetScreenDimension(settingName) {
+    var value =
+      typeof settings !== 'undefined' ? Number(settings[settingName]) : NaN;
+    return isFinite(value) && value > 0 ? value : null;
+  }
+
+  function _targetScreenWidth() {
+    return _targetScreenDimension('targetScreenWidth');
+  }
+
   function _targetScreenHeight() {
-    return typeof settings !== 'undefined' && settings.targetScreenHeight > 0
-      ? Number(settings.targetScreenHeight)
-      : null;
+    return _targetScreenDimension('targetScreenHeight');
   }
 
   function _emptyGridConversion(screenNumber) {
@@ -1831,7 +1838,13 @@ var DashticzLayoutEditor = (function () {
         (gridConfig.rowHeight + gridConfig.gap)
     );
     var targetHeightRows = 0;
+    var targetWidth = _targetScreenWidth();
     var targetHeight = _targetScreenHeight();
+    if (targetWidth) {
+      $grid[0].style.setProperty('--dle-target-width', targetWidth + 'px');
+    } else {
+      $grid[0].style.removeProperty('--dle-target-width');
+    }
     if (targetHeight) {
       $grid[0].style.setProperty('--dle-target-height', targetHeight + 'px');
       $canvas.addClass('dle-has-target-height');
@@ -1844,6 +1857,10 @@ var DashticzLayoutEditor = (function () {
       $grid[0].style.removeProperty('--dle-target-height');
       $canvas.removeClass('dle-has-target-height');
     }
+    $canvas.toggleClass(
+      'dle-has-target-resolution',
+      Boolean(targetWidth || targetHeight)
+    );
     _ensureGridCanvasRows(
       Math.max(occupiedRows + 10, viewportRows + 6, targetHeightRows + 4)
     );
@@ -2890,7 +2907,9 @@ var DashticzLayoutEditor = (function () {
     if ($canvas) $canvas.removeClass('dle-canvas');
     if ($canvas) $canvas.removeClass('dle-grid-canvas');
     if ($canvas) $canvas.removeClass('dle-has-target-height');
+    if ($canvas) $canvas.removeClass('dle-has-target-resolution');
     if ($canvas) $canvas[0].style.removeProperty('--dle-grid-column-stride');
+    if ($canvas) $canvas[0].style.removeProperty('--dle-target-width');
     if ($canvas) $canvas[0].style.removeProperty('--dle-target-height');
     if ($canvas)
       $canvas[0].style.removeProperty('--dle-grid-editor-min-height');

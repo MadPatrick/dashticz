@@ -1910,11 +1910,29 @@ body.dle-active {
   overscroll-behavior: contain;
 }
 
-/* Settings > Weergave's optional target screen height, drawn as a thick
-   dashed line across the grid canvas - everything below it needs scrolling
-   on a screen that tall. --dle-target-height (px, measured from the top of
-   the grid) is only set by the Layout Editor when that setting has a
-   value, so the line is simply absent on installs that never set one. */
+/* Settings > Weergave's optional target screen resolution. Tint every part
+   of the editing canvas outside the configured top-left width x height
+   rectangle, including blocks placed there, without intercepting editor
+   controls. A missing dimension falls back to that full canvas dimension,
+   so width and height can also be configured independently. The conic
+   gradient's transparent 270-360 degree quadrant is exactly that top-left
+   rectangle; its other three quadrants form one uniform out-of-bounds area. */
+.dt-grid-layout.dle-grid-canvas.dle-has-target-resolution::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(
+    from 0deg at var(--dle-target-width, 100%) var(--dle-target-height, 100%),
+    rgba(231, 76, 60, 0.18) 0deg 270deg,
+    transparent 270deg 360deg
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* The configured screen height additionally gets a strong red dashed line.
+   --dle-target-height is measured from the top of the grid and is only set
+   when the user has stored a height, so width-only guides do not draw it. */
 .dt-grid-layout.dle-grid-canvas.dle-has-target-height::after {
   content: '';
   position: absolute;
@@ -1924,7 +1942,7 @@ body.dle-active {
   height: 0;
   border-top: 4px dashed #e74c3c;
   pointer-events: none;
-  z-index: 5;
+  z-index: 6;
 }
 
 .dt-grid-layout.dle-grid-canvas > .dt-grid-item {

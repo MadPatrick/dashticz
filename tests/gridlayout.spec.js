@@ -19,6 +19,65 @@ test.describe('optional screen grid layout', () => {
     await expect(page.locator('.screen1 .dt-grid-layout')).toHaveCount(0);
   });
 
+  test('marks the area outside the configured target resolution in edit mode', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.route('**/tests/CONFIG.pw.js*', async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({
+        response,
+        body:
+          (await response.text()) +
+          `
+config['targetScreenWidth'] = 700;
+config['targetScreenHeight'] = 350;
+blocks['tc1'].grid = {x: 1, y: 1, w: 6, h: 4};
+screens[1] = {
+  layout: 'grid', gridColumns: 24, rowHeight: 20, gap: 5,
+  mobileLayout: 'stack', blocks: ['tc1']
+};
+`,
+      });
+    });
+
+    await page.goto(dashboardUrl);
+    await waitForDashboard(page);
+
+    const grid = page.locator('.screen1 > .dt-grid-layout');
+    await expect(grid).not.toHaveClass(/dle-has-target-resolution/);
+    await page.locator('.screen1 .layouteditoricon').click();
+    await expect(page.locator('body')).toHaveClass(/dle-active/);
+    await expect(grid).toHaveClass(/dle-has-target-resolution/);
+    await expect(grid).toHaveClass(/dle-has-target-height/);
+    await expect(grid).toHaveCSS('--dle-target-width', '700px');
+    await expect(grid).toHaveCSS('--dle-target-height', '350px');
+
+    const guide = await grid.evaluate((element) => {
+      const outside = getComputedStyle(element, '::before');
+      const heightBoundary = getComputedStyle(element, '::after');
+      return {
+        outsideImage: outside.backgroundImage,
+        outsidePointerEvents: outside.pointerEvents,
+        boundaryTop: heightBoundary.top,
+        boundaryStyle: heightBoundary.borderTopStyle,
+        boundaryColor: heightBoundary.borderTopColor,
+      };
+    });
+    expect(guide.outsideImage).toContain('conic-gradient');
+    expect(guide.outsideImage).toContain('700px 350px');
+    expect(guide.outsidePointerEvents).toBe('none');
+    expect(guide.boundaryTop).toBe('350px');
+    expect(guide.boundaryStyle).toBe('dashed');
+    expect(guide.boundaryColor).toBe('rgb(231, 76, 60)');
+
+    await page.locator('.dle-cancel').click();
+    await expect(grid).not.toHaveClass(/dle-has-target-resolution/);
+    await expect(grid).not.toHaveClass(/dle-has-target-height/);
+    await expect(grid).toHaveCSS('--dle-target-width', '');
+    await expect(grid).toHaveCSS('--dle-target-height', '');
+  });
+
   test('applies a saved shared background to screen 2 despite its legacy background', async ({
     page,
   }) => {
