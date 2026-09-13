@@ -392,7 +392,13 @@
 
   .dt_block:hover::before {
     background-position: 150% 0;
-    transition: background-position 0.45s ease-out;
+    /* ease-out already keeps the sweep starting immediately (its steepest
+       point is right at the start) - only the duration governs how long
+       the glow stays visible while crossing the tile before it's swept
+       past and gone again. 0.45s made that crossing read as too fast
+       ("start is goed, maar het is nu te snel weg"); 0.9s keeps the same
+       immediate start but roughly doubles how long it lingers. */
+    transition: background-position 0.9s ease-out;
   }
 }
 
