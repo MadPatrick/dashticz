@@ -7434,3 +7434,81 @@ test('Selector Switch dropdown shows only its own levels, no generic placeholder
     /parseFloat\(nv\.value\) > 0 \|\|\s*\n\s*\(nv\.value == 0 &&\s*\n\s*\(typeof device\['LevelOffHidden'\] == 'undefined' \|\|\s*\n\s*device\['LevelOffHidden'\] === false\)\)/
   );
 });
+
+test('Weergave settings offer a target screen resolution, and its panel renders as a 2-column grid', () => {
+  const settingsJs = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const enLang = JSON.parse(
+    fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8')
+  );
+  const nlLang = JSON.parse(
+    fs.readFileSync(path.join(root, 'lang/nl_NL.json'), 'utf8')
+  );
+
+  // Two new number fields under the 'screen' (Weergave) settings category,
+  // sitting next to the existing gridColumns/rowHeight grid-layout fields.
+  // They default via a placeholder hint only - like every other settings
+  // field here, no value is stored until the user actually sets one.
+  assert.match(
+    settingsJs,
+    /settingList\['screen'\]\['targetScreenWidth'\] = \{[\s\S]{0,300}?type: 'number',\s*\n\s*placeholder: '1920',/
+  );
+  assert.match(
+    settingsJs,
+    /settingList\['screen'\]\['targetScreenHeight'\] = \{[\s\S]{0,300}?type: 'number',\s*\n\s*placeholder: '1200',/
+  );
+
+  // renderSettingsRow() actually renders that placeholder onto the <input>
+  // for both the 'text' and 'number' field types (gridColumns/rowHeight are
+  // 'text', the two new resolution fields are 'number').
+  assert.match(
+    settingsJs,
+    /if \(definition\.type === 'text'\) \{[\s\S]{0,400}?placeholder="/
+  );
+  assert.match(
+    settingsJs,
+    /if \(definition\.type === 'number'\) \{[\s\S]{0,500}?placeholder="/
+  );
+
+  // Only the 'screen' category panel is wrapped in the 2-column fields
+  // grid - "start with the Weergave menu" - every other category (general,
+  // localize, standby, ...) keeps its existing single-column layout.
+  assert.match(settingsJs, /var useFieldsGrid = id === 'screen';/);
+  assert.match(
+    settingsJs,
+    /if \(useFieldsGrid\) \{\s*\n\s*html \+= '<div class="settings-fields-grid">';/
+  );
+
+  // .settings-fields-grid: a true 2-columns-of-rows grid (like the existing
+  // .settings-switch-grid pattern), with a narrower input column than the
+  // blanket 40ch rule and a single-column fallback on narrow screens.
+  assert.match(
+    styles,
+    /\.settings-fields-grid \{\s*\n\s*display: grid;\s*\n\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);\s*\n\s*column-gap: 28px;\s*\n\}/
+  );
+  assert.match(
+    styles,
+    /\.settings-fields-grid \.settings-row \{\s*\n\s*grid-template-columns: minmax\(130px, 1fr\) minmax\(0, 130px\) 26px;\s*\n\}/
+  );
+  assert.match(
+    styles,
+    /@media \(max-width: 767\.98px\) \{\s*\n\s*\.settings-fields-grid \{\s*\n\s*grid-template-columns: 1fr;/
+  );
+
+  assert.equal(
+    enLang.settings.screen.targetScreenWidth,
+    'Target screen width (px)'
+  );
+  assert.equal(
+    enLang.settings.screen.targetScreenHeight,
+    'Target screen height (px)'
+  );
+  assert.equal(
+    nlLang.settings.screen.targetScreenWidth,
+    'Doel schermbreedte (px)'
+  );
+  assert.equal(
+    nlLang.settings.screen.targetScreenHeight,
+    'Doel schermhoogte (px)'
+  );
+});

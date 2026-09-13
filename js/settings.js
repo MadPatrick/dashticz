@@ -156,6 +156,26 @@ settingList['screen']['rowHeight'] = {
   help: language.settings.screen.rowHeight_help,
 };
 
+settingList['screen']['targetScreenWidth'] = {
+  title:
+    language.settings.screen.targetScreenWidth || 'Target screen width (px)',
+  type: 'number',
+  placeholder: '1920',
+  help:
+    language.settings.screen.targetScreenWidth_help ||
+    'The width of the screen you design the grid for. Used to show which part of the grid fits on this screen.',
+};
+
+settingList['screen']['targetScreenHeight'] = {
+  title:
+    language.settings.screen.targetScreenHeight || 'Target screen height (px)',
+  type: 'number',
+  placeholder: '1200',
+  help:
+    language.settings.screen.targetScreenHeight_help ||
+    'The height of the screen you design the grid for. Used to show which part of the grid fits on this screen.',
+};
+
 settingList['screen']['auto_swipe_back_to'] = {};
 settingList['screen']['auto_swipe_back_to']['title'] =
   language.settings.screen.auto_swipe_back_to;
@@ -1158,7 +1178,11 @@ function renderSettingsRow(settingName, definition) {
       escapeSettingsHtml(controlId) +
       '" name="' +
       escapeSettingsHtml(settingName) +
-      '" value="' +
+      '"' +
+      (typeof definition.placeholder !== 'undefined'
+        ? ' placeholder="' + escapeSettingsHtml(definition.placeholder) + '"'
+        : '') +
+      ' value="' +
       escapeSettingsHtml(value) +
       '">';
   }
@@ -1188,6 +1212,9 @@ function renderSettingsRow(settingName, definition) {
         : '') +
       (typeof definition.max !== 'undefined'
         ? ' max="' + escapeSettingsHtml(definition.max) + '"'
+        : '') +
+      (typeof definition.placeholder !== 'undefined'
+        ? ' placeholder="' + escapeSettingsHtml(definition.placeholder) + '"'
         : '') +
       ' value="' +
       escapeSettingsHtml(value) +
@@ -1446,6 +1473,12 @@ function renderSettingsCategoryHome() {
     } else if (id === 'theme') {
       html += renderThemeSettingsPanel();
     } else {
+      // Weergave is wide enough for two columns of fields, so field rows
+      // are grouped for a shared .settings-fields-grid wrapper below.
+      var useFieldsGrid = id === 'screen';
+      if (useFieldsGrid) {
+        html += '<div class="settings-fields-grid">';
+      }
       for (var s in settingList[id]) {
         if (s !== 'title') {
           // Standby path field is rendered as part of the background picker.
@@ -1458,6 +1491,9 @@ function renderSettingsCategoryHome() {
           }
           html += renderSettingsRow(s, settingList[id][s]);
         }
+      }
+      if (useFieldsGrid) {
+        html += '</div>';
       }
       if (id === 'standby') {
         html += renderBackgroundPicker(

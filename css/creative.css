@@ -1097,6 +1097,31 @@ next css sets the default height of the frame popup
   }
 }
 
+/* Weergave (Display) panel: most of its fields (a page number, a timeout in
+   seconds, a pixel size) need far less than the blanket 40ch input width, so
+   its rows sit two per line instead of stacked full width, one per line. */
+.settings-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+}
+
+.settings-fields-grid .settings-row {
+  grid-template-columns: minmax(130px, 1fr) minmax(0, 130px) 26px;
+}
+
+#settingspopup .settings-fields-grid .settings-control .form-control,
+#settingspopup .settings-fields-grid .settings-control .form-select {
+  width: 100%;
+  max-width: 130px;
+}
+
+@media (max-width: 767.98px) {
+  .settings-fields-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Number + "px" suffix pair used by the Font size / Icon size rows - the
    unit is fixed and shown next to the field instead of being typed. */
 .settings-cssvar-px-control {
