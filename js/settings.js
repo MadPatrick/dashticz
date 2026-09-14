@@ -152,12 +152,14 @@ settingList['screen']['gridColumns'] = {
   title: language.settings.screen.gridColumns,
   type: 'text',
   help: language.settings.screen.gridColumns_help,
+  fullWidth: true,
 };
 
 settingList['screen']['rowHeight'] = {
   title: language.settings.screen.rowHeight,
   type: 'text',
   help: language.settings.screen.rowHeight_help,
+  fullWidth: true,
 };
 
 settingList['screen']['auto_swipe_back_to'] = {};
@@ -1144,7 +1146,10 @@ function renderSettingsRow(settingName, definition) {
   var controlId = 'setting-' + settingName;
   var value =
     typeof settings[settingName] === 'undefined' ? '' : settings[settingName];
-  var html = '<div class="settings-row">';
+  var html =
+    '<div class="settings-row' +
+    (definition.fullWidth ? ' settings-row-full' : '') +
+    '">';
   html +=
     '<label class="settings-label" for="' +
     escapeSettingsHtml(controlId) +
