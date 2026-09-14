@@ -1097,6 +1097,25 @@ next css sets the default height of the frame popup
   }
 }
 
+/* General (Algemeen) and Screen (Weergave) settings tabs: two rows per
+   line instead of stacked full width, same 2-column pattern as the theme
+   color grid above but keeping the help-tooltip column visible. */
+.settings-two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+}
+
+.settings-two-col-grid .settings-row {
+  grid-template-columns: minmax(140px, 1fr) minmax(0, 1fr) 26px;
+}
+
+@media (max-width: 767.98px) {
+  .settings-two-col-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Number + "px" suffix pair used by the Font size / Icon size rows - the
    unit is fixed and shown next to the field instead of being typed. */
 .settings-cssvar-px-control {

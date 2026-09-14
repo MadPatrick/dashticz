@@ -128,7 +128,9 @@ settingList['screen']['start_page']['type'] = 'text';
 
 settingList['screen']['enable_swiper'] = {
   title: language.settings.screen.enable_swiper,
-  type: 'text',
+  type: 'select',
+  noEmptyOption: true,
+  options: { 0: '0', 1: '1', 2: '2' },
   help: language.settings.screen.enable_swiper_help,
 };
 
@@ -140,7 +142,9 @@ settingList['screen']['swiper_touch_move'] = {
 
 settingList['screen']['vertical_scroll'] = {
   title: language.settings.screen.vertical_scroll,
-  type: 'text',
+  type: 'select',
+  noEmptyOption: true,
+  options: { 0: '0', 1: '1', 2: '2' },
   help: language.settings.screen.vertical_scroll_help,
 };
 
@@ -1446,6 +1450,12 @@ function renderSettingsCategoryHome() {
     } else if (id === 'theme') {
       html += renderThemeSettingsPanel();
     } else {
+      // General (Algemeen) and Screen (Weergave) tabs show their rows two
+      // per line instead of stacked full width.
+      var twoColumn = id === 'general' || id === 'screen';
+      if (twoColumn) {
+        html += '<div class="settings-two-col-grid">';
+      }
       for (var s in settingList[id]) {
         if (s !== 'title') {
           // Standby path field is rendered as part of the background picker.
@@ -1458,6 +1468,9 @@ function renderSettingsCategoryHome() {
           }
           html += renderSettingsRow(s, settingList[id][s]);
         }
+      }
+      if (twoColumn) {
+        html += '</div>';
       }
       if (id === 'standby') {
         html += renderBackgroundPicker(
