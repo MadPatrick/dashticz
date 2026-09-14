@@ -1,4 +1,4 @@
-/* global Domoticz settings columns columns_standby blocks myswiper Dashticz DashticzGridLayout DashticzScreenSwitcher DashticzDeviceEditor DashticzWidgetEditor DT_function isCustomConfigMode standbyActive language */
+/* global Domoticz settings columns columns_standby blocks myswiper Dashticz DashticzGridLayout DashticzScreenSwitcher DashticzDeviceEditor DashticzWidgetEditor DT_function isCustomConfigMode standbyActive language DashticzTopbar */
 /* global DashticzDeviceRules */
 // eslint-disable-next-line no-unused-vars
 var DashticzLayoutEditor = (function () {
@@ -125,6 +125,7 @@ var DashticzLayoutEditor = (function () {
       }
       active = true;
       $('body').addClass('dle-active');
+      _pauseTopbarAutoHide();
       _prepareGridCanvas($grid);
       _decorateItems();
       _buildToolbar();
@@ -170,11 +171,32 @@ var DashticzLayoutEditor = (function () {
 
     active = true;
     $('body').addClass('dle-active');
+    _pauseTopbarAutoHide();
     _prepareCanvas($managedColumns);
     _decorateItems();
     _buildToolbar();
     _attachHandlers();
     _finishActivation();
+  }
+
+  // A topbar auto-hidden mid-edit (see Settings > Weergave's "Topbar
+  // auto-hide" - nothing resets its idle timer on a touch-only tablet,
+  // which never fires mousemove) would silently invalidate
+  // _prepareGridCanvas()'s one-time topbar height measurement (used to
+  // work out how much of the target screen height the grid itself gets)
+  // without ever recomputing it. Pin it visible for the whole editing
+  // session instead; _cancel() below hands normal auto-hide back. _save()
+  // reloads the page on success, which already resets this on its own.
+  function _pauseTopbarAutoHide() {
+    if (typeof DashticzTopbar !== 'undefined' && DashticzTopbar.pause) {
+      DashticzTopbar.pause();
+    }
+  }
+
+  function _resumeTopbarAutoHide() {
+    if (typeof DashticzTopbar !== 'undefined' && DashticzTopbar.resume) {
+      DashticzTopbar.resume();
+    }
   }
 
   function _disableSwiper() {
@@ -2787,6 +2809,7 @@ var DashticzLayoutEditor = (function () {
     if ($toolbar) $toolbar.remove();
     $('.dle-drag-ghost').remove();
     $('body').removeClass('dle-active');
+    _resumeTopbarAutoHide();
 
     if (
       typeof myswiper !== 'undefined' &&

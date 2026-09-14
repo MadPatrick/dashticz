@@ -569,6 +569,63 @@ test('configured topbar timeout loads and initializes the auto-hide behavior', (
   assert.match(settings, /topbar_timeout:/);
 });
 
+test('Layout Editor pins the topbar visible for the whole editing session', () => {
+  const topbar = fs.readFileSync(path.join(root, 'js/topbar.js'), 'utf8');
+  const layoutEditor = fs.readFileSync(
+    path.join(root, 'js/layouteditor.js'),
+    'utf8'
+  );
+
+  // A topbar auto-hidden by inactivity (its idle timer never resets on a
+  // touch-only tablet, which fires no mousemove events at all) would
+  // otherwise be measured as 0px tall whenever the Layout Editor happens
+  // to open after that - silently pushing the target-height boundary
+  // line far too low, since it would assume the grid gets the whole
+  // target height instead of target height minus the (actually 0-looking)
+  // topbar.
+  assert.match(
+    topbar,
+    /function pause\(\) \{[\s\S]{0,300}?getBars\(\)\.stop\(true, true\)\.show\(\)\.css\('display', 'flex'\);/
+  );
+  assert.match(
+    topbar,
+    /function resume\(\) \{\s*\n\s*if \(!paused\) return;\s*\n\s*paused = false;\s*\n\s*resetTimer\(\);/
+  );
+  assert.match(
+    topbar,
+    /function resetTimer\(\) \{\s*\n\s*if \(paused \|\| !autoHideMs\) return;/
+  );
+  assert.match(
+    topbar,
+    /return \{ init: init, pause: pause, resume: resume \};/
+  );
+
+  // Paused right before _prepareGridCanvas()/_prepareCanvas() measure
+  // anything, in both the grid-screen and classic-column open() paths -
+  // resumed only on cancel, since a successful save reloads the page
+  // (which resets the topbar's own idle timer on its own).
+  assert.match(
+    layoutEditor,
+    /active = true;\s*\n\s*\$\('body'\)\.addClass\('dle-active'\);\s*\n\s*_pauseTopbarAutoHide\(\);\s*\n\s*_prepareGridCanvas\(\$grid\);/
+  );
+  assert.match(
+    layoutEditor,
+    /active = true;\s*\n\s*\$\('body'\)\.addClass\('dle-active'\);\s*\n\s*_pauseTopbarAutoHide\(\);\s*\n\s*_prepareCanvas\(\$managedColumns\);/
+  );
+  assert.match(
+    layoutEditor,
+    /function _pauseTopbarAutoHide\(\) \{\s*\n\s*if \(typeof DashticzTopbar !== 'undefined' && DashticzTopbar\.pause\) \{\s*\n\s*DashticzTopbar\.pause\(\);/
+  );
+  assert.match(
+    layoutEditor,
+    /function _resumeTopbarAutoHide\(\) \{\s*\n\s*if \(typeof DashticzTopbar !== 'undefined' && DashticzTopbar\.resume\) \{\s*\n\s*DashticzTopbar\.resume\(\);/
+  );
+  assert.match(
+    layoutEditor,
+    /\$\('body'\)\.removeClass\('dle-active'\);\s*\n\s*_resumeTopbarAutoHide\(\);/
+  );
+});
+
 test('visual layout editor handles generated devices and widgets on a 10px height grid', () => {
   const simpleBlock = fs.readFileSync(
     path.join(root, 'js/components/simpleblock.js'),
