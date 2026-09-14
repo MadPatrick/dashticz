@@ -7541,12 +7541,18 @@ test('Layout Editor draws a dashed boundary line at the target screen height whi
     /function _prepareGridCanvas\(\$grid\) \{[\s\S]*?\n {2}\}/
   );
   assert.ok(prepareGridCanvas, 'expected to find _prepareGridCanvas()');
-  // Just the target height divided by the row height, rounded to the
-  // nearest whole row - snaps the line to a grid line instead of cutting
-  // through the middle of one.
+  // The topbar row above the grid eats into the target height's budget on
+  // a real device, so it's subtracted before dividing by the row height.
   assert.match(
     prepareGridCanvas[0],
-    /targetHeightRows = Math\.round\(targetHeight \/ gridConfig\.rowHeight\);/
+    /var \$topbar = \$editingScreen\.children\('\.dt-grid-topbar'\)\.first\(\);\s*\n\s*var topbarHeight = \$topbar\.length \? \$topbar\.outerHeight\(\) \|\| 0 : 0;\s*\n\s*var availableHeight = Math\.max\(0, targetHeight - topbarHeight\);/
+  );
+  // Then just that available height divided by the row height, rounded to
+  // the nearest whole row - snaps the line to a grid line instead of
+  // cutting through the middle of one.
+  assert.match(
+    prepareGridCanvas[0],
+    /targetHeightRows = Math\.round\(availableHeight \/ gridConfig\.rowHeight\);/
   );
   assert.match(
     prepareGridCanvas[0],
@@ -7554,7 +7560,7 @@ test('Layout Editor draws a dashed boundary line at the target screen height whi
   );
   assert.match(
     prepareGridCanvas[0],
-    /if \(targetHeight\) \{[\s\S]{0,700}?\$grid\[0\]\.style\.setProperty\('--dle-target-height', targetHeightPx \+ 'px'\);\s*\n\s*\$canvas\.addClass\('dle-has-target-height'\);/
+    /if \(targetHeight\) \{[\s\S]{0,1000}?\$grid\[0\]\.style\.setProperty\('--dle-target-height', targetHeightPx \+ 'px'\);\s*\n\s*\$canvas\.addClass\('dle-has-target-height'\);/
   );
   // The canvas is grown tall enough to actually scroll down to the line,
   // even on a near-empty grid screen or a short browser window.

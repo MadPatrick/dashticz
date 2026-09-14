@@ -45,12 +45,21 @@ screens[1] = {
 
     const grid = page.locator('.screen1 > .dt-grid-layout');
     await expect(grid).not.toHaveClass(/dle-has-target-height/);
+    // The topbar row (logo/settings icons) above the grid is real content
+    // here, like on any actual dashboard - measure it before entering edit
+    // mode so the expected line position accounts for the space it eats
+    // into the 400px target budget, instead of assuming a 0px topbar.
+    const topbarHeight = await page
+      .locator('.screen1 .dt-grid-topbar')
+      .evaluate((element) => element.getBoundingClientRect().height);
     await page.locator('.screen1 .layouteditoricon').click();
     await expect(page.locator('body')).toHaveClass(/dle-active/);
     await expect(grid).toHaveClass(/dle-has-target-height/);
-    // 400px target height / 20px row height = 20 whole rows, each 20px row
-    // + 5px gap = 25px, so the line lands at 20 * 25 = 500px.
-    await expect(grid).toHaveCSS('--dle-target-height', '500px');
+    // (400px target height - topbar height) / 20px row height, rounded to
+    // the nearest whole row, each row 20px + 5px gap = 25px.
+    const expectedRows = Math.round((400 - topbarHeight) / 20);
+    const expectedTop = expectedRows * 25;
+    await expect(grid).toHaveCSS('--dle-target-height', `${expectedTop}px`);
 
     const guide = await grid.evaluate((element) => {
       const heightBoundary = getComputedStyle(element, '::after');
@@ -61,7 +70,7 @@ screens[1] = {
         pointerEvents: heightBoundary.pointerEvents,
       };
     });
-    expect(guide.top).toBe('500px');
+    expect(guide.top).toBe(`${expectedTop}px`);
     expect(guide.style).toBe('dashed');
     expect(guide.color).toBe('rgb(231, 76, 60)');
     expect(guide.pointerEvents).toBe('none');

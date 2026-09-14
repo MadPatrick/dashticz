@@ -1833,11 +1833,17 @@ var DashticzLayoutEditor = (function () {
     var targetHeightRows = 0;
     var targetHeight = _targetScreenHeight();
     if (targetHeight) {
+      // The target height is the whole physical screen, but the topbar
+      // above the grid (logo/settings row) already eats into that budget
+      // on a real device - only what's left actually fits the grid.
+      var $topbar = $editingScreen.children('.dt-grid-topbar').first();
+      var topbarHeight = $topbar.length ? $topbar.outerHeight() || 0 : 0;
+      var availableHeight = Math.max(0, targetHeight - topbarHeight);
       // Snap to a row boundary instead of the raw pixel value: simply
-      // dividing the target height by the row height, rounded to the
+      // dividing the available height by the row height, rounded to the
       // nearest whole row, keeps the line exactly on a grid line instead
       // of cutting through the middle of one.
-      targetHeightRows = Math.round(targetHeight / gridConfig.rowHeight);
+      targetHeightRows = Math.round(availableHeight / gridConfig.rowHeight);
       var targetHeightPx =
         targetHeightRows * (gridConfig.rowHeight + gridConfig.gap);
       $grid[0].style.setProperty('--dle-target-height', targetHeightPx + 'px');
