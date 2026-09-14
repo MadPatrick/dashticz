@@ -807,6 +807,7 @@
       "security_button_icons": "Pictogrammen in plaats van tekst op beveiligingsschakelaar",
       "blink_color": "Knipperkleur en ondoorzichtigheid (RBGA)",
       "blink_color_help": "Stel de knipperkleur en ondoorzichtigheid in (rood, groen, blauw, ondoorzichtigheid)",
+      "blink_color_opacity": "Ondoorzichtigheid",
       "start_page": "Start pagina nummer (Eerste pagina=1)",
       "enable_swiper": "Enable Swiper",
       "enable_swiper_help": "0: Disable swiper; 1: Enable on narrow screens; 2: Enable",

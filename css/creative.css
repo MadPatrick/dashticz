@@ -1043,6 +1043,32 @@ next css sets the default height of the frame popup
   accent-color: #0b6fc2;
 }
 
+/* blink_color (Knipperkleur): same swatch + opacity-slider control as the
+   theme color variables above, bound to a plain "R, G, B, A" setting
+   instead of a CSS custom property. */
+.settings-blink-color-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-blink-color-swatch {
+  flex-shrink: 0;
+  width: 36px;
+  height: 34px;
+  padding: 2px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+.settings-blink-color-alpha {
+  flex: 1;
+  min-width: 80px;
+  accent-color: #0b6fc2;
+}
+
 @media (max-width: 767.98px) {
   .settings-theme-color-grid {
     grid-template-columns: 1fr;

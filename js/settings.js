@@ -233,9 +233,11 @@ settingList['screen']['standard_graph']['options']['day'] =
 settingList['screen']['blink_color'] = {};
 settingList['screen']['blink_color']['title'] =
   language.settings.screen.blink_color;
-settingList['screen']['blink_color']['type'] = 'text';
+settingList['screen']['blink_color']['type'] = 'rgba';
 settingList['screen']['blink_color']['help'] =
   language.settings.screen.blink_color_help;
+settingList['screen']['blink_color']['alphaLabel'] =
+  language.settings.screen.blink_color_opacity || 'Opacity';
 
 settingList['localize'] = {};
 settingList['localize']['title'] = language.settings.localize.title;
@@ -1157,6 +1159,43 @@ function escapeSettingsHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+// blink_color is stored as a plain "R, G, B, A" string (e.g. the default
+// '255, 255, 255, 1'), not a CSS color/rgba() string - these convert
+// between that format and a <input type="color"> hex value + 0-1 alpha.
+function _parseRgbaChannels(value) {
+  var parts = String(value || '')
+    .split(',')
+    .map(function (part) {
+      return parseFloat(part);
+    });
+  function channel(n, fallback) {
+    return isNaN(n) ? fallback : Math.max(0, Math.min(255, n));
+  }
+  return {
+    r: channel(parts[0], 255),
+    g: channel(parts[1], 255),
+    b: channel(parts[2], 255),
+    a: isNaN(parts[3]) ? 1 : Math.max(0, Math.min(1, parts[3])),
+  };
+}
+
+function _rgbToHex(r, g, b) {
+  function hex(n) {
+    return Math.round(n).toString(16).padStart(2, '0');
+  }
+  return '#' + hex(r) + hex(g) + hex(b);
+}
+
+function _hexToRgbChannels(hex) {
+  var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || '');
+  if (!m) return { r: 255, g: 255, b: 255 };
+  return {
+    r: parseInt(m[1], 16),
+    g: parseInt(m[2], 16),
+    b: parseInt(m[3], 16),
+  };
+}
+
 function formatSystemInfo(fallback) {
   if (!systemInfo) return fallback;
   return (
@@ -1268,6 +1307,34 @@ function renderSettingsRow(settingName, definition) {
         '</option>';
     }
     html += '</select>';
+  }
+
+  if (definition.type === 'rgba') {
+    var rgba = _parseRgbaChannels(value);
+    html += '<div class="settings-blink-color-control">';
+    html +=
+      '<input type="color" class="settings-blink-color-swatch" id="' +
+      escapeSettingsHtml(controlId) +
+      '-swatch" value="' +
+      _rgbToHex(rgba.r, rgba.g, rgba.b) +
+      '">';
+    html +=
+      '<input type="range" class="settings-blink-color-alpha" id="' +
+      escapeSettingsHtml(controlId) +
+      '-alpha" min="0" max="100" step="1" value="' +
+      Math.round(rgba.a * 100) +
+      '" aria-label="' +
+      escapeSettingsHtml(definition.alphaLabel || 'Opacity') +
+      '">';
+    html +=
+      '<input type="hidden" id="' +
+      escapeSettingsHtml(controlId) +
+      '" name="' +
+      escapeSettingsHtml(settingName) +
+      '" value="' +
+      escapeSettingsHtml(value) +
+      '">';
+    html += '</div>';
   }
 
   html += '</div><div class="settings-help-slot">';
@@ -1386,6 +1453,7 @@ function loadSettings() {
         bindClockTypeToggle();
         bindThemeCssVarControls();
         bindThemeCustomCssNotice();
+        bindBlinkColorControl();
 
         $('#php_version').html(phpversion);
 
@@ -2258,6 +2326,36 @@ function renderThemeSettingsPanel() {
   html += '</div>';
 
   return html;
+}
+
+// Keeps the blink_color swatch/opacity slider and their hidden "R, G, B, A"
+// input in sync, in both directions.
+function bindBlinkColorControl() {
+  var $popup = $('#settingspopup');
+  if (!$popup.length) return;
+
+  function syncFromControls(controlId) {
+    var $swatch = $popup.find('#' + $.escapeSelector(controlId + '-swatch'));
+    var $alpha = $popup.find('#' + $.escapeSelector(controlId + '-alpha'));
+    var $hidden = $popup.find('#' + $.escapeSelector(controlId));
+    if (!$swatch.length || !$alpha.length || !$hidden.length) return;
+    var rgb = _hexToRgbChannels($swatch.val());
+    var alpha = Number($alpha.val()) / 100;
+    $hidden.val(rgb.r + ', ' + rgb.g + ', ' + rgb.b + ', ' + alpha);
+  }
+
+  $popup
+    .off('input.blink-color')
+    .on(
+      'input.blink-color',
+      '.settings-blink-color-swatch, .settings-blink-color-alpha',
+      function () {
+        var controlId = $(this)
+          .attr('id')
+          .replace(/-(swatch|alpha)$/, '');
+        syncFromControls(controlId);
+      }
+    );
 }
 
 function bindThemeCssVarControls() {

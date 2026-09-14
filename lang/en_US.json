@@ -920,6 +920,7 @@
       "security_button_icons": "Icons instead of text on security switch",
       "blink_color": "Flash color and opacity (RGBA)",
       "blink_color_help": "Set flash color and opacity (red, green, blue, alpha)",
+      "blink_color_opacity": "Opacity",
       "start_page": "Start page number (First page=1)",
       "enable_swiper": "Enable Swiper",
       "enable_swiper_help": "0: Disable Swiper; 1: Enable on narrow screens; 2: Enable",
