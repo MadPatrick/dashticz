@@ -1,4 +1,25 @@
 /* global language dashticz_version dashticz_branch newVersion config isNumeric Domoticz*/
+
+// Turns a "0: Foo; 1: Bar; 2: Baz" style help string (as used by every
+// language file for enable_swiper/vertical_scroll) into a value -> label
+// map, so the select shows the description instead of a bare number.
+// Falls back to the number itself for any value the help text doesn't
+// cover, or if the help string couldn't be parsed at all.
+function _parseNumberedOptionsFromHelp(helpText, values) {
+  var labels = {};
+  var regex = /(\d+)\s*[:：]\s*([\s\S]*?)(?=(?:\d+\s*[:：])|$)/g;
+  var match;
+  while ((match = regex.exec(String(helpText || '')))) {
+    var label = match[2].replace(/[;；,.]+\s*$/, '').trim();
+    if (label) labels[match[1]] = label;
+  }
+  var options = {};
+  values.forEach(function (value) {
+    options[value] = labels[value] || String(value);
+  });
+  return options;
+}
+
 var settingList = {};
 settingList.general = {
   title: language.settings.general.title,
@@ -130,7 +151,10 @@ settingList['screen']['enable_swiper'] = {
   title: language.settings.screen.enable_swiper,
   type: 'select',
   noEmptyOption: true,
-  options: { 0: '0', 1: '1', 2: '2' },
+  options: _parseNumberedOptionsFromHelp(
+    language.settings.screen.enable_swiper_help,
+    [0, 1, 2]
+  ),
   help: language.settings.screen.enable_swiper_help,
 };
 
@@ -153,7 +177,10 @@ settingList['screen']['vertical_scroll'] = {
   title: language.settings.screen.vertical_scroll,
   type: 'select',
   noEmptyOption: true,
-  options: { 0: '0', 1: '1', 2: '2' },
+  options: _parseNumberedOptionsFromHelp(
+    language.settings.screen.vertical_scroll_help,
+    [0, 1, 2]
+  ),
   help: language.settings.screen.vertical_scroll_help,
 };
 
