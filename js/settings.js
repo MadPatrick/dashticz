@@ -21,10 +21,6 @@ settingList.general = {
     type: 'text',
     help: language.settings.general.dashticz_refresh_help,
   },
-  disable_update_check: {
-    title: language.settings.general.disable_update_check,
-    type: 'checkbox',
-  },
   loginEnabled: {
     title: language.settings.general.loginEnabled,
     type: 'checkbox',
@@ -42,11 +38,6 @@ settingList.general = {
   pass_word: {
     title: language.settings.general.pass_word,
     type: 'text',
-  },
-  enable_websocket: {
-    title: language.settings.general.enable_websocket,
-    type: 'checkbox',
-    help: language.settings.general.enable_websocket_help,
   },
   domoticz_timeout: {
     title: language.settings.general.domoticz_timeout,
@@ -73,6 +64,23 @@ settingList.general = {
     type: 'text',
     help: language.settings.general.colorpickerscale_help,
   },
+  default_cors_url: {
+    title: language.settings.general.default_cors_url,
+    type: 'text',
+  },
+  dashticz_php_path: {
+    title: language.settings.general.dashticz_php_path,
+    type: 'text',
+  },
+  enable_websocket: {
+    title: language.settings.general.enable_websocket,
+    type: 'checkbox',
+    help: language.settings.general.enable_websocket_help,
+  },
+  disable_update_check: {
+    title: language.settings.general.disable_update_check,
+    type: 'checkbox',
+  },
   last_update: {
     title: language.settings.general.last_update,
     type: 'checkbox',
@@ -81,14 +89,6 @@ settingList.general = {
     title: language.settings.general.disable_googleanalytics,
     help: language.settings.general.disable_googleanalytics_help,
     type: 'checkbox',
-  },
-  default_cors_url: {
-    title: language.settings.general.default_cors_url,
-    type: 'text',
-  },
-  dashticz_php_path: {
-    title: language.settings.general.dashticz_php_path,
-    type: 'text',
   },
 };
 
