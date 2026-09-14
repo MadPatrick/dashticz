@@ -140,6 +140,15 @@ settingList['screen']['swiper_touch_move'] = {
   help: language.settings.screen.swiper_touch_move_help,
 };
 
+// gridColumns/vertical_scroll/rowHeight are ordered so gridColumns and
+// rowHeight land in the same column of the two-column Screen tab, one
+// directly below the other, instead of side by side.
+settingList['screen']['gridColumns'] = {
+  title: language.settings.screen.gridColumns,
+  type: 'text',
+  help: language.settings.screen.gridColumns_help,
+};
+
 settingList['screen']['vertical_scroll'] = {
   title: language.settings.screen.vertical_scroll,
   type: 'select',
@@ -148,18 +157,10 @@ settingList['screen']['vertical_scroll'] = {
   help: language.settings.screen.vertical_scroll_help,
 };
 
-settingList['screen']['gridColumns'] = {
-  title: language.settings.screen.gridColumns,
-  type: 'text',
-  help: language.settings.screen.gridColumns_help,
-  fullWidth: true,
-};
-
 settingList['screen']['rowHeight'] = {
   title: language.settings.screen.rowHeight,
   type: 'text',
   help: language.settings.screen.rowHeight_help,
-  fullWidth: true,
 };
 
 settingList['screen']['auto_swipe_back_to'] = {};
@@ -1146,10 +1147,7 @@ function renderSettingsRow(settingName, definition) {
   var controlId = 'setting-' + settingName;
   var value =
     typeof settings[settingName] === 'undefined' ? '' : settings[settingName];
-  var html =
-    '<div class="settings-row' +
-    (definition.fullWidth ? ' settings-row-full' : '') +
-    '">';
+  var html = '<div class="settings-row">';
   html +=
     '<label class="settings-label" for="' +
     escapeSettingsHtml(controlId) +

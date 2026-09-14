@@ -1110,14 +1110,6 @@ next css sets the default height of the frame popup
   grid-template-columns: minmax(140px, 1fr) minmax(0, 1fr) 26px;
 }
 
-/* Rows flagged fullWidth (e.g. the paired grid-layout columns/row-height
-   settings) span both columns instead of sitting side by side with an
-   unrelated row. */
-.settings-two-col-grid .settings-row-full {
-  grid-column: 1 / -1;
-  grid-template-columns: minmax(230px, 320px) minmax(0, 40ch) 26px;
-}
-
 @media (max-width: 767.98px) {
   .settings-two-col-grid {
     grid-template-columns: 1fr;
