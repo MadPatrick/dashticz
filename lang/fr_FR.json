@@ -670,6 +670,7 @@
       "security_button_icons": "Icônes au lieu du texte sur le bouton de sécurité",
       "blink_color": "Couleur et opacité du flash (RGBA)",
       "blink_color_help": "Définir la couleur et l’opacité du flash (rouge, vert, bleu, alpha)",
+      "blink_color_opacity": "Opacité",
       "start_page": "Numéro de page de démarrage (Première page = 1)",
       "enable_swiper": "Activer Swiper",
       "enable_swiper_help": "0 : Désactiver Swiper ; 1 : Activer sur les écrans étroits ; 2 : Activer",
