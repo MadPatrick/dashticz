@@ -1122,6 +1122,16 @@ next css sets the default height of the frame popup
   }
 }
 
+.settings-fill-current-resolution {
+  margin: 4px 0 14px;
+}
+
+.settings-fill-current-resolution-help {
+  margin: 6px 0 0;
+  color: #6c757d;
+  font-size: 12px;
+}
+
 /* Number + "px" suffix pair used by the Font size / Icon size rows - the
    unit is fixed and shown next to the field instead of being typed. */
 .settings-cssvar-px-control {

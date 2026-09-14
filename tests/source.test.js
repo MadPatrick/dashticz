@@ -7522,6 +7522,69 @@ test('Weergave settings offer a target screen resolution, and its panel renders 
   );
 });
 
+test('Weergave offers a "fill current screen size" button, since a marketed resolution can differ from the browser viewport', () => {
+  const settingsJs = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
+  const styles = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const enLang = JSON.parse(
+    fs.readFileSync(path.join(root, 'lang/en_US.json'), 'utf8')
+  );
+  const nlLang = JSON.parse(
+    fs.readFileSync(path.join(root, 'lang/nl_NL.json'), 'utf8')
+  );
+
+  // Rendered once, only under the 'screen' category, right after its
+  // fields-grid closes - not a per-field control.
+  assert.match(
+    settingsJs,
+    /if \(id === 'screen'\) \{[\s\S]{0,1200}?id="settings-fill-current-resolution"[\s\S]{0,900}?<\/div>';\s*\n\s*\}/
+  );
+
+  // Reads this device's own viewport size (window.innerWidth/innerHeight)
+  // and writes it straight into the two number fields - meant to be
+  // clicked from Settings opened on the actual target device, not the PC
+  // used to edit the dashboard, since OS display scaling/browser zoom can
+  // make a device's real viewport differ a lot from its marketed
+  // resolution (e.g. a tablet sold as "1920x1200").
+  assert.match(
+    settingsJs,
+    /\$popup\.on\(\s*\n\s*'click\.settingsnav',\s*\n\s*'#settings-fill-current-resolution',\s*\n\s*function \(\) \{\s*\n\s*\$popup\.find\('#setting-targetScreenWidth'\)\.val\(window\.innerWidth\);\s*\n\s*\$popup\.find\('#setting-targetScreenHeight'\)\.val\(window\.innerHeight\);/
+  );
+
+  assert.equal(
+    enLang.settings.screen.fill_current_resolution,
+    'Fill in current screen size'
+  );
+  assert.equal(
+    nlLang.settings.screen.fill_current_resolution,
+    'Vul huidige schermgrootte in'
+  );
+  assert.match(
+    enLang.settings.screen.fill_current_resolution_help,
+    /target device itself/
+  );
+  assert.match(
+    nlLang.settings.screen.fill_current_resolution_help,
+    /doelapparaat zelf/
+  );
+
+  // Both field help texts now also warn that "target height/width" means
+  // browser pixels, not necessarily the device's marketed resolution -
+  // the exact confusion that made the boundary line land in the wrong
+  // place for a device whose viewport doesn't match its spec sheet.
+  assert.match(enLang.settings.screen.targetScreenWidth_help, /browser pixels/);
+  assert.match(
+    enLang.settings.screen.targetScreenHeight_help,
+    /browser pixels/
+  );
+  assert.match(nlLang.settings.screen.targetScreenWidth_help, /browser-pixels/);
+  assert.match(
+    nlLang.settings.screen.targetScreenHeight_help,
+    /browser-pixels/
+  );
+
+  assert.match(styles, /\.settings-fill-current-resolution \{/);
+});
+
 test('Layout Editor draws a dashed boundary line at the target screen height while editing a grid screen', () => {
   const layoutEditor = fs.readFileSync(
     path.join(root, 'js/layouteditor.js'),

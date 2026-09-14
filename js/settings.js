@@ -167,7 +167,7 @@ settingList['screen']['targetScreenWidth'] = {
   placeholder: '1920',
   help:
     language.settings.screen.targetScreenWidth_help ||
-    'The width of the screen you design the grid for. Used to show which part of the grid fits on this screen.',
+    "The width of the screen you design the grid for, in browser pixels (not necessarily the screen's marketed resolution - use the button below on the target device itself).",
 };
 
 settingList['screen']['rowHeight'] = {
@@ -183,7 +183,7 @@ settingList['screen']['targetScreenHeight'] = {
   placeholder: '1200',
   help:
     language.settings.screen.targetScreenHeight_help ||
-    'The height of the screen you design the grid for. Used to show which part of the grid fits on this screen.',
+    "The height of the screen you design the grid for, in browser pixels (not necessarily the screen's marketed resolution - use the button below on the target device itself).",
 };
 
 settingList['screen']['auto_swipe_back_to'] = {};
@@ -1505,6 +1505,30 @@ function renderSettingsCategoryHome() {
       if (useFieldsGrid) {
         html += '</div>';
       }
+      if (id === 'screen') {
+        // Target screen width/height are meant to match the CSS pixels the
+        // grid itself is measured in (gridColumns/rowHeight, and this
+        // panel's own layout), not a device's marketed/physical resolution
+        // - those can differ a lot from the browser's actual viewport size
+        // (OS display scaling, browser zoom, tablet pixel density). Opening
+        // Settings on the target device itself and clicking this fills in
+        // the two fields with that device's real window size.
+        html +=
+          '<div class="settings-fill-current-resolution">' +
+          '<button type="button" class="btn btn-sm btn-outline-secondary" id="settings-fill-current-resolution">' +
+          '<i class="fas fa-crosshairs" aria-hidden="true"></i> ' +
+          escapeSettingsHtml(
+            language.settings.screen.fill_current_resolution ||
+              'Fill in current screen size'
+          ) +
+          '</button>' +
+          '<p class="settings-fill-current-resolution-help">' +
+          escapeSettingsHtml(
+            language.settings.screen.fill_current_resolution_help ||
+              'Open Settings on the target device itself and use this button - a marketed resolution (e.g. 1920x1200) can differ from what the browser actually renders there.'
+          ) +
+          '</p></div>';
+      }
       if (id === 'standby') {
         html += renderBackgroundPicker(
           'standby_background',
@@ -1996,6 +2020,14 @@ function bindSettingsCategoryTiles() {
     }
     showSettingsHome();
   });
+  $popup.on(
+    'click.settingsnav',
+    '#settings-fill-current-resolution',
+    function () {
+      $popup.find('#setting-targetScreenWidth').val(window.innerWidth);
+      $popup.find('#setting-targetScreenHeight').val(window.innerHeight);
+    }
+  );
 }
 
 function themeOptionLabel(themeName) {
