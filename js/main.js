@@ -1,5 +1,5 @@
 /* eslint-disable no-prototype-builtins */
-/* global getAllDevicesHandler objectlength config initVersion loadSettings settings getLocationParameters _DASHTICZ_VERSION*/
+/* global getAllDevicesHandler objectlength config initVersion loadSettings settings getLocationParameters _LOADER_CACHE_BUST*/
 /* global sessionValid MobileDetect moment getBlock DT_function*/
 /* global Swiper Debug*/
 
@@ -76,10 +76,15 @@ function createErrorHandler() {
 }
 
 function loadStyling() {
+  // Cache-busted per page load, like js/main.js itself and every other
+  // frequently-edited source file loader.js already busts this way (see
+  // its own _LOADER_CACHE_BUST comment) - creative.css changes at least as
+  // often during development and a stale cached copy left no visible sign
+  // anything was wrong.
   $(
     '<link href="' +
       'css/creative.css?_=' +
-      _DASHTICZ_VERSION +
+      _LOADER_CACHE_BUST +
       '" rel="stylesheet">'
   ).appendTo('head');
   // Loaded after creative.css so the config/editor typography rules in it
@@ -88,7 +93,7 @@ function loadStyling() {
   $(
     '<link href="' +
       'css/config-typography.css?_=' +
-      _DASHTICZ_VERSION +
+      _LOADER_CACHE_BUST +
       '" rel="stylesheet">'
   ).appendTo('head');
 }
@@ -213,7 +218,7 @@ function loadLanguage() {
     setLang = localStorage.dashticz_language;
   }
   return $.ajax({
-    url: 'lang/en_US.json?v=' + _DASHTICZ_VERSION,
+    url: 'lang/en_US.json?v=' + _LOADER_CACHE_BUST,
     dataType: 'json',
   }).then(function (english) {
     if (setLang === 'en_US') {
@@ -221,7 +226,7 @@ function loadLanguage() {
       return language;
     }
     return $.ajax({
-      url: 'lang/' + setLang + '.json?v=' + _DASHTICZ_VERSION,
+      url: 'lang/' + setLang + '.json?v=' + _LOADER_CACHE_BUST,
       dataType: 'json',
     }).then(
       function (selected) {
@@ -739,7 +744,7 @@ function prepareStart() {
       })
       .then(function () {
         return $.ajax({
-          url: 'js/settings.js?v=' + _DASHTICZ_VERSION,
+          url: 'js/settings.js?v=' + _LOADER_CACHE_BUST,
           dataType: 'script',
           cache: true,
         });

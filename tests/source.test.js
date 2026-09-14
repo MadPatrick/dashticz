@@ -2813,7 +2813,7 @@ test('settings modal uses compact Bootstrap 5 controls and aligned help icons', 
   assert.match(settings, /showSettingsHome\(\)/);
   assert.doesNotMatch(settings, /settings-category-back/);
   assert.doesNotMatch(settings, /settings-widget-back/);
-  assert.match(main, /url: 'js\/settings\.js\?v=' \+ _DASHTICZ_VERSION/);
+  assert.match(main, /url: 'js\/settings\.js\?v=' \+ _LOADER_CACHE_BUST/);
   assert.match(settings, /img\/favicon\/app-icon-192x192\.png/);
   assert.match(settings, /window\.bootstrap\.Tooltip/);
   assert.match(settings, /data-bs-trigger="click"/);
@@ -7647,5 +7647,53 @@ test('Layout Editor draws a dashed boundary line at the target screen height whi
   assert.match(
     styles,
     /\.dt-grid-layout\.dle-grid-canvas\.dle-has-target-height::after \{\s*\n\s*content: '';\s*\n\s*position: absolute;\s*\n\s*left: 0;\s*\n\s*right: 0;\s*\n\s*top: var\(--dle-target-height\);\s*\n\s*height: 0;\s*\n\s*border-top: 4px dashed #e74c3c;\s*\n\s*pointer-events: none;/
+  );
+});
+
+test('feature files and their CSS/lang loaded via cached_scripts:true are cache-busted per page load, not per release', () => {
+  const main = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
+  const dtFunction = fs.readFileSync(
+    path.join(root, 'js/dt_function.js'),
+    'utf8'
+  );
+  const loader = fs.readFileSync(path.join(root, 'js/loader.js'), 'utf8');
+
+  // _LOADER_CACHE_BUST (a per-page-load timestamp, js/loader.js) - not
+  // _DASHTICZ_VERSION (a number only bumped on an actual release) - so a
+  // same-day fix to creative.css/settings.js/lang files/any DT_function-
+  // loaded module (layouteditor.js, deviceeditor.js, blocks.js, ...) is
+  // never left silently stuck behind a same-URL cached copy, with cache:
+  // true (js/settings.js) or cached_scripts: true (DT_function.loadScript)
+  // both explicitly relying on the URL itself to invalidate the cache.
+  assert.match(loader, /var _LOADER_CACHE_BUST = new Date\(\)\.getTime\(\);/);
+
+  assert.match(main, /'css\/creative\.css\?_=' \+\s*\n\s*_LOADER_CACHE_BUST/);
+  assert.match(
+    main,
+    /'css\/config-typography\.css\?_=' \+\s*\n\s*_LOADER_CACHE_BUST/
+  );
+  assert.match(main, /url: 'lang\/en_US\.json\?v=' \+ _LOADER_CACHE_BUST/);
+  assert.match(
+    main,
+    /url: 'lang\/' \+ setLang \+ '\.json\?v=' \+ _LOADER_CACHE_BUST/
+  );
+  assert.match(main, /url: 'js\/settings\.js\?v=' \+ _LOADER_CACHE_BUST/);
+
+  assert.match(
+    dtFunction,
+    /function loadCSS\(filename\) \{[\s\S]{0,300}?_LOADER_CACHE_BUST/
+  );
+  assert.match(
+    dtFunction,
+    /function loadDTScript\(filename\) \{\s*\n\s*return loadScript\(filename \+ '\?v=' \+ _LOADER_CACHE_BUST\);/
+  );
+
+  // dist/bundle.js is the one exception, and deliberately stays tied to
+  // the release version - it's a real build artifact only rebuilt (and
+  // recommitted) on an actual release, not on every source-file fix, so
+  // busting it every page load would just be wasted 1MB+ re-downloads.
+  assert.match(
+    loader,
+    /script\.src = 'dist\/bundle\.js\?t=' \+ _DASHTICZ_VERSION;/
   );
 });

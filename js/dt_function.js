@@ -1,4 +1,4 @@
-/* global toSlide getRandomInt settings infoMessage _DASHTICZ_VERSION Dashticz */
+/* global toSlide getRandomInt settings infoMessage _LOADER_CACHE_BUST Dashticz */
 /* from blocks.js */
 /* global convertBlock addBlock2Column*/
 /* from graph.js */
@@ -215,7 +215,7 @@ var DT_function = (function () {
       '<link rel="stylesheet" type="text/css" href="' +
         filename +
         '?v=' +
-        _DASHTICZ_VERSION +
+        _LOADER_CACHE_BUST +
         '">'
     );
   }
@@ -236,8 +236,15 @@ var DT_function = (function () {
     return loadedResources[id];
   }
 
+  // Cache-busted per page load, like js/main.js and every other frequently
+  // edited file (see js/loader.js's own _LOADER_CACHE_BUST comment) - this
+  // is how virtually every feature module (layouteditor.js, deviceeditor.js,
+  // blocks.js, ...) gets loaded, and cached_scripts: true above means the
+  // browser was otherwise free to keep serving a same-day-old cached copy
+  // under the old, version-bump-only _DASHTICZ_VERSION query string, with
+  // no visible sign anything was wrong.
   function loadDTScript(filename) {
-    return loadScript(filename + '?v=' + _DASHTICZ_VERSION);
+    return loadScript(filename + '?v=' + _LOADER_CACHE_BUST);
   }
 
   /** Prompt for password
