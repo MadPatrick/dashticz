@@ -4625,17 +4625,37 @@ img.icon {
   padding: 4px 0;
 }
 
-.postnl-row-label {
-  font-size: inherit;
+.postnl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.postnl-badge {
+  flex: none;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1em;
   font-weight: 600;
-  color: var(--text-muted);
+  line-height: 1;
+  color: #fff;
+}
+
+.postnl-badge-in {
+  background: #2e9e5b;
+}
+
+.postnl-badge-out {
+  background: #3a86d8;
 }
 
 .postnl-row-text {
   font-size: inherit;
-  /* One formatted shipment line per line - preserves the newlines the
-     component joins them with, without needing them converted to <br>. */
-  white-space: pre-line;
+  min-width: 0;
 }
 
 .postnl-error {

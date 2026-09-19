@@ -124,8 +124,6 @@
     "wu_settings_missing": "Weather Underground settings are missing.",
     "widget_not_visible": "Not seeing a widget?",
     "more_info": "More info",
-    "postnl_incoming_label": "Incoming",
-    "postnl_sent_label": "Sent",
     "postnl_status_open": "In transit",
     "postnl_status_intransit": "In transit",
     "postnl_status_delivered": "Delivered",

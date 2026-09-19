@@ -4,8 +4,9 @@ PostNL
 ======
 
 The PostNL widget shows your incoming and sent PostNL shipments (Track & Trace)
-as two rows in one block: Incoming and Sent. A row is left out completely when
-there is nothing to show.
+in one list, soonest first. Each line starts with a round arrow badge: a green
+arrow down for an incoming package, a blue arrow up for a sent package. Nothing
+is shown when there are no shipments.
 
 PostNL has no public API. The widget logs in to your PostNL account server-side
 (``vendor/dashticz/postnl/index.php``), using the same unofficial login flow as

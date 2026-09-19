@@ -10,8 +10,9 @@
  * js/widgeteditor.js), not per-tile config - there is nothing to pick per
  * tile, same as Weather or Garbage.
  *
- * Either row (Incoming/Sent) is simply omitted when its own array comes
- * back empty - no filler/placeholder text, by design. Status text and
+ * Incoming and sent shipments are shown in one list, each line with a
+ * round arrow badge. Nothing is shown when there are no shipments - no
+ * filler/placeholder text, by design. Status text and
  * date/time formatting happen here (not in the PHP backend) purely from the
  * raw {status, who, from, to, deliveryDate} fields it returns, so the
  * display always follows Dashticz's own active language automatically,
@@ -65,21 +66,42 @@ var DT_postnl = (function () {
     return prefix + who + ': ' + label + suffix;
   }
 
-  function rowHtml(cssClass, label, entries) {
-    if (!entries || !entries.length) return '';
-    var lines = entries.map(formatLine).join('\n');
-    return (
-      '<div class="postnl-row ' +
-      cssClass +
-      '">' +
-      '<div class="postnl-row-label">' +
-      label +
-      '</div>' +
-      '<div class="postnl-row-text">' +
-      lines +
-      '</div>' +
-      '</div>'
-    );
+  function sortKey(entry) {
+    var date = entry.status === 'Delivered' ? entry.deliveryDate : entry.from;
+    return date ? moment(date).valueOf() : 8.64e15;
+  }
+
+  // One combined list, soonest first: each line gets a round arrow badge
+  // (down = incoming, up = sent) instead of separate Incoming/Sent rows.
+  function listHtml(res) {
+    var entries = []
+      .concat(
+        ((res && res.incoming) || []).map(function (entry) {
+          return { role: 'in', entry: entry };
+        }),
+        ((res && res.sent) || []).map(function (entry) {
+          return { role: 'out', entry: entry };
+        })
+      )
+      .sort(function (a, b) {
+        return sortKey(a.entry) - sortKey(b.entry);
+      });
+    return entries
+      .map(function (item) {
+        return (
+          '<div class="postnl-row">' +
+          '<span class="postnl-badge postnl-badge-' +
+          item.role +
+          '">' +
+          (item.role === 'in' ? '&darr;' : '&uarr;') +
+          '</span>' +
+          '<span class="postnl-row-text">' +
+          formatLine(item.entry) +
+          '</span>' +
+          '</div>'
+        );
+      })
+      .join('');
   }
 
   function refresh(me) {
@@ -112,17 +134,7 @@ var DT_postnl = (function () {
       }),
     }).then(
       function (res) {
-        var html =
-          rowHtml(
-            'postnl-row-incoming',
-            misc.postnl_incoming_label || 'Incoming',
-            res && res.incoming
-          ) +
-          rowHtml(
-            'postnl-row-sent',
-            misc.postnl_sent_label || 'Sent',
-            res && res.sent
-          );
+        var html = listHtml(res);
         me.$mountPoint
           .find('.dt_state')
           .html('<div class="postnl-rows">' + html + '</div>');
