@@ -89,7 +89,9 @@ var DT_postnl = (function () {
     return entries
       .map(function (item) {
         return (
-          '<div class="postnl-row">' +
+          '<div class="postnl-row' +
+          (item.entry.status === 'Delivered' ? ' postnl-row-delivered' : '') +
+          '">' +
           '<span class="postnl-badge postnl-badge-' +
           item.role +
           '">' +
