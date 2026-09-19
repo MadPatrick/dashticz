@@ -3629,7 +3629,7 @@ var DashticzWidgetEditor = (function () {
         pncfg.postnl_days || '2',
         { min: 1, max: 30, step: 1 },
         lp.postnl_days_help ||
-          'How many days a sent package stays visible after delivery. Default: 2.'
+          'How many days a package stays visible after delivery. Default: 2.'
       );
       fields += _cfgField(
         'postnl_pollminutes',

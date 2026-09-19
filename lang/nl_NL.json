@@ -691,7 +691,7 @@
       "postnl_username": "PostNL e-mailadres",
       "postnl_password": "PostNL wachtwoord",
       "postnl_days": "Bezorgd tonen gedurende (dagen)",
-      "postnl_days_help": "Hoeveel dagen een verzonden pakket zichtbaar blijft na bezorging. Standaard: 2.",
+      "postnl_days_help": "Hoeveel dagen een pakket zichtbaar blijft na bezorging. Standaard: 2.",
       "postnl_pollminutes": "Ophaalinterval (minuten)",
       "postnl_fontsize": "Lettergrootte (px)",
       "postnl_fontsize_help": "Lettergrootte van de pakkettekst. Standaard: 14.",

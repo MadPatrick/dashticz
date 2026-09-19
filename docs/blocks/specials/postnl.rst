@@ -31,7 +31,7 @@ Settings
   * - postnl_password
     - Your PostNL password
   * - postnl_days
-    - ``1..30``: Number of days a sent package stays visible after delivery. Default: 2
+    - ``1..30``: Number of days a package (incoming or sent) stays visible after delivery. Default: 2
   * - postnl_pollminutes
     - ``15..720``: Poll interval in minutes. Minimum 15, to avoid your account being flagged. Default: 60
 
