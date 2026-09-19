@@ -803,6 +803,7 @@
       "title": "PostNL",
       "postnl_username": "PostNL e-mail address",
       "postnl_password": "PostNL password",
+      "postnl_showdelivered": "Show delivered packages",
       "postnl_days": "Show delivered for (days)",
       "postnl_days_help": "How many days a package stays visible after delivery. Default: 2.",
       "postnl_pollminutes": "Poll interval (minutes)",
