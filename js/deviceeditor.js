@@ -1182,6 +1182,12 @@ var DashticzDeviceEditor = (function () {
         dial: definition.type === 'dial' && !barMode,
         bar: barMode,
         needle: definition.needle === true,
+        // Selector Switch "Compact" layout (js/blocks.js getSelectorSwitch()).
+        compactSelector: definition.compactSelector === true,
+        compactIcons:
+          definition.compactIcons && typeof definition.compactIcons === 'object'
+            ? $.extend({}, definition.compactIcons)
+            : {},
         // Preserved as a real tri-state (true/false/undefined), not coerced
         // to a boolean: undefined means "not explicitly set yet", so the
         // popup can fall back to auto-detecting from the live device's
@@ -7230,7 +7236,7 @@ var DashticzDeviceEditor = (function () {
     // fields. An already-saved value stays editable even when the live device
     // is temporarily unavailable.
     var supportsCompactSelector =
-      !isSpecial &&
+      (!isSpecial || (isCustom && !!special.idx)) &&
       hasDial &&
       ((!!barLiveDevice &&
         barLiveDevice.SwitchType === 'Selector' &&
@@ -9406,6 +9412,20 @@ var DashticzDeviceEditor = (function () {
             }
             specialEntry.custom_fields = specialCustomFields;
           }
+          // Selector Switch Compact layout, same as for a plain device below.
+          delete specialCustomFields.compactSelector;
+          delete specialCustomFields.compactIcons;
+          if (specialOptions.compactSelector === true) {
+            specialCustomFields.compactSelector = true;
+            if (
+              specialOptions.compactIcons &&
+              Object.keys(specialOptions.compactIcons).length
+            )
+              specialCustomFields.compactIcons = specialOptions.compactIcons;
+          }
+          if (Object.keys(specialCustomFields).length)
+            specialEntry.custom_fields = specialCustomFields;
+          else delete specialEntry.custom_fields;
         } else if (
           SIMPLE_ICON_PAYLOAD_KINDS.indexOf(special.specialType) > -1
         ) {
