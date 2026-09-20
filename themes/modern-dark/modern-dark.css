@@ -585,9 +585,9 @@
 
 /* Compact Selector Switch (Device Config -> Compact, block.compactSelector).
    js/blocks.js getSelectorSwitch() adds .dt-selector-compact when the block
-   has exactly three level buttons. The layout stays the theme's own: title
-   top right (not restyled), the buttons right below it - only smaller, as
-   icon buttons. The level names stay in the DOM (title/aria-label) and are
+   has exactly three level buttons. The layout stays the theme's own: icon
+   and title (not restyled) where every other block has them, the buttons
+   below the title - only smaller, as icon buttons. The level names stay in the DOM (title/aria-label) and are
    hidden with font-size 0; the icons are Font Awesome glyphs on ::before:
    1st level up, 2nd minus, 3rd down. The buttons scale with the block
    height (Layout Editor / configured height), 24px in the default block.
@@ -595,7 +595,7 @@
    !important on .transbg .btn, so those properties repeat !important on
    this more specific selector; everything else wins on specificity. */
 .transbg.mh.dt-selector-compact {
-  --sc-block-h: 66px;
+  --sc-block-h: 76px;
   --sc-block-radius: 12px;
   --sc-btn-w: 29px;
   --sc-btn-h: 24px;
@@ -612,56 +612,34 @@
   --sc-icon-font:
     'Font Awesome 7 Free', 'Font Awesome 6 Free', 'Font Awesome 5 Free',
     'FontAwesome';
-  align-items: center;
   height: var(--sc-block-h) !important;
   min-height: 0;
-  padding: 6px 8px !important;
   border-radius: var(--sc-block-radius) !important;
 }
 
 @supports (height: 1cqh) {
   .transbg.mh.dt-selector-compact {
     container-type: size;
-    --sc-btn-h: clamp(18px, 44cqh, 56px);
+    --sc-btn-h: clamp(18px, 39cqh, 56px);
     --sc-btn-w: calc(var(--sc-btn-h) * 1.2);
     --sc-btn-radius: calc(var(--sc-btn-h) * 0.27);
-    --sc-icon-size: clamp(10px, 20cqh, 26px);
+    --sc-icon-size: clamp(10px, 18cqh, 26px);
   }
 }
 
-.transbg.mh.dt-selector-compact > .col-icon {
-  flex: 0 0 auto;
-  margin: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  line-height: 1;
-}
-
+/* Icon, padding, title and the column layout (title on top, buttons
+   centred in the space below it) are the theme's own and stay untouched;
+   the buttons only move to the right edge. */
 .transbg.mh.dt-selector-compact > .col-data {
-  display: flex;
-  flex: 1 1 0;
-  flex-direction: column;
   align-items: flex-end;
-  justify-content: center;
-  gap: 2px;
-  width: auto;
-  min-width: 0;
-  height: 100%;
-}
-
-.transbg.mh.dt-selector-compact > .col-data > br {
-  display: none;
 }
 
 .transbg.mh.dt-selector-compact .selector-buttons {
-  display: flex;
   flex: 0 0 auto;
   flex-wrap: nowrap;
   gap: var(--sc-gap);
   justify-content: flex-end;
   width: auto;
-  margin: 0;
-  transform: none;
 }
 
 .transbg.mh.dt-selector-compact .selector-buttons .btn {
