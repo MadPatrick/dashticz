@@ -73,6 +73,11 @@ Block parameters
         between the two, so this is picked per row in the Cluster popup
         rather than auto-detected.
       | ``{ 12: 13 }``: Device 12's row also shows device 13's consumption
+  * - fontSize
+    - | Optional: font size of the whole cluster in pixels (``8``-``60``),
+        like the font size setting of the HP iLO widget. Absent (the
+        default) means the normal size.
+      | ``22``: Rows and title render at 22px
   * - switchScale
     - | Switch mode only. Optional: a scale factor (``0.3``-``3``) resizing
         the on/off toggle. Absent (the default) means the normal size.

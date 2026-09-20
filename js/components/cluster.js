@@ -190,6 +190,16 @@ var DT_cluster = (function () {
       switchScale > 0 ? switchScale : ''
     );
 
+    // Optional block.fontSize (px, 8-60) sizes the whole cluster: the row
+    // title/usage/value spans read --font-device-title (css/creative.css),
+    // so setting it on the block also covers the block's own title. Set on
+    // every refresh, like switchScale above; empty removes the override.
+    var fontSize = parseInt(me.block.fontSize, 10);
+    me.$mountPoint.css(
+      '--font-device-title',
+      fontSize >= 8 && fontSize <= 60 ? fontSize + 'px' : ''
+    );
+
     if (me.mode !== 'switch') return;
 
     me.$mountPoint

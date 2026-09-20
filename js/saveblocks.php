@@ -426,6 +426,18 @@ foreach ($data['devices'] as $entry) {
                         dashticz_json_error(400, 'A cluster block\'s switchScale must be between 0.3 and 3.');
                     }
                 }
+                // fontSize (optional): font size of the whole cluster in pixels
+                // (js/components/cluster.js sets --font-device-title from it).
+                // Absent means the default size.
+                if (isset($customFields['fontSize'])) {
+                    $clusterFontSize = $customFields['fontSize'];
+                    if (!is_int($clusterFontSize)) {
+                        dashticz_json_error(400, 'A cluster block\'s fontSize must be a whole number.');
+                    }
+                    if ($clusterFontSize < 8 || $clusterFontSize > 60) {
+                        dashticz_json_error(400, 'A cluster block\'s fontSize must be between 8 and 60.');
+                    }
+                }
             }
         } elseif ($kind === 'timegraph') {
             // Only Icon and Last update apply (no Data/Switch/Dial - see

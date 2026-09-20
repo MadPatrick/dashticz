@@ -282,6 +282,9 @@ var DashticzDeviceEditor = (function () {
         cluster_switch_scale: 'Switch size',
         cluster_switch_scale_help:
           'Scale factor for the on/off toggle (e.g. 1.5 for 150%). Leave empty for the default size.',
+        cluster_font_size: 'Font size (px)',
+        cluster_font_size_help:
+          'Font size of the whole cluster in pixels (8-60). Leave empty for the default size.',
         invalid_cluster_name: 'Enter a valid unique cluster name.',
         invalid_cluster_devices: 'Add at least one device.',
         html_block: 'HTML Block',
@@ -3732,7 +3735,8 @@ var DashticzDeviceEditor = (function () {
     t,
     mode,
     locked,
-    switchScaleValue
+    switchScaleValue,
+    fontSizeValue
   ) {
     var html =
       '<div class="mb-3"><label class="form-label">' +
@@ -3787,6 +3791,7 @@ var DashticzDeviceEditor = (function () {
       '-switch-scale-slot">' +
       _clusterSwitchScaleFieldHtml(idPrefix, t, mode, switchScaleValue) +
       '</span>';
+    html += _clusterFontSizeFieldHtml(idPrefix, t, fontSizeValue);
     html += '</div>';
     if (locked) {
       html +=
@@ -3830,6 +3835,38 @@ var DashticzDeviceEditor = (function () {
     );
   }
 
+  // Cluster's font-size field (like HP iLO's font size, but per block):
+  // applies to every mode, so unlike the switch size it is never re-rendered
+  // on a mode change. Stored as the block's optional fontSize custom field
+  // (js/components/cluster.js sets --font-device-title from it).
+  function _clusterFontSizeFieldHtml(idPrefix, t, value) {
+    return (
+      '<span class="d-flex align-items-center gap-2">' +
+      '<label class="form-label mb-0 small" for="' +
+      _esc(idPrefix) +
+      '-font-size">' +
+      _esc(t.cluster_font_size) +
+      '</label>' +
+      '<input type="number" class="form-control form-control-sm" id="' +
+      _esc(idPrefix) +
+      '-font-size" style="width:10ch;flex:0 0 auto;" min="8" max="60" step="1" placeholder="18" value="' +
+      _esc(value || '') +
+      '" title="' +
+      _esc(t.cluster_font_size_help) +
+      '" autocomplete="off">' +
+      '</span>'
+    );
+  }
+
+  // Parses/clamps the font-size field's raw text into a whole number of
+  // pixels saveblocks.php will accept (8-60), or null when it should be
+  // left unset (empty or non-numeric - meaning "use the default size").
+  function _readClusterFontSize(rawValue) {
+    var num = parseInt($.trim(String(rawValue || '')), 10);
+    if (!(num > 0)) return null;
+    return Math.min(60, Math.max(8, num));
+  }
+
   // Parses/clamps the switch-size field's raw text into a number saveblocks
   // .php will accept (0.3-3), or null when it should be left unset (empty,
   // non-numeric, or <= 0 - meaning "use the default size").
@@ -3854,6 +3891,7 @@ var DashticzDeviceEditor = (function () {
 
     var clusterMode = '';
     var clusterSwitchScaleValue = '';
+    var clusterFontSizeValue = '';
     var deviceList = _clusterAvailableDeviceList();
     var usageList = _clusterUsageDeviceList();
     var pendingDevices = [];
@@ -3912,7 +3950,8 @@ var DashticzDeviceEditor = (function () {
       t,
       clusterMode,
       false,
-      clusterSwitchScaleValue
+      clusterSwitchScaleValue,
+      clusterFontSizeValue
     );
     html +=
       '<div class="mb-3"><label class="form-label" for="cl-device-select">' +
@@ -3994,6 +4033,10 @@ var DashticzDeviceEditor = (function () {
 
     $popup.on('input', '#cl-switch-scale', function () {
       clusterSwitchScaleValue = String($(this).val() || '');
+    });
+
+    $popup.on('input', '#cl-font-size', function () {
+      clusterFontSizeValue = String($(this).val() || '');
     });
 
     $popup.on('click', '.cl-mode-button', function () {
@@ -4089,6 +4132,14 @@ var DashticzDeviceEditor = (function () {
           field: 'titles',
           setting: JSON.stringify(titlesMap),
           value: titlesMap,
+        });
+      }
+      var fontSize = _readClusterFontSize($('#cl-font-size').val());
+      if (fontSize !== null) {
+        customRows.push({
+          field: 'fontSize',
+          setting: String(fontSize),
+          value: fontSize,
         });
       }
       if (_clusterUsesSwitchRows(clusterMode)) {
@@ -7104,6 +7155,7 @@ var DashticzDeviceEditor = (function () {
     var clusterPendingDevices = [];
     var clusterMode = '';
     var clusterSwitchScaleValue = '';
+    var clusterFontSizeValue = '';
     if (isClusterBlock) {
       var clusterValues = {};
       customRows.forEach(function (row) {
@@ -7117,6 +7169,10 @@ var DashticzDeviceEditor = (function () {
       clusterSwitchScaleValue =
         typeof clusterValues.switchscale === 'number'
           ? String(clusterValues.switchscale)
+          : '';
+      clusterFontSizeValue =
+        typeof clusterValues.fontsize === 'number'
+          ? String(clusterValues.fontsize)
           : '';
       var clusterDeviceIdxList = Array.isArray(clusterValues.devices)
         ? clusterValues.devices
@@ -7155,7 +7211,8 @@ var DashticzDeviceEditor = (function () {
           field !== 'usage' &&
           field !== 'mode' &&
           field !== 'titles' &&
-          field !== 'switchscale'
+          field !== 'switchscale' &&
+          field !== 'fontsize'
         );
       });
     }
@@ -7595,7 +7652,8 @@ var DashticzDeviceEditor = (function () {
         t,
         clusterMode,
         true,
-        clusterSwitchScaleValue
+        clusterSwitchScaleValue,
+        clusterFontSizeValue
       );
       html += _clusterFieldsHtml(
         'de-config',
@@ -8011,6 +8069,7 @@ var DashticzDeviceEditor = (function () {
         customKeys.mode = true;
         customKeys.titles = true;
         customKeys.switchscale = true;
+        customKeys.fontsize = true;
       }
       if (isGraphBlock) {
         customKeys.graph = true;
@@ -8381,6 +8440,16 @@ var DashticzDeviceEditor = (function () {
             field: 'titles',
             setting: JSON.stringify(clusterTitlesOut),
             value: clusterTitlesOut,
+          });
+        }
+        var editFontSize = _readClusterFontSize(
+          $('#de-config-font-size').val()
+        );
+        if (editFontSize !== null) {
+          storedRows.push({
+            field: 'fontSize',
+            setting: String(editFontSize),
+            value: editFontSize,
           });
         }
         if (_clusterUsesSwitchRows(clusterMode)) {

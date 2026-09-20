@@ -5749,7 +5749,7 @@ test('a saved Cluster block can actually be re-opened and saved from the Layout 
   // saved Cluster block impossible to edit.
   assert.match(
     deviceEditor,
-    /if \(isClusterBlock\) \{[\s\S]{0,2200}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles' &&\s*field !== 'switchscale'\s*\);[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
+    /if \(isClusterBlock\) \{[\s\S]{0,2200}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles' &&\s*field !== 'switchscale' &&\s*field !== 'fontsize'\s*\);[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
   );
 
   // A dedicated add/remove device picker (mirroring _showClusterPopup's own)
@@ -5897,7 +5897,7 @@ test("Cluster rows can show a companion device's power consumption", () => {
   );
   assert.match(
     deviceEditor,
-    /return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles' &&\s*field !== 'switchscale'\s*\);/
+    /return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles' &&\s*field !== 'switchscale' &&\s*field !== 'fontsize'\s*\);/
   );
 
   // js/components/cluster.js: subscribes to each referenced companion
@@ -6017,12 +6017,12 @@ test('Cluster row type is locked once the cluster has been saved', () => {
   // guards against it defensively.
   assert.match(
     deviceEditor,
-    /function _clusterModeButtonsHtml\(\s*idPrefix,\s*t,\s*mode,\s*locked,\s*switchScaleValue\s*\)\s*\{/
+    /function _clusterModeButtonsHtml\(\s*idPrefix,\s*t,\s*mode,\s*locked,\s*switchScaleValue,\s*fontSizeValue\s*\)\s*\{/
   );
   assert.match(deviceEditor, /\(locked \? ' disabled' : ''\)/);
   assert.match(
     deviceEditor,
-    /_clusterModeButtonsHtml\(\s*'de-config',\s*t,\s*clusterMode,\s*true,\s*clusterSwitchScaleValue\s*\);/
+    /_clusterModeButtonsHtml\(\s*'de-config',\s*t,\s*clusterMode,\s*true,\s*clusterSwitchScaleValue,\s*clusterFontSizeValue\s*\);/
   );
   assert.match(
     deviceEditor,
@@ -6033,7 +6033,7 @@ test('Cluster row type is locked once the cluster has been saved', () => {
   // unlocked (nothing is saved yet there).
   assert.match(
     deviceEditor,
-    /html \+= _clusterModeButtonsHtml\(\s*'cl',\s*t,\s*clusterMode,\s*false,\s*clusterSwitchScaleValue\s*\);/
+    /html \+= _clusterModeButtonsHtml\(\s*'cl',\s*t,\s*clusterMode,\s*false,\s*clusterSwitchScaleValue,\s*clusterFontSizeValue\s*\);/
   );
 });
 
@@ -6129,6 +6129,22 @@ test('Cluster switch can be resized via a switchScale field next to the Row type
   // reserved so a hand-typed 'switchScale' custom field can't collide.
   assert.match(deviceEditor, /function _readClusterSwitchScale\(/);
   assert.match(deviceEditor, /customKeys\.switchscale = true;/);
+
+  // Font size of the whole cluster (like HP iLO's font size): a per-block
+  // fontSize custom field (8-60px) next to the row type buttons, applied by
+  // cluster.js through --font-device-title and validated in saveblocks.php.
+  assert.match(deviceEditor, /function _clusterFontSizeFieldHtml\(/);
+  assert.match(deviceEditor, /function _readClusterFontSize\(/);
+  assert.match(deviceEditor, /customKeys\.fontsize = true;/);
+  assert.match(deviceEditor, /field: 'fontSize',/);
+  assert.match(
+    fs.readFileSync(path.join(root, 'js/components/cluster.js'), 'utf8'),
+    /'--font-device-title',/
+  );
+  assert.match(
+    fs.readFileSync(path.join(root, 'js/saveblocks.php'), 'utf8'),
+    /fontSize must be between 8 and 60\./
+  );
   assert.match(deviceEditor, /field !== 'switchscale'/);
   assert.match(
     deviceEditor,
