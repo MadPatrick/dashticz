@@ -16,6 +16,8 @@ v4.0.10 (20-9-2026)
   widget config. iLO host, port, credentials, poll interval and font size are
   widget settings.
 - The Widgets menu cards are now sorted alphabetically.
+- The Widgets menu now shows four cards per row (slightly smaller cards,
+  same menu width).
 
 v4.0.9 (14-9-2026)
 ----------------------
