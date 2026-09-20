@@ -5749,7 +5749,7 @@ test('a saved Cluster block can actually be re-opened and saved from the Layout 
   // saved Cluster block impossible to edit.
   assert.match(
     deviceEditor,
-    /if \(isClusterBlock\) \{[\s\S]{0,2200}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles' &&\s*field !== 'switchscale' &&\s*field !== 'fontsize'\s*\);[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
+    /if \(isClusterBlock\) \{[\s\S]{0,2200}?customRows = customRows\.filter\(function \(row\) \{[\s\S]{0,120}?return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles' &&\s*field !== 'switchscale' &&\s*field !== 'fontsize' &&\s*field !== 'icons'\s*\);[\s\S]{0,40}?\}\);[\s\S]{0,20}?\}/
   );
 
   // A dedicated add/remove device picker (mirroring _showClusterPopup's own)
@@ -5897,7 +5897,7 @@ test("Cluster rows can show a companion device's power consumption", () => {
   );
   assert.match(
     deviceEditor,
-    /return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles' &&\s*field !== 'switchscale' &&\s*field !== 'fontsize'\s*\);/
+    /return\s*\(\s*field !== 'devices' &&\s*field !== 'usage' &&\s*field !== 'mode' &&\s*field !== 'titles' &&\s*field !== 'switchscale' &&\s*field !== 'fontsize' &&\s*field !== 'icons'\s*\);/
   );
 
   // js/components/cluster.js: subscribes to each referenced companion
@@ -6136,6 +6136,21 @@ test('Cluster switch can be resized via a switchScale field next to the Row type
   assert.match(deviceEditor, /function _clusterFontSizeFieldHtml\(/);
   assert.match(deviceEditor, /function _readClusterFontSize\(/);
   assert.match(deviceEditor, /customKeys\.fontsize = true;/);
+
+  // Per-row icons (the HP iLO look): an icons map (idx -> 'auto' or a Font
+  // Awesome class) picked from a pull-down in every pending row, rendered
+  // by cluster.js in front of the name, validated in saveblocks.php.
+  assert.match(deviceEditor, /function _clusterIconPickerHtml\(/);
+  assert.match(deviceEditor, /customKeys\.icons = true;/);
+  assert.match(deviceEditor, /field: 'icons',/);
+  assert.match(
+    fs.readFileSync(path.join(root, 'js/components/cluster.js'), 'utf8'),
+    /cluster-row-icon/
+  );
+  assert.match(
+    fs.readFileSync(path.join(root, 'js/saveblocks.php'), 'utf8'),
+    /icons map values must be Font Awesome class names/
+  );
   assert.match(deviceEditor, /field: 'fontSize',/);
   assert.match(
     fs.readFileSync(path.join(root, 'js/components/cluster.js'), 'utf8'),

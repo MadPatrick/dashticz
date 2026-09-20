@@ -73,6 +73,12 @@ Block parameters
         between the two, so this is picked per row in the Cluster popup
         rather than auto-detected.
       | ``{ 12: 13 }``: Device 12's row also shows device 13's consumption
+  * - icons
+    - | Optional: shows an icon in front of a row's name, like the rows of
+        the HP iLO widget. Maps a device's own idx to ``'auto'`` (an icon
+        derived from the device's type) or to a Font Awesome class. Rows
+        without an entry show no icon.
+      | ``{ 12: 'auto', 13: 'fas fa-fan' }``
   * - fontSize
     - | Optional: font size of the whole cluster in pixels (``8``-``60``),
         like the font size setting of the HP iLO widget. Absent (the

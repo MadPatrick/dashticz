@@ -47,6 +47,7 @@ var DT_cluster = (function () {
       me.devices = me.block.devices || [];
       me.usageMap = me.mode === 'switch' ? me.block.usage || {} : {};
       me.titlesMap = me.block.titles || {};
+      me.iconsMap = me.block.icons || {};
       me.devices.forEach(function (idx) {
         Dashticz.subscribeDevice(me, idx, false, function () {
           return refresh(me);
@@ -95,7 +96,38 @@ var DT_cluster = (function () {
     return String(raw).replace(/\bWatt\b/, 'W');
   }
 
-  function temperatureRowHtml(idx, device, title) {
+  // Row icons (block.icons: device idx -> 'auto' or a Font Awesome class
+  // string, chosen per row in the Cluster popups): the HP iLO look, a small
+  // blue icon in front of the name. 'auto' derives one from the device's own
+  // Domoticz type; absent means no icon, as before.
+  function autoIcon(device) {
+    var type = String(device.Type || '');
+    var subType = String(device.SubType || '');
+    if (device.SwitchType) {
+      return String(device.SwitchType).indexOf('Blinds') === 0
+        ? 'fas fa-window-maximize'
+        : 'fas fa-lightbulb';
+    }
+    if (/^Temp/.test(type)) return 'fas fa-thermometer-half';
+    if (/Humidity/.test(type)) return 'fas fa-droplet';
+    if (/Wind/.test(type)) return 'fas fa-wind';
+    if (/Rain/.test(type)) return 'fas fa-cloud-rain';
+    if (type === 'Lux' || subType === 'Lux') return 'fas fa-sun';
+    if (/Usage|Energy|P1|kWh|Current|Power/.test(type + ' ' + subType))
+      return 'fas fa-bolt';
+    if (/Baro/.test(type + ' ' + subType)) return 'fas fa-gauge-high';
+    return 'fas fa-circle-info';
+  }
+
+  function iconHtml(me, idx, device) {
+    var setting = me.iconsMap[idx];
+    if (!setting) return '';
+    var icon = setting === 'auto' ? autoIcon(device) : String(setting);
+    if (!/^[A-Za-z0-9 _-]+$/.test(icon)) return '';
+    return '<i class="' + icon + ' cluster-row-icon" aria-hidden="true"></i>';
+  }
+
+  function temperatureRowHtml(idx, device, title, icon) {
     var reading =
       typeof device.Temp === 'number'
         ? device.Temp.toFixed(1) + _TEMP_SYMBOL
@@ -104,6 +136,7 @@ var DT_cluster = (function () {
       '<div class="cluster-row" data-idx="' +
       idx +
       '">' +
+      icon +
       '<span class="cluster-row-title">' +
       title +
       '</span>' +
@@ -113,7 +146,7 @@ var DT_cluster = (function () {
   }
 
   // Other mode: the device's own Data string ("54 %", "3.2 m/s", ...).
-  function otherRowHtml(idx, device, title) {
+  function otherRowHtml(idx, device, title, icon) {
     var reading =
       typeof device.Data === 'string' || typeof device.Data === 'number'
         ? String(device.Data)
@@ -122,6 +155,7 @@ var DT_cluster = (function () {
       '<div class="cluster-row" data-idx="' +
       idx +
       '">' +
+      icon +
       '<span class="cluster-row-title">' +
       title +
       '</span>' +
@@ -130,7 +164,7 @@ var DT_cluster = (function () {
     );
   }
 
-  function switchRowHtml(idx, device, usage, title) {
+  function switchRowHtml(idx, device, usage, title, icon) {
     var status = getIconStatusClass(device.Status);
     return (
       '<div class="cluster-row ' +
@@ -138,6 +172,7 @@ var DT_cluster = (function () {
       '" data-idx="' +
       idx +
       '">' +
+      icon +
       '<span class="cluster-row-title">' +
       title +
       '</span>' +
@@ -168,12 +203,23 @@ var DT_cluster = (function () {
       if (!device) return;
       var title = me.titlesMap[idx] || device.Name || idx;
       if (me.mode === 'temperature') {
-        html += temperatureRowHtml(idx, device, title);
+        html += temperatureRowHtml(
+          idx,
+          device,
+          title,
+          iconHtml(me, idx, device)
+        );
       } else if (me.mode === 'other') {
-        html += otherRowHtml(idx, device, title);
+        html += otherRowHtml(idx, device, title, iconHtml(me, idx, device));
       } else {
         var usage = usageText(allDevices[me.usageMap[idx]]);
-        html += switchRowHtml(idx, device, usage, title);
+        html += switchRowHtml(
+          idx,
+          device,
+          usage,
+          title,
+          iconHtml(me, idx, device)
+        );
       }
     });
     html += '</div>';

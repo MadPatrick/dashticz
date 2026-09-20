@@ -285,6 +285,9 @@ var DashticzDeviceEditor = (function () {
         cluster_font_size: 'Font size (px)',
         cluster_font_size_help:
           'Font size of the whole cluster in pixels (8-60). Leave empty for the default size.',
+        cluster_icon: 'Icon for this row',
+        cluster_icon_none: 'None',
+        cluster_icon_auto: 'Automatic',
         invalid_cluster_name: 'Enter a valid unique cluster name.',
         invalid_cluster_devices: 'Add at least one device.',
         html_block: 'HTML Block',
@@ -3487,6 +3490,96 @@ var DashticzDeviceEditor = (function () {
     return html;
   }
 
+  // Icons a Cluster row can show in front of its name (Font Awesome, free
+  // set) - the same look as the HP iLO widget's rows. A row's icon setting
+  // is '' (none, the default for existing clusters), 'auto' (chosen by
+  // js/components/cluster.js from the device's own type) or one of these.
+  var CLUSTER_ICON_PRESETS = [
+    ['fas fa-lightbulb', 'Light'],
+    ['fas fa-plug', 'Plug'],
+    ['fas fa-power-off', 'Power'],
+    ['fas fa-toggle-on', 'Toggle'],
+    ['fas fa-thermometer-half', 'Temperature'],
+    ['fas fa-droplet', 'Humidity'],
+    ['fas fa-wind', 'Wind'],
+    ['fas fa-cloud-rain', 'Rain'],
+    ['fas fa-sun', 'Sun / lux'],
+    ['fas fa-bolt', 'Energy'],
+    ['fas fa-gauge-high', 'Gauge'],
+    ['fas fa-fan', 'Fan'],
+    ['fas fa-fire', 'Heating'],
+    ['fas fa-snowflake', 'Cooling'],
+    ['fas fa-clock', 'Clock'],
+    ['fas fa-heart-pulse', 'Health'],
+    ['fas fa-server', 'Server'],
+    ['fas fa-hard-drive', 'Storage'],
+    ['fas fa-microchip', 'Chip'],
+    ['fas fa-wifi', 'Network'],
+    ['fas fa-battery-full', 'Battery'],
+    ['fas fa-door-open', 'Door'],
+    ['fas fa-lock', 'Lock'],
+    ['fas fa-bell', 'Bell'],
+    ['fas fa-person-walking', 'Motion'],
+    ['fas fa-car', 'Car'],
+    ['fas fa-house', 'House'],
+    ['fas fa-circle-info', 'Info'],
+  ];
+
+  // The icon pull-down of one pending row: a button with the current icon
+  // and a panel of icon-only choices (names as tooltip), like the compact
+  // selector's per-level icon picker.
+  function _clusterIconPickerHtml(t, d) {
+    var current = String(d.icon || '');
+    var button =
+      current === ''
+        ? _esc(t.cluster_icon_none)
+        : current === 'auto'
+          ? _esc(t.cluster_icon_auto)
+          : '<i class="' + _esc(current) + '" aria-hidden="true"></i>';
+    var html =
+      '<span class="cl-icon-wrap" style="position:relative;flex:0 0 auto;">' +
+      '<button type="button" class="btn btn-outline-secondary btn-sm cl-icon-toggle" data-idx="' +
+      _esc(d.idx) +
+      '" aria-haspopup="true" title="' +
+      _esc(t.cluster_icon) +
+      '" style="min-width:3.5em;">' +
+      button +
+      ' <span aria-hidden="true">&#9662;</span></button>' +
+      '<span class="cl-icon-panel d-none" style="position:absolute;top:100%;right:0;z-index:1060;width:max-content;min-width:4em;max-height:260px;overflow-x:hidden;overflow-y:auto;padding:4px;margin-top:2px;border:1px solid rgba(128,128,128,.5);border-radius:6px;background:var(--bs-body-bg,#fff);box-shadow:0 4px 12px rgba(0,0,0,.35);">';
+    [
+      ['', t.cluster_icon_none],
+      ['auto', t.cluster_icon_auto],
+    ].forEach(function (choice) {
+      html +=
+        '<button type="button" class="btn btn-sm d-block w-100 text-center cl-icon-choice' +
+        (current === choice[0] ? ' active' : '') +
+        '" data-idx="' +
+        _esc(d.idx) +
+        '" data-icon="' +
+        choice[0] +
+        '">' +
+        _esc(choice[1]) +
+        '</button>';
+    });
+    CLUSTER_ICON_PRESETS.forEach(function (p) {
+      html +=
+        '<button type="button" class="btn btn-sm d-block w-100 text-center cl-icon-choice' +
+        (current === p[0] ? ' active' : '') +
+        '" data-idx="' +
+        _esc(d.idx) +
+        '" data-icon="' +
+        _esc(p[0]) +
+        '" title="' +
+        _esc(p[1]) +
+        '" aria-label="' +
+        _esc(p[1]) +
+        '"><i class="' +
+        _esc(p[0]) +
+        '" aria-hidden="true"></i></button>';
+    });
+    return html + '</span></span>';
+  }
+
   function _clusterPendingListHtml(t, pendingDevices, usageList) {
     if (!pendingDevices.length) {
       return '<div class="de-empty">' + _esc(t.cluster_no_devices) + '</div>';
@@ -3526,6 +3619,7 @@ var DashticzDeviceEditor = (function () {
           d.idx +
           '</span>' +
           '</span>' +
+          _clusterIconPickerHtml(t, d) +
           usageSelect +
           '<button type="button" class="btn btn-danger btn-sm cl-remove-btn ms-auto" data-idx="' +
           _esc(d.idx) +
@@ -3999,9 +4093,29 @@ var DashticzDeviceEditor = (function () {
       if (!(idx > 0)) return;
       var selectedOption = $select.find('option:selected');
       var name = selectedOption.attr('data-name') || String(idx);
-      pendingDevices.push({ idx: idx, name: name });
+      pendingDevices.push({ idx: idx, name: name, icon: 'auto' });
       $select.html(deviceOptionsHtml());
       $('#cl-device-pending').html(pendingListHtml());
+    });
+
+    $('#cl-device-pending').on('click', '.cl-icon-toggle', function () {
+      var $panel = $(this).siblings('.cl-icon-panel');
+      $popup.find('.cl-icon-panel').not($panel).addClass('d-none');
+      $panel.toggleClass('d-none');
+    });
+
+    $('#cl-device-pending').on('click', '.cl-icon-choice', function () {
+      var idx = parseInt($(this).attr('data-idx'), 10);
+      var target = pendingDevices.find(function (d) {
+        return d.idx === idx;
+      });
+      if (target) target.icon = String($(this).attr('data-icon') || '');
+      $('#cl-device-pending').html(pendingListHtml());
+    });
+
+    $popup.on('click', function (event) {
+      if (!$(event.target).closest('.cl-icon-toggle, .cl-icon-panel').length)
+        $popup.find('.cl-icon-panel').addClass('d-none');
     });
 
     $('#cl-device-pending').on('click', '.cl-remove-btn', function () {
@@ -4132,6 +4246,17 @@ var DashticzDeviceEditor = (function () {
           field: 'titles',
           setting: JSON.stringify(titlesMap),
           value: titlesMap,
+        });
+      }
+      var iconsMap = {};
+      pendingDevices.forEach(function (d) {
+        if (d.icon) iconsMap[d.idx] = d.icon;
+      });
+      if (Object.keys(iconsMap).length) {
+        customRows.push({
+          field: 'icons',
+          setting: JSON.stringify(iconsMap),
+          value: iconsMap,
         });
       }
       var fontSize = _readClusterFontSize($('#cl-font-size').val());
@@ -7185,6 +7310,10 @@ var DashticzDeviceEditor = (function () {
         clusterValues.titles && typeof clusterValues.titles === 'object'
           ? clusterValues.titles
           : {};
+      var clusterIconsMap =
+        clusterValues.icons && typeof clusterValues.icons === 'object'
+          ? clusterValues.icons
+          : {};
       var allDevicesForCluster = Domoticz.getAllDevices();
       clusterPendingDevices = clusterDeviceIdxList.map(function (idx) {
         var live = allDevicesForCluster ? allDevicesForCluster[idx] : null;
@@ -7195,6 +7324,7 @@ var DashticzDeviceEditor = (function () {
           name: (live && live.Name) || String(idx),
           usageIdx: usageIdx,
           title: customTitle,
+          icon: String(clusterIconsMap[idx] || ''),
         };
       });
       clusterDeviceList =
@@ -7212,7 +7342,8 @@ var DashticzDeviceEditor = (function () {
           field !== 'mode' &&
           field !== 'titles' &&
           field !== 'switchscale' &&
-          field !== 'fontsize'
+          field !== 'fontsize' &&
+          field !== 'icons'
         );
       });
     }
@@ -7721,13 +7852,40 @@ var DashticzDeviceEditor = (function () {
         if (!(idx > 0)) return;
         var selectedOption = $select.find('option:selected');
         var name = selectedOption.attr('data-name') || String(idx);
-        clusterPendingDevices.push({ idx: idx, name: name });
+        clusterPendingDevices.push({ idx: idx, name: name, icon: 'auto' });
         $select.html(
           _clusterDeviceOptionsHtml(t, clusterDeviceList, clusterPendingDevices)
         );
         $popup
           .find('#de-config-cluster-pending')
           .html(clusterEditPendingListHtml());
+      });
+      $popup.on(
+        'click',
+        '#de-config-cluster-pending .cl-icon-toggle',
+        function () {
+          var $panel = $(this).siblings('.cl-icon-panel');
+          $popup.find('.cl-icon-panel').not($panel).addClass('d-none');
+          $panel.toggleClass('d-none');
+        }
+      );
+      $popup.on(
+        'click',
+        '#de-config-cluster-pending .cl-icon-choice',
+        function () {
+          var idx = parseInt($(this).attr('data-idx'), 10);
+          var target = clusterPendingDevices.find(function (d) {
+            return d.idx === idx;
+          });
+          if (target) target.icon = String($(this).attr('data-icon') || '');
+          $popup
+            .find('#de-config-cluster-pending')
+            .html(clusterEditPendingListHtml());
+        }
+      );
+      $popup.on('click', function (event) {
+        if (!$(event.target).closest('.cl-icon-toggle, .cl-icon-panel').length)
+          $popup.find('.cl-icon-panel').addClass('d-none');
       });
       $popup.on(
         'click',
@@ -8068,6 +8226,7 @@ var DashticzDeviceEditor = (function () {
         customKeys.usage = true;
         customKeys.mode = true;
         customKeys.titles = true;
+        customKeys.icons = true;
         customKeys.switchscale = true;
         customKeys.fontsize = true;
       }
@@ -8440,6 +8599,17 @@ var DashticzDeviceEditor = (function () {
             field: 'titles',
             setting: JSON.stringify(clusterTitlesOut),
             value: clusterTitlesOut,
+          });
+        }
+        var clusterIconsOut = {};
+        clusterPendingDevices.forEach(function (d) {
+          if (d.icon) clusterIconsOut[d.idx] = d.icon;
+        });
+        if (Object.keys(clusterIconsOut).length) {
+          storedRows.push({
+            field: 'icons',
+            setting: JSON.stringify(clusterIconsOut),
+            value: clusterIconsOut,
           });
         }
         var editFontSize = _readClusterFontSize(
