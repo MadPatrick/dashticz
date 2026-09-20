@@ -3821,6 +3821,7 @@ var DashticzWidgetEditor = (function () {
       // _readConfiguredWidgets()/_hydrateGridWidget() above).
       var tcfg = widgetConfigs.trafficinfo || {};
       var lwgt = lng.widgets || {};
+      fields += '<div class="we-switch-grid we-switch-grid-three">';
       fields += _cfgField(
         'trafficJams',
         lwgt.traffic_jams || 'Traffic jams',
@@ -3845,6 +3846,7 @@ var DashticzWidgetEditor = (function () {
         null,
         lwgt.traffic_radars_help || ''
       );
+      fields += '</div>';
       fields += _cfgField(
         'results',
         lwgt.traffic_results || 'Max results',

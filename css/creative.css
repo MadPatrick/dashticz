@@ -2816,6 +2816,10 @@ body.dle-active {
   column-gap: 16px;
 }
 
+.we-switch-grid.we-switch-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .we-switch-grid .mb-3 {
   margin-bottom: 0.75rem;
 }
