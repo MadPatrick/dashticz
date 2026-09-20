@@ -37,6 +37,15 @@ var DT_cluster = (function () {
         width: 4,
         refresh: 3600,
         containerClass: 'cluster-block',
+        // template: 1 (js/dashticz.js's getSpecialBlock()) puts the block's
+        // own icon/title in their own row and renders .dt_state - the rows -
+        // as a sibling spanning the block's full width, instead of the
+        // framework default that reserves a .col-icon-wide column beside the
+        // rows for the whole block height. A row list has no use for that
+        // reserved column past the header, so the default layout left rows
+        // indented with dead space to their left; explicit template: 0 in a
+        // block definition still opts back into the old side-by-side layout.
+        template: 1,
       };
     },
     run: function (me) {
