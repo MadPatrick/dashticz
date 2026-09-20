@@ -427,13 +427,18 @@
    becomes a flex item of .dt_block directly. .dt_block's align-items:
    flex-start (needed so .col-icon/.dt_content top-align in the normal row
    layout) then also governs .dt_column's cross axis, which is horizontal in
-   column mode - so without an explicit width, .dt_state shrinks to its
-   content's own width instead of filling the block like .dt_content already
-   does above, and any right-aligned content inside it (e.g. Cluster's
+   column mode - so without an override, .dt_state shrinks to its content's
+   own width instead of filling the block like .dt_content already does
+   above, and any right-aligned content inside it (e.g. Cluster's
    switchRowHtml, css/creative.css's .cluster-row) sits against that
-   shrunk-to-fit edge rather than the block's true right edge. */
+   shrunk-to-fit edge rather than the block's true right edge.
+   align-self: stretch, not width: 100% - .dt_state already carries its own
+   margin: 5px 5px (below), and a stretched flex item's margin box (not its
+   border box) is what fills the line, so stretch keeps that 5px margin on
+   both sides. width: 100% would ignore the margin and add it on top,
+   overflowing the block by 5px on the right. */
 .dt_column > .dt_state {
-  width: 100%;
+  align-self: stretch;
 }
 
 .fixedheight:not(.dt_column) .dt_content {
