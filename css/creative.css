@@ -4665,6 +4665,60 @@ img.icon {
   color: var(--text-muted);
 }
 
+/* HP iLO widget (js/components/hpilo.js): clustered server info fetched via
+   vendor/dashticz/hpilo/index.php. Rows are painted into .dt_state, same
+   reasoning as the PostNL widget above. */
+.hpilo-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.hpilo-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.hpilo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hpilo-icon {
+  flex: none;
+  width: 1.6em;
+  text-align: center;
+  color: #3a86d8;
+}
+
+.hpilo-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hpilo-value {
+  flex: none;
+  margin-left: auto;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.hpilo-warning .hpilo-value {
+  color: #e0a800;
+}
+
+.hpilo-critical .hpilo-value {
+  color: #d9534f;
+}
+
+.hpilo-error {
+  font-size: inherit;
+  color: var(--text-muted);
+}
+
 @media (max-width: 975px) {
   div.mh {
     height: 75px;

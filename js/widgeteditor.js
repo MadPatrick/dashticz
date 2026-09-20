@@ -41,6 +41,15 @@ var DashticzWidgetEditor = (function () {
       height: 160,
     },
     {
+      id: 'hpilo',
+      blockKey: 'widget_hpilo',
+      title: 'HP iLO',
+      description: 'HPE server status (power, fans, temperatures) via iLO.',
+      icon: 'fas fa-server',
+      width: 4,
+      height: 200,
+    },
+    {
       id: 'spotify',
       blockKey: 'widget_spotify',
       title: 'Spotify',
@@ -1088,6 +1097,26 @@ var DashticzWidgetEditor = (function () {
         postnl_fontsize: _s('postnl_fontsize', '14'),
         postnl_showdelivered: _n('postnl_showdelivered', 1),
       },
+      hpilo: {
+        hpilo_host: _s('hpilo_host'),
+        hpilo_port: _s('hpilo_port', '443'),
+        hpilo_username: _s('hpilo_username'),
+        hpilo_password: _s('hpilo_password'),
+        hpilo_pollseconds: _s('hpilo_pollseconds', '300'),
+        hpilo_fontsize: _s('hpilo_fontsize', '14'),
+        hpilo_show_name: _n('hpilo_show_name', 0),
+        hpilo_show_model: _n('hpilo_show_model', 0),
+        hpilo_show_power: _n('hpilo_show_power', 1),
+        hpilo_show_health: _n('hpilo_show_health', 1),
+        hpilo_show_uptime: _n('hpilo_show_uptime', 1),
+        hpilo_show_fanspeed: _n('hpilo_show_fanspeed', 1),
+        hpilo_show_cputemp: _n('hpilo_show_cputemp', 1),
+        hpilo_show_inlettemp: _n('hpilo_show_inlettemp', 1),
+        hpilo_show_watts: _n('hpilo_show_watts', 0),
+        hpilo_show_storage: _n('hpilo_show_storage', 0),
+        hpilo_show_firmware: _n('hpilo_show_firmware', 0),
+        hpilo_show_serial: _n('hpilo_show_serial', 0),
+      },
       spotify: {
         spot_clientid: _s('spot_clientid'),
       },
@@ -1692,6 +1721,7 @@ var DashticzWidgetEditor = (function () {
       wunderground: 'weather',
       garbage: 'garbage',
       postnl: 'postnl',
+      hpilo: 'hpilo',
       spotify: 'spotify',
       sonarr: 'sonarr',
       calendar: 'calendar',
@@ -2208,6 +2238,7 @@ var DashticzWidgetEditor = (function () {
       id === 'clock' ||
       id === 'garbage' ||
       id === 'postnl' ||
+      id === 'hpilo' ||
       id === 'sonarr' ||
       id === 'spotify' ||
       id === 'secpanel' ||
@@ -3079,6 +3110,7 @@ var DashticzWidgetEditor = (function () {
     var ll = lng.localize || {};
     var lg = lng.garbage || {};
     var lp = lng.postnl || {};
+    var lh = lng.hpilo || {};
     var lm = lng.media || {};
     // Radio's Add station control docks next to the Display options
     // checkboxes rather than living on every station row.
@@ -3656,6 +3688,72 @@ var DashticzWidgetEditor = (function () {
         lp.postnl_fontsize_help ||
           'Font size of the shipment text. Default: 14.'
       );
+    } else if (item.id === 'hpilo') {
+      var hcfg = widgetConfigs.hpilo || {};
+      fields += _cfgField(
+        'hpilo_host',
+        lh.hpilo_host || 'iLO IP address / hostname',
+        'text',
+        hcfg.hpilo_host
+      );
+      fields += _cfgField(
+        'hpilo_port',
+        lh.hpilo_port || 'Port',
+        'number',
+        hcfg.hpilo_port || '443',
+        { min: 1, max: 65535, step: 1 },
+        lh.hpilo_port_help || 'HTTPS port of the iLO. Default: 443.'
+      );
+      fields += _cfgField(
+        'hpilo_username',
+        lh.hpilo_username || 'Username',
+        'text',
+        hcfg.hpilo_username
+      );
+      fields += _cfgField(
+        'hpilo_password',
+        lh.hpilo_password || 'Password',
+        'password',
+        hcfg.hpilo_password
+      );
+      fields += _cfgField(
+        'hpilo_pollseconds',
+        lh.hpilo_pollseconds || 'Poll interval (sec)',
+        'number',
+        hcfg.hpilo_pollseconds || '300',
+        { min: 30, max: 86400, step: 10 },
+        lh.hpilo_pollseconds_help ||
+          'Minimum 30 seconds; the iLO is a slow management processor. Default: 300.'
+      );
+      fields += _cfgField(
+        'hpilo_fontsize',
+        lh.hpilo_fontsize || 'Font size (px)',
+        'number',
+        hcfg.hpilo_fontsize || '14',
+        { min: 8, max: 60, step: 1 },
+        lh.hpilo_fontsize_help || 'Font size of the rows. Default: 14.'
+      );
+      [
+        ['name', 'Server name'],
+        ['model', 'Model'],
+        ['power', 'Server power'],
+        ['health', 'Server health'],
+        ['uptime', 'Server uptime'],
+        ['fanspeed', 'Server fanspeed'],
+        ['cputemp', 'CPU temperature'],
+        ['inlettemp', 'Inlet temperature'],
+        ['watts', 'Power usage'],
+        ['storage', 'Storage health'],
+        ['firmware', 'iLO firmware'],
+        ['serial', 'Serial number'],
+      ].forEach(function (row) {
+        fields += _cfgField(
+          'hpilo_show_' + row[0],
+          lh['hpilo_show_' + row[0]] || 'Show: ' + row[1],
+          'checkbox',
+          hcfg['hpilo_show_' + row[0]]
+        );
+      });
     } else if (item.id === 'sonarr') {
       var scfg = widgetConfigs.sonarr || {};
       fields += _cfgField(
@@ -4783,6 +4881,8 @@ var DashticzWidgetEditor = (function () {
         widgetConfigs.garbage = collected;
       } else if (widgetId === 'postnl') {
         widgetConfigs.postnl = collected;
+      } else if (widgetId === 'hpilo') {
+        widgetConfigs.hpilo = collected;
       } else if (widgetId === 'sonarr') {
         widgetConfigs.sonarr = collected;
       } else if (widgetId === 'spotify') {
@@ -5278,6 +5378,26 @@ var DashticzWidgetEditor = (function () {
         'postnl_pollminutes',
         'postnl_fontsize',
         'postnl_showdelivered',
+      ],
+      hpilo: [
+        'hpilo_host',
+        'hpilo_port',
+        'hpilo_username',
+        'hpilo_password',
+        'hpilo_pollseconds',
+        'hpilo_fontsize',
+        'hpilo_show_name',
+        'hpilo_show_model',
+        'hpilo_show_power',
+        'hpilo_show_health',
+        'hpilo_show_uptime',
+        'hpilo_show_fanspeed',
+        'hpilo_show_cputemp',
+        'hpilo_show_inlettemp',
+        'hpilo_show_watts',
+        'hpilo_show_storage',
+        'hpilo_show_firmware',
+        'hpilo_show_serial',
       ],
       spotify: ['spot_clientid'],
       calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],

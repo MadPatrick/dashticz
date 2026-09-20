@@ -89,6 +89,25 @@ $allowedSettings = [
     'postnl_pollminutes'     => 'number',
     'postnl_fontsize'        => 'number',
     'postnl_showdelivered'   => 'bool',
+    // hp ilo
+    'hpilo_host'             => 'string',
+    'hpilo_port'             => 'number',
+    'hpilo_username'         => 'string',
+    'hpilo_password'         => 'string',
+    'hpilo_pollseconds'      => 'number',
+    'hpilo_fontsize'         => 'number',
+    'hpilo_show_name'        => 'bool',
+    'hpilo_show_model'       => 'bool',
+    'hpilo_show_power'       => 'bool',
+    'hpilo_show_health'      => 'bool',
+    'hpilo_show_uptime'      => 'bool',
+    'hpilo_show_fanspeed'    => 'bool',
+    'hpilo_show_cputemp'     => 'bool',
+    'hpilo_show_inlettemp'   => 'bool',
+    'hpilo_show_watts'       => 'bool',
+    'hpilo_show_storage'     => 'bool',
+    'hpilo_show_firmware'    => 'bool',
+    'hpilo_show_serial'      => 'bool',
     // spotify
     'spot_clientid'          => 'string',
     // calendar
@@ -197,6 +216,7 @@ $catalog = [
     'weather' => ['key' => 'widget_weather', 'width' => 4, 'height' => 120],
     'garbage' => ['key' => 'widget_garbage', 'width' => 5, 'height' => 160],
     'postnl' => ['key' => 'widget_postnl', 'width' => 6, 'height' => 160],
+    'hpilo' => ['key' => 'widget_hpilo', 'width' => 4, 'height' => 200],
     'spotify' => ['key' => 'widget_spotify', 'width' => 4, 'height' => 120],
     'sonarr' => ['key' => 'widget_sonarr', 'width' => 4, 'height' => 120],
     'clock' => ['key' => 'widget_clock', 'width' => 4],
@@ -1048,6 +1068,10 @@ function _widgetBlockProps($widget)
         case 'postnl':
             $props['type'] = 'postnl';
             $props['title'] = 'PostNL';
+            break;
+        case 'hpilo':
+            $props['type'] = 'hpilo';
+            $props['title'] = 'HP iLO';
             break;
         case 'spotify':
             $props['type'] = 'spotify';
