@@ -96,18 +96,7 @@ $allowedSettings = [
     'hpilo_password'         => 'string',
     'hpilo_pollseconds'      => 'number',
     'hpilo_fontsize'         => 'number',
-    'hpilo_show_name'        => 'bool',
-    'hpilo_show_model'       => 'bool',
-    'hpilo_show_power'       => 'bool',
-    'hpilo_show_health'      => 'bool',
-    'hpilo_show_uptime'      => 'bool',
-    'hpilo_show_fanspeed'    => 'bool',
-    'hpilo_show_cputemp'     => 'bool',
-    'hpilo_show_inlettemp'   => 'bool',
-    'hpilo_show_watts'       => 'bool',
-    'hpilo_show_storage'     => 'bool',
-    'hpilo_show_firmware'    => 'bool',
-    'hpilo_show_serial'      => 'bool',
+    'hpilo_rows'             => 'hpilo_rows',
     // spotify
     'spot_clientid'          => 'string',
     // calendar
@@ -162,6 +151,11 @@ $allowedWeatherIcons = ['line', 'linestatic', 'fill', 'static', 'meteo'];
 
 $allowedWaqiLayouts = ['xsmall', 'small', 'large', 'xlarge', 'xxl'];
 
+$allowedHpiloRows = [
+    'name', 'model', 'power', 'health', 'uptime', 'fanspeed',
+    'cputemp', 'inlettemp', 'watts', 'storage', 'firmware', 'serial',
+];
+
 // Process optional config settings
 $configSettings = [];
 if (isset($data['settings']) && is_array($data['settings'])) {
@@ -193,6 +187,16 @@ if (isset($data['settings']) && is_array($data['settings'])) {
             if (in_array((string)$value, $allowedWaqiLayouts, true)) {
                 $configSettings[$key] = (string)$value;
             }
+        } elseif ($type === 'hpilo_rows') {
+            // Ordered, comma-separated list of known HP iLO row keys.
+            $rows = [];
+            foreach (explode(',', (string)$value) as $row) {
+                $row = trim($row);
+                if (in_array($row, $allowedHpiloRows, true) && !in_array($row, $rows, true)) {
+                    $rows[] = $row;
+                }
+            }
+            $configSettings[$key] = implode(',', $rows);
         } elseif ($type === 'security_panel_lock') {
             if (in_array($value, [0, 1, 2, '0', '1', '2'], true)) {
                 $configSettings[$key] = (int)$value;

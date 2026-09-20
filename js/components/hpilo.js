@@ -7,7 +7,7 @@
  * reachable from the browser. Based on the domoticz_HP_ilo plugin.
  *
  * The iLO host/port/credentials, poll interval, font size and which rows are
- * visible are global settings (Settings -> Widgets -> HP iLO, see
+ * visible (in order, hpilo_rows) are global settings (Settings -> Widgets -> HP iLO, see
  * js/widgeteditor.js), same as Weather, Garbage or PostNL. Icon, title and
  * background of the tile are the usual block options.
  *
@@ -82,9 +82,25 @@ var DT_hpilo = (function () {
     return size >= 8 && size <= 60 ? size : 14;
   }
 
-  function isVisible(metric) {
-    var value = parseInt(settings['hpilo_show_' + metric.key], 10);
-    return isNaN(value) ? !!metric.def : value !== 0;
+  // hpilo_rows: ordered, comma-separated metric keys (the order on the tile).
+  function visibleMetrics() {
+    var setting = settings['hpilo_rows'];
+    var keys =
+      typeof setting === 'string'
+        ? setting.split(',')
+        : METRICS.filter(function (metric) {
+            return metric.def;
+          }).map(function (metric) {
+            return metric.key;
+          });
+    var result = [];
+    keys.forEach(function (key) {
+      var metric = METRICS.filter(function (m) {
+        return m.key === key.trim();
+      })[0];
+      if (metric && result.indexOf(metric) === -1) result.push(metric);
+    });
+    return result;
   }
 
   function label(key) {
@@ -162,7 +178,7 @@ var DT_hpilo = (function () {
       );
       return;
     }
-    var metrics = METRICS.filter(isVisible);
+    var metrics = visibleMetrics();
 
     $.ajax({
       url: settings['dashticz_php_path'] + 'hpilo/index.php',

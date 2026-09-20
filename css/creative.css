@@ -4688,12 +4688,18 @@ img.icon {
 .hpilo-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.hpilo-icon {
+.we-hpilo-name {
+  min-width: 0;
+}
+
+.hpilo-block .dt_state .hpilo-icon {
   flex: none;
-  width: 1.6em;
+  width: 1.4em;
+  font-size: 1em;
+  line-height: 1;
   text-align: center;
   color: #3a86d8;
 }

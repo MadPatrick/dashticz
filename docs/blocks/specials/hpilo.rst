@@ -6,7 +6,7 @@ HP iLO
 The HP iLO widget shows clustered status information of an HPE server, read
 from its iLO Redfish API. Each line has a small icon, a label and the value,
 for example server uptime, fan speed and temperature. You choose which lines
-are shown.
+are shown, and in which order.
 
 The widget talks to the iLO server-side (``vendor/dashticz/hpilo/index.php``),
 using the same Redfish endpoints as the
@@ -41,11 +41,12 @@ Settings
     - Poll interval in seconds. Minimum 30. Default: 300
   * - hpilo_fontsize
     - Font size in pixels (8..60). Default: 14
-  * - hpilo_show_<row>
-    - ``1``/``0``: show or hide a row. Rows: ``name``, ``model``, ``power``,
-      ``health``, ``uptime``, ``fanspeed``, ``cputemp``, ``inlettemp``,
-      ``watts``, ``storage``, ``firmware``, ``serial``. Default on: ``power``,
-      ``health``, ``uptime``, ``fanspeed``, ``cputemp``, ``inlettemp``
+  * - hpilo_rows
+    - Comma-separated list of the rows to show, in the order they appear on
+      the tile. Rows: ``name``, ``model``, ``power``, ``health``, ``uptime``,
+      ``fanspeed``, ``cputemp``, ``inlettemp``, ``watts``, ``storage``,
+      ``firmware``, ``serial``. Default:
+      ``power,health,uptime,fanspeed,cputemp,inlettemp``
 
 Rows that the iLO does not report (for example uptime on older iLO versions)
 are left out.
