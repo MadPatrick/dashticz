@@ -8438,6 +8438,20 @@ canvas {
   --sc-glyph: '\f078'; /* chevron-down */
 }
 
+/* Buttons scale with the block height (Layout Editor / configured height):
+   30px buttons and a 14px icon in the default 44px block, proportionally
+   larger in a taller one. The block always has a definite height, so it can
+   be a size container; browsers without container units keep the px sizes. */
+@supports (height: 1cqh) {
+  .transbg.mh.dt-selector-compact {
+    container-type: size;
+    --sc-btn-h: clamp(24px, 68cqh, 72px);
+    --sc-btn-w: calc(var(--sc-btn-h) * 1.2);
+    --sc-btn-radius: calc(var(--sc-btn-h) * 0.27);
+    --sc-icon-size: clamp(12px, 32cqh, 34px);
+  }
+}
+
 /* Narrow screens: the buttons never wrap, so the title gets the room of the
    decorative icon column. */
 @media (max-width: 480px) {
