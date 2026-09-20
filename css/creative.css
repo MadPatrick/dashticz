@@ -422,6 +422,20 @@
   margin: 0px 0px;
 }
 
+/* .dt_column (template: 1, js/dashticz.js's getSpecialBlock()) renders
+   .dt_state as a sibling of .dt_content instead of nested inside it, so it
+   becomes a flex item of .dt_block directly. .dt_block's align-items:
+   flex-start (needed so .col-icon/.dt_content top-align in the normal row
+   layout) then also governs .dt_column's cross axis, which is horizontal in
+   column mode - so without an explicit width, .dt_state shrinks to its
+   content's own width instead of filling the block like .dt_content already
+   does above, and any right-aligned content inside it (e.g. Cluster's
+   switchRowHtml, css/creative.css's .cluster-row) sits against that
+   shrunk-to-fit edge rather than the block's true right edge. */
+.dt_column > .dt_state {
+  width: 100%;
+}
+
 .fixedheight:not(.dt_column) .dt_content {
   display: flex;
   flex-direction: column;
