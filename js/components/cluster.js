@@ -3,9 +3,9 @@
 /* Cluster: a Dashticz-only block that renders a fixed list of Domoticz
  * devices as individual rows inside one tile, added via the Screen
  * Editor's "Add items" -> Cluster quick-add popup (js/deviceeditor.js's
- * _showClusterPopup()). Two mutually exclusive row types (block.mode,
+ * _showClusterPopup()). Three mutually exclusive row types (block.mode,
  * chosen once per cluster in that popup - a cluster is never a mix of
- * both):
+ * the others):
  *
  * - Switch (block.mode absent/'switch', the default): name plus its own
  *   on/off toggle. Unlike Group (js/components/group.js), which shows one
@@ -18,6 +18,9 @@
  *   optional block.usage map (switch idx -> companion device idx).
  * - Temperature (block.mode === 'temperature'): name plus that device's
  *   own .Temp reading, no toggle - these are plain sensors, not switches.
+ * - Other (block.mode === 'other'): name plus that device's own Data value,
+ *   no toggle - for every device that is neither a switch nor a
+ *   temperature reading (humidity, wind, lux, energy meters, ...).
  *
  * Either mode's row name defaults to the device's own Domoticz Name, but
  * can be overridden per row via the optional block.titles map (device idx
@@ -37,7 +40,10 @@ var DT_cluster = (function () {
       };
     },
     run: function (me) {
-      me.mode = me.block.mode === 'temperature' ? 'temperature' : 'switch';
+      me.mode =
+        me.block.mode === 'temperature' || me.block.mode === 'other'
+          ? me.block.mode
+          : 'switch';
       me.devices = me.block.devices || [];
       me.usageMap = me.mode === 'switch' ? me.block.usage || {} : {};
       me.titlesMap = me.block.titles || {};
@@ -106,6 +112,24 @@ var DT_cluster = (function () {
     );
   }
 
+  // Other mode: the device's own Data string ("54 %", "3.2 m/s", ...).
+  function otherRowHtml(idx, device, title) {
+    var reading =
+      typeof device.Data === 'string' || typeof device.Data === 'number'
+        ? String(device.Data)
+        : '';
+    return (
+      '<div class="cluster-row" data-idx="' +
+      idx +
+      '">' +
+      '<span class="cluster-row-title">' +
+      title +
+      '</span>' +
+      (reading ? '<span class="cluster-row-temp">' + reading + '</span>' : '') +
+      '</div>'
+    );
+  }
+
   function switchRowHtml(idx, device, usage, title) {
     var status = getIconStatusClass(device.Status);
     return (
@@ -145,6 +169,8 @@ var DT_cluster = (function () {
       var title = me.titlesMap[idx] || device.Name || idx;
       if (me.mode === 'temperature') {
         html += temperatureRowHtml(idx, device, title);
+      } else if (me.mode === 'other') {
+        html += otherRowHtml(idx, device, title);
       } else {
         var usage = usageText(allDevices[me.usageMap[idx]]);
         html += switchRowHtml(idx, device, usage, title);
@@ -164,7 +190,7 @@ var DT_cluster = (function () {
       switchScale > 0 ? switchScale : ''
     );
 
-    if (me.mode === 'temperature') return;
+    if (me.mode !== 'switch') return;
 
     me.$mountPoint
       .find('.cluster-row-switch')

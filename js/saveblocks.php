@@ -381,11 +381,12 @@ foreach ($data['devices'] as $entry) {
                     }
                 }
                 // mode (optional): 'temperature' switches every row from a
-                // toggle to a plain .Temp reading (js/components/cluster.js);
-                // absent/anything else means the default switch rows. The
-                // only value js/deviceeditor.js's Cluster popups ever send.
-                if (isset($customFields['mode']) && $customFields['mode'] !== 'temperature') {
-                    dashticz_json_error(400, 'A cluster block\'s mode must be \'temperature\' if set.');
+                // toggle to a plain .Temp reading, 'other' to the device's
+                // own Data value (js/components/cluster.js); absent means
+                // the default switch rows. The only values
+                // js/deviceeditor.js's Cluster popups ever send.
+                if (isset($customFields['mode']) && $customFields['mode'] !== 'temperature' && $customFields['mode'] !== 'other') {
+                    dashticz_json_error(400, 'A cluster block\'s mode must be \'temperature\' or \'other\' if set.');
                 }
                 // titles (optional): overrides a row's displayed name
                 // (js/components/cluster.js falls back to the device's own

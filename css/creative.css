@@ -4503,7 +4503,7 @@ img.icon {
   color: var(--text-muted);
 }
 
-/* Temperature mode's own row value (js/components/cluster.js) - unlike
+/* Temperature and Other mode's own row value (js/components/cluster.js) - unlike
    the usage span, this is the row's primary value (there is no toggle
    next to it), so it keeps its own status color instead of the muted one
    .cluster-row-usage uses for its secondary annotation. */

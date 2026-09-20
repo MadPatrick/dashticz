@@ -5975,11 +5975,27 @@ test('Cluster rows can be Switch or Temperature, never mixed', () => {
   // and never wire a switch click handler.
   assert.match(
     cluster,
-    /me\.mode = me\.block\.mode === 'temperature' \? 'temperature' : 'switch';/
+    /me\.mode =\s*me\.block\.mode === 'temperature' \|\| me\.block\.mode === 'other'\s*\? me\.block\.mode\s*: 'switch';/
   );
   assert.match(cluster, /function temperatureRowHtml\(/);
   assert.match(cluster, /device\.Temp\.toFixed\(1\) \+ _TEMP_SYMBOL/);
-  assert.match(cluster, /if \(me\.mode === 'temperature'\) return;/);
+  assert.match(cluster, /if \(me\.mode !== 'switch'\) return;/);
+
+  // Other ("Overige") rows show the device's own Data value, for every
+  // device that is neither a switch nor a temperature reading.
+  assert.match(cluster, /function otherRowHtml\(/);
+  assert.match(cluster, /me\.mode === 'other'/);
+  assert.match(deviceEditor, /function _clusterOtherDeviceList\(\) \{/);
+  assert.match(
+    deviceEditor,
+    /if \(d\.SwitchType \|\| temperatureIdx\[idx\]\) return;/
+  );
+  assert.match(
+    deviceEditor,
+    /mode: 'other',\s*\n\s*label: t\.cluster_mode_other,/
+  );
+  assert.match(deviceEditor, /field: 'mode', setting: 'other', value: 'other'/);
+  assert.match(saveblocks, /\$customFields\['mode'\] !== 'other'/);
   assert.match(css, /\.cluster-row-temp \{/);
 
   // Server-side: only 'temperature' (or absent) is a valid mode.
@@ -6098,7 +6114,10 @@ test('Cluster switch can be resized via a switchScale field next to the Row type
   // it as a separate field below, and it's hidden entirely in Temperature
   // mode (no switches there to size).
   assert.match(deviceEditor, /function _clusterSwitchScaleFieldHtml\(/);
-  assert.match(deviceEditor, /if \(mode === 'temperature'\) return '';/);
+  assert.match(
+    deviceEditor,
+    /if \(!_clusterUsesSwitchRows\(mode\)\) return '';/
+  );
   assert.match(deviceEditor, /width:10ch/);
   assert.match(
     deviceEditor,
