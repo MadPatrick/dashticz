@@ -1,4 +1,4 @@
-/* global Domoticz settings columns columns_standby blocks blocktypes screens standby_screen DashticzScreenSwitcher standbyActive language getBlockTypesBlock DashticzLayoutEditor DashticzDeviceRules */
+/* global Domoticz settings columns columns_standby blocks blocktypes screens standby_screen DashticzScreenSwitcher standbyActive language getBlockTypesBlock DashticzLayoutEditor DashticzDeviceRules b64_to_utf8 */
 // eslint-disable-next-line no-unused-vars
 var DashticzDeviceEditor = (function () {
   'use strict';
@@ -191,6 +191,9 @@ var DashticzDeviceEditor = (function () {
           'Number of segments the Bar is divided into (default 10).',
         invalid_barsteps: 'Enter a positive number of steps.',
         compact_selector: 'Compact',
+        compact_icons: 'Icon per level',
+        compact_icon_auto: 'Automatic',
+        compact_icon_custom: 'Custom Font Awesome class...',
         compact_selector_help:
           'Show the title and the three level buttons (for example Open/Half/Closed) on one line, as small icon buttons. Only applies to selectors with exactly three levels.',
         show_title: 'Title',
@@ -2238,6 +2241,10 @@ var DashticzDeviceEditor = (function () {
         needle: configured.needle === true,
         // Selector Switch "Compact" layout (js/blocks.js getSelectorSwitch()).
         compactSelector: configured.compactSelector === true,
+        compactIcons:
+          configured.compactIcons && typeof configured.compactIcons === 'object'
+            ? $.extend({}, configured.compactIcons)
+            : {},
         // See the analogous comment in _specialFromReference() - kept as a
         // tri-state, not coerced to a boolean.
         inverse: configured.inverse,
@@ -7234,6 +7241,10 @@ var DashticzDeviceEditor = (function () {
         return String(row.field || '').toLowerCase() === 'compactselector';
       });
       if (compactRowIndex > -1) customRows.splice(compactRowIndex, 1);
+      var compactIconsRowIndex = customRows.findIndex(function (row) {
+        return String(row.field || '').toLowerCase() === 'compacticons';
+      });
+      if (compactIconsRowIndex > -1) customRows.splice(compactIconsRowIndex, 1);
     }
 
     var visualMode =
@@ -7426,9 +7437,19 @@ var DashticzDeviceEditor = (function () {
         _esc(t.compact_selector) +
         '</span></label>';
       html +=
-        '<div class="form-text">' +
-        _esc(t.compact_selector_help) +
-        '</div></div>';
+        '<div class="form-text">' + _esc(t.compact_selector_help) + '</div>';
+      var compactLevels = _selectorLevels(barLiveDevice);
+      if (compactLevels.length) {
+        html +=
+          '<div class="mt-2 de-compact-icons' +
+          (options.compactSelector === true ? '' : ' d-none') +
+          '"><div class="form-label small">' +
+          _esc(t.compact_icons) +
+          '</div>' +
+          _compactIconRowsHtml(compactLevels, options.compactIcons, t) +
+          '</div>';
+      }
+      html += '</div>';
     }
 
     if (!isTitle) {
@@ -7841,6 +7862,30 @@ var DashticzDeviceEditor = (function () {
         return;
       closeCustomImagePickers();
     });
+    $popup.on('change', '#de-config-compact-selector', function () {
+      $popup
+        .find('.de-compact-icons')
+        .toggleClass('d-none', !$(this).prop('checked'));
+    });
+    $popup.on(
+      'change input',
+      '.de-compact-icon-select, .de-compact-icon-custom',
+      function () {
+        var $row = $(this).closest('.de-compact-icon-row');
+        $row
+          .find('.de-compact-icon-custom')
+          .toggleClass(
+            'd-none',
+            $row.find('.de-compact-icon-select').val() !== '__custom__'
+          );
+        var icon = _compactIconValue($row);
+        $row
+          .find('.de-compact-icon-preview')
+          .html(
+            icon ? '<i class="' + _esc(icon) + '" aria-hidden="true"></i>' : ''
+          );
+      }
+    );
     $popup.on('click', '.de-visual-mode-button', function () {
       if ($(this).prop('disabled')) return;
       var mode = String($(this).attr('data-visual-mode') || '');
@@ -7997,6 +8042,14 @@ var DashticzDeviceEditor = (function () {
         updated.compactSelector = $('#de-config-compact-selector').prop(
           'checked'
         );
+        if ($popup.find('.de-compact-icon-row').length) {
+          var pendingCompactIcons = {};
+          $popup.find('.de-compact-icon-row').each(function () {
+            var icon = _compactIconValue($(this));
+            if (icon) pendingCompactIcons[$(this).attr('data-level')] = icon;
+          });
+          updated.compactIcons = pendingCompactIcons;
+        }
       }
       if (hasDial) {
         updated.dial = pendingVisualMode === 'dial';
@@ -9499,7 +9552,12 @@ var DashticzDeviceEditor = (function () {
       // needle above (saveblocks.php only knows a fixed set of top-level
       // props). Written only when on; unchecking removes it.
       delete customFields.compactSelector;
-      if (options.compactSelector === true) customFields.compactSelector = true;
+      delete customFields.compactIcons;
+      if (options.compactSelector === true) {
+        customFields.compactSelector = true;
+        if (options.compactIcons && Object.keys(options.compactIcons).length)
+          customFields.compactIcons = options.compactIcons;
+      }
       if (Object.keys(customFields).length) entry.custom_fields = customFields;
       if (deviceHeights[ck]) entry.height = deviceHeights[ck];
       // Never retain a legacy name-based reference: Domoticz names may change.
@@ -9913,6 +9971,114 @@ var DashticzDeviceEditor = (function () {
   }
 
   /* ── HTML-escape helper ─────────────────────────────────────── */
+  // Icons offered per level for a compact Selector Switch (Font Awesome
+  // classes, all in the free set). '' = automatic, '__custom__' = own class.
+  var COMPACT_ICON_PRESETS = [
+    ['fas fa-chevron-up', 'Chevron up'],
+    ['fas fa-chevron-down', 'Chevron down'],
+    ['fas fa-minus', 'Minus'],
+    ['fas fa-arrow-up', 'Arrow up'],
+    ['fas fa-arrow-down', 'Arrow down'],
+    ['fas fa-power-off', 'Power'],
+    ['fas fa-toggle-on', 'Toggle on'],
+    ['fas fa-toggle-off', 'Toggle off'],
+    ['fas fa-lightbulb', 'Light on'],
+    ['far fa-lightbulb', 'Light off'],
+    ['fas fa-check', 'Check'],
+    ['fas fa-xmark', 'Cross'],
+    ['fas fa-sun', 'Sun'],
+    ['fas fa-moon', 'Moon'],
+    ['fas fa-lock', 'Locked'],
+    ['fas fa-lock-open', 'Unlocked'],
+    ['fas fa-play', 'Play'],
+    ['fas fa-pause', 'Pause'],
+    ['fas fa-stop', 'Stop'],
+  ];
+
+  // The levels a Selector Switch shows as buttons, same rules as
+  // js/blocks.js getSelectorSwitch(): [{value: level index, name}].
+  function _selectorLevels(device) {
+    if (!device || typeof device.LevelNames !== 'string' || !device.LevelNames)
+      return [];
+    var names = device.LevelNames;
+    if (
+      typeof Domoticz !== 'undefined' &&
+      Domoticz.info &&
+      Domoticz.info.levelNamesEncoded &&
+      typeof b64_to_utf8 === 'function'
+    )
+      names = b64_to_utf8(names);
+    return names
+      .split('|')
+      .map(function (name, index) {
+        return { value: index, name: name };
+      })
+      .filter(function (level) {
+        return (
+          level.value > 0 ||
+          typeof device.LevelOffHidden === 'undefined' ||
+          device.LevelOffHidden === false
+        );
+      });
+  }
+
+  function _compactIconRowsHtml(levels, saved, t) {
+    var html = '';
+    levels.forEach(function (level) {
+      var current = String((saved && saved[level.value]) || '');
+      var preset = COMPACT_ICON_PRESETS.some(function (p) {
+        return p[0] === current;
+      });
+      var selected = !current ? '' : preset ? current : '__custom__';
+      html +=
+        '<div class="d-flex align-items-center gap-2 mb-2 de-compact-icon-row" data-level="' +
+        level.value +
+        '">' +
+        '<span class="de-compact-icon-preview" style="width:2em;text-align:center;">' +
+        (current
+          ? '<i class="' + _esc(current) + '" aria-hidden="true"></i>'
+          : '') +
+        '</span><span class="flex-grow-1">' +
+        _esc(level.name) +
+        '</span><select class="form-select form-select-sm w-auto de-compact-icon-select">' +
+        '<option value=""' +
+        (selected === '' ? ' selected' : '') +
+        '>' +
+        _esc(t.compact_icon_auto) +
+        '</option>';
+      COMPACT_ICON_PRESETS.forEach(function (p) {
+        html +=
+          '<option value="' +
+          _esc(p[0]) +
+          '"' +
+          (selected === p[0] ? ' selected' : '') +
+          '>' +
+          _esc(p[1]) +
+          '</option>';
+      });
+      html +=
+        '<option value="__custom__"' +
+        (selected === '__custom__' ? ' selected' : '') +
+        '>' +
+        _esc(t.compact_icon_custom) +
+        '</option></select>' +
+        '<input type="text" class="form-control form-control-sm w-auto de-compact-icon-custom' +
+        (selected === '__custom__' ? '' : ' d-none') +
+        '" placeholder="fas fa-star" value="' +
+        (selected === '__custom__' ? _esc(current) : '') +
+        '"></div>';
+    });
+    return html;
+  }
+
+  // Value chosen in one level row: a safe Font Awesome class string or ''.
+  function _compactIconValue($row) {
+    var value = String($row.find('.de-compact-icon-select').val() || '');
+    if (value === '__custom__')
+      value = $.trim(String($row.find('.de-compact-icon-custom').val() || ''));
+    return /^[A-Za-z0-9 _-]+$/.test(value) ? value : '';
+  }
+
   function _esc(str) {
     return String(str)
       .replace(/&/g, '&amp;')
