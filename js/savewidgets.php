@@ -153,7 +153,8 @@ $allowedWaqiLayouts = ['xsmall', 'small', 'large', 'xlarge', 'xxl'];
 
 $allowedHpiloRows = [
     'name', 'model', 'power', 'health', 'uptime', 'fanspeed',
-    'cputemp', 'inlettemp', 'watts', 'storage', 'firmware', 'serial',
+    'cputemp', 'inlettemp', 'watts', 'storage', 'ssdlife', 'firmware', 'network',
+    'serial', 'minfan', 'thermalconfig', 'powerregulator',
 ];
 
 // Process optional config settings

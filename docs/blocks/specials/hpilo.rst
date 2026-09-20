@@ -45,8 +45,11 @@ Settings
     - Comma-separated list of the rows to show, in the order they appear on
       the tile. Rows: ``name``, ``model``, ``power``, ``health``, ``uptime``,
       ``fanspeed``, ``cputemp``, ``inlettemp``, ``watts``, ``storage``,
-      ``firmware``, ``serial``. Default:
+      ``ssdlife``, ``firmware``, ``network``, ``serial``, ``minfan``,
+      ``thermalconfig``, ``powerregulator``. Default:
       ``power,health,uptime,fanspeed,cputemp,inlettemp``
+
+Server uptime is shown as days, hours and minutes.
 
 Rows that the iLO does not report (for example uptime on older iLO versions)
 are left out.

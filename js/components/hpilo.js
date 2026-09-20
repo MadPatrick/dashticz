@@ -21,14 +21,19 @@ var DT_hpilo = (function () {
     { key: 'model', icon: 'fa-microchip', def: 0 },
     { key: 'power', icon: 'fa-power-off', def: 1, fmt: 'power' },
     { key: 'health', icon: 'fa-heart-pulse', def: 1, fmt: 'health' },
-    { key: 'uptime', icon: 'fa-clock', def: 1, unit: ' min' },
+    { key: 'uptime', icon: 'fa-clock', def: 1, fmt: 'duration' },
     { key: 'fanspeed', icon: 'fa-fan', def: 1, unit: ' %' },
     { key: 'cputemp', icon: 'fa-temperature-half', def: 1, unit: ' °C' },
     { key: 'inlettemp', icon: 'fa-temperature-half', def: 1, unit: ' °C' },
     { key: 'watts', icon: 'fa-bolt', def: 0, unit: ' W' },
     { key: 'storage', icon: 'fa-hard-drive', def: 0, fmt: 'health' },
+    { key: 'ssdlife', icon: 'fa-hard-drive', def: 0, unit: ' %' },
     { key: 'firmware', icon: 'fa-code-branch', def: 0 },
+    { key: 'network', icon: 'fa-network-wired', def: 0 },
     { key: 'serial', icon: 'fa-barcode', def: 0 },
+    { key: 'minfan', icon: 'fa-fan', def: 0, unit: ' %' },
+    { key: 'thermalconfig', icon: 'fa-gauge-high', def: 0 },
+    { key: 'powerregulator', icon: 'fa-plug', def: 0 },
   ];
   var LABELS = {
     name: 'Server name',
@@ -41,8 +46,13 @@ var DT_hpilo = (function () {
     inlettemp: 'Inlet temperature',
     watts: 'Power usage',
     storage: 'Storage health',
+    ssdlife: 'SSD lifetime',
     firmware: 'iLO firmware',
+    network: 'Network',
     serial: 'Serial number',
+    minfan: 'Minimum fan speed',
+    thermalconfig: 'Thermal configuration',
+    powerregulator: 'Power regulator',
   };
   var VALUES = {
     on: 'On',
@@ -119,7 +129,20 @@ var DT_hpilo = (function () {
     });
   }
 
+  // Minutes -> "12d 3h 5m" (units are language independent).
+  function formatDuration(totalMinutes) {
+    var minutes = Math.max(0, Math.floor(Number(totalMinutes) || 0));
+    var days = Math.floor(minutes / 1440);
+    var hours = Math.floor((minutes % 1440) / 60);
+    var parts = [];
+    if (days) parts.push(days + 'd');
+    if (days || hours) parts.push(hours + 'h');
+    parts.push((minutes % 60) + 'm');
+    return parts.join(' ');
+  }
+
   function formatValue(metric, value) {
+    if (metric.fmt === 'duration') return formatDuration(value);
     if (metric.fmt) {
       var key = String(value).toLowerCase();
       return misc()['hpilo_value_' + key] || VALUES[key] || value;
@@ -134,12 +157,13 @@ var DT_hpilo = (function () {
       })
       .map(function (metric) {
         var value = res[metric.key];
-        var state = metric.fmt
-          ? ' hpilo-' +
-            String(value)
-              .toLowerCase()
-              .replace(/[^a-z]/g, '')
-          : '';
+        var state =
+          metric.fmt === 'health'
+            ? ' hpilo-' +
+              String(value)
+                .toLowerCase()
+                .replace(/[^a-z]/g, '')
+            : '';
         return (
           '<div class="hpilo-row' +
           state +

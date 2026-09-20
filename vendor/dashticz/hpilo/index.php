@@ -77,7 +77,12 @@ function dashticz_hpilo_metric_sections()
         'fanspeed' => 'thermal',
         'watts' => 'power',
         'firmware' => 'manager',
+        'network' => 'network',
+        'minfan' => 'thermal',
+        'thermalconfig' => 'thermal',
+        'powerregulator' => 'bios',
         'storage' => 'storage',
+        'ssdlife' => 'storage',
     );
 }
 
@@ -294,11 +299,82 @@ function dashticz_hpilo_section_thermal($input, $chassisUri)
             }
         }
     }
+    $minFan = dashticz_hpilo_oem_setting($thermal, array(
+        'FanPercentMinimum', 'MinimumFanSpeedPercent', 'MinimumFanSpeed', 'MinFanSpeedPercent',
+        'MinFanSpeed', 'FanSpeedMinimum', 'FanSpeedMin', 'FanMinimumPercent',
+    ));
+    $thermalConfig = dashticz_hpilo_oem_setting($thermal, array(
+        'ThermalConfiguration', 'ThermalConfig', 'CoolingConfiguration', 'CoolingMode', 'FanConfiguration',
+    ));
     return array(
         'cputemp' => $cpu,
         'inlettemp' => $inlet,
         'fanspeed' => $count ? (int) round($sum / $count) : null,
+        'minfan' => is_numeric($minFan) ? (int) $minFan : null,
+        'thermalconfig' => $thermalConfig === null ? null : dashticz_hpilo_label(
+            $thermalConfig,
+            dashticz_hpilo_thermal_config_labels()
+        ),
     );
+}
+
+// Value of the first of $keys found in the HPE OEM block, else in the
+// resource itself - same lookup as the reference plugin.
+function dashticz_hpilo_oem_setting($data, $keys)
+{
+    $oem = array();
+    if (isset($data['Oem']['Hpe']) && is_array($data['Oem']['Hpe'])) {
+        $oem = $data['Oem']['Hpe'];
+    } elseif (isset($data['Oem']['Hp']) && is_array($data['Oem']['Hp'])) {
+        $oem = $data['Oem']['Hp'];
+    }
+    foreach (array($oem, $data) as $source) {
+        foreach ($keys as $key) {
+            if (isset($source[$key]) && !is_array($source[$key])) {
+                return $source[$key];
+            }
+        }
+    }
+    return null;
+}
+
+function dashticz_hpilo_thermal_config_labels()
+{
+    return array(
+        'Optimal Cooling' => array('OptimalCooling', 'Optimal', 'Optimal_Cooling'),
+        'Enhanced CPU Cooling' => array('EnhancedCPUCooling', 'EnhancedCpuCooling', 'EnhancedCooling', 'Enhanced_CPU_Cooling'),
+        'Increased Cooling' => array('IncreasedCooling', 'Increased', 'Increased_Cooling'),
+        'Maximum Cooling' => array('MaximumCooling', 'Maximum', 'MaxCooling', 'Maximum_Cooling'),
+        'Smooth Cooling' => array('SmoothCooling', 'Smooth', 'Smooth_Cooling'),
+    );
+}
+
+function dashticz_hpilo_power_regulator_labels()
+{
+    return array(
+        'Dynamic Power Savings Mode' => array('DynamicPowerSavings', 'DynamicPowerSavingsMode', 'DynamicPowerSavings_Mode'),
+        'Static Low Power Mode' => array('StaticLowPower', 'StaticLowPowerMode', 'StaticLowPower_Mode'),
+        'Static High Performance Mode' => array('StaticHighPerf', 'StaticHighPerformance', 'StaticHighPerformanceMode', 'StaticHighPerformance_Mode'),
+        'OS Control Mode' => array('OSControl', 'OsControl', 'OSControlMode', 'OSControl_Mode'),
+    );
+}
+
+// Maps a raw Redfish value (any of its known aliases) to a readable label,
+// like the reference plugin's option tables; unknown values pass through.
+function dashticz_hpilo_label($value, $labels)
+{
+    $normalize = function ($text) {
+        return strtolower(str_replace(array(' ', '_'), '', (string) $text));
+    };
+    $wanted = $normalize($value);
+    foreach ($labels as $label => $aliases) {
+        foreach (array_merge(array($label), $aliases) as $candidate) {
+            if ($normalize($candidate) === $wanted) {
+                return $label;
+            }
+        }
+    }
+    return (string) $value;
 }
 
 function dashticz_hpilo_section_power($input, $chassisUri)
@@ -314,6 +390,31 @@ function dashticz_hpilo_section_power($input, $chassisUri)
         }
     }
     return array('watts' => $watts);
+}
+
+function dashticz_hpilo_section_bios($input, $systemUri)
+{
+    $bios = dashticz_hpilo_get($input, rtrim($systemUri, '/') . '/Bios');
+    $attributes = isset($bios['Attributes']) && is_array($bios['Attributes']) ? $bios['Attributes'] : array();
+    $value = null;
+    foreach (array('PowerRegulator', 'PowerRegulatorMode', 'PowerProfile') as $key) {
+        if (isset($attributes[$key]) && !is_array($attributes[$key])) {
+            $value = $attributes[$key];
+            break;
+        }
+    }
+    return array(
+        'powerregulator' => $value === null ? null : dashticz_hpilo_label($value, dashticz_hpilo_power_regulator_labels()),
+    );
+}
+
+function dashticz_hpilo_section_network($input, $managersUri)
+{
+    $managerUri = dashticz_hpilo_first_member($input, $managersUri);
+    $eth = dashticz_hpilo_get($input, dashticz_hpilo_first_member($input, rtrim($managerUri, '/') . '/EthernetInterfaces'));
+    $ip = isset($eth['IPv4Addresses'][0]['Address']) ? $eth['IPv4Addresses'][0]['Address'] : 'N/A';
+    $mac = isset($eth['MACAddress']) ? $eth['MACAddress'] : 'N/A';
+    return array('network' => 'IP: ' . $ip . ' | MAC: ' . $mac);
 }
 
 function dashticz_hpilo_section_manager($input, $managersUri)
@@ -342,6 +443,7 @@ function dashticz_hpilo_section_storage($input, $systemUri)
         }
     };
     $sawDrive = false;
+    $ssdLifetimes = array();
     $controllerHealth = array();
     foreach (isset($storage['Members']) && is_array($storage['Members']) ? $storage['Members'] : array() as $member) {
         if (empty($member['@odata.id'])) {
@@ -364,6 +466,11 @@ function dashticz_hpilo_section_storage($input, $systemUri)
             }
             $sawDrive = true;
             $consider(isset($drive['Status']['Health']) ? $drive['Status']['Health'] : null);
+            $media = strtolower(isset($drive['MediaType']) ? (string) $drive['MediaType'] : '');
+            $life = dashticz_hpilo_drive_lifetime($drive);
+            if ($life !== null && in_array($media, array('ssd', 'solidstate', 'solid state drive'), true)) {
+                $ssdLifetimes[] = $life;
+            }
         }
     }
     if (!$sawDrive) {
@@ -371,7 +478,41 @@ function dashticz_hpilo_section_storage($input, $systemUri)
             $consider($health);
         }
     }
-    return array('storage' => $worst);
+    return array(
+        'storage' => $worst,
+        'ssdlife' => $ssdLifetimes ? min($ssdLifetimes) : null,
+    );
+}
+
+// Remaining SSD life in percent (0..100), like the reference plugin's
+// _get_drive_lifetime_percent(): "life left" fields as-is, "life used"
+// fields inverted.
+function dashticz_hpilo_drive_lifetime($drive)
+{
+    $left = array('PredictedMediaLifeLeftPercent', 'RemainingLifePercent', 'PercentLifeRemaining', 'MediaLifeLeftPercent', 'SSDLifeLeft');
+    $used = array('SSDEnduranceUtilizationPercentage', 'DriveLifeUsedPercent', 'PercentLifeUsed');
+    $sources = array();
+    foreach (array('Hpe', 'Hp') as $vendor) {
+        if (isset($drive['Oem'][$vendor]) && is_array($drive['Oem'][$vendor])) {
+            $sources[] = $drive['Oem'][$vendor];
+        }
+    }
+    array_unshift($sources, $drive);
+    foreach ($sources as $source) {
+        foreach ($left as $key) {
+            if (isset($source[$key]) && is_numeric($source[$key])) {
+                return max(0, min(100, (int) round($source[$key])));
+            }
+        }
+    }
+    foreach ($sources as $source) {
+        foreach ($used as $key) {
+            if (isset($source[$key]) && is_numeric($source[$key])) {
+                return max(0, min(100, (int) round(100 - $source[$key])));
+            }
+        }
+    }
+    return null;
 }
 
 // -------------------------------------------------------------- orchestration
@@ -395,6 +536,12 @@ function dashticz_hpilo_fetch($input)
         },
         'manager' => function () use ($input, $managersPath) {
             return dashticz_hpilo_section_manager($input, $managersPath);
+        },
+        'bios' => function () use ($input, $systemsPath) {
+            return dashticz_hpilo_section_bios($input, dashticz_hpilo_first_member($input, $systemsPath));
+        },
+        'network' => function () use ($input, $managersPath) {
+            return dashticz_hpilo_section_network($input, $managersPath);
         },
         'storage' => function () use ($input, $systemsPath) {
             return dashticz_hpilo_section_storage($input, dashticz_hpilo_first_member($input, $systemsPath));

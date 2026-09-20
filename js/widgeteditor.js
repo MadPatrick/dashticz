@@ -2216,6 +2216,19 @@ var DashticzWidgetEditor = (function () {
       '</div></div></div></div>';
 
     $('body').append(html);
+    // Show the widget cards alphabetically (by the displayed, translated title).
+    $('#widgeteditorpopup .we-widget-grid').each(function () {
+      var $cards = $(this).children('.we-widget-card').get();
+      $cards.sort(function (a, b) {
+        return $(a)
+          .find('.we-widget-title')
+          .text()
+          .localeCompare($(b).find('.we-widget-title').text(), undefined, {
+            sensitivity: 'base',
+          });
+      });
+      $(this).append($cards);
+    });
     _attachHandlers();
     _wireBackButton('widgeteditorpopup');
     window.bootstrap.Modal.getOrCreateInstance(
@@ -3106,8 +3119,13 @@ var DashticzWidgetEditor = (function () {
     inlettemp: 'Inlet temperature',
     watts: 'Power usage',
     storage: 'Storage health',
+    ssdlife: 'SSD lifetime',
     firmware: 'iLO firmware',
+    network: 'Network',
     serial: 'Serial number',
+    minfan: 'Minimum fan speed',
+    thermalconfig: 'Thermal configuration',
+    powerregulator: 'Power regulator',
   };
 
   function _hpiloRowLabel(key) {
