@@ -636,8 +636,9 @@
 }
 
 .transbg.mh.dt-selector-compact .selector-buttons {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   flex-wrap: nowrap;
+  max-width: 100%;
   gap: var(--sc-gap);
   justify-content: flex-end;
   width: auto;
@@ -664,8 +665,9 @@
 }
 
 .transbg.mh.dt-selector-compact .selector-buttons .btn.dt-sc-icon {
-  flex: 0 0 var(--sc-btn-w);
+  flex: 0 1 var(--sc-btn-w);
   width: var(--sc-btn-w);
+  min-width: 18px;
   padding: 0 !important;
   font-size: 0 !important;
   line-height: 0;

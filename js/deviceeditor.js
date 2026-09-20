@@ -7867,25 +7867,27 @@ var DashticzDeviceEditor = (function () {
         .find('.de-compact-icons')
         .toggleClass('d-none', !$(this).prop('checked'));
     });
-    $popup.on(
-      'change input',
-      '.de-compact-icon-select, .de-compact-icon-custom',
-      function () {
-        var $row = $(this).closest('.de-compact-icon-row');
-        $row
-          .find('.de-compact-icon-custom')
-          .toggleClass(
-            'd-none',
-            $row.find('.de-compact-icon-select').val() !== '__custom__'
-          );
-        var icon = _compactIconValue($row);
-        $row
-          .find('.de-compact-icon-preview')
-          .html(
-            icon ? '<i class="' + _esc(icon) + '" aria-hidden="true"></i>' : ''
-          );
-      }
-    );
+    $popup.on('click', '.de-compact-icon-toggle', function () {
+      $(this)
+        .closest('.de-compact-icon-row')
+        .find('.de-compact-icon-panel')
+        .toggleClass('d-none');
+    });
+    $popup.on('click', '.de-compact-icon-choice', function () {
+      var $row = $(this).closest('.de-compact-icon-row');
+      var icon = String($(this).attr('data-icon') || '');
+      $row.find('.de-compact-icon-value').val(icon);
+      $row.find('.de-compact-icon-choice').removeClass('active');
+      $(this).addClass('active');
+      _refreshCompactIconRow($row, t);
+      // A custom class still needs typing; every other choice is final.
+      if (icon === '__custom__')
+        $row.find('.de-compact-icon-custom').trigger('focus');
+      else $row.find('.de-compact-icon-panel').addClass('d-none');
+    });
+    $popup.on('input', '.de-compact-icon-custom', function () {
+      _refreshCompactIconRow($(this).closest('.de-compact-icon-row'), t);
+    });
     $popup.on('click', '.de-visual-mode-button', function () {
       if ($(this).prop('disabled')) return;
       var mode = String($(this).attr('data-visual-mode') || '');
@@ -10022,6 +10024,14 @@ var DashticzDeviceEditor = (function () {
       });
   }
 
+  function _compactIconLabel(icon, t) {
+    if (!icon) return _esc(t.compact_icon_auto);
+    var preset = COMPACT_ICON_PRESETS.filter(function (p) {
+      return p[0] === icon;
+    })[0];
+    return _esc(preset ? preset[1] : icon);
+  }
+
   function _compactIconRowsHtml(levels, saved, t) {
     var html = '';
     levels.forEach(function (level) {
@@ -10031,52 +10041,79 @@ var DashticzDeviceEditor = (function () {
       });
       var selected = !current ? '' : preset ? current : '__custom__';
       html +=
-        '<div class="d-flex align-items-center gap-2 mb-2 de-compact-icon-row" data-level="' +
+        '<div class="mb-2 de-compact-icon-row" data-level="' +
         level.value +
-        '">' +
+        '"><div class="d-flex align-items-center gap-2">' +
         '<span class="de-compact-icon-preview" style="width:2em;text-align:center;">' +
         (current
           ? '<i class="' + _esc(current) + '" aria-hidden="true"></i>'
           : '') +
         '</span><span class="flex-grow-1">' +
         _esc(level.name) +
-        '</span><select class="form-select form-select-sm w-auto de-compact-icon-select">' +
-        '<option value=""' +
-        (selected === '' ? ' selected' : '') +
-        '>' +
+        '</span><button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-toggle">' +
+        _compactIconLabel(current, t) +
+        '</button></div>' +
+        '<input type="hidden" class="de-compact-icon-value" value="' +
+        _esc(selected) +
+        '">' +
+        '<div class="de-compact-icon-panel d-none mt-2"><div class="d-flex flex-wrap gap-1">' +
+        '<button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-choice' +
+        (selected === '' ? ' active' : '') +
+        '" data-icon="">' +
         _esc(t.compact_icon_auto) +
-        '</option>';
+        '</button>';
       COMPACT_ICON_PRESETS.forEach(function (p) {
         html +=
-          '<option value="' +
+          '<button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-choice' +
+          (selected === p[0] ? ' active' : '') +
+          '" data-icon="' +
           _esc(p[0]) +
-          '"' +
-          (selected === p[0] ? ' selected' : '') +
-          '>' +
+          '" title="' +
           _esc(p[1]) +
-          '</option>';
+          '" aria-label="' +
+          _esc(p[1]) +
+          '" style="min-width:2.4em;"><i class="' +
+          _esc(p[0]) +
+          '" aria-hidden="true"></i></button>';
       });
       html +=
-        '<option value="__custom__"' +
-        (selected === '__custom__' ? ' selected' : '') +
-        '>' +
+        '<button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-choice' +
+        (selected === '__custom__' ? ' active' : '') +
+        '" data-icon="__custom__">' +
         _esc(t.compact_icon_custom) +
-        '</option></select>' +
-        '<input type="text" class="form-control form-control-sm w-auto de-compact-icon-custom' +
+        '</button></div>' +
+        '<input type="text" class="form-control form-control-sm mt-2 de-compact-icon-custom' +
         (selected === '__custom__' ? '' : ' d-none') +
         '" placeholder="fas fa-star" value="' +
         (selected === '__custom__' ? _esc(current) : '') +
-        '"></div>';
+        '"></div></div>';
     });
     return html;
   }
 
   // Value chosen in one level row: a safe Font Awesome class string or ''.
   function _compactIconValue($row) {
-    var value = String($row.find('.de-compact-icon-select').val() || '');
+    var value = String($row.find('.de-compact-icon-value').val() || '');
     if (value === '__custom__')
-      value = $.trim(String($row.find('.de-compact-icon-custom').val() || ''));
+      value = String($row.find('.de-compact-icon-custom').val() || '').trim();
     return /^[A-Za-z0-9 _-]+$/.test(value) ? value : '';
+  }
+
+  // Sync the preview and the toggle button of one level row.
+  function _refreshCompactIconRow($row, t) {
+    var icon = _compactIconValue($row);
+    $row
+      .find('.de-compact-icon-preview')
+      .html(
+        icon ? '<i class="' + _esc(icon) + '" aria-hidden="true"></i>' : ''
+      );
+    $row.find('.de-compact-icon-toggle').html(_compactIconLabel(icon, t));
+    $row
+      .find('.de-compact-icon-custom')
+      .toggleClass(
+        'd-none',
+        String($row.find('.de-compact-icon-value').val()) !== '__custom__'
+      );
   }
 
   function _esc(str) {
