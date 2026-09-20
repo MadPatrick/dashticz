@@ -1650,9 +1650,9 @@ function getSelectorSwitch(block) {
               device['LevelOffHidden'] === false))
         );
       });
-      // Device Config "Compact" option (block.compactSelector): one-line
+      // Device Config "Compact" option (block.compactSelector): compact
       // block with icon-only buttons (Open/Half/Dicht -> up/minus/down, see
-      // css/creative.css .dt-selector-compact). The icons are defined for
+      // themes/modern-dark .dt-selector-compact). The icons are defined for
       // exactly three levels; any other selector keeps its normal layout.
       var compact =
         block.compactSelector === true && visibleLevels.length === 3;
