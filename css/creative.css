@@ -8314,11 +8314,11 @@ canvas {
 .transbg.mh.dt-selector-compact {
   --sc-block-h: 44px;
   --sc-block-radius: 12px;
-  --sc-btn-w: 36px;
-  --sc-btn-h: 30px;
-  --sc-btn-radius: 8px;
+  --sc-btn-w: 29px;
+  --sc-btn-h: 24px;
+  --sc-btn-radius: 6px;
   --sc-gap: 4px;
-  --sc-icon-size: 14px;
+  --sc-icon-size: 11px;
   --sc-btn-bg: var(--button-bg, rgb(29, 43, 63));
   --sc-btn-bg-hover: var(--button-hover, rgb(35, 53, 78));
   --sc-btn-border: var(--border-color-inactive, rgba(42, 94, 151, 0.5));
@@ -8439,16 +8439,16 @@ canvas {
 }
 
 /* Buttons scale with the block height (Layout Editor / configured height):
-   30px buttons and a 14px icon in the default 44px block, proportionally
+   24px buttons and an 11px icon (80% of the original size) in the default 44px block, proportionally
    larger in a taller one. The block always has a definite height, so it can
    be a size container; browsers without container units keep the px sizes. */
 @supports (height: 1cqh) {
   .transbg.mh.dt-selector-compact {
     container-type: size;
-    --sc-btn-h: clamp(24px, 68cqh, 72px);
+    --sc-btn-h: clamp(19px, 54cqh, 58px);
     --sc-btn-w: calc(var(--sc-btn-h) * 1.2);
     --sc-btn-radius: calc(var(--sc-btn-h) * 0.27);
-    --sc-icon-size: clamp(12px, 32cqh, 34px);
+    --sc-icon-size: clamp(10px, 26cqh, 27px);
   }
 }
 
