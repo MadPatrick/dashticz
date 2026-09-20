@@ -847,8 +847,7 @@
       "hpilo_rows_select": "Select a row",
       "hpilo_rows_help": "Pick a row and click + to add it. The order below is the order on the tile.",
       "hpilo_rows_none": "No rows added yet.",
-      "hpilo_rows_up": "Move up",
-      "hpilo_rows_down": "Move down",
+      "hpilo_rows_drag": "Drag to reorder",
       "hpilo_rows_remove": "Remove"
     },
     "general": {

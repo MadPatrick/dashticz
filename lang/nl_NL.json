@@ -734,8 +734,7 @@
       "hpilo_rows_select": "Kies een regel",
       "hpilo_rows_help": "Kies een regel en klik op + om toe te voegen. De volgorde hieronder is de volgorde op de tegel.",
       "hpilo_rows_none": "Nog geen regels toegevoegd.",
-      "hpilo_rows_up": "Omhoog",
-      "hpilo_rows_down": "Omlaag",
+      "hpilo_rows_drag": "Sleep om te verplaatsen",
       "hpilo_rows_remove": "Verwijderen"
     },
     "general": {

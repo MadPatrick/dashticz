@@ -3151,25 +3151,18 @@ var DashticzWidgetEditor = (function () {
     });
     var list = keys.length
       ? keys
-          .map(function (key, index) {
+          .map(function (key) {
             return (
               '<div class="de-device-item we-hpilo-item" data-key="' +
               _esc(key) +
-              '">' +
+              '" draggable="true">' +
+              '<span class="de-drag-handle" title="' +
+              _esc(lh.hpilo_rows_drag || 'Drag to reorder') +
+              '"><i class="fas fa-grip-vertical" aria-hidden="true"></i></span>' +
               '<span class="we-hpilo-name">' +
               _esc(_hpiloRowLabel(key)) +
               '</span>' +
-              '<button type="button" class="btn btn-outline-secondary btn-sm we-hpilo-up ms-auto"' +
-              (index === 0 ? ' disabled' : '') +
-              ' title="' +
-              _esc(lh.hpilo_rows_up || 'Move up') +
-              '"><i class="fas fa-arrow-up" aria-hidden="true"></i></button>' +
-              '<button type="button" class="btn btn-outline-secondary btn-sm we-hpilo-down"' +
-              (index === keys.length - 1 ? ' disabled' : '') +
-              ' title="' +
-              _esc(lh.hpilo_rows_down || 'Move down') +
-              '"><i class="fas fa-arrow-down" aria-hidden="true"></i></button>' +
-              '<button type="button" class="btn btn-danger btn-sm we-hpilo-remove"' +
+              '<button type="button" class="btn btn-danger btn-sm we-hpilo-remove ms-auto"' +
               ' title="' +
               _esc(lh.hpilo_rows_remove || 'Remove') +
               '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
@@ -4645,14 +4638,62 @@ var DashticzWidgetEditor = (function () {
       );
     });
 
-    $cfgModal.on('click', '.we-hpilo-up, .we-hpilo-down', function () {
-      var key = String($(this).closest('.we-hpilo-item').data('key'));
-      var keys = hpiloRows();
-      var index = keys.indexOf(key);
-      var target = index + ($(this).hasClass('we-hpilo-up') ? -1 : 1);
-      if (index < 0 || target < 0 || target >= keys.length) return;
-      keys.splice(target, 0, keys.splice(index, 1)[0]);
-      hpiloSetRows(keys);
+    // Drag-and-drop reordering, same behaviour as the Device Editor's list.
+    var hpiloDragEl = null;
+    var hpiloDragClasses = 'de-drag-over-top de-drag-over-bottom';
+
+    $cfgModal.on('dragstart', '.we-hpilo-item', function (e) {
+      hpiloDragEl = this;
+      e.originalEvent.dataTransfer.effectAllowed = 'move';
+      e.originalEvent.dataTransfer.setData(
+        'text/plain',
+        String($(this).attr('data-key'))
+      );
+      $(this).addClass('de-drag-dragging');
+    });
+
+    $cfgModal.on('dragend', '.we-hpilo-item', function () {
+      hpiloDragEl = null;
+      $(this).removeClass('de-drag-dragging');
+      $cfgModal.find('.we-hpilo-item').removeClass(hpiloDragClasses);
+    });
+
+    $cfgModal.on('dragover', '.we-hpilo-item', function (e) {
+      if (!hpiloDragEl) return;
+      e.preventDefault();
+      e.originalEvent.dataTransfer.dropEffect = 'move';
+      if (this === hpiloDragEl) return;
+      var rect = this.getBoundingClientRect();
+      var above = e.originalEvent.clientY < rect.top + rect.height / 2;
+      $(this)
+        .toggleClass('de-drag-over-top', above)
+        .toggleClass('de-drag-over-bottom', !above);
+    });
+
+    $cfgModal.on('dragleave', '.we-hpilo-item', function (e) {
+      /* only clear when leaving the item itself, not a child */
+      if (!this.contains(e.originalEvent.relatedTarget)) {
+        $(this).removeClass(hpiloDragClasses);
+      }
+    });
+
+    $cfgModal.on('drop', '.we-hpilo-item', function (e) {
+      if (!hpiloDragEl) return;
+      e.preventDefault();
+      if (this === hpiloDragEl) return;
+      var rect = this.getBoundingClientRect();
+      var above = e.originalEvent.clientY < rect.top + rect.height / 2;
+      if (above) {
+        $(this).before(hpiloDragEl);
+      } else {
+        $(this).after(hpiloDragEl);
+      }
+      $(this).removeClass(hpiloDragClasses);
+      var keys = [];
+      $cfgModal.find('.we-hpilo-item').each(function () {
+        keys.push(String($(this).attr('data-key')));
+      });
+      $cfgModal.find('#we-cfg-hpilo-rows').val(keys.join(','));
     });
 
     $cfgModal.on('click', '#we-calendar-add', function () {
