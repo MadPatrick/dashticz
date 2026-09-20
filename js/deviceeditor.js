@@ -10062,7 +10062,7 @@ var DashticzDeviceEditor = (function () {
         '</span><button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-toggle" aria-haspopup="true" style="min-width:4em;">' +
         _compactIconLabel(current, t) +
         '</button>' +
-        '<div class="de-compact-icon-panel d-none" style="position:absolute;top:100%;right:0;z-index:1060;min-width:4em;max-height:260px;overflow-y:auto;padding:4px;margin-top:2px;border:1px solid rgba(128,128,128,.5);border-radius:6px;background:var(--bs-body-bg,#fff);box-shadow:0 4px 12px rgba(0,0,0,.35);">' +
+        '<div class="de-compact-icon-panel d-none" style="position:absolute;top:100%;right:0;z-index:1060;min-width:4em;width:max-content;max-height:260px;overflow-x:hidden;overflow-y:auto;padding:4px;margin-top:2px;border:1px solid rgba(128,128,128,.5);border-radius:6px;background:var(--bs-body-bg,#fff);box-shadow:0 4px 12px rgba(0,0,0,.35);">' +
         '<button type="button" class="btn btn-sm d-block w-100 text-center de-compact-icon-choice' +
         (selected === '' ? ' active' : '') +
         '" data-icon="">' +
