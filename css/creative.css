@@ -4517,12 +4517,21 @@ img.icon {
 
 /* Optional row icon (block.icons), the HP iLO look (.hpilo-icon). The size
    and colour repeat !important because themes size/colour some .fas icons
-   globally. */
+   globally. margin: 0 !important for the same reason, but against a
+   different culprit: legacy per-icon rules further up this file
+   (.fas.fa-bolt, .fas.fa-thermometer-half, .fas.fa-plug, .fas.fa-microchip,
+   ...), meant for the classic device-tile icon column, add their own
+   margin-left/margin-top to those exact Font Awesome classes - which
+   autoIcon() (js/components/cluster.js) or a manually picked icon can
+   easily reuse here. Without this override, a row using one of those
+   specific icons "jumps" a few px out of line with every other row's icon
+   in the same cluster. */
 .cluster-block .dt_state .cluster-row-icon {
   flex: none;
   width: 1.4em;
   color: #3a86d8 !important;
   font-size: var(--font-device-title, 1em) !important;
+  margin: 0 !important;
   line-height: 1;
   text-align: center;
 }
@@ -4738,10 +4747,16 @@ img.icon {
   min-width: 0;
 }
 
+/* margin: 0 !important - same reasoning as .cluster-row-icon above: legacy
+   per-icon rules further up this file (.fas.fa-plug, .fas.fa-microchip, ...)
+   would otherwise add a stray margin to the exact Font Awesome classes some
+   METRICS entries use (js/components/hpilo.js), making that row's icon
+   jump out of line with the others. */
 .hpilo-block .dt_state .hpilo-icon {
   flex: none;
   width: 1.4em;
   font-size: 1em;
+  margin: 0 !important;
   line-height: 1;
   text-align: center;
   color: #3a86d8;
