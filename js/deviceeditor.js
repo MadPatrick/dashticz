@@ -7868,10 +7868,19 @@ var DashticzDeviceEditor = (function () {
         .toggleClass('d-none', !$(this).prop('checked'));
     });
     $popup.on('click', '.de-compact-icon-toggle', function () {
-      $(this)
+      var $panel = $(this)
         .closest('.de-compact-icon-row')
-        .find('.de-compact-icon-panel')
-        .toggleClass('d-none');
+        .find('.de-compact-icon-panel');
+      $popup.find('.de-compact-icon-panel').not($panel).addClass('d-none');
+      $panel.toggleClass('d-none');
+    });
+    $popup.on('click', function (event) {
+      if (
+        !$(event.target).closest(
+          '.de-compact-icon-toggle, .de-compact-icon-panel'
+        ).length
+      )
+        $popup.find('.de-compact-icon-panel').addClass('d-none');
     });
     $popup.on('click', '.de-compact-icon-choice', function () {
       var $row = $(this).closest('.de-compact-icon-row');
@@ -10024,14 +10033,18 @@ var DashticzDeviceEditor = (function () {
       });
   }
 
+  // Toggle button content: the chosen icon (or "Automatic") plus a caret.
   function _compactIconLabel(icon, t) {
-    if (!icon) return _esc(t.compact_icon_auto);
-    var preset = COMPACT_ICON_PRESETS.filter(function (p) {
-      return p[0] === icon;
-    })[0];
-    return _esc(preset ? preset[1] : icon);
+    return (
+      (icon
+        ? '<i class="' + _esc(icon) + '" aria-hidden="true"></i>'
+        : _esc(t.compact_icon_auto)) +
+      ' <span aria-hidden="true">&#9662;</span>'
+    );
   }
 
+  // One row per level: the level name and a pull-down whose entries are the
+  // icons themselves (names only as tooltip).
   function _compactIconRowsHtml(levels, saved, t) {
     var html = '';
     levels.forEach(function (level) {
@@ -10043,28 +10056,21 @@ var DashticzDeviceEditor = (function () {
       html +=
         '<div class="mb-2 de-compact-icon-row" data-level="' +
         level.value +
-        '"><div class="d-flex align-items-center gap-2">' +
-        '<span class="de-compact-icon-preview" style="width:2em;text-align:center;">' +
-        (current
-          ? '<i class="' + _esc(current) + '" aria-hidden="true"></i>'
-          : '') +
-        '</span><span class="flex-grow-1">' +
+        '"><div class="d-flex align-items-center gap-2" style="position:relative;">' +
+        '<span class="flex-grow-1">' +
         _esc(level.name) +
-        '</span><button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-toggle">' +
+        '</span><button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-toggle" aria-haspopup="true" style="min-width:4em;">' +
         _compactIconLabel(current, t) +
-        '</button></div>' +
-        '<input type="hidden" class="de-compact-icon-value" value="' +
-        _esc(selected) +
-        '">' +
-        '<div class="de-compact-icon-panel d-none mt-2"><div class="d-flex flex-wrap gap-1">' +
-        '<button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-choice' +
+        '</button>' +
+        '<div class="de-compact-icon-panel d-none" style="position:absolute;top:100%;right:0;z-index:1060;min-width:4em;max-height:260px;overflow-y:auto;padding:4px;margin-top:2px;border:1px solid rgba(128,128,128,.5);border-radius:6px;background:var(--bs-body-bg,#fff);box-shadow:0 4px 12px rgba(0,0,0,.35);">' +
+        '<button type="button" class="btn btn-sm d-block w-100 text-center de-compact-icon-choice' +
         (selected === '' ? ' active' : '') +
         '" data-icon="">' +
         _esc(t.compact_icon_auto) +
         '</button>';
       COMPACT_ICON_PRESETS.forEach(function (p) {
         html +=
-          '<button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-choice' +
+          '<button type="button" class="btn btn-sm d-block w-100 text-center de-compact-icon-choice' +
           (selected === p[0] ? ' active' : '') +
           '" data-icon="' +
           _esc(p[0]) +
@@ -10072,21 +10078,27 @@ var DashticzDeviceEditor = (function () {
           _esc(p[1]) +
           '" aria-label="' +
           _esc(p[1]) +
-          '" style="min-width:2.4em;"><i class="' +
+          '"><i class="' +
           _esc(p[0]) +
           '" aria-hidden="true"></i></button>';
       });
       html +=
-        '<button type="button" class="btn btn-outline-secondary btn-sm de-compact-icon-choice' +
+        '<button type="button" class="btn btn-sm d-block w-100 text-center de-compact-icon-choice' +
         (selected === '__custom__' ? ' active' : '') +
-        '" data-icon="__custom__">' +
+        '" data-icon="__custom__" title="' +
         _esc(t.compact_icon_custom) +
-        '</button></div>' +
-        '<input type="text" class="form-control form-control-sm mt-2 de-compact-icon-custom' +
+        '" aria-label="' +
+        _esc(t.compact_icon_custom) +
+        '">&hellip;</button></div></div>' +
+        '<input type="text" class="form-control form-control-sm mt-1 de-compact-icon-custom' +
         (selected === '__custom__' ? '' : ' d-none') +
-        '" placeholder="fas fa-star" value="' +
+        '" placeholder="fas fa-star" aria-label="' +
+        _esc(t.compact_icon_custom) +
+        '" value="' +
         (selected === '__custom__' ? _esc(current) : '') +
-        '"></div></div>';
+        '"><input type="hidden" class="de-compact-icon-value" value="' +
+        _esc(selected) +
+        '"></div>';
     });
     return html;
   }
@@ -10099,15 +10111,11 @@ var DashticzDeviceEditor = (function () {
     return /^[A-Za-z0-9 _-]+$/.test(value) ? value : '';
   }
 
-  // Sync the preview and the toggle button of one level row.
+  // Sync the toggle button and the custom input of one level row.
   function _refreshCompactIconRow($row, t) {
-    var icon = _compactIconValue($row);
     $row
-      .find('.de-compact-icon-preview')
-      .html(
-        icon ? '<i class="' + _esc(icon) + '" aria-hidden="true"></i>' : ''
-      );
-    $row.find('.de-compact-icon-toggle').html(_compactIconLabel(icon, t));
+      .find('.de-compact-icon-toggle')
+      .html(_compactIconLabel(_compactIconValue($row), t));
     $row
       .find('.de-compact-icon-custom')
       .toggleClass(
