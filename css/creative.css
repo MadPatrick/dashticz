@@ -4515,23 +4515,21 @@ img.icon {
   font-weight: normal;
 }
 
-/* Optional row icon (block.icons), the HP iLO look (.hpilo-icon). The size
-   and colour repeat !important because themes size/colour some .fas icons
-   globally. margin: 0 !important for the same reason, but against a
-   different culprit: legacy per-icon rules further up this file
-   (.fas.fa-bolt, .fas.fa-thermometer-half, .fas.fa-plug, .fas.fa-microchip,
-   ...), meant for the classic device-tile icon column, add their own
-   margin-left/margin-top to those exact Font Awesome classes - which
-   autoIcon() (js/components/cluster.js) or a manually picked icon can
-   easily reuse here. Without this override, a row using one of those
-   specific icons "jumps" a few px out of line with every other row's icon
-   in the same cluster. */
+/* Optional row icon (block.icons), the HP iLO look (.hpilo-icon). The size,
+   colour and margin repeat !important because themes size/colour some .fas
+   icons globally, and this file has per-icon margin offsets of its own
+   (.fas.fa-lightbulb, .fas.fa-bolt, .fas.fa-thermometer-half, .fas.fa-plug,
+   .fas.fa-microchip, ...) meant for the big tile icon - autoIcon()
+   (js/components/cluster.js) or a manually picked icon can easily reuse one
+   of those exact classes, and without this override a row using one of them
+   "jumps" a few px out of line with every other row's icon in the same
+   cluster. */
 .cluster-block .dt_state .cluster-row-icon {
   flex: none;
   width: 1.4em;
+  margin: 0 !important;
   color: #3a86d8 !important;
   font-size: var(--font-device-title, 1em) !important;
-  margin: 0 !important;
   line-height: 1;
   text-align: center;
 }
@@ -4755,8 +4753,8 @@ img.icon {
 .hpilo-block .dt_state .hpilo-icon {
   flex: none;
   width: 1.4em;
-  font-size: 1em;
   margin: 0 !important;
+  font-size: 1em;
   line-height: 1;
   text-align: center;
   color: #3a86d8;
@@ -8355,6 +8353,7 @@ canvas {
 .de-config-popup .de-compact-icon-row .de-compact-icon-choice > i {
   display: inline-block;
   width: 1.25em;
+  margin: 0 !important;
   color: var(--bs-body-color, #212529) !important;
   font-size: 13px !important;
   line-height: 1;
@@ -8369,6 +8368,22 @@ canvas {
 .cl-icon-wrap .cl-icon-panel .cl-icon-choice > i {
   display: inline-block;
   width: 1.25em;
+  margin: 0 !important;
+  color: var(--bs-body-color, #212529) !important;
+  font-size: 13px !important;
+  line-height: 1;
+  text-align: center;
+}
+
+/* HP iLO row icon picker (Widget Config): same uniform size and single colour
+   for every icon as the other icon pickers - the theme's global .fas.fa-*
+   rules (size and colour !important) would otherwise make each look
+   different. */
+.we-hpilo-icon-wrap .we-hpilo-icon-toggle > i,
+.we-hpilo-icon-wrap .we-hpilo-icon-panel .we-hpilo-icon-choice > i {
+  display: inline-block;
+  width: 1.25em;
+  margin: 0 !important;
   color: var(--bs-body-color, #212529) !important;
   font-size: 13px !important;
   line-height: 1;
