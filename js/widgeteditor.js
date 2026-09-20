@@ -3162,7 +3162,7 @@ var DashticzWidgetEditor = (function () {
               '<span class="we-hpilo-name">' +
               _esc(_hpiloRowLabel(key)) +
               '</span>' +
-              '<button type="button" class="btn btn-danger btn-sm we-hpilo-remove ms-auto"' +
+              '<button type="button" class="btn btn-outline-danger btn-sm we-hpilo-remove ms-auto"' +
               ' title="' +
               _esc(lh.hpilo_rows_remove || 'Remove') +
               '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
@@ -3196,7 +3196,7 @@ var DashticzWidgetEditor = (function () {
       '<select class="form-select form-select-sm" id="we-hpilo-select">' +
       inner.options +
       '</select>' +
-      '<button type="button" class="btn btn-success btn-sm" id="we-hpilo-add"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
+      '<button type="button" class="btn btn-outline-success btn-sm" id="we-hpilo-add"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
       '</div>' +
       '<div class="form-text">' +
       _esc(

@@ -4691,6 +4691,11 @@ img.icon {
   gap: 10px;
 }
 
+#we-hpilo-add:not(:hover),
+.we-hpilo-remove:not(:hover) {
+  background-color: #fff;
+}
+
 .we-hpilo-name {
   min-width: 0;
 }
