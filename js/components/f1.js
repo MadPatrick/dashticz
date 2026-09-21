@@ -18,8 +18,12 @@
  *   f1_hideimageonempty  hide the tile image while there is no event
  *   f1_fontsize        font size of the rows
  *
- * The tile shows the plugin's 'next event' text, centered: the Grand Prix
- * name, and below it the next session ("Do 24 Sep 10:30 : Vrije Training 1").
+ * Two block types share these settings, so both can be on one screen:
+ *   f1        the plugin's 'next event' text, centered: the Grand Prix
+ *             name, and below it the next session
+ *             ("Do 24 Sep 10:30 : Vrije Training 1").
+ *   f1events  all (filtered) sessions of that race weekend, one row per
+ *             session: name left, date/time right, finished ones dimmed.
  */
 var DT_f1 = (function () {
   var DEFAULT_URLS = {
@@ -64,7 +68,7 @@ var DT_f1 = (function () {
   return {
     name: 'f1',
     canHandle: function (block) {
-      return !!(block && block.type === 'f1');
+      return !!(block && (block.type === 'f1' || block.type === 'f1events'));
     },
     defaultCfg: {
       width: 4,
@@ -159,6 +163,40 @@ var DT_f1 = (function () {
     return next;
   }
 
+  // All sessions of the next event's weekend (see f1_sessions), or null.
+  function nextWeekend(events, now) {
+    var next = nextEvent(events, now);
+    if (!next) return null;
+    return events.filter(passesFilter).filter(function (event) {
+      return event.gp === next.gp;
+    });
+  }
+
+  function weekendHtml(weekend, now) {
+    var head = weekend[0].gp || weekend[0].location;
+    return (
+      '<div class="f1-rows f1-list">' +
+      (head ? '<div class="f1-heading">' + esc(head) + '</div>' : '') +
+      weekend
+        .map(function (event) {
+          return (
+            '<div class="f1-row' +
+            (event.end < now ? ' f1-past' : '') +
+            '">' +
+            '<span class="f1-label">' +
+            esc(event.session) +
+            '</span>' +
+            '<span class="f1-value">' +
+            esc(formatWhen(event.start)) +
+            '</span>' +
+            '</div>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
   // Grand Prix name, and below it "Do 24 Sep 10:30 : Vrije Training 1".
   function eventHtml(event) {
     var head = event.gp || event.location;
@@ -214,9 +252,17 @@ var DT_f1 = (function () {
     }).then(
       function (res) {
         var now = Math.floor(Date.now() / 1000);
-        var event = nextEvent((res && res.events) || [], now);
-        if (!event) return showEmpty(me);
-        me.$mountPoint.find('.dt_state').html(eventHtml(event));
+        var events = (res && res.events) || [];
+        var html;
+        if (me.block.type === 'f1events') {
+          var weekend = nextWeekend(events, now);
+          html = weekend && weekend.length && weekendHtml(weekend, now);
+        } else {
+          var event = nextEvent(events, now);
+          html = event && eventHtml(event);
+        }
+        if (!html) return showEmpty(me);
+        me.$mountPoint.find('.dt_state').html(html);
         setImageVisible(me, true);
       },
       function (jqXHR) {

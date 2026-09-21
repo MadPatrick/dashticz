@@ -11,6 +11,14 @@ and below it the date, time and session, for example::
 
 Use the tile ``image`` option to show the F1 logo next to it.
 
+There are two F1 widgets in the widget menu, which share the settings below,
+so you can put both on one screen:
+
+* **F1 - Next event** (block type ``f1``): the tile described above.
+* **F1 - All events** (block type ``f1events``): the Grand Prix name with one
+  row per session of that race weekend (session name left, date and time
+  right). Sessions that are over are dimmed.
+
 The widget is standalone (no Domoticz device needed). It is based on the
 `domoticz_F1 <https://github.com/MadPatrick/domoticz_F1>`_ plugin and uses the
 same calendar feeds and options. The calendar is downloaded server-side

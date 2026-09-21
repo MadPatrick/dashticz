@@ -52,8 +52,17 @@ var DashticzWidgetEditor = (function () {
     {
       id: 'f1',
       blockKey: 'widget_f1',
-      title: 'F1',
-      description: 'Formula 1 race weekend schedule (domoticz_F1 plugin).',
+      title: 'F1 - Next event',
+      description: 'The next Formula 1 session (domoticz_F1 plugin).',
+      icon: 'fas fa-flag-checkered',
+      width: 4,
+      height: 120,
+    },
+    {
+      id: 'f1events',
+      blockKey: 'widget_f1events',
+      title: 'F1 - All events',
+      description: 'All sessions of the next Formula 1 race weekend.',
       icon: 'fas fa-flag-checkered',
       width: 4,
       height: 200,
@@ -969,13 +978,18 @@ var DashticzWidgetEditor = (function () {
     _buildAndShowModal();
   }
 
+  // Both F1 widgets (next event / all events) share one set of settings.
+  function _configId(widgetId) {
+    return widgetId === 'f1events' ? 'f1' : widgetId;
+  }
+
   function openConfig(widgetId, options) {
     options = options || {};
     gridMode = _activeScreenDom().hasClass('dt-grid-screen');
     _readConfiguredWidgets();
     if (options.draft) {
       if (options.draft.widgetConfig) {
-        widgetConfigs[widgetId] = $.extend(
+        widgetConfigs[_configId(widgetId)] = $.extend(
           true,
           {},
           options.draft.widgetConfig
@@ -1743,6 +1757,7 @@ var DashticzWidgetEditor = (function () {
       postnl: 'postnl',
       hpilo: 'hpilo',
       f1: 'f1',
+      f1events: 'f1events',
       spotify: 'spotify',
       sonarr: 'sonarr',
       calendar: 'calendar',
@@ -2274,6 +2289,7 @@ var DashticzWidgetEditor = (function () {
       id === 'postnl' ||
       id === 'hpilo' ||
       id === 'f1' ||
+      id === 'f1events' ||
       id === 'sonarr' ||
       id === 'spotify' ||
       id === 'secpanel' ||
@@ -4016,7 +4032,7 @@ var DashticzWidgetEditor = (function () {
         lh.hpilo_fontsize_help || 'Font size of the rows. Default: 14.'
       );
       fields += _hpiloRowsFieldHtml(hcfg.hpilo_rows, hcfg.hpilo_icons);
-    } else if (item.id === 'f1') {
+    } else if (item.id === 'f1' || item.id === 'f1events') {
       var f1cfg = widgetConfigs.f1 || {};
       fields += _cfgField(
         'f1_language',
@@ -5350,7 +5366,7 @@ var DashticzWidgetEditor = (function () {
         widgetConfigs.postnl = collected;
       } else if (widgetId === 'hpilo') {
         widgetConfigs.hpilo = collected;
-      } else if (widgetId === 'f1') {
+      } else if (widgetId === 'f1' || widgetId === 'f1events') {
         widgetConfigs.f1 = collected;
       } else if (widgetId === 'sonarr') {
         widgetConfigs.sonarr = collected;
@@ -6176,7 +6192,11 @@ var DashticzWidgetEditor = (function () {
 
   function _widgetEditorDraft(widgetId) {
     return {
-      widgetConfig: $.extend(true, {}, widgetConfigs[widgetId] || {}),
+      widgetConfig: $.extend(
+        true,
+        {},
+        widgetConfigs[_configId(widgetId)] || {}
+      ),
       blockOptions: $.extend(
         true,
         {},
