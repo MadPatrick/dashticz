@@ -90,11 +90,24 @@ var DT_postnl = (function () {
     return prefix + part('text', who + ': ' + label) + suffix;
   }
 
-  // Delivered: open box; otherwise a delivery truck (incoming) or a paper
-  // plane (sent).
+  function useEmoji() {
+    return settings['postnl_iconstyle'] === 'emoji';
+  }
+
+  // Delivered: open box / package; otherwise a delivery truck (incoming) or a
+  // paper plane / outbox (sent). Emoji style keeps its own colors.
   function icon(item) {
-    if (item.entry.status === 'Delivered') return 'fa-box-open';
-    return item.role === 'in' ? 'fa-truck' : 'fa-paper-plane';
+    var delivered = item.entry.status === 'Delivered';
+    if (useEmoji()) {
+      if (delivered) return '📦';
+      return item.role === 'in' ? '🚚' : '📤';
+    }
+    var cls = delivered
+      ? 'fa-box-open'
+      : item.role === 'in'
+        ? 'fa-truck'
+        : 'fa-paper-plane';
+    return '<i class="fas ' + cls + '" aria-hidden="true"></i>';
   }
 
   function sortKey(entry) {
@@ -126,13 +139,12 @@ var DT_postnl = (function () {
           '<div class="postnl-row' +
           (item.entry.status === 'Delivered' ? ' postnl-row-delivered' : '') +
           '">' +
-          '<i class="fas ' +
-          icon(item) +
-          ' postnl-icon postnl-icon-' +
+          '<span class="postnl-icon postnl-icon-' +
           item.role +
-          '"' +
-          colorStyle('icon') +
-          ' aria-hidden="true"></i>' +
+          (useEmoji() ? ' postnl-icon-emoji' : '') +
+          '" aria-hidden="true">' +
+          icon(item) +
+          '</span>' +
           '<span class="postnl-row-text">' +
           formatLine(item.entry) +
           '</span>' +

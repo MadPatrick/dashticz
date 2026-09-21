@@ -1096,7 +1096,7 @@ var DashticzWidgetEditor = (function () {
         postnl_pollminutes: _s('postnl_pollminutes', '60'),
         postnl_fontsize: _s('postnl_fontsize', '14'),
         postnl_showdelivered: _n('postnl_showdelivered', 1),
-        postnl_icon_color: _s('postnl_icon_color'),
+        postnl_iconstyle: _s('postnl_iconstyle', 'fa'),
         postnl_date_color: _s('postnl_date_color'),
         postnl_time_color: _s('postnl_time_color'),
         postnl_text_color: _s('postnl_text_color'),
@@ -3946,11 +3946,14 @@ var DashticzWidgetEditor = (function () {
           'Font size of the shipment text. Default: 14.'
       );
       fields += _cfgField(
-        'postnl_icon_color',
-        lp.postnl_icon_color || 'Icon color',
-        'color',
-        pncfg.postnl_icon_color,
-        { default: '#2e9e5b' }
+        'postnl_iconstyle',
+        lp.postnl_iconstyle || 'Icon style',
+        'select',
+        pncfg.postnl_iconstyle || 'fa',
+        {
+          fa: lp.postnl_iconstyle_fa || 'Font Awesome',
+          emoji: lp.postnl_iconstyle_emoji || 'Emoji (colorful)',
+        }
       );
       fields += _cfgField(
         'postnl_date_color',
@@ -5770,7 +5773,7 @@ var DashticzWidgetEditor = (function () {
         'postnl_pollminutes',
         'postnl_fontsize',
         'postnl_showdelivered',
-        'postnl_icon_color',
+        'postnl_iconstyle',
         'postnl_date_color',
         'postnl_time_color',
         'postnl_text_color',

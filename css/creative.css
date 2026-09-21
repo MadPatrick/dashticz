@@ -4665,6 +4665,10 @@ img.icon {
   text-align: center;
 }
 
+.postnl-icon-emoji {
+  font-size: 24px;
+}
+
 .postnl-icon-in {
   color: #2e9e5b;
 }
