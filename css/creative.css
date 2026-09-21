@@ -8367,7 +8367,7 @@ canvas {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .f1-rows {
