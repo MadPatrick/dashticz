@@ -8368,6 +8368,8 @@ canvas {
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
+  /* The cluster's font size option sets --font-device-title on the tile. */
+  font-size: var(--font-device-title);
 }
 
 .f1-rows {

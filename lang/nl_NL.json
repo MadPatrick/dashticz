@@ -400,6 +400,7 @@
       "f1_block_emptytext": "Tekst zonder event",
       "f1_block_emptytext_help": "Getoond als er geen event binnen de zichtbaarheid valt. Leeg = niets.",
       "f1_block_fontsize": "Lettergrootte (px)",
+      "f1_block_fontsize_help": "Lettergrootte in pixels (8-60). Leeg laten voor de standaardgrootte.",
       "f1_block_hideimage": "Verberg afbeelding als er geen event is",
       "f1_block_image": "Afbeelding (voor de tekst van Volgend event)",
       "f1_block_image_help": "Kies een afbeelding uit de map img/. Die staat voor de tekst van een Volgend event-tegel; het icoon blijft bestaan.",

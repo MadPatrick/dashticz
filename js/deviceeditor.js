@@ -6933,7 +6933,7 @@ var DashticzDeviceEditor = (function () {
       emptyText: String(values.f1emptytext || ''),
       hideImage:
         values.hideimageonempty === true || values.hideimageonempty === 'true',
-      fontSize: values.f1fontsize !== undefined ? values.f1fontsize : 14,
+      fontSize: values.f1fontsize !== undefined ? values.f1fontsize : '',
       image: String(values.f1image || ''),
     };
   }
@@ -7099,7 +7099,8 @@ var DashticzDeviceEditor = (function () {
         'number',
         v.fontSize,
         ' min="8" max="60" step="1"'
-      )
+      ),
+      t.f1_block_fontsize_help
     );
     html += _f1FieldHtml(
       prefix,
@@ -7249,7 +7250,10 @@ var DashticzDeviceEditor = (function () {
       visibility: num('visibility', 3, 0, 365),
       emptyText: text('emptytext').slice(0, 200),
       hideImage: $('#' + prefix + '-f1-hideimage').is(':checked'),
-      fontSize: num('fontsize', 14, 8, 60),
+      fontSize:
+        parseInt(text('fontsize'), 10) > 0
+          ? Math.min(60, Math.max(8, parseInt(text('fontsize'), 10)))
+          : null,
       image:
         /^[A-Za-z0-9 _.\/-]{0,100}$/.test(text('image')) &&
         text('image').indexOf('..') < 0
@@ -7275,7 +7279,7 @@ var DashticzDeviceEditor = (function () {
     add('f1visibility', f1.visibility, 3);
     add('f1emptytext', f1.emptyText, '');
     add('hideimageonempty', f1.hideImage, false);
-    add('f1fontsize', f1.fontSize, 14);
+    add('f1fontsize', f1.fontSize, null);
     add('f1image', f1.image, '');
     return rows;
   }

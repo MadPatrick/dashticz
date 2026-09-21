@@ -27,7 +27,9 @@
  *                  session (default 3); otherwise the 'no-event' text
  *   f1emptytext    text shown when there is no event (may be empty)
  *   hideimageonempty  hide the tile image while there is no event
- *   f1fontsize     font size of the text (default 14)
+ *   f1fontsize     optional font size in px (8-60), like the cluster's fontSize:
+ *                  sets --font-device-title on the tile, so the title follows
+ *                  too; empty = the theme's size
  *   f1image        image (from img/, chosen in the config) shown before the
  *                  text of the 'next' tile; the tile icon stays as it is
  */
@@ -283,9 +285,12 @@ var DT_f1 = (function () {
 
   function refresh(me) {
     var block = me.block;
-    me.$mountPoint
-      .find('.dt_state')
-      .css('font-size', num(block, 'f1fontsize', 14, 8, 60) + 'px');
+    // Set on every refresh; empty removes the override.
+    var fontSize = parseInt(block.f1fontsize, 10);
+    me.$mountPoint.css(
+      '--font-device-title',
+      fontSize >= 8 && fontSize <= 60 ? fontSize + 'px' : ''
+    );
     $.ajax({
       url: settings['dashticz_php_path'] + 'f1/index.php',
       method: 'POST',

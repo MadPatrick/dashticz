@@ -480,6 +480,7 @@
       "f1_block_emptytext": "No-event text",
       "f1_block_emptytext_help": "Shown when there is no event within the visibility window. Blank = empty.",
       "f1_block_fontsize": "Font size (px)",
+      "f1_block_fontsize_help": "Font size in pixels (8-60). Leave empty for the default size.",
       "f1_block_hideimage": "Hide image when there is no event",
       "f1_block_image": "Image (before the text of Next event)",
       "f1_block_image_help": "Choose an image from the img/ folder. It is shown in front of the text of a Next event tile; the icon stays.",

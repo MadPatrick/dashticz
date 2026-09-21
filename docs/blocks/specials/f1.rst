@@ -70,7 +70,8 @@ from the default.
     - ``true``: hide the tile ``image`` while there is no event (same as the
       ``hideimageonempty`` option of Domoticz blocks). Default: false
   * - f1fontsize
-    - Font size in pixels (8..60). Default: 14
+    - Optional: font size of the tile in pixels (``8``-``60``), same as the
+      font size of the cluster widget. Default: the size of the theme
   * - f1image
     - Image from the ``img/`` folder (for example ``custom/f1.png``, chosen in
       the config) that is shown in front of the text of a ``'next'`` tile. The
