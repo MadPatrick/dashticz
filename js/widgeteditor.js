@@ -63,7 +63,7 @@ var DashticzWidgetEditor = (function () {
       blockKey: 'widget_f1events',
       title: 'F1 - All events',
       description: 'All sessions of the next Formula 1 race weekend.',
-      icon: 'fas fa-flag-checkered',
+      icon: 'fas fa-list-ul',
       width: 4,
       height: 200,
     },

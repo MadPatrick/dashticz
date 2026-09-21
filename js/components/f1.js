@@ -70,11 +70,16 @@ var DT_f1 = (function () {
     canHandle: function (block) {
       return !!(block && (block.type === 'f1' || block.type === 'f1events'));
     },
-    defaultCfg: {
-      width: 4,
-      icon: 'fas fa-flag-checkered',
-      refresh: 60,
-      containerClass: 'f1-block',
+    defaultCfg: function (block) {
+      return {
+        width: 4,
+        icon:
+          block && block.type === 'f1events'
+            ? 'fas fa-list-ul'
+            : 'fas fa-flag-checkered',
+        refresh: 60,
+        containerClass: 'f1-block',
+      };
     },
     run: function (me) {
       refresh(me);
