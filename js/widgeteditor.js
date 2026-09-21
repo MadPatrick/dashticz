@@ -4076,7 +4076,7 @@ var DashticzWidgetEditor = (function () {
         f1cfg.f1_visibility || '3',
         { min: 0, max: 365, step: 1 },
         lf.f1_visibility_help ||
-          'Show a race weekend this many days before its first session. Default: 3.'
+          'Show the next session this many days before it starts. Default: 3.'
       );
       fields += _cfgField(
         'f1_emptytext',

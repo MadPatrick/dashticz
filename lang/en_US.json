@@ -866,7 +866,7 @@
       "f1_sessions_sprint_race": "Sprint / Race",
       "f1_sessions_race": "Race",
       "f1_visibility": "Next-event visibility (days)",
-      "f1_visibility_help": "Show a race weekend this many days before its first session. Default: 3.",
+      "f1_visibility_help": "Show the next session this many days before it starts. Default: 3.",
       "f1_emptytext": "No-event text",
       "f1_emptytext_help": "Shown when there is no event within the visibility window. Blank = empty.",
       "f1_hideimageonempty": "Hide image when there is no event",

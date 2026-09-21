@@ -3,9 +3,13 @@
 F1
 ==
 
-The F1 widget shows the upcoming Formula 1 race weekend: the location as
-heading, and one row per session with the session name and its date and time.
-Sessions that are over are dimmed.
+The F1 widget shows the next Formula 1 session, centered: the Grand Prix name
+and below it the date, time and session, for example::
+
+  Grand Prix van Azerbeidzjan
+  Do 24 Sep 10:30 : Vrije Training 1
+
+Use the tile ``image`` option to show the F1 logo next to it.
 
 The widget is standalone (no Domoticz device needed). It is based on the
 `domoticz_F1 <https://github.com/MadPatrick/domoticz_F1>`_ plugin and uses the
@@ -43,8 +47,8 @@ Settings
     - ``'all'`` (training, sprint and race; default), ``'sprint_race'`` or
       ``'race'``
   * - f1_visibility
-    - The race weekend is shown this many days before its first upcoming
-      session. Default: 3
+    - The next session is shown this many days before it starts (and while it
+      is running). Default: 3
   * - f1_emptytext
     - Text shown when there is no event within the visibility window. Default:
       empty

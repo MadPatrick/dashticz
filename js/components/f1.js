@@ -18,8 +18,8 @@
  *   f1_hideimageonempty  hide the tile image while there is no event
  *   f1_fontsize        font size of the rows
  *
- * Every row is: the session name and its date/time right-aligned, below a
- * heading with the location of the Grand Prix.
+ * The tile shows the plugin's 'next event' text, centered: the Grand Prix
+ * name, and below it the next session ("Do 24 Sep 10:30 : Vrije Training 1").
  */
 var DT_f1 = (function () {
   var DEFAULT_URLS = {
@@ -149,40 +149,25 @@ var DT_f1 = (function () {
     return true;
   }
 
-  // Sessions of the weekend to show, or null when there is nothing to show.
-  function currentWeekend(events, now) {
-    var sessions = events.filter(passesFilter);
-    var next = sessions.filter(function (event) {
+  // The next (or running) session, or null when there is nothing to show.
+  function nextEvent(events, now) {
+    var next = events.filter(passesFilter).filter(function (event) {
       return event.end > now;
     })[0];
     if (!next) return null;
     if (next.start - now > num('f1_visibility', 3, 0, 365) * 86400) return null;
-    return sessions.filter(function (event) {
-      return event.gp === next.gp;
-    });
+    return next;
   }
 
-  function rowsHtml(weekend, now) {
-    var head = weekend[0].location || weekend[0].gp;
+  // Grand Prix name, and below it "Do 24 Sep 10:30 : Vrije Training 1".
+  function eventHtml(event) {
+    var head = event.gp || event.location;
     return (
       '<div class="f1-rows">' +
-      (head ? '<div class="f1-row f1-heading">' + esc(head) + '</div>' : '') +
-      weekend
-        .map(function (event) {
-          return (
-            '<div class="f1-row' +
-            (event.end < now ? ' f1-past' : '') +
-            '">' +
-            '<span class="f1-label">' +
-            esc(event.session) +
-            '</span>' +
-            '<span class="f1-value">' +
-            esc(formatWhen(event.start)) +
-            '</span>' +
-            '</div>'
-          );
-        })
-        .join('') +
+      (head ? '<div class="f1-heading">' + esc(head) + '</div>' : '') +
+      '<div class="f1-session">' +
+      esc(formatWhen(event.start) + ' : ' + event.session) +
+      '</div>' +
       '</div>'
     );
   }
@@ -229,9 +214,9 @@ var DT_f1 = (function () {
     }).then(
       function (res) {
         var now = Math.floor(Date.now() / 1000);
-        var weekend = currentWeekend((res && res.events) || [], now);
-        if (!weekend || !weekend.length) return showEmpty(me);
-        me.$mountPoint.find('.dt_state').html(rowsHtml(weekend, now));
+        var event = nextEvent((res && res.events) || [], now);
+        if (!event) return showEmpty(me);
+        me.$mountPoint.find('.dt_state').html(eventHtml(event));
         setImageVisible(me, true);
       },
       function (jqXHR) {

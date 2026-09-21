@@ -753,7 +753,7 @@
       "f1_sessions_sprint_race": "Sprint / Race",
       "f1_sessions_race": "Race",
       "f1_visibility": "Zichtbaarheid volgend event (dagen)",
-      "f1_visibility_help": "Toon een raceweekend zoveel dagen voor de eerste sessie. Standaard: 3.",
+      "f1_visibility_help": "Toon de volgende sessie zoveel dagen voor de start. Standaard: 3.",
       "f1_emptytext": "Tekst zonder event",
       "f1_emptytext_help": "Getoond als er geen event binnen de zichtbaarheid valt. Leeg = niets.",
       "f1_hideimageonempty": "Verberg afbeelding als er geen event is",
