@@ -3286,7 +3286,6 @@ var DashticzWidgetEditor = (function () {
         ? language.settings
         : {};
     var lh = lng.hpilo || {};
-    var lf = lng.f1 || {};
     var options =
       '<option value="">— ' +
       _esc(lh.hpilo_rows_select || 'Select a row') +
@@ -3379,6 +3378,7 @@ var DashticzWidgetEditor = (function () {
     var lg = lng.garbage || {};
     var lp = lng.postnl || {};
     var lh = lng.hpilo || {};
+    var lf = lng.f1 || {};
     var lm = lng.media || {};
     // Radio's Add station control docks next to the Display options
     // checkboxes rather than living on every station row.
@@ -5270,6 +5270,8 @@ var DashticzWidgetEditor = (function () {
         widgetConfigs.postnl = collected;
       } else if (widgetId === 'hpilo') {
         widgetConfigs.hpilo = collected;
+      } else if (widgetId === 'f1') {
+        widgetConfigs.f1 = collected;
       } else if (widgetId === 'sonarr') {
         widgetConfigs.sonarr = collected;
       } else if (widgetId === 'spotify') {
@@ -5776,6 +5778,7 @@ var DashticzWidgetEditor = (function () {
         'hpilo_rows',
         'hpilo_icons',
       ],
+      f1: ['f1_idx', 'f1_fontsize'],
       spotify: ['spot_clientid'],
       calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],
       secpanel: ['security_button_icons'],
