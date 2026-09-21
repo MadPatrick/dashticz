@@ -49,7 +49,7 @@ var DT_postnl = (function () {
   function colorStyle(key) {
     var c = settings['postnl_' + key + '_color'];
     return c && /^#[0-9a-f]{3,8}$/i.test(String(c))
-      ? ' style="color:' + c + '"'
+      ? ' style="color:' + c + ' !important"'
       : '';
   }
 
