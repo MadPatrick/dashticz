@@ -8419,3 +8419,14 @@ canvas {
   height: 3em;
   object-fit: contain;
 }
+
+/* Grid screens: cap the F1 tile at its row's height and clip the excess, like
+   .frame/.waqi/.log above - min-height alone lets a tile with more rows than
+   fit grow past its row, and .dt-grid-item's own overflow: auto then shows a
+   scrollbar on the grid item. */
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .f1,
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .f1-block {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
