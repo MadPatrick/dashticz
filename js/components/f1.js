@@ -5,25 +5,27 @@
  * standalone - no Domoticz device needed. The calendar (ICS feed) is
  * downloaded and parsed by vendor/dashticz/f1/index.php, a same-origin PHP
  * bridge like the PostNL and HP iLO widgets; the filtering and formatting
- * below mirror the plugin's settings:
+ * below mirror the plugin's settings.
  *
- *   f1_language        'en' | 'nl'  (weekday/month names and feed)
- *   f1_url_en/_nl      ICS feed per language (defaults: the plugin's feeds)
- *   f1_utcoffset       hours added to the (UTC) session times
- *   f1_pollminutes     how often the feed is downloaded
- *   f1_sessions        'all' | 'sprint_race' | 'race'
- *   f1_visibility      show the weekend this many days before its first
- *                      upcoming session; otherwise the 'no-event' text
- *   f1_emptytext       text shown when there is no event (may be empty)
- *   f1_hideimageonempty  hide the tile image while there is no event
- *   f1_fontsize        font size of the rows
+ * It is a repeatable block (Widgets -> F1, multiple per screen), configured
+ * per block, and dispatched on f1mode:
  *
- * Two block types share these settings, so both can be on one screen:
- *   f1        the plugin's 'next event' text, centered: the Grand Prix
- *             name, and below it the next session
- *             ("Do 24 Sep 10:30 : Vrije Training 1").
- *   f1events  all (filtered) sessions of that race weekend, one row per
- *             session: name left, date/time right, finished ones dimmed.
+ *   f1mode         'next': the plugin's 'next event' text, centered - the
+ *                  Grand Prix name, and below it the next session
+ *                  ("Do 24 Sep 10:30 : Vrije Training 1").
+ *                  'all': all (filtered) sessions of that race weekend, one
+ *                  row per session: name left, date/time right, finished
+ *                  ones dimmed.
+ *   f1language     'en' (default) | 'nl'  (weekday/month names and feed)
+ *   f1urlen/f1urlnl  ICS feed per language (defaults: the plugin's feeds)
+ *   f1utcoffset    hours added to the (UTC) session times (default 1)
+ *   f1pollminutes  how often the feed is downloaded (default 60)
+ *   f1sessions     'all' (default) | 'sprint_race' | 'race'
+ *   f1visibility   show the event this many days before its first upcoming
+ *                  session (default 3); otherwise the 'no-event' text
+ *   f1emptytext    text shown when there is no event (may be empty)
+ *   hideimageonempty  hide the tile image while there is no event
+ *   f1fontsize     font size of the text (default 14)
  */
 var DT_f1 = (function () {
   var DEFAULT_URLS = {
@@ -68,18 +70,13 @@ var DT_f1 = (function () {
   return {
     name: 'f1',
     canHandle: function (block) {
-      return !!(block && (block.type === 'f1' || block.type === 'f1events'));
+      return !!(block && typeof block.f1mode === 'string' && block.f1mode);
     },
-    defaultCfg: function (block) {
-      return {
-        width: 4,
-        icon:
-          block && block.type === 'f1events'
-            ? 'fas fa-list-ul'
-            : 'fas fa-flag-checkered',
-        refresh: 60,
-        containerClass: 'f1-block',
-      };
+    defaultCfg: {
+      width: 4,
+      icon: 'fas fa-flag-checkered',
+      refresh: 60,
+      containerClass: 'f1-block',
     },
     run: function (me) {
       refresh(me);
@@ -91,23 +88,20 @@ var DT_f1 = (function () {
     return (typeof language !== 'undefined' && language.misc) || {};
   }
 
-  function num(key, def, min, max) {
-    var value = parseFloat(settings[key]);
+  function num(block, key, def, min, max) {
+    var value = parseFloat(block[key]);
     return isNaN(value) ? def : Math.min(max, Math.max(min, value));
   }
 
-  function flag(key) {
-    var value = settings[key];
-    return value === true || value === 1 || String(value) === '1';
+  function lang(block) {
+    return block.f1language === 'nl' ? 'nl' : 'en';
   }
 
-  function lang() {
-    return settings['f1_language'] === 'nl' ? 'nl' : 'en';
-  }
-
-  function feedUrl() {
+  function feedUrl(block) {
+    var l = lang(block);
     return (
-      String(settings['f1_url_' + lang()] || '').trim() || DEFAULT_URLS[lang()]
+      String(block[l === 'nl' ? 'f1urlnl' : 'f1urlen'] || '').trim() ||
+      DEFAULT_URLS[l]
     );
   }
 
@@ -128,14 +122,16 @@ var DT_f1 = (function () {
   }
 
   // Unix time -> "Sat 5 Jul 12:30", shifted by the UTC offset.
-  function formatWhen(ts) {
-    var d = new Date((ts + num('f1_utcoffset', 1, -24, 24) * 3600) * 1000);
+  function formatWhen(block, ts) {
+    var offset = num(block, 'f1utcoffset', 1, -24, 24);
+    var d = new Date((ts + offset * 3600) * 1000);
+    var l = lang(block);
     return (
-      WEEKDAYS[lang()][d.getUTCDay()] +
+      WEEKDAYS[l][d.getUTCDay()] +
       ' ' +
       d.getUTCDate() +
       ' ' +
-      MONTHS[lang()][d.getUTCMonth()] +
+      MONTHS[l][d.getUTCMonth()] +
       ' ' +
       pad(d.getUTCHours()) +
       ':' +
@@ -151,33 +147,42 @@ var DT_f1 = (function () {
     return /grand prix/i.test(event.session);
   }
 
-  function passesFilter(event) {
-    var mode = settings['f1_sessions'];
+  function passesFilter(block, event) {
+    var mode = block.f1sessions;
     if (mode === 'race') return isRace(event);
     if (mode === 'sprint_race') return !isTraining(event);
     return true;
   }
 
   // The next (or running) session, or null when there is nothing to show.
-  function nextEvent(events, now) {
-    var next = events.filter(passesFilter).filter(function (event) {
-      return event.end > now;
-    })[0];
+  function nextEvent(block, events, now) {
+    var next = events
+      .filter(function (event) {
+        return passesFilter(block, event);
+      })
+      .filter(function (event) {
+        return event.end > now;
+      })[0];
     if (!next) return null;
-    if (next.start - now > num('f1_visibility', 3, 0, 365) * 86400) return null;
+    if (next.start - now > num(block, 'f1visibility', 3, 0, 365) * 86400)
+      return null;
     return next;
   }
 
-  // All sessions of the next event's weekend (see f1_sessions), or null.
-  function nextWeekend(events, now) {
-    var next = nextEvent(events, now);
+  // All sessions of the next event's weekend (see f1sessions), or null.
+  function nextWeekend(block, events, now) {
+    var next = nextEvent(block, events, now);
     if (!next) return null;
-    return events.filter(passesFilter).filter(function (event) {
-      return event.gp === next.gp;
-    });
+    return events
+      .filter(function (event) {
+        return passesFilter(block, event);
+      })
+      .filter(function (event) {
+        return event.gp === next.gp;
+      });
   }
 
-  function weekendHtml(weekend, now) {
+  function weekendHtml(block, weekend, now) {
     var head = weekend[0].gp || weekend[0].location;
     return (
       '<div class="f1-rows f1-list">' +
@@ -192,7 +197,7 @@ var DT_f1 = (function () {
             esc(event.session) +
             '</span>' +
             '<span class="f1-value">' +
-            esc(formatWhen(event.start)) +
+            esc(formatWhen(block, event.start)) +
             '</span>' +
             '</div>'
           );
@@ -203,13 +208,13 @@ var DT_f1 = (function () {
   }
 
   // Grand Prix name, and below it "Do 24 Sep 10:30 : Vrije Training 1".
-  function eventHtml(event) {
+  function eventHtml(block, event) {
     var head = event.gp || event.location;
     return (
       '<div class="f1-rows">' +
       (head ? '<div class="f1-heading">' + esc(head) + '</div>' : '') +
       '<div class="f1-session">' +
-      esc(formatWhen(event.start) + ' : ' + event.session) +
+      esc(formatWhen(block, event.start) + ' : ' + event.session) +
       '</div>' +
       '</div>'
     );
@@ -224,14 +229,22 @@ var DT_f1 = (function () {
     });
   }
 
+  function hideImageOnEmpty(block) {
+    return (
+      block.hideimageonempty === true ||
+      block.hideimageonempty === 1 ||
+      String(block.hideimageonempty).toLowerCase() === 'true'
+    );
+  }
+
   function showEmpty(me) {
-    var text = String(settings['f1_emptytext'] || '').trim();
+    var text = String(me.block.f1emptytext || '').trim();
     me.$mountPoint
       .find('.dt_state')
       .html(
         text ? '<div class="f1-rows f1-empty">' + esc(text) + '</div>' : ''
       );
-    setImageVisible(me, !flag('f1_hideimageonempty'));
+    setImageVisible(me, !hideImageOnEmpty(me.block));
   }
 
   function showError(me, text) {
@@ -242,29 +255,30 @@ var DT_f1 = (function () {
   }
 
   function refresh(me) {
+    var block = me.block;
     me.$mountPoint
       .find('.dt_state')
-      .css('font-size', num('f1_fontsize', 14, 8, 60) + 'px');
+      .css('font-size', num(block, 'f1fontsize', 14, 8, 60) + 'px');
     $.ajax({
       url: settings['dashticz_php_path'] + 'f1/index.php',
       method: 'POST',
       contentType: 'application/json',
       dataType: 'json',
       data: JSON.stringify({
-        url: feedUrl(),
-        pollMinutes: num('f1_pollminutes', 60, 5, 1440),
+        url: feedUrl(block),
+        pollMinutes: num(block, 'f1pollminutes', 60, 5, 1440),
       }),
     }).then(
       function (res) {
         var now = Math.floor(Date.now() / 1000);
         var events = (res && res.events) || [];
         var html;
-        if (me.block.type === 'f1events') {
-          var weekend = nextWeekend(events, now);
-          html = weekend && weekend.length && weekendHtml(weekend, now);
+        if (block.f1mode === 'all') {
+          var weekend = nextWeekend(block, events, now);
+          html = weekend && weekend.length && weekendHtml(block, weekend, now);
         } else {
-          var event = nextEvent(events, now);
-          html = event && eventHtml(event);
+          var event = nextEvent(block, events, now);
+          html = event && eventHtml(block, event);
         }
         if (!html) return showEmpty(me);
         me.$mountPoint.find('.dt_state').html(html);

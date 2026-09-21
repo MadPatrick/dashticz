@@ -3,33 +3,34 @@
 F1
 ==
 
-The F1 widget shows the next Formula 1 session, centered: the Grand Prix name
-and below it the date, time and session, for example::
-
-  Grand Prix van Azerbeidzjan
-  Do 24 Sep 10:30 : Vrije Training 1
-
-Use the tile ``image`` option to show the F1 logo next to it.
-
-There are two F1 widgets in the widget menu, which share the settings below,
-so you can put both on one screen:
-
-* **F1 - Next event** (block type ``f1``): the tile described above.
-* **F1 - All events** (block type ``f1events``): the Grand Prix name with one
-  row per session of that race weekend (session name left, date and time
-  right). Sessions that are over are dimmed.
-
-The widget is standalone (no Domoticz device needed). It is based on the
-`domoticz_F1 <https://github.com/MadPatrick/domoticz_F1>`_ plugin and uses the
+The F1 widget shows the Formula 1 race weekend. It is standalone (no Domoticz
+device needed) and based on the
+`domoticz_F1 <https://github.com/MadPatrick/domoticz_F1>`_ plugin, with the
 same calendar feeds and options. The calendar is downloaded server-side
 (``vendor/dashticz/f1/index.php``) and cached for the poll interval.
 
-Add the widget via the Screen Editor: "Add items" -> Widgets -> F1, and fill in
-the settings with the cog icon. Icon, title, image and background are set like
-for any other widget.
+You can place it several times on one screen. Add it via the Screen Editor:
+"Add items" -> Widgets -> F1 (in the "Widgets (multiple per screen)" section),
+and choose with the two icon buttons what the tile shows:
+
+* **Next event** (``f1mode: 'next'``): the Grand Prix name, centered, and below
+  it the next session, for example::
+
+    Grand Prix van Azerbeidzjan
+    Do 24 Sep 10:30 : Vrije Training 1
+
+* **All events** (``f1mode: 'all'``): the Grand Prix name with one row per
+  session of that race weekend (session name left, date and time right).
+  Sessions that are over are dimmed.
+
+Use the tile ``image`` option to show the F1 logo next to it. Change the
+settings of a placed tile with the cog icon.
 
 Settings
 --------
+
+These are block properties. The Screen Editor writes only the ones that differ
+from the default.
 
 .. list-table::
   :header-rows: 1
@@ -38,32 +39,35 @@ Settings
 
   * - Setting
     - Description
-  * - f1_language
+  * - f1mode
+    - ``'next'`` or ``'all'``, see above. Required: this property makes the
+      block an F1 widget
+  * - f1language
     - ``'en'`` (default) or ``'nl'``: language of the weekday/month names and
       which calendar URL is used
-  * - f1_url_en
+  * - f1urlen
     - ICS feed for English. Default:
       ``https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics``
-  * - f1_url_nl
+  * - f1urlnl
     - ICS feed for Dutch. Default:
       ``https://files-f1.motorsportcalendars.com/nl/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics``
-  * - f1_utcoffset
+  * - f1utcoffset
     - Hours added to the (UTC) session times. Default: 1
-  * - f1_pollminutes
+  * - f1pollminutes
     - How often the calendar is downloaded, in minutes. Minimum 5. Default: 60
-  * - f1_sessions
+  * - f1sessions
     - ``'all'`` (training, sprint and race; default), ``'sprint_race'`` or
       ``'race'``
-  * - f1_visibility
+  * - f1visibility
     - The next session is shown this many days before it starts (and while it
       is running). Default: 3
-  * - f1_emptytext
+  * - f1emptytext
     - Text shown when there is no event within the visibility window. Default:
       empty
-  * - f1_hideimageonempty
-    - ``1``: hide the tile ``image`` while there is no event (same as the
-      ``hideimageonempty`` block option). Default: 0
-  * - f1_fontsize
+  * - hideimageonempty
+    - ``true``: hide the tile ``image`` while there is no event (same as the
+      ``hideimageonempty`` option of Domoticz blocks). Default: false
+  * - f1fontsize
     - Font size in pixels (8..60). Default: 14
 
-The calendar URL must be a public ``https`` address.
+The calendar URLs must be public ``https`` addresses.

@@ -50,24 +50,6 @@ var DashticzWidgetEditor = (function () {
       height: 200,
     },
     {
-      id: 'f1',
-      blockKey: 'widget_f1',
-      title: 'F1 - Next event',
-      description: 'The next Formula 1 session (domoticz_F1 plugin).',
-      icon: 'fas fa-flag-checkered',
-      width: 4,
-      height: 120,
-    },
-    {
-      id: 'f1events',
-      blockKey: 'widget_f1events',
-      title: 'F1 - All events',
-      description: 'All sessions of the next Formula 1 race weekend.',
-      icon: 'fas fa-list-ul',
-      width: 4,
-      height: 200,
-    },
-    {
       id: 'spotify',
       blockKey: 'widget_spotify',
       title: 'Spotify',
@@ -978,18 +960,13 @@ var DashticzWidgetEditor = (function () {
     _buildAndShowModal();
   }
 
-  // Both F1 widgets (next event / all events) share one set of settings.
-  function _configId(widgetId) {
-    return widgetId === 'f1events' ? 'f1' : widgetId;
-  }
-
   function openConfig(widgetId, options) {
     options = options || {};
     gridMode = _activeScreenDom().hasClass('dt-grid-screen');
     _readConfiguredWidgets();
     if (options.draft) {
       if (options.draft.widgetConfig) {
-        widgetConfigs[_configId(widgetId)] = $.extend(
+        widgetConfigs[widgetId] = $.extend(
           true,
           {},
           options.draft.widgetConfig
@@ -1132,24 +1109,6 @@ var DashticzWidgetEditor = (function () {
           'power,health,uptime,fanspeed,cputemp,inlettemp'
         ),
         hpilo_icons: _s('hpilo_icons', '{}'),
-      },
-      f1: {
-        f1_language: _s('f1_language', 'en'),
-        f1_url_en: _s(
-          'f1_url_en',
-          'https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics'
-        ),
-        f1_url_nl: _s(
-          'f1_url_nl',
-          'https://files-f1.motorsportcalendars.com/nl/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics'
-        ),
-        f1_utcoffset: _s('f1_utcoffset', '1'),
-        f1_pollminutes: _s('f1_pollminutes', '60'),
-        f1_sessions: _s('f1_sessions', 'all'),
-        f1_visibility: _s('f1_visibility', '3'),
-        f1_emptytext: _s('f1_emptytext'),
-        f1_hideimageonempty: _n('f1_hideimageonempty', 0),
-        f1_fontsize: _s('f1_fontsize', '14'),
       },
       spotify: {
         spot_clientid: _s('spot_clientid'),
@@ -1756,8 +1715,6 @@ var DashticzWidgetEditor = (function () {
       garbage: 'garbage',
       postnl: 'postnl',
       hpilo: 'hpilo',
-      f1: 'f1',
-      f1events: 'f1events',
       spotify: 'spotify',
       sonarr: 'sonarr',
       calendar: 'calendar',
@@ -2244,6 +2201,7 @@ var DashticzWidgetEditor = (function () {
     html += _newsWidgetCardHtml();
     html += _lmsWidgetCardHtml();
     html += _graphWidgetCardHtml();
+    html += _f1WidgetCardHtml();
 
     html +=
       '</div><div class="we-message" role="status"></div></div>' +
@@ -2288,8 +2246,6 @@ var DashticzWidgetEditor = (function () {
       id === 'garbage' ||
       id === 'postnl' ||
       id === 'hpilo' ||
-      id === 'f1' ||
-      id === 'f1events' ||
       id === 'sonarr' ||
       id === 'spotify' ||
       id === 'secpanel' ||
@@ -2696,6 +2652,39 @@ var DashticzWidgetEditor = (function () {
       _t('click_to_add', 'Click to add') +
       '</div></div>'
     );
+  }
+
+  /* F1 (docs/blocks/specials/f1.rst, js/components/f1.js) is, like Graph,
+     only ever a repeatable card: it opens the F1 quick-add popup
+     (DashticzDeviceEditor.openF1()), where the tile itself is set to show
+     the next event or all events. */
+  function _f1WidgetCardHtml() {
+    var itemTitle = _t('f1_title', 'F1');
+    return (
+      '<div class="we-widget-card we-widget-card-f1" data-special-widget="f1" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="fas fa-flag-checkered" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _t(
+        'f1_description',
+        'Formula 1 race weekend: the next session, or all sessions (domoticz_F1 plugin).'
+      ) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openF1FromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openF1();
+    });
   }
 
   function _openGraphFromWidgets() {
@@ -3408,7 +3397,6 @@ var DashticzWidgetEditor = (function () {
     var lg = lng.garbage || {};
     var lp = lng.postnl || {};
     var lh = lng.hpilo || {};
-    var lf = lng.f1 || {};
     var lm = lng.media || {};
     // Radio's Add station control docks next to the Display options
     // checkboxes rather than living on every station row.
@@ -4032,122 +4020,6 @@ var DashticzWidgetEditor = (function () {
         lh.hpilo_fontsize_help || 'Font size of the rows. Default: 14.'
       );
       fields += _hpiloRowsFieldHtml(hcfg.hpilo_rows, hcfg.hpilo_icons);
-    } else if (item.id === 'f1' || item.id === 'f1events') {
-      // Two columns; the (long) calendar URLs span both.
-      var f1Html = '';
-      var f1Add = function (html) {
-        f1Html +=
-          '<div class="' +
-          (/data-cfg-key="f1_url_/.test(html) ? 'col-12' : 'col-md-6') +
-          '">' +
-          html +
-          '</div>';
-      };
-      var f1cfg = widgetConfigs.f1 || {};
-      f1Add(
-        _cfgField(
-          'f1_language',
-          lf.f1_language || 'Language',
-          'select',
-          f1cfg.f1_language || 'en',
-          { en: 'English', nl: 'Nederlands' }
-        )
-      );
-      f1Add(
-        _cfgField(
-          'f1_utcoffset',
-          lf.f1_utcoffset || 'UTC offset in hours',
-          'number',
-          f1cfg.f1_utcoffset || '1',
-          { min: -24, max: 24, step: 1 },
-          lf.f1_utcoffset_help || 'Added to the session times. Default: 1.'
-        )
-      );
-      f1Add(
-        _cfgField(
-          'f1_pollminutes',
-          lf.f1_pollminutes || 'Poll interval (minutes)',
-          'number',
-          f1cfg.f1_pollminutes || '60',
-          { min: 5, max: 1440, step: 5 },
-          lf.f1_pollminutes_help ||
-            'How often the calendar is downloaded. Minimum 5. Default: 60.'
-        )
-      );
-      f1Add(
-        _cfgField(
-          'f1_sessions',
-          lf.f1_sessions || 'Show sessions',
-          'select',
-          f1cfg.f1_sessions || 'all',
-          {
-            all: lf.f1_sessions_all || 'Training / Sprint / Race',
-            sprint_race: lf.f1_sessions_sprint_race || 'Sprint / Race',
-            race: lf.f1_sessions_race || 'Race',
-          }
-        )
-      );
-      f1Add(
-        _cfgField(
-          'f1_visibility',
-          lf.f1_visibility || 'Next-event visibility (days)',
-          'number',
-          f1cfg.f1_visibility || '3',
-          { min: 0, max: 365, step: 1 },
-          lf.f1_visibility_help ||
-            'Show the next session this many days before it starts. Default: 3.'
-        )
-      );
-      f1Add(
-        _cfgField(
-          'f1_emptytext',
-          lf.f1_emptytext || 'No-event text',
-          'text',
-          f1cfg.f1_emptytext,
-          undefined,
-          lf.f1_emptytext_help ||
-            'Shown when there is no event within the visibility window. Blank = empty.'
-        )
-      );
-      f1Add(
-        _cfgField(
-          'f1_hideimageonempty',
-          lf.f1_hideimageonempty || 'Hide image when there is no event',
-          'checkbox',
-          f1cfg.f1_hideimageonempty
-        )
-      );
-      f1Add(
-        _cfgField(
-          'f1_fontsize',
-          lf.f1_fontsize || 'Font size (px)',
-          'number',
-          f1cfg.f1_fontsize || '14',
-          { min: 8, max: 60, step: 1 },
-          lf.f1_fontsize_help || 'Font size of the rows. Default: 14.'
-        )
-      );
-      f1Add(
-        _cfgField(
-          'f1_url_en',
-          lf.f1_url_en || 'Calendar URL (English)',
-          'text',
-          f1cfg.f1_url_en ||
-            'https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics',
-          undefined,
-          lf.f1_url_help || 'ICS feed with the F1 calendar.'
-        )
-      );
-      f1Add(
-        _cfgField(
-          'f1_url_nl',
-          lf.f1_url_nl || 'Calendar URL (Dutch)',
-          'text',
-          f1cfg.f1_url_nl ||
-            'https://files-f1.motorsportcalendars.com/nl/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics'
-        )
-      );
-      fields += '<div class="row">' + f1Html + '</div>';
     } else if (item.id === 'sonarr') {
       var scfg = widgetConfigs.sonarr || {};
       fields += _cfgField(
@@ -4709,9 +4581,7 @@ var DashticzWidgetEditor = (function () {
 
     return (
       '<div class="modal fade" id="we-config-popup" tabindex="-1" aria-labelledby="we-cfg-title" aria-hidden="true" data-bs-backdrop="static">' +
-      '<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable' +
-      (item.id === 'f1' || item.id === 'f1events' ? ' modal-lg' : '') +
-      '">' +
+      '<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">' +
       '<div class="modal-content">' +
       '<div class="modal-header">' +
       '<h5 class="modal-title" id="we-cfg-title"><i class="fas fa-cog me-2" aria-hidden="true"></i>' +
@@ -5399,8 +5269,6 @@ var DashticzWidgetEditor = (function () {
         widgetConfigs.postnl = collected;
       } else if (widgetId === 'hpilo') {
         widgetConfigs.hpilo = collected;
-      } else if (widgetId === 'f1' || widgetId === 'f1events') {
-        widgetConfigs.f1 = collected;
       } else if (widgetId === 'sonarr') {
         widgetConfigs.sonarr = collected;
       } else if (widgetId === 'spotify') {
@@ -5772,6 +5640,10 @@ var DashticzWidgetEditor = (function () {
         _openGraphFromWidgets();
         return;
       }
+      if ($(this).data('special-widget') === 'f1') {
+        _openF1FromWidgets();
+        return;
+      }
       _toggleWidget(String($(this).data('widget-id')));
     });
 
@@ -5813,6 +5685,10 @@ var DashticzWidgetEditor = (function () {
       }
       if ($(this).data('special-widget') === 'graph') {
         _openGraphFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'f1') {
+        _openF1FromWidgets();
         return;
       }
       _toggleWidget(String($(this).data('widget-id')));
@@ -5906,18 +5782,6 @@ var DashticzWidgetEditor = (function () {
         'hpilo_fontsize',
         'hpilo_rows',
         'hpilo_icons',
-      ],
-      f1: [
-        'f1_language',
-        'f1_url_en',
-        'f1_url_nl',
-        'f1_utcoffset',
-        'f1_pollminutes',
-        'f1_sessions',
-        'f1_visibility',
-        'f1_emptytext',
-        'f1_hideimageonempty',
-        'f1_fontsize',
       ],
       spotify: ['spot_clientid'],
       calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],
@@ -6225,11 +6089,7 @@ var DashticzWidgetEditor = (function () {
 
   function _widgetEditorDraft(widgetId) {
     return {
-      widgetConfig: $.extend(
-        true,
-        {},
-        widgetConfigs[_configId(widgetId)] || {}
-      ),
+      widgetConfig: $.extend(true, {}, widgetConfigs[widgetId] || {}),
       blockOptions: $.extend(
         true,
         {},
