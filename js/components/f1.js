@@ -26,6 +26,8 @@
  *   f1emptytext    text shown when there is no event (may be empty)
  *   hideimageonempty  hide the tile image while there is no event
  *   f1fontsize     font size of the text (default 14)
+ *   f1image        image (from img/, chosen in the config) shown before the
+ *                  text of the 'next' tile; the tile icon stays as it is
  */
 var DT_f1 = (function () {
   var DEFAULT_URLS = {
@@ -207,14 +209,25 @@ var DT_f1 = (function () {
     );
   }
 
+  // Optional image before the text, from block.f1image (path relative to img/).
+  function imageHtml(block) {
+    var image = String(block.f1image || '');
+    if (!/^[A-Za-z0-9 _.\/-]{1,100}$/.test(image) || image.indexOf('..') > -1)
+      return '';
+    return '<img class="f1-image" src="img/' + esc(image) + '" alt="">';
+  }
+
   // Grand Prix name, and below it "Do 24 Sep 10:30 : Vrije Training 1".
   function eventHtml(block, event) {
     var head = event.gp || event.location;
     return (
+      '<div class="f1-next">' +
+      imageHtml(block) +
       '<div class="f1-rows">' +
       (head ? '<div class="f1-heading">' + esc(head) + '</div>' : '') +
       '<div class="f1-session">' +
       esc(formatWhen(block, event.start) + ' : ' + event.session) +
+      '</div>' +
       '</div>' +
       '</div>'
     );

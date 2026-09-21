@@ -481,6 +481,8 @@
       "f1_block_emptytext_help": "Shown when there is no event within the visibility window. Blank = empty.",
       "f1_block_fontsize": "Font size (px)",
       "f1_block_hideimage": "Hide image when there is no event",
+      "f1_block_image": "Image (before the text of Next event)",
+      "f1_block_image_help": "Choose an image from the img/ folder. It is shown in front of the text of a Next event tile; the icon stays.",
       "f1_block_url_en": "Calendar URL (English)",
       "f1_block_url_nl": "Calendar URL (Dutch)",
       "f1_block_url_help": "ICS feed with the F1 calendar (https).",

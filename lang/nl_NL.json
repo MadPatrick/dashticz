@@ -401,6 +401,8 @@
       "f1_block_emptytext_help": "Getoond als er geen event binnen de zichtbaarheid valt. Leeg = niets.",
       "f1_block_fontsize": "Lettergrootte (px)",
       "f1_block_hideimage": "Verberg afbeelding als er geen event is",
+      "f1_block_image": "Afbeelding (voor de tekst van Volgend event)",
+      "f1_block_image_help": "Kies een afbeelding uit de map img/. Die staat voor de tekst van een Volgend event-tegel; het icoon blijft bestaan.",
       "f1_block_url_en": "Agenda-URL (Engels)",
       "f1_block_url_nl": "Agenda-URL (Nederlands)",
       "f1_block_url_help": "ICS-feed met de F1-kalender (https).",

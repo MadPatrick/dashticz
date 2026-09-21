@@ -8404,3 +8404,18 @@ canvas {
 .f1-past {
   opacity: 0.5;
 }
+
+.f1-next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.f1-image {
+  flex: none;
+  width: auto;
+  max-width: 40%;
+  height: 3em;
+  object-fit: contain;
+}

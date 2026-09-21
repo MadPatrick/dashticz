@@ -6908,6 +6908,7 @@ var DashticzDeviceEditor = (function () {
     f1emptytext: true,
     hideimageonempty: true,
     f1fontsize: true,
+    f1image: true,
   };
 
   // Stored custom-field rows -> the values shown in the F1 section.
@@ -6933,6 +6934,7 @@ var DashticzDeviceEditor = (function () {
       hideImage:
         values.hideimageonempty === true || values.hideimageonempty === 'true',
       fontSize: values.f1fontsize !== undefined ? values.f1fontsize : 14,
+      image: String(values.f1image || ''),
     };
   }
 
@@ -7111,6 +7113,26 @@ var DashticzDeviceEditor = (function () {
     );
     html += _f1FieldHtml(
       prefix,
+      'image',
+      t.f1_block_image,
+      '<div class="input-group input-group-sm de-f1-image-row" style="position:relative;">' +
+        '<input type="text" class="form-control de-f1-image-input" id="' +
+        _esc(prefix) +
+        '-f1-image" placeholder="custom/icon.png" value="' +
+        _esc(v.image) +
+        '" autocomplete="off">' +
+        '<button type="button" class="btn btn-outline-danger de-f1-image-clear" title="' +
+        _esc(t.remove_field) +
+        '"><i class="fas fa-xmark" aria-hidden="true"></i></button>' +
+        '<div class="dropdown-menu dt-custom-image-picker" role="dialog" aria-label="' +
+        _esc(t.custom_images) +
+        '"><div class="dt-custom-image-status"></div>' +
+        '<div class="dt-custom-image-grid"></div></div></div>',
+      t.f1_block_image_help,
+      true
+    );
+    html += _f1FieldHtml(
+      prefix,
       'urlen',
       t.f1_block_url_en,
       _f1InputHtml(prefix, 'urlen', 'text', v.urlEn || F1_URL_EN),
@@ -7139,6 +7161,60 @@ var DashticzDeviceEditor = (function () {
         .removeClass('active')
         .attr('aria-pressed', 'false');
       $(this).addClass('active').attr('aria-pressed', 'true');
+    });
+
+    // Own image picker (same custom-image grid as the Icon/Image field). The
+    // image is shown next to the text of the Next event tile, in addition to
+    // the tile icon, so it is not the block's own icon/image field. Handlers
+    // stop propagation: the config popup closes every picker on a click
+    // outside its own icon rows.
+    var t = _translations();
+    function closePicker() {
+      $popup
+        .find('.de-f1-image-row .dt-custom-image-picker')
+        .removeClass('show');
+    }
+    $popup.on('click focus', '.de-f1-image-input', function (event) {
+      event.stopImmediatePropagation();
+      var $picker = $(this)
+        .closest('.de-f1-image-row')
+        .find('.dt-custom-image-picker');
+      var selected = String($(this).val() || '');
+      closePicker();
+      $picker.addClass('show');
+      $picker.find('.dt-custom-image-status').show().text(t.loading_images);
+      $picker.find('.dt-custom-image-grid').empty();
+      _loadCustomImages()
+        .done(function (images) {
+          _renderCustomImageGrid($picker, images, selected, t.no_custom_images);
+        })
+        .fail(function () {
+          $picker.find('.dt-custom-image-grid').empty();
+          $picker
+            .find('.dt-custom-image-status')
+            .show()
+            .text(t.custom_images_error);
+        });
+    });
+    $popup.on(
+      'click',
+      '.de-f1-image-row .dt-custom-image-option',
+      function (event) {
+        event.stopImmediatePropagation();
+        $(this)
+          .closest('.de-f1-image-row')
+          .find('.de-f1-image-input')
+          .val(String($(this).attr('data-image-path') || ''));
+        closePicker();
+      }
+    );
+    $popup.on('click', '.de-f1-image-clear', function (event) {
+      event.stopImmediatePropagation();
+      $(this).closest('.de-f1-image-row').find('.de-f1-image-input').val('');
+      closePicker();
+    });
+    $popup.on('click', function (event) {
+      if (!$(event.target).closest('.de-f1-image-row').length) closePicker();
     });
   }
 
@@ -7174,6 +7250,11 @@ var DashticzDeviceEditor = (function () {
       emptyText: text('emptytext').slice(0, 200),
       hideImage: $('#' + prefix + '-f1-hideimage').is(':checked'),
       fontSize: num('fontsize', 14, 8, 60),
+      image:
+        /^[A-Za-z0-9 _.\/-]{0,100}$/.test(text('image')) &&
+        text('image').indexOf('..') < 0
+          ? text('image')
+          : '',
     };
   }
 
@@ -7195,6 +7276,7 @@ var DashticzDeviceEditor = (function () {
     add('f1emptytext', f1.emptyText, '');
     add('hideimageonempty', f1.hideImage, false);
     add('f1fontsize', f1.fontSize, 14);
+    add('f1image', f1.image, '');
     return rows;
   }
 
@@ -8247,8 +8329,6 @@ var DashticzDeviceEditor = (function () {
       });
     } else if (isGraphBlock) {
       html += _graphFieldsHtml('de-config', graphFields);
-    } else if (isF1Block) {
-      html += _f1FieldsHtml('de-config', f1Values);
     } else if (isClusterBlock) {
       // Unlike the quick-add popup, mode is locked here (see the 'locked'
       // arg below) and never changes, so the switch-size field it embeds
@@ -8297,6 +8377,8 @@ var DashticzDeviceEditor = (function () {
       html += '</div></div>';
     }
     html += '</div>';
+    // After the (Title/Icon/Image) custom fields, so those stay at the top.
+    if (isF1Block) html += _f1FieldsHtml('de-config', f1Values);
     html +=
       '<div class="de-config-message" role="status"></div></div><div class="modal-footer">';
     html +=
