@@ -15,7 +15,9 @@
  *                  ("Do 24 Sep 10:30 : Vrije Training 1").
  *                  'all': all (filtered) sessions of that race weekend, one
  *                  row per session: name left, date/time right, finished
- *                  ones dimmed.
+ *                  ones dimmed. The race location is added to the tile
+ *                  title ("F1 agenda - Baku"); without a title it is the
+ *                  heading above the rows.
  *   f1language     'en' (default) | 'nl'  (weekday/month names and feed)
  *   f1urlen/f1urlnl  ICS feed per language (defaults: the plugin's feeds)
  *   f1utcoffset    hours added to the (UTC) session times (default 1)
@@ -184,11 +186,22 @@ var DT_f1 = (function () {
       });
   }
 
-  function weekendHtml(block, weekend, now) {
+  // The location of the race is added to the tile title ("F1 agenda - Baku").
+  // Returns false when the tile has no title to put it in.
+  function setTitleLocation(me, location) {
+    var $title = me.$mountPoint.find('.dt_title');
+    if (!$title.length || !me.block.title) return false;
+    $title.html(me.block.title + (location ? ' - ' + esc(location) : ''));
+    return !!location;
+  }
+
+  function weekendHtml(block, weekend, now, titleHasLocation) {
     var head = weekend[0].gp || weekend[0].location;
     return (
       '<div class="f1-rows f1-list">' +
-      (head ? '<div class="f1-heading">' + esc(head) + '</div>' : '') +
+      (head && !titleHasLocation
+        ? '<div class="f1-heading">' + esc(head) + '</div>'
+        : '') +
       weekend
         .map(function (event) {
           return (
@@ -251,6 +264,7 @@ var DT_f1 = (function () {
   }
 
   function showEmpty(me) {
+    setTitleLocation(me, '');
     var text = String(me.block.f1emptytext || '').trim();
     me.$mountPoint
       .find('.dt_state')
@@ -288,7 +302,15 @@ var DT_f1 = (function () {
         var html;
         if (block.f1mode === 'all') {
           var weekend = nextWeekend(block, events, now);
-          html = weekend && weekend.length && weekendHtml(block, weekend, now);
+          html =
+            weekend &&
+            weekend.length &&
+            weekendHtml(
+              block,
+              weekend,
+              now,
+              setTitleLocation(me, weekend[0].location)
+            );
         } else {
           var event = nextEvent(block, events, now);
           html = event && eventHtml(block, event);

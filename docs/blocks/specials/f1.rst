@@ -19,9 +19,11 @@ and choose with the two icon buttons what the tile shows:
     Grand Prix van Azerbeidzjan
     Do 24 Sep 10:30 : Vrije Training 1
 
-* **All events** (``f1mode: 'all'``): the Grand Prix name with one row per
-  session of that race weekend (session name left, date and time right).
-  Sessions that are over are dimmed.
+* **All events** (``f1mode: 'all'``): one row per session of that race
+  weekend (session name left, date and time right). Sessions that are over are
+  dimmed. The location of the race is added to the tile title (for example
+  ``F1 agenda - Baku``); a tile without a title shows the Grand Prix name above
+  the rows instead.
 
 Use the tile ``image`` option to show the F1 logo next to it. Change the
 settings of a placed tile with the cog icon.
