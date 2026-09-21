@@ -45,6 +45,26 @@ var DT_postnl = (function () {
     return parseInt(settings['postnl_showdelivered'], 10) !== 0;
   }
 
+  // Optional per-part colors (Settings -> Widgets -> PostNL); empty = theme default.
+  function colorStyle(key) {
+    var c = settings['postnl_' + key + '_color'];
+    return c && /^#[0-9a-f]{3,8}$/i.test(String(c))
+      ? ' style="color:' + c + '"'
+      : '';
+  }
+
+  function part(cls, text) {
+    return (
+      '<span class="postnl-' +
+      cls +
+      '"' +
+      colorStyle(cls) +
+      '>' +
+      text +
+      '</span>'
+    );
+  }
+
   function statusLabel(status) {
     var misc = (typeof language !== 'undefined' && language.misc) || {};
     return misc['postnl_status_' + String(status).toLowerCase()] || status;
@@ -65,9 +85,9 @@ var DT_postnl = (function () {
       var timeTo = entry.to ? moment(entry.to).format('HH:mm') : '';
       time = timeFrom && timeTo ? timeFrom + '-' + timeTo : timeFrom || timeTo;
     }
-    var prefix = date ? '[' + date + '] ' : '';
-    var suffix = time ? ' ' + time : '';
-    return prefix + who + ': ' + label + suffix;
+    var prefix = date ? part('date', '[' + date + ']') + ' ' : '';
+    var suffix = time ? ' ' + part('time', time) : '';
+    return prefix + part('text', who + ': ' + label) + suffix;
   }
 
   // Delivered: open box; otherwise a delivery truck (incoming) or a paper
@@ -110,7 +130,9 @@ var DT_postnl = (function () {
           icon(item) +
           ' postnl-icon postnl-icon-' +
           item.role +
-          '" aria-hidden="true"></i>' +
+          '"' +
+          colorStyle('icon') +
+          ' aria-hidden="true"></i>' +
           '<span class="postnl-row-text">' +
           formatLine(item.entry) +
           '</span>' +
