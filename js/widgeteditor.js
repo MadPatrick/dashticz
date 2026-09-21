@@ -4033,90 +4033,121 @@ var DashticzWidgetEditor = (function () {
       );
       fields += _hpiloRowsFieldHtml(hcfg.hpilo_rows, hcfg.hpilo_icons);
     } else if (item.id === 'f1' || item.id === 'f1events') {
+      // Two columns; the (long) calendar URLs span both.
+      var f1Html = '';
+      var f1Add = function (html) {
+        f1Html +=
+          '<div class="' +
+          (/data-cfg-key="f1_url_/.test(html) ? 'col-12' : 'col-md-6') +
+          '">' +
+          html +
+          '</div>';
+      };
       var f1cfg = widgetConfigs.f1 || {};
-      fields += _cfgField(
-        'f1_language',
-        lf.f1_language || 'Language',
-        'select',
-        f1cfg.f1_language || 'en',
-        { en: 'English', nl: 'Nederlands' }
+      f1Add(
+        _cfgField(
+          'f1_language',
+          lf.f1_language || 'Language',
+          'select',
+          f1cfg.f1_language || 'en',
+          { en: 'English', nl: 'Nederlands' }
+        )
       );
-      fields += _cfgField(
-        'f1_url_en',
-        lf.f1_url_en || 'Calendar URL (English)',
-        'text',
-        f1cfg.f1_url_en ||
-          'https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics',
-        undefined,
-        lf.f1_url_help || 'ICS feed with the F1 calendar.'
+      f1Add(
+        _cfgField(
+          'f1_utcoffset',
+          lf.f1_utcoffset || 'UTC offset in hours',
+          'number',
+          f1cfg.f1_utcoffset || '1',
+          { min: -24, max: 24, step: 1 },
+          lf.f1_utcoffset_help || 'Added to the session times. Default: 1.'
+        )
       );
-      fields += _cfgField(
-        'f1_url_nl',
-        lf.f1_url_nl || 'Calendar URL (Dutch)',
-        'text',
-        f1cfg.f1_url_nl ||
-          'https://files-f1.motorsportcalendars.com/nl/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics'
+      f1Add(
+        _cfgField(
+          'f1_pollminutes',
+          lf.f1_pollminutes || 'Poll interval (minutes)',
+          'number',
+          f1cfg.f1_pollminutes || '60',
+          { min: 5, max: 1440, step: 5 },
+          lf.f1_pollminutes_help ||
+            'How often the calendar is downloaded. Minimum 5. Default: 60.'
+        )
       );
-      fields += _cfgField(
-        'f1_utcoffset',
-        lf.f1_utcoffset || 'UTC offset in hours',
-        'number',
-        f1cfg.f1_utcoffset || '1',
-        { min: -24, max: 24, step: 1 },
-        lf.f1_utcoffset_help || 'Added to the session times. Default: 1.'
+      f1Add(
+        _cfgField(
+          'f1_sessions',
+          lf.f1_sessions || 'Show sessions',
+          'select',
+          f1cfg.f1_sessions || 'all',
+          {
+            all: lf.f1_sessions_all || 'Training / Sprint / Race',
+            sprint_race: lf.f1_sessions_sprint_race || 'Sprint / Race',
+            race: lf.f1_sessions_race || 'Race',
+          }
+        )
       );
-      fields += _cfgField(
-        'f1_pollminutes',
-        lf.f1_pollminutes || 'Poll interval (minutes)',
-        'number',
-        f1cfg.f1_pollminutes || '60',
-        { min: 5, max: 1440, step: 5 },
-        lf.f1_pollminutes_help ||
-          'How often the calendar is downloaded. Minimum 5. Default: 60.'
+      f1Add(
+        _cfgField(
+          'f1_visibility',
+          lf.f1_visibility || 'Next-event visibility (days)',
+          'number',
+          f1cfg.f1_visibility || '3',
+          { min: 0, max: 365, step: 1 },
+          lf.f1_visibility_help ||
+            'Show the next session this many days before it starts. Default: 3.'
+        )
       );
-      fields += _cfgField(
-        'f1_sessions',
-        lf.f1_sessions || 'Show sessions',
-        'select',
-        f1cfg.f1_sessions || 'all',
-        {
-          all: lf.f1_sessions_all || 'Training / Sprint / Race',
-          sprint_race: lf.f1_sessions_sprint_race || 'Sprint / Race',
-          race: lf.f1_sessions_race || 'Race',
-        }
+      f1Add(
+        _cfgField(
+          'f1_emptytext',
+          lf.f1_emptytext || 'No-event text',
+          'text',
+          f1cfg.f1_emptytext,
+          undefined,
+          lf.f1_emptytext_help ||
+            'Shown when there is no event within the visibility window. Blank = empty.'
+        )
       );
-      fields += _cfgField(
-        'f1_visibility',
-        lf.f1_visibility || 'Next-event visibility (days)',
-        'number',
-        f1cfg.f1_visibility || '3',
-        { min: 0, max: 365, step: 1 },
-        lf.f1_visibility_help ||
-          'Show the next session this many days before it starts. Default: 3.'
+      f1Add(
+        _cfgField(
+          'f1_hideimageonempty',
+          lf.f1_hideimageonempty || 'Hide image when there is no event',
+          'checkbox',
+          f1cfg.f1_hideimageonempty
+        )
       );
-      fields += _cfgField(
-        'f1_emptytext',
-        lf.f1_emptytext || 'No-event text',
-        'text',
-        f1cfg.f1_emptytext,
-        undefined,
-        lf.f1_emptytext_help ||
-          'Shown when there is no event within the visibility window. Blank = empty.'
+      f1Add(
+        _cfgField(
+          'f1_fontsize',
+          lf.f1_fontsize || 'Font size (px)',
+          'number',
+          f1cfg.f1_fontsize || '14',
+          { min: 8, max: 60, step: 1 },
+          lf.f1_fontsize_help || 'Font size of the rows. Default: 14.'
+        )
       );
-      fields += _cfgField(
-        'f1_hideimageonempty',
-        lf.f1_hideimageonempty || 'Hide image when there is no event',
-        'checkbox',
-        f1cfg.f1_hideimageonempty
+      f1Add(
+        _cfgField(
+          'f1_url_en',
+          lf.f1_url_en || 'Calendar URL (English)',
+          'text',
+          f1cfg.f1_url_en ||
+            'https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics',
+          undefined,
+          lf.f1_url_help || 'ICS feed with the F1 calendar.'
+        )
       );
-      fields += _cfgField(
-        'f1_fontsize',
-        lf.f1_fontsize || 'Font size (px)',
-        'number',
-        f1cfg.f1_fontsize || '14',
-        { min: 8, max: 60, step: 1 },
-        lf.f1_fontsize_help || 'Font size of the rows. Default: 14.'
+      f1Add(
+        _cfgField(
+          'f1_url_nl',
+          lf.f1_url_nl || 'Calendar URL (Dutch)',
+          'text',
+          f1cfg.f1_url_nl ||
+            'https://files-f1.motorsportcalendars.com/nl/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics'
+        )
       );
+      fields += '<div class="row">' + f1Html + '</div>';
     } else if (item.id === 'sonarr') {
       var scfg = widgetConfigs.sonarr || {};
       fields += _cfgField(
@@ -4678,7 +4709,9 @@ var DashticzWidgetEditor = (function () {
 
     return (
       '<div class="modal fade" id="we-config-popup" tabindex="-1" aria-labelledby="we-cfg-title" aria-hidden="true" data-bs-backdrop="static">' +
-      '<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">' +
+      '<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable' +
+      (item.id === 'f1' || item.id === 'f1events' ? ' modal-lg' : '') +
+      '">' +
       '<div class="modal-content">' +
       '<div class="modal-header">' +
       '<h5 class="modal-title" id="we-cfg-title"><i class="fas fa-cog me-2" aria-hidden="true"></i>' +
