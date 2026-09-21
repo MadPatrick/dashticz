@@ -1120,7 +1120,21 @@ var DashticzWidgetEditor = (function () {
         hpilo_icons: _s('hpilo_icons', '{}'),
       },
       f1: {
-        f1_idx: _s('f1_idx'),
+        f1_language: _s('f1_language', 'en'),
+        f1_url_en: _s(
+          'f1_url_en',
+          'https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics'
+        ),
+        f1_url_nl: _s(
+          'f1_url_nl',
+          'https://files-f1.motorsportcalendars.com/nl/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics'
+        ),
+        f1_utcoffset: _s('f1_utcoffset', '1'),
+        f1_pollminutes: _s('f1_pollminutes', '60'),
+        f1_sessions: _s('f1_sessions', 'all'),
+        f1_visibility: _s('f1_visibility', '3'),
+        f1_emptytext: _s('f1_emptytext'),
+        f1_hideimageonempty: _n('f1_hideimageonempty', 0),
         f1_fontsize: _s('f1_fontsize', '14'),
       },
       spotify: {
@@ -4005,13 +4019,79 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'f1') {
       var f1cfg = widgetConfigs.f1 || {};
       fields += _cfgField(
-        'f1_idx',
-        lf.f1_idx || 'F1 text device idx',
+        'f1_language',
+        lf.f1_language || 'Language',
+        'select',
+        f1cfg.f1_language || 'en',
+        { en: 'English', nl: 'Nederlands' }
+      );
+      fields += _cfgField(
+        'f1_url_en',
+        lf.f1_url_en || 'Calendar URL (English)',
+        'text',
+        f1cfg.f1_url_en ||
+          'https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics',
+        undefined,
+        lf.f1_url_help || 'ICS feed with the F1 calendar.'
+      );
+      fields += _cfgField(
+        'f1_url_nl',
+        lf.f1_url_nl || 'Calendar URL (Dutch)',
+        'text',
+        f1cfg.f1_url_nl ||
+          'https://files-f1.motorsportcalendars.com/nl/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics'
+      );
+      fields += _cfgField(
+        'f1_utcoffset',
+        lf.f1_utcoffset || 'UTC offset in hours',
         'number',
-        f1cfg.f1_idx,
-        { min: 1, step: 1 },
-        lf.f1_idx_help ||
-          'Idx of the text device created by the domoticz_F1 plugin.'
+        f1cfg.f1_utcoffset || '1',
+        { min: -24, max: 24, step: 1 },
+        lf.f1_utcoffset_help || 'Added to the session times. Default: 1.'
+      );
+      fields += _cfgField(
+        'f1_pollminutes',
+        lf.f1_pollminutes || 'Poll interval (minutes)',
+        'number',
+        f1cfg.f1_pollminutes || '60',
+        { min: 5, max: 1440, step: 5 },
+        lf.f1_pollminutes_help ||
+          'How often the calendar is downloaded. Minimum 5. Default: 60.'
+      );
+      fields += _cfgField(
+        'f1_sessions',
+        lf.f1_sessions || 'Show sessions',
+        'select',
+        f1cfg.f1_sessions || 'all',
+        {
+          all: lf.f1_sessions_all || 'Training / Sprint / Race',
+          sprint_race: lf.f1_sessions_sprint_race || 'Sprint / Race',
+          race: lf.f1_sessions_race || 'Race',
+        }
+      );
+      fields += _cfgField(
+        'f1_visibility',
+        lf.f1_visibility || 'Next-event visibility (days)',
+        'number',
+        f1cfg.f1_visibility || '3',
+        { min: 0, max: 365, step: 1 },
+        lf.f1_visibility_help ||
+          'Show a race weekend this many days before its first session. Default: 3.'
+      );
+      fields += _cfgField(
+        'f1_emptytext',
+        lf.f1_emptytext || 'No-event text',
+        'text',
+        f1cfg.f1_emptytext,
+        undefined,
+        lf.f1_emptytext_help ||
+          'Shown when there is no event within the visibility window. Blank = empty.'
+      );
+      fields += _cfgField(
+        'f1_hideimageonempty',
+        lf.f1_hideimageonempty || 'Hide image when there is no event',
+        'checkbox',
+        f1cfg.f1_hideimageonempty
       );
       fields += _cfgField(
         'f1_fontsize',
@@ -5778,7 +5858,18 @@ var DashticzWidgetEditor = (function () {
         'hpilo_rows',
         'hpilo_icons',
       ],
-      f1: ['f1_idx', 'f1_fontsize'],
+      f1: [
+        'f1_language',
+        'f1_url_en',
+        'f1_url_nl',
+        'f1_utcoffset',
+        'f1_pollminutes',
+        'f1_sessions',
+        'f1_visibility',
+        'f1_emptytext',
+        'f1_hideimageonempty',
+        'f1_fontsize',
+      ],
       spotify: ['spot_clientid'],
       calendar: ['calendarformat', 'calendarlanguage', 'calendar_maxitems'],
       secpanel: ['security_button_icons'],

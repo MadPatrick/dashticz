@@ -1,20 +1,66 @@
-/* global Dashticz Domoticz settings language */
+/* global Dashticz settings language */
 //# sourceURL=js/components/f1.js
-/* F1 widget: shows the race weekend schedule of the domoticz_F1 plugin
- * (https://github.com/MadPatrick/domoticz_F1). The plugin writes its schedule
- * into a Domoticz text device, one session per line:
+/* F1 widget: shows the upcoming Formula 1 race weekend, based on the
+ * domoticz_F1 plugin (https://github.com/MadPatrick/domoticz_F1). It is
+ * standalone - no Domoticz device needed. The calendar (ICS feed) is
+ * downloaded and parsed by vendor/dashticz/f1/index.php, a same-origin PHP
+ * bridge like the PostNL and HP iLO widgets; the filtering and formatting
+ * below mirror the plugin's settings:
  *
- *   Sat 5 Jul 12:30 : Qualifying
+ *   f1_language        'en' | 'nl'  (weekday/month names and feed)
+ *   f1_url_en/_nl      ICS feed per language (defaults: the plugin's feeds)
+ *   f1_utcoffset       hours added to the (UTC) session times
+ *   f1_pollminutes     how often the feed is downloaded
+ *   f1_sessions        'all' | 'sprint_race' | 'race'
+ *   f1_visibility      show the weekend this many days before its first
+ *                      upcoming session; otherwise the 'no-event' text
+ *   f1_emptytext       text shown when there is no event (may be empty)
+ *   f1_hideimageonempty  hide the tile image while there is no event
+ *   f1_fontsize        font size of the rows
  *
- * The device idx (f1_idx) and the font size are global settings (Settings ->
- * Widgets -> F1, see js/widgeteditor.js), same as Weather, Garbage or PostNL.
- * Icon, title and background of the tile are the usual block options.
- *
- * Every row is: the session name and the date/time right-aligned. A line
- * without the ' : ' separator (for example the location line of the plugin's
- * 'next event' device) is shown as a heading.
+ * Every row is: the session name and its date/time right-aligned, below a
+ * heading with the location of the Grand Prix.
  */
 var DT_f1 = (function () {
+  var DEFAULT_URLS = {
+    en: 'https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics',
+    nl: 'https://files-f1.motorsportcalendars.com/nl/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics',
+  };
+  var WEEKDAYS = {
+    en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    nl: ['Zo', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za'],
+  };
+  var MONTHS = {
+    en: [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ],
+    nl: [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Dec',
+    ],
+  };
+
   return {
     name: 'f1',
     canHandle: function (block) {
@@ -36,9 +82,24 @@ var DT_f1 = (function () {
     return (typeof language !== 'undefined' && language.misc) || {};
   }
 
-  function fontSize() {
-    var size = parseInt(settings['f1_fontsize'], 10);
-    return size >= 8 && size <= 60 ? size : 14;
+  function num(key, def, min, max) {
+    var value = parseFloat(settings[key]);
+    return isNaN(value) ? def : Math.min(max, Math.max(min, value));
+  }
+
+  function flag(key) {
+    var value = settings[key];
+    return value === true || value === 1 || String(value) === '1';
+  }
+
+  function lang() {
+    return settings['f1_language'] === 'nl' ? 'nl' : 'en';
+  }
+
+  function feedUrl() {
+    return (
+      String(settings['f1_url_' + lang()] || '').trim() || DEFAULT_URLS[lang()]
+    );
   }
 
   function esc(text) {
@@ -53,72 +114,135 @@ var DT_f1 = (function () {
     });
   }
 
-  // Plugin text -> [{when, what}]; 'when' is empty for a heading line.
-  function parseLines(text) {
-    return String(text || '')
-      .split(/<br\s*\/?>|\r?\n/i)
-      .map(function (line) {
-        return line.trim();
-      })
-      .filter(Boolean)
-      .map(function (line) {
-        var pos = line.indexOf(' : ');
-        return pos < 0
-          ? { when: '', what: line }
-          : {
-              when: line.slice(0, pos).trim(),
-              what: line.slice(pos + 3).trim(),
-            };
-      });
+  function pad(n) {
+    return (n < 10 ? '0' : '') + n;
   }
 
-  function rowsHtml(lines) {
-    return lines
-      .map(function (line) {
-        if (!line.when) {
-          return '<div class="f1-row f1-heading">' + esc(line.what) + '</div>';
-        }
-        return (
-          '<div class="f1-row">' +
-          '<span class="f1-label">' +
-          esc(line.what) +
-          '</span>' +
-          '<span class="f1-value">' +
-          esc(line.when) +
-          '</span>' +
-          '</div>'
-        );
-      })
-      .join('');
+  // Unix time -> "Sat 5 Jul 12:30", shifted by the UTC offset.
+  function formatWhen(ts) {
+    var d = new Date((ts + num('f1_utcoffset', 1, -24, 24) * 3600) * 1000);
+    return (
+      WEEKDAYS[lang()][d.getUTCDay()] +
+      ' ' +
+      d.getUTCDate() +
+      ' ' +
+      MONTHS[lang()][d.getUTCMonth()] +
+      ' ' +
+      pad(d.getUTCHours()) +
+      ':' +
+      pad(d.getUTCMinutes())
+    );
   }
 
-  function showMessage(me, text) {
-    me.$mountPoint
-      .find('.dt_state')
-      .html('<div class="f1-rows f1-error">' + esc(text) + '</div>');
+  function isTraining(event) {
+    return /training|practice|^fp\d/i.test(event.session);
   }
 
-  function refresh(me) {
-    me.$mountPoint.find('.dt_state').css('font-size', fontSize() + 'px');
-    var idx = parseInt(settings['f1_idx'], 10);
-    if (!idx) {
-      showMessage(
-        me,
-        misc().f1_not_configured ||
-          'Configure the F1 device in Settings -> Widgets -> F1.'
-      );
-      return;
-    }
-    var device = Domoticz.getAllDevices(idx);
-    if (!device) {
-      showMessage(me, misc().f1_error || 'F1 device not found.');
-      return;
-    }
+  function isRace(event) {
+    return /grand prix/i.test(event.session);
+  }
+
+  function passesFilter(event) {
+    var mode = settings['f1_sessions'];
+    if (mode === 'race') return isRace(event);
+    if (mode === 'sprint_race') return !isTraining(event);
+    return true;
+  }
+
+  // Sessions of the weekend to show, or null when there is nothing to show.
+  function currentWeekend(events, now) {
+    var sessions = events.filter(passesFilter);
+    var next = sessions.filter(function (event) {
+      return event.end > now;
+    })[0];
+    if (!next) return null;
+    if (next.start - now > num('f1_visibility', 3, 0, 365) * 86400) return null;
+    return sessions.filter(function (event) {
+      return event.gp === next.gp;
+    });
+  }
+
+  function rowsHtml(weekend, now) {
+    var head = weekend[0].location || weekend[0].gp;
+    return (
+      '<div class="f1-rows">' +
+      (head ? '<div class="f1-row f1-heading">' + esc(head) + '</div>' : '') +
+      weekend
+        .map(function (event) {
+          return (
+            '<div class="f1-row' +
+            (event.end < now ? ' f1-past' : '') +
+            '">' +
+            '<span class="f1-label">' +
+            esc(event.session) +
+            '</span>' +
+            '<span class="f1-value">' +
+            esc(formatWhen(event.start)) +
+            '</span>' +
+            '</div>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  // Same behaviour as the hideimageonempty block option of Domoticz blocks
+  // (js/components/domoticzblock.js): only the tile image is hidden.
+  function setImageVisible(me, visible) {
+    me.$mountPoint.find('.col-icon img').each(function () {
+      if (visible) this.style.removeProperty('display');
+      else this.style.setProperty('display', 'none', 'important');
+    });
+  }
+
+  function showEmpty(me) {
+    var text = String(settings['f1_emptytext'] || '').trim();
     me.$mountPoint
       .find('.dt_state')
       .html(
-        '<div class="f1-rows">' + rowsHtml(parseLines(device.Data)) + '</div>'
+        text ? '<div class="f1-rows f1-empty">' + esc(text) + '</div>' : ''
       );
+    setImageVisible(me, !flag('f1_hideimageonempty'));
+  }
+
+  function showError(me, text) {
+    me.$mountPoint
+      .find('.dt_state')
+      .html('<div class="f1-rows f1-error">' + esc(text) + '</div>');
+    setImageVisible(me, true);
+  }
+
+  function refresh(me) {
+    me.$mountPoint
+      .find('.dt_state')
+      .css('font-size', num('f1_fontsize', 14, 8, 60) + 'px');
+    $.ajax({
+      url: settings['dashticz_php_path'] + 'f1/index.php',
+      method: 'POST',
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify({
+        url: feedUrl(),
+        pollMinutes: num('f1_pollminutes', 60, 5, 1440),
+      }),
+    }).then(
+      function (res) {
+        var now = Math.floor(Date.now() / 1000);
+        var weekend = currentWeekend((res && res.events) || [], now);
+        if (!weekend || !weekend.length) return showEmpty(me);
+        me.$mountPoint.find('.dt_state').html(rowsHtml(weekend, now));
+        setImageVisible(me, true);
+      },
+      function (jqXHR) {
+        showError(
+          me,
+          (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) ||
+            misc().f1_error ||
+            'Unable to fetch the F1 calendar.'
+        );
+      }
+    );
   }
 })();
 

@@ -99,7 +99,15 @@ $allowedSettings = [
     'hpilo_rows'             => 'hpilo_rows',
     'hpilo_icons'            => 'hpilo_icons',
     // f1
-    'f1_idx'                 => 'number',
+    'f1_language'            => 'f1_language',
+    'f1_url_en'              => 'string',
+    'f1_url_nl'              => 'string',
+    'f1_utcoffset'           => 'number',
+    'f1_pollminutes'         => 'number',
+    'f1_sessions'            => 'f1_sessions',
+    'f1_visibility'          => 'number',
+    'f1_emptytext'           => 'string',
+    'f1_hideimageonempty'    => 'bool',
     'f1_fontsize'            => 'number',
     // spotify
     'spot_clientid'          => 'string',
@@ -190,6 +198,14 @@ if (isset($data['settings']) && is_array($data['settings'])) {
             }
         } elseif ($type === 'waqi_layout') {
             if (in_array((string)$value, $allowedWaqiLayouts, true)) {
+                $configSettings[$key] = (string)$value;
+            }
+        } elseif ($type === 'f1_language') {
+            if (in_array((string)$value, ['en', 'nl'], true)) {
+                $configSettings[$key] = (string)$value;
+            }
+        } elseif ($type === 'f1_sessions') {
+            if (in_array((string)$value, ['all', 'sprint_race', 'race'], true)) {
                 $configSettings[$key] = (string)$value;
             }
         } elseif ($type === 'hpilo_rows') {

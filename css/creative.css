@@ -8395,3 +8395,7 @@ canvas {
   flex: none;
   text-align: right;
 }
+
+.f1-past {
+  opacity: 0.5;
+}

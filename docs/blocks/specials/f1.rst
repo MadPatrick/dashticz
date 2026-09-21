@@ -3,15 +3,18 @@
 F1
 ==
 
-The F1 widget shows the race weekend schedule of the
-`domoticz_F1 <https://github.com/MadPatrick/domoticz_F1>`_ plugin. The plugin
-writes the sessions (practice, qualifying, sprint, Grand Prix) into a Domoticz
-text device; the widget shows one row per session, with the session name and
-the date and time.
+The F1 widget shows the upcoming Formula 1 race weekend: the location as
+heading, and one row per session with the session name and its date and time.
+Sessions that are over are dimmed.
+
+The widget is standalone (no Domoticz device needed). It is based on the
+`domoticz_F1 <https://github.com/MadPatrick/domoticz_F1>`_ plugin and uses the
+same calendar feeds and options. The calendar is downloaded server-side
+(``vendor/dashticz/f1/index.php``) and cached for the poll interval.
 
 Add the widget via the Screen Editor: "Add items" -> Widgets -> F1, and fill in
-the settings with the cog icon. Icon, title and background are set like for any
-other widget.
+the settings with the cog icon. Icon, title, image and background are set like
+for any other widget.
 
 Settings
 --------
@@ -23,10 +26,32 @@ Settings
 
   * - Setting
     - Description
-  * - f1_idx
-    - Idx of the text device created by the domoticz_F1 plugin
+  * - f1_language
+    - ``'en'`` (default) or ``'nl'``: language of the weekday/month names and
+      which calendar URL is used
+  * - f1_url_en
+    - ICS feed for English. Default:
+      ``https://files-f1.motorsportcalendars.com/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics``
+  * - f1_url_nl
+    - ICS feed for Dutch. Default:
+      ``https://files-f1.motorsportcalendars.com/nl/f1-calendar_p1_p2_p3_qualifying_sprint_gp.ics``
+  * - f1_utcoffset
+    - Hours added to the (UTC) session times. Default: 1
+  * - f1_pollminutes
+    - How often the calendar is downloaded, in minutes. Minimum 5. Default: 60
+  * - f1_sessions
+    - ``'all'`` (training, sprint and race; default), ``'sprint_race'`` or
+      ``'race'``
+  * - f1_visibility
+    - The race weekend is shown this many days before its first upcoming
+      session. Default: 3
+  * - f1_emptytext
+    - Text shown when there is no event within the visibility window. Default:
+      empty
+  * - f1_hideimageonempty
+    - ``1``: hide the tile ``image`` while there is no event (same as the
+      ``hideimageonempty`` block option). Default: 0
   * - f1_fontsize
     - Font size in pixels (8..60). Default: 14
 
-The session filter, UTC offset and poll interval are settings of the plugin
-itself.
+The calendar URL must be a public ``https`` address.
