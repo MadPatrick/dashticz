@@ -129,6 +129,8 @@
     "postnl_error": "Kan PostNL-zendingen niet ophalen.",
     "hpilo_not_configured": "Stel je iLO in bij Instellingen -> Widgets -> HP iLO.",
     "hpilo_error": "Kan de iLO-gegevens niet ophalen.",
+    "f1_not_configured": "Stel het F1-device in bij Instellingen -> Widgets -> F1.",
+    "f1_error": "F1-device niet gevonden.",
     "hpilo_name": "Servernaam",
     "hpilo_model": "Model",
     "hpilo_power": "Server aan/uit",
@@ -560,6 +562,7 @@
       "postnl_title": "PostNL",
       "postnl_description": "Inkomende en verzonden PostNL-pakketten.",
       "hpilo_title": "HP iLO",
+      "f1_title": "F1",
       "hpilo_description": "HPE-serverstatus (stroom, ventilatoren, temperaturen) via iLO.",
       "spotify_title": "Spotify",
       "spotify_description": "Spotify Connect-afstandsbediening.",
@@ -735,6 +738,13 @@
       "postnl_fontsize": "Lettergrootte (px)",
       "postnl_fontsize_help": "Lettergrootte van de pakkettekst. Standaard: 14.",
       "postnl_pollminutes_help": "Minimaal 15 minuten, om te voorkomen dat je PostNL-account wordt geblokkeerd. Standaard: 60."
+    },
+    "f1": {
+      "title": "F1",
+      "f1_idx": "F1 tekstdevice idx",
+      "f1_idx_help": "Idx van het tekstdevice dat de domoticz_F1 plugin aanmaakt.",
+      "f1_fontsize": "Lettergrootte (px)",
+      "f1_fontsize_help": "Lettergrootte van de regels. Standaard: 14."
     },
     "hpilo": {
       "title": "HP iLO",

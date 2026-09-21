@@ -1,0 +1,32 @@
+.. _f1 :
+
+F1
+==
+
+The F1 widget shows the race weekend schedule of the
+`domoticz_F1 <https://github.com/MadPatrick/domoticz_F1>`_ plugin. The plugin
+writes the sessions (practice, qualifying, sprint, Grand Prix) into a Domoticz
+text device; the widget shows one row per session, with the session name and
+the date and time.
+
+Add the widget via the Screen Editor: "Add items" -> Widgets -> F1, and fill in
+the settings with the cog icon. Icon, title and background are set like for any
+other widget.
+
+Settings
+--------
+
+.. list-table::
+  :header-rows: 1
+  :widths: 5 30
+  :class: tight-table
+
+  * - Setting
+    - Description
+  * - f1_idx
+    - Idx of the text device created by the domoticz_F1 plugin
+  * - f1_fontsize
+    - Font size in pixels (8..60). Default: 14
+
+The session filter, UTC offset and poll interval are settings of the plugin
+itself.

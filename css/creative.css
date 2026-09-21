@@ -8360,3 +8360,38 @@ canvas {
   line-height: 1;
   text-align: center;
 }
+
+/* F1 widget (js/components/f1.js): race weekend schedule from the
+   domoticz_F1 plugin's text device, painted into .dt_state. */
+.f1-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.f1-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.f1-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.f1-heading {
+  font-weight: bold;
+}
+
+.f1-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.f1-value {
+  flex: none;
+  text-align: right;
+}

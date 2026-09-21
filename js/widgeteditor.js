@@ -50,6 +50,15 @@ var DashticzWidgetEditor = (function () {
       height: 200,
     },
     {
+      id: 'f1',
+      blockKey: 'widget_f1',
+      title: 'F1',
+      description: 'Formula 1 race weekend schedule (domoticz_F1 plugin).',
+      icon: 'fas fa-flag-checkered',
+      width: 4,
+      height: 200,
+    },
+    {
       id: 'spotify',
       blockKey: 'widget_spotify',
       title: 'Spotify',
@@ -1110,6 +1119,10 @@ var DashticzWidgetEditor = (function () {
         ),
         hpilo_icons: _s('hpilo_icons', '{}'),
       },
+      f1: {
+        f1_idx: _s('f1_idx'),
+        f1_fontsize: _s('f1_fontsize', '14'),
+      },
       spotify: {
         spot_clientid: _s('spot_clientid'),
       },
@@ -1715,6 +1728,7 @@ var DashticzWidgetEditor = (function () {
       garbage: 'garbage',
       postnl: 'postnl',
       hpilo: 'hpilo',
+      f1: 'f1',
       spotify: 'spotify',
       sonarr: 'sonarr',
       calendar: 'calendar',
@@ -2245,6 +2259,7 @@ var DashticzWidgetEditor = (function () {
       id === 'garbage' ||
       id === 'postnl' ||
       id === 'hpilo' ||
+      id === 'f1' ||
       id === 'sonarr' ||
       id === 'spotify' ||
       id === 'secpanel' ||
@@ -3271,6 +3286,7 @@ var DashticzWidgetEditor = (function () {
         ? language.settings
         : {};
     var lh = lng.hpilo || {};
+    var lf = lng.f1 || {};
     var options =
       '<option value="">— ' +
       _esc(lh.hpilo_rows_select || 'Select a row') +
@@ -3986,6 +4002,25 @@ var DashticzWidgetEditor = (function () {
         lh.hpilo_fontsize_help || 'Font size of the rows. Default: 14.'
       );
       fields += _hpiloRowsFieldHtml(hcfg.hpilo_rows, hcfg.hpilo_icons);
+    } else if (item.id === 'f1') {
+      var f1cfg = widgetConfigs.f1 || {};
+      fields += _cfgField(
+        'f1_idx',
+        lf.f1_idx || 'F1 text device idx',
+        'number',
+        f1cfg.f1_idx,
+        { min: 1, step: 1 },
+        lf.f1_idx_help ||
+          'Idx of the text device created by the domoticz_F1 plugin.'
+      );
+      fields += _cfgField(
+        'f1_fontsize',
+        lf.f1_fontsize || 'Font size (px)',
+        'number',
+        f1cfg.f1_fontsize || '14',
+        { min: 8, max: 60, step: 1 },
+        lf.f1_fontsize_help || 'Font size of the rows. Default: 14.'
+      );
     } else if (item.id === 'sonarr') {
       var scfg = widgetConfigs.sonarr || {};
       fields += _cfgField(

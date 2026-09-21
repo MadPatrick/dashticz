@@ -98,6 +98,9 @@ $allowedSettings = [
     'hpilo_fontsize'         => 'number',
     'hpilo_rows'             => 'hpilo_rows',
     'hpilo_icons'            => 'hpilo_icons',
+    // f1
+    'f1_idx'                 => 'number',
+    'f1_fontsize'            => 'number',
     // spotify
     'spot_clientid'          => 'string',
     // calendar
@@ -239,6 +242,7 @@ $catalog = [
     'garbage' => ['key' => 'widget_garbage', 'width' => 5, 'height' => 160],
     'postnl' => ['key' => 'widget_postnl', 'width' => 6, 'height' => 160],
     'hpilo' => ['key' => 'widget_hpilo', 'width' => 4, 'height' => 200],
+    'f1' => ['key' => 'widget_f1', 'width' => 4, 'height' => 200],
     'spotify' => ['key' => 'widget_spotify', 'width' => 4, 'height' => 120],
     'sonarr' => ['key' => 'widget_sonarr', 'width' => 4, 'height' => 120],
     'clock' => ['key' => 'widget_clock', 'width' => 4],
@@ -1094,6 +1098,10 @@ function _widgetBlockProps($widget)
         case 'hpilo':
             $props['type'] = 'hpilo';
             $props['title'] = 'HP iLO';
+            break;
+        case 'f1':
+            $props['type'] = 'f1';
+            $props['title'] = 'F1';
             break;
         case 'spotify':
             $props['type'] = 'spotify';

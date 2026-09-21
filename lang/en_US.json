@@ -133,6 +133,8 @@
     "postnl_error": "Unable to fetch PostNL shipments.",
     "hpilo_not_configured": "Configure your iLO in Settings -> Widgets -> HP iLO.",
     "hpilo_error": "Unable to fetch the iLO data.",
+    "f1_not_configured": "Configure the F1 device in Settings -> Widgets -> F1.",
+    "f1_error": "F1 device not found.",
     "hpilo_name": "Server name",
     "hpilo_model": "Model",
     "hpilo_power": "Server power",
@@ -670,6 +672,7 @@
       "postnl_title": "PostNL",
       "postnl_description": "Incoming and sent PostNL shipments.",
       "hpilo_title": "HP iLO",
+      "f1_title": "F1",
       "hpilo_description": "HPE server status (power, fans, temperatures) via iLO.",
       "spotify_title": "Spotify",
       "spotify_description": "Spotify Connect remote control.",
@@ -848,6 +851,13 @@
       "postnl_fontsize": "Font size (px)",
       "postnl_fontsize_help": "Font size of the shipment text. Default: 14.",
       "postnl_pollminutes_help": "Minimum 15 minutes, to avoid your PostNL account being flagged. Default: 60."
+    },
+    "f1": {
+      "title": "F1",
+      "f1_idx": "F1 text device idx",
+      "f1_idx_help": "Idx of the text device created by the domoticz_F1 plugin.",
+      "f1_fontsize": "Font size (px)",
+      "f1_fontsize_help": "Font size of the rows. Default: 14."
     },
     "hpilo": {
       "title": "HP iLO",
