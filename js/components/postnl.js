@@ -95,7 +95,8 @@ var DT_postnl = (function () {
   }
 
   // Delivered: open box / package; otherwise a delivery truck (incoming) or a
-  // paper plane / outbox (sent). Emoji style keeps its own colors.
+  // paper plane / outbox (sent). Emoji style keeps its own colors; Font Awesome icons are the
+  // text size + 2px.
   function icon(item) {
     var delivered = item.entry.status === 'Delivered';
     if (useEmoji()) {
@@ -107,7 +108,13 @@ var DT_postnl = (function () {
       : item.role === 'in'
         ? 'fa-truck'
         : 'fa-paper-plane';
-    return '<i class="fas ' + cls + '" aria-hidden="true"></i>';
+    return (
+      '<i class="fas ' +
+      cls +
+      '" style="font-size:' +
+      (fontSize() + 2) +
+      'px" aria-hidden="true"></i>'
+    );
   }
 
   function sortKey(entry) {
