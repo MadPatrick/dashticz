@@ -1924,7 +1924,7 @@
           escapeHtml(opts.title) +
           '</div>'
         : '') +
-      '<div class="d-flex align-items-start gap-2 dr-switch-row">' +
+      '<div class="d-flex align-items-start dr-switch-row">' +
       '<span class="form-check form-switch p-0 flex-shrink-0 dr-switch-cell' +
       (opts.deepFields ? ' dr-switch-cell-deep' : '') +
       '">' +

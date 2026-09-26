@@ -3979,6 +3979,9 @@ var DashticzWidgetEditor = (function () {
         lp.postnl_fontsize_help ||
           'Font size of the shipment text. Default: 14.'
       );
+      // Icon style and the three colors share one row across both columns
+      // (css/config-typography.css .we-cfg-inline).
+      fields += '<div class="we-cfg-inline">';
       fields += _cfgField(
         'postnl_iconstyle',
         lp.postnl_iconstyle || 'Icon style',
@@ -4010,6 +4013,7 @@ var DashticzWidgetEditor = (function () {
         pncfg.postnl_text_color,
         { default: '#2e9e5b' }
       );
+      fields += '</div>';
       fields =
         fields.slice(0, pnStart) +
         '<div class="we-cfg-cols">' +
