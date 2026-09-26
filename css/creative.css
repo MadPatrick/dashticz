@@ -2640,6 +2640,15 @@ body.dle-active {
   min-width: 0;
 }
 
+/* +/- buttons: text-sized icons instead of the global 30px .fas size, so
+   the rows stay as compact as the -sm inputs next to them. */
+.de-custom-field-row .btn .fas,
+.we-custom-field-row .btn .fas {
+  margin: 0 !important;
+  font-size: 1em !important;
+  line-height: 1;
+}
+
 /* Stretch the Icon/Image pulldown to the row's height, like the text
    inputs next to it already do - a fixed height left it shorter than rows
    made taller by the +/- button icons. */
