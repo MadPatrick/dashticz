@@ -2805,6 +2805,19 @@ var DashticzWidgetEditor = (function () {
     return html;
   }
 
+  // Add button below a repeatable list (Calendar, Camera, Radio, Timegraph):
+  // the same green, labelled button everywhere (css/creative.css
+  // .dt-btn-green), like Automation's "Add automation".
+  function _addButtonHtml(id, label) {
+    return (
+      '<button type="button" class="btn btn-sm dt-btn-green we-list-add" id="' +
+      id +
+      '"><i class="fas fa-plus" aria-hidden="true"></i>' +
+      _esc(label) +
+      '</button>'
+    );
+  }
+
   function _cfgHeading(text) {
     return '<h6 class="de-section-title">' + text + '</h6>';
   }
@@ -2972,14 +2985,11 @@ var DashticzWidgetEditor = (function () {
       _t('timegraph_value', 'Value') +
       ' ' +
       (index + 1) +
-      '</strong><span>' +
-      '<button type="button" class="btn btn-sm btn-outline-success we-timegraph-value-add" title="' +
-      _t('timegraph_add_value', 'Add value') +
-      '"><i class="fas fa-plus" aria-hidden="true"></i></button> ' +
+      '</strong>' +
       '<button type="button" class="btn btn-sm btn-outline-danger we-timegraph-value-remove" title="' +
       _t('timegraph_remove_value', 'Remove value') +
       '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
-      '</span></div>' +
+      '</div>' +
       '<div class="mb-2"><label class="form-label we-field-label">' +
       _t('timegraph_value_value', 'Value, e.g. Usage or NettUsage') +
       '</label>' +
@@ -3060,19 +3070,19 @@ var DashticzWidgetEditor = (function () {
     );
   }
 
-  // extraButtonHtml: optional control (e.g. Radio's Add station button) shown
-  // to the right of the Display options checkboxes.
-  // insertHtml: optional block (e.g. Radio's station list) shown above the
-  // Custom fields section, below the checkboxes.
-  function _widgetBlockOptionsHtml(item, extraButtonHtml, insertHtml) {
+  // Every Widget Config has the same section order: Display options, the
+  // widget's own Settings (see _buildConfigModalHtml()), then Custom fields
+  // last - the same order as Device Config.
+  function _widgetBlockOptionsFor(item) {
     var options =
       widgetBlockOptions[item.id] || _defaultWidgetBlockOptions(item);
     _ensureWidgetSystemFields(item, options);
     widgetBlockOptions[item.id] = options;
-    var rows =
-      options.customFields && options.customFields.length
-        ? options.customFields
-        : [{ field: '', setting: '' }];
+    return options;
+  }
+
+  function _widgetBlockOptionsHtml(item) {
+    var options = _widgetBlockOptionsFor(item);
     var html = _cfgHeading(_t('display_options', 'Display options'));
     html +=
       '<div class="d-flex align-items-center justify-content-between flex-wrap mb-2">';
@@ -3122,10 +3132,17 @@ var DashticzWidgetEditor = (function () {
         '</span></button>';
     });
     html += '</div>';
-    if (extraButtonHtml) html += extraButtonHtml;
     html += '</div>';
-    if (insertHtml) html += insertHtml;
-    html += _cfgHeading(_t('custom_fields', 'Custom fields'));
+    return html;
+  }
+
+  function _widgetCustomFieldsHtml(item) {
+    var options = _widgetBlockOptionsFor(item);
+    var rows =
+      options.customFields && options.customFields.length
+        ? options.customFields
+        : [{ field: '', setting: '' }];
+    var html = _cfgHeading(_t('custom_fields', 'Custom fields'));
     html +=
       '<p class="form-text">' +
       _esc(
@@ -3374,7 +3391,7 @@ var DashticzWidgetEditor = (function () {
       '<select class="form-select form-select-sm" id="we-hpilo-select">' +
       inner.options +
       '</select>' +
-      '<button type="button" class="btn btn-outline-success btn-sm" id="we-hpilo-add"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
+      '<button type="button" class="btn btn-sm dt-btn-green" id="we-hpilo-add"><i class="fas fa-plus" aria-hidden="true"></i></button>' +
       '</div>' +
       '<div class="form-text">' +
       _esc(
@@ -3400,10 +3417,6 @@ var DashticzWidgetEditor = (function () {
     var lp = lng.postnl || {};
     var lh = lng.hpilo || {};
     var lm = lng.media || {};
-    // Radio's Add station control docks next to the Display options
-    // checkboxes rather than living on every station row.
-    var blockOptionsExtraButton = '';
-    var blockOptionsInsertHtml = '';
 
     if (item.id === 'weather') {
       var cfg = widgetConfigs.weather || {};
@@ -3569,11 +3582,10 @@ var DashticzWidgetEditor = (function () {
         fields += _calendarRowHtml(source, index);
       });
       fields += '</div>';
-      fields +=
-        '<button type="button" class="btn btn-sm btn-outline-success mb-3" id="we-calendar-add">' +
-        '<i class="fas fa-plus me-1" aria-hidden="true"></i>' +
-        _t('calendar_add', 'Add calendar') +
-        '</button>';
+      fields += _addButtonHtml(
+        'we-calendar-add',
+        _t('calendar_add', 'Add calendar')
+      );
       fields += _cfgField(
         'calendarformat',
         ll.calendarformat || 'Calendar format',
@@ -4231,10 +4243,7 @@ var DashticzWidgetEditor = (function () {
       });
       fields +=
         '</div>' +
-        '<button type="button" class="btn btn-sm btn-outline-primary" id="we-camera-add">' +
-        '<i class="fas fa-plus me-1" aria-hidden="true"></i>' +
-        _t('camera_add', 'Add camera') +
-        '</button>';
+        _addButtonHtml('we-camera-add', _t('camera_add', 'Add camera'));
     } else if (item.id === 'map') {
       var mcfg = widgetConfigs.map || {};
       fields += _cfgField(
@@ -4412,20 +4421,18 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'radio') {
       // Config fields for the Radio (Streamplayer) widget: a graphical builder
       // for the same tracks:[{name,file}] array _STREAMPLAYER_TRACKS already uses.
-      // The Add station control is shown once, next to the Display options
-      // checkboxes (see _widgetBlockOptionsHtml), and every row only keeps
-      // its own Remove button.
+      // One Add station button below the list, like Calendar/Camera; every
+      // row only keeps its own Remove button.
       var rcfg = _radioWidgetConfig();
-      var radioListHtml = '<div id="we-cfg-radio-list">';
+      fields += '<div id="we-cfg-radio-list">';
       rcfg.tracks.forEach(function (station, index) {
-        radioListHtml += _radioStationRowHtml(station, index);
+        fields += _radioStationRowHtml(station, index);
       });
-      radioListHtml += '</div>';
-      blockOptionsInsertHtml = radioListHtml;
-      blockOptionsExtraButton =
-        '<button type="button" class="btn btn-sm btn-outline-success" id="we-radio-add-btn" title="' +
-        _t('radio_add', 'Add station') +
-        '"><i class="fas fa-plus" aria-hidden="true"></i></button>';
+      fields += '</div>';
+      fields += _addButtonHtml(
+        'we-radio-add-btn',
+        _t('radio_add', 'Add station')
+      );
     } else if (item.id === 'log') {
       // Config fields for the Domoticz log widget. Field keys match
       // widgetConfigs.log's own property names 1:1, so the OK handler can
@@ -4624,20 +4631,28 @@ var DashticzWidgetEditor = (function () {
         fields += _timegraphValueRowHtml(row, index);
       });
       fields += '</div>';
+      fields += _addButtonHtml(
+        'we-timegraph-add',
+        _t('timegraph_add_value', 'Add value')
+      );
     }
 
+    // Point order for every widget: Display options, the widget's own
+    // Settings in the shared two-column grid (css/creative.css
+    // .we-settings-grid), then Custom fields last.
     fields =
-      _widgetBlockOptionsHtml(
-        item,
-        blockOptionsExtraButton,
-        blockOptionsInsertHtml
-      ) + fields;
+      _widgetBlockOptionsHtml(item) +
+      (fields
+        ? _cfgHeading(_t('settings', 'Settings')) +
+          '<div class="we-settings-grid">' +
+          fields +
+          '</div>'
+        : '') +
+      _widgetCustomFieldsHtml(item);
 
     return (
       '<div class="modal fade" id="we-config-popup" tabindex="-1" aria-labelledby="we-cfg-title" aria-hidden="true" data-bs-backdrop="static">' +
-      '<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable' +
-      (item.id === 'postnl' ? ' modal-lg' : '') +
-      '">' +
+      '<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">' +
       '<div class="modal-content">' +
       '<div class="modal-header">' +
       '<h5 class="modal-title" id="we-cfg-title"><i class="fas fa-cog me-2" aria-hidden="true"></i>' +
@@ -5068,11 +5083,9 @@ var DashticzWidgetEditor = (function () {
         );
     }
 
-    $cfgModal.on('click', '.we-timegraph-value-add', function () {
+    $cfgModal.on('click', '#we-timegraph-add', function () {
       var index = $cfgModal.find('.we-timegraph-value-row').length;
-      $(this)
-        .closest('.we-timegraph-value-row')
-        .after(_timegraphValueRowHtml({}, index));
+      $('#we-cfg-timegraph-list').append(_timegraphValueRowHtml({}, index));
       _renumberTimegraphValueRows();
       $cfgModal
         .find('.we-timegraph-value-row')

@@ -3081,6 +3081,69 @@ h6.de-section-title {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* Widget Config -> Settings (js/widgeteditor.js _buildConfigModalHtml()):
+   one shared two-column grid for every widget's own fields, one column on a
+   phone. Headings, help paragraphs, lists, add buttons and the existing
+   multi-column rows (.we-cfg-cols, switch grids, .we-cfg-inline) span the
+   full width; a section wrapper (e.g. Weather's per-provider group) spans
+   the full width and repeats the same two columns inside. */
+.we-settings-grid,
+.we-settings-grid > .we-weather-group,
+.we-settings-grid > .we-clock-group,
+.we-settings-grid > .we-clock-size-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  align-items: start;
+}
+
+.we-settings-grid > :not(.we-cfg-field),
+.we-settings-grid > div > h6,
+.we-settings-grid > div > p {
+  grid-column: 1 / -1;
+}
+
+/* Every Widget Config popup is one fixed width (modal-lg), instead of
+   shrinking to its content - a widget with few or short fields was
+   narrower than the others. */
+#we-config-popup .modal-dialog {
+  width: 100%;
+}
+
+.we-settings-grid > #we-hpilo-rows {
+  grid-column: 1 / -1;
+}
+
+/* Selects as wide as the inputs next to them, instead of the global
+   select { max-width: 90% } rule further down this file. */
+#we-config-popup .modal-body .form-select,
+#de-config-popup .modal-body .form-select {
+  max-width: 100%;
+}
+
+.we-settings-grid > .we-list-add {
+  justify-self: start;
+  margin-bottom: 6px;
+}
+
+@media (max-width: 575px) {
+  .we-settings-grid,
+  .we-settings-grid > .we-weather-group,
+  .we-settings-grid > .we-clock-group,
+  .we-settings-grid > .we-clock-size-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Repeatable-list buttons (Calendar, Camera, Radio, Timegraph, HP iLO):
+   text-sized icons instead of the global 30px .fas size, like the green
+   Add buttons and the Custom fields +/- buttons. */
+#we-config-popup .modal-body .btn:not(.we-block-option) .fas {
+  margin: 0 !important;
+  font-size: 1em !important;
+  line-height: 1;
+}
+
 /* One uniform, compact spacing between Widget Config fields
    (js/widgeteditor.js _cfgField()), in every widget and layout (single
    column, .we-cfg-cols, switch rows): 6px between fields, a tighter label
