@@ -2416,6 +2416,21 @@ body.dle-active {
   line-height: 1;
 }
 
+/* LMS Device Config: Server/IP + Port and Username + Password pairs, two
+   equal-width fields 10px apart, stacked on a narrow popup. Own flex row
+   instead of Bootstrap's .row/.col grid, which Dashticz's own grid CSS
+   changes. */
+.de-lms-pair {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.de-lms-pair > * {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
 /* LMS Device Config: Hide-when-off and Player controls (js/lmsconfig.js)
    switches side by side, wrapping on a narrow popup. */
 .de-lms-switches {
@@ -2625,13 +2640,13 @@ body.dle-active {
   min-width: 0;
 }
 
-/* Same height as the -sm text inputs in the other rows. The global
-   select { font-size: 16px !important } rule (kept for iOS, which zooms in
-   on smaller selects) would otherwise make this row taller, so the height
-   is set from the -sm input's own rem sizes instead of the select's em. */
+/* Stretch the Icon/Image pulldown to the row's height, like the text
+   inputs next to it already do - a fixed height left it shorter than rows
+   made taller by the +/- button icons. */
 .de-custom-field-row .de-icon-source,
 .we-custom-field-row .we-icon-source {
-  height: calc(0.875rem * 1.5 + 0.5rem + 2px);
+  height: auto;
+  align-self: stretch;
   padding-top: 0;
   padding-bottom: 0;
   line-height: 1.2;

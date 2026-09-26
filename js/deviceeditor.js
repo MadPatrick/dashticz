@@ -4488,7 +4488,7 @@ var DashticzDeviceEditor = (function () {
     values = values || {};
     // Server/IP + Port and Username + Password each share one row.
     var html =
-      '<div class="row g-2 mb-3"><div class="col"><label class="form-label" for="' +
+      '<div class="de-lms-pair mb-3"><div><label class="form-label" for="' +
       prefix +
       '-lms-server">' +
       _esc(t.lms_server) +
@@ -4500,7 +4500,7 @@ var DashticzDeviceEditor = (function () {
       _esc(values.server || '') +
       '"></div>';
     html +=
-      '<div class="col-4 col-sm-3"><label class="form-label" for="' +
+      '<div><label class="form-label" for="' +
       prefix +
       '-lms-port">' +
       _esc(t.lms_port) +
@@ -4512,7 +4512,7 @@ var DashticzDeviceEditor = (function () {
       _esc(values.port || 9000) +
       '"></div></div>';
     html +=
-      '<div class="mb-3"><div class="row g-2"><div class="col-12 col-sm-6"><label class="form-label" for="' +
+      '<div class="mb-3"><div class="de-lms-pair"><div><label class="form-label" for="' +
       prefix +
       '-lms-username">' +
       _esc(t.lms_username) +
@@ -4524,7 +4524,7 @@ var DashticzDeviceEditor = (function () {
       _esc(values.username || '') +
       '"></div>';
     html +=
-      '<div class="col-12 col-sm-6"><label class="form-label" for="' +
+      '<div><label class="form-label" for="' +
       prefix +
       '-lms-password">' +
       _esc(t.lms_password) +
