@@ -382,12 +382,8 @@
 
 .we-cfg-inline .form-control-color {
   width: 3rem;
-  height: 2.125rem;
+  height: calc(0.875rem * 1.5 + 0.5rem + 2px);
   padding: 0.2rem;
-}
-
-.we-cfg-inline .form-select-sm {
-  height: 2.125rem;
 }
 
 @media (max-width: 575px) {

@@ -3090,7 +3090,8 @@ h6.de-section-title {
 .we-settings-grid,
 .we-settings-grid > .we-weather-group,
 .we-settings-grid > .we-clock-group,
-.we-settings-grid > .we-clock-size-group {
+.we-settings-grid > .we-clock-size-group,
+.we-row-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 16px;
@@ -3130,9 +3131,18 @@ h6.de-section-title {
   .we-settings-grid,
   .we-settings-grid > .we-weather-group,
   .we-settings-grid > .we-clock-group,
-  .we-settings-grid > .we-clock-size-group {
+  .we-settings-grid > .we-clock-size-group,
+  .we-row-fields {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* Color swatches: the same height as the -sm inputs and selects next to
+   them (31px), in every Widget Config. */
+#we-config-popup .modal-body .form-control-color {
+  width: 3rem;
+  height: calc(0.875rem * 1.5 + 0.5rem + 2px);
+  padding: 0.2rem;
 }
 
 /* Repeatable-list buttons (Calendar, Camera, Radio, Timegraph, HP iLO):

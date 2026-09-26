@@ -34,12 +34,8 @@
   min-width: 0;
 }
 
-#we-config-popup .garbage-row-size-input,
-#we-config-popup .garbage-row-color-input {
-  height: 2.125rem;
-}
-
 #we-config-popup .garbage-row-color-input {
   width: 3rem;
+  height: calc(0.875rem * 1.5 + 0.5rem + 2px);
   padding: 0.2rem;
 }

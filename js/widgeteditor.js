@@ -2759,9 +2759,17 @@ var DashticzWidgetEditor = (function () {
     } else if (type === 'number') {
       // number inputs use opts for min/max/step, so the GUI cannot produce
       // out-of-range values for fields like duration, ticks or lineTension.
+      // A stored value that is not a plain number (e.g. "0,9") keeps a text
+      // input instead, so opening and saving the popup never drops it.
       opts = opts || {};
+      var numberText =
+        value !== null && value !== undefined ? String(value).trim() : '';
+      var inputType =
+        numberText === '' || isFinite(Number(numberText)) ? 'number' : 'text';
       html +=
-        '<input type="number" class="form-control form-control-sm we-widget-field" id="' +
+        '<input type="' +
+        inputType +
+        '" class="form-control form-control-sm we-widget-field" id="' +
         _esc(id) +
         '" data-cfg-key="' +
         _esc(key) +
@@ -2838,24 +2846,25 @@ var DashticzWidgetEditor = (function () {
       _t('camera_remove', 'Remove camera') +
       '">' +
       '<i class="fas fa-minus" aria-hidden="true"></i></button></div>' +
-      '<div class="mb-2"><label class="form-label we-field-label">' +
+      '<div class="we-row-fields">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('name', 'Name') +
       '</label>' +
       '<input type="text" class="form-control form-control-sm we-camera-title" maxlength="100" value="' +
       _esc(camera.title || _t('camera', 'Camera') + ' ' + (index + 1)) +
       '"></div>' +
-      '<div class="mb-2"><label class="form-label we-field-label">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('image_url', 'Image URL') +
       '</label>' +
       '<input type="url" class="form-control form-control-sm we-camera-image" value="' +
       _esc(camera.imageUrl || '') +
       '"></div>' +
-      '<div><label class="form-label we-field-label">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('video_url_optional', 'Video URL (optional, MJPEG)') +
       '</label>' +
       '<input type="url" class="form-control form-control-sm we-camera-video" value="' +
       _esc(camera.videoUrl || '') +
-      '"></div></div>'
+      '"></div></div></div>'
     );
   }
 
@@ -2877,26 +2886,27 @@ var DashticzWidgetEditor = (function () {
       _t('radio_remove', 'Remove station') +
       '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
       '</div>' +
-      '<div class="mb-2"><label class="form-label we-field-label">' +
+      '<div class="we-row-fields">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('name', 'Name') +
       '</label>' +
       '<input type="text" class="form-control form-control-sm we-radio-name" maxlength="100" value="' +
       _esc(station.name || '') +
       '"></div>' +
-      '<div class="mb-2"><label class="form-label we-field-label">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('radio_url', 'Stream URL') +
       '</label>' +
       '<input type="url" class="form-control form-control-sm we-radio-url" value="' +
       _esc(station.file || '') +
       '"></div>' +
-      '<div><label class="form-label we-field-label">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('radio_logo', 'Logo (URL or filename in img/custom/radio/)') +
       '</label>' +
       '<input type="text" class="form-control form-control-sm we-radio-logo" ' +
       'placeholder="https://... or logo.png" value="' +
       _esc(station.logo || '') +
       '"></div>' +
-      '</div>'
+      '</div></div>'
     );
   }
 
@@ -2946,27 +2956,28 @@ var DashticzWidgetEditor = (function () {
       _esc(_t('calendar_remove', 'Remove calendar')) +
       '">' +
       '<i class="fas fa-minus" aria-hidden="true"></i></button></div>' +
-      '<div class="mb-2"><label class="form-label we-field-label">' +
+      '<div class="we-row-fields">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('calendar_name', 'Name') +
       '</label>' +
       '<input type="text" class="form-control form-control-sm we-calendar-name" maxlength="100" value="' +
       _esc(source.name || '') +
       '"></div>' +
-      '<div class="mb-2"><label class="form-label we-field-label">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('ics_url', 'ICS URL') +
       '</label>' +
       '<input type="url" class="form-control form-control-sm we-calendar-url" maxlength="2048" ' +
       'placeholder="https://…/calendar.ics" value="' +
       _esc(source.ics || '') +
       '"></div>' +
-      '<div><label class="form-label we-field-label">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('calendar_color', 'Color') +
       '</label>' +
       '<input type="color" class="form-control form-control-color we-calendar-color" value="' +
       _calendarPickerColor(color) +
       '" data-calendar-color-value="' +
       _esc(color) +
-      '"></div></div>'
+      '"></div></div></div>'
     );
   }
 
@@ -2990,24 +3001,25 @@ var DashticzWidgetEditor = (function () {
       _t('timegraph_remove_value', 'Remove value') +
       '"><i class="fas fa-minus" aria-hidden="true"></i></button>' +
       '</div>' +
-      '<div class="mb-2"><label class="form-label we-field-label">' +
+      '<div class="we-row-fields">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('timegraph_value_value', 'Value, e.g. Usage or NettUsage') +
       '</label>' +
       '<input type="text" class="form-control form-control-sm we-timegraph-value-value" value="' +
       _esc(row.value || '') +
       '"></div>' +
-      '<div class="mb-2"><label class="form-label we-field-label">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('timegraph_value_idx', 'IDX (optional, main device by default)') +
       '</label>' +
       '<input type="number" min="1" step="1" class="form-control form-control-sm we-timegraph-value-idx" value="' +
       _esc(row.idx || '') +
       '"></div>' +
-      '<div><label class="form-label we-field-label">' +
+      '<div class="mb-3 we-cfg-field"><label class="form-label we-field-label">' +
       _t('timegraph_value_label', 'Label (optional)') +
       '</label>' +
       '<input type="text" class="form-control form-control-sm we-timegraph-value-label" value="' +
       _esc(row.label || '') +
-      '"></div></div>'
+      '"></div></div></div>'
     );
   }
 
@@ -3484,9 +3496,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'owm_cnt',
         lw.owm_cnt || 'Number of periods',
-        'text',
+        'number',
         cfg.owm_cnt,
-        null,
+        { min: 1, max: 40, step: 1 },
         lw.owm_cnt_help || ''
       );
       fields += _cfgField(
@@ -3602,9 +3614,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'calendar_maxitems',
         ll.calendar_maxitems || 'Visible calendar rows',
-        'text',
+        'number',
         ccal.calendar_maxitems,
-        null,
+        { min: 1, max: 100, step: 1 },
         ll.calendar_maxitems_help ||
           'Maximum number of calendar rows to display. Default: 15.'
       );
@@ -3712,9 +3724,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'scale',
         _t('scale', 'Scale'),
-        'text',
+        'number',
         ccfg.scale,
-        null,
+        { min: 0.1, max: 5, step: 0.05 },
         _t('scale_help', 'For example 0.75 (default 1)')
       );
       fields += '</div>';
@@ -3853,15 +3865,16 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'garbage_maxitems',
         lg.garbage_maxitems || 'Maximum items',
-        'text',
-        gcfg.garbage_maxitems
+        'number',
+        gcfg.garbage_maxitems,
+        { min: 1, max: 50, step: 1 }
       );
       fields += _cfgField(
         'garbage_maxdays',
         lg.garbage_maxdays || 'Maximum days',
-        'text',
+        'number',
         gcfg.garbage_maxdays,
-        null,
+        { min: 1, max: 365, step: 1 },
         lg.garbage_maxdays_help ||
           'Maximum number of days ahead to search. Default: 32.'
       );
@@ -4103,8 +4116,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'sonarr_maxitems',
         lm.sonarr_maxitems || 'Maximum items',
-        'text',
-        scfg.sonarr_maxitems
+        'number',
+        scfg.sonarr_maxitems,
+        { min: 1, max: 100, step: 1 }
       );
     } else if (item.id === 'spotify') {
       var spcfg = widgetConfigs.spotify || {};
@@ -4287,8 +4301,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'news_scroll_after',
         lg2.news_scroll_after || 'Scroll after (seconds)',
-        'text',
-        ncfg.news_scroll_after
+        'number',
+        ncfg.news_scroll_after,
+        { min: 1, max: 3600, step: 1 }
       );
     } else if (item.id === 'iframe') {
       // Config fields for the iframe widget
@@ -4325,18 +4340,18 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'iframe_scaletofit',
         li.iframe_scaletofit || 'Scale-to-fit width (px)',
-        'text',
+        'number',
         icfg.scaletofit,
-        null,
+        { min: 1, max: 10000, step: 1 },
         li.iframe_scaletofit_help ||
           'Design width of the embedded page (e.g. 1024). The page will be scaled so it fits the tile width. Leave empty to disable scaling.'
       );
       fields += _cfgField(
         'iframe_aspectratio',
         li.iframe_aspectratio || 'Aspect ratio',
-        'text',
+        'number',
         icfg.aspectratio,
-        null,
+        { min: 0.01, max: 10, step: 0.01 },
         li.iframe_aspectratio_help ||
           'Height divided by width (for example 0.9). When set, no fixed height is written.'
       );
@@ -4349,9 +4364,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'iframe_refresh',
         li.iframe_refresh || 'Refresh interval (seconds)',
-        'text',
+        'number',
         icfg.refresh,
-        null,
+        { min: 0, max: 86400, step: 1 },
         li.iframe_refresh_help ||
           'How often to reload the iframe. Default: 300 seconds.'
       );
@@ -4384,9 +4399,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'xmltv_maxitems',
         lx.xmltv_maxitems || 'Max items',
-        'text',
+        'number',
         xcfg.maxitems,
-        null,
+        { min: 1, max: 100, step: 1 },
         lx.xmltv_maxitems_help ||
           'Maximum number of programme rows to display (default: 10).'
       );
@@ -4412,9 +4427,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'xmltv_refresh',
         lx.xmltv_refresh || 'Refresh interval (seconds)',
-        'text',
+        'number',
         xcfg.refresh,
-        null,
+        { min: 0, max: 86400, step: 1 },
         lx.xmltv_refresh_help ||
           'How often to refresh the widget from the cached XMLTV data.'
       );
@@ -4457,9 +4472,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'maxitems',
         llog.log_maxitems || 'Maximum lines',
-        'text',
+        'number',
         logcfg.maxitems,
-        null,
+        { min: 1, max: 1000, step: 1 },
         llog.log_maxitems_help ||
           'Limit the number of log lines shown, so no scrollbar is needed. Leave empty for no limit.'
       );
@@ -4475,9 +4490,9 @@ var DashticzWidgetEditor = (function () {
       fields += _cfgField(
         'aspectratio',
         llog.log_aspectratio || 'Aspect ratio',
-        'text',
+        'number',
         logcfg.aspectratio,
-        null,
+        { min: 0.01, max: 10, step: 0.01 },
         llog.log_aspectratio_help ||
           'Height divided by width. Only used when Height above is left empty.'
       );
