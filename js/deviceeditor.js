@@ -334,6 +334,7 @@ var DashticzDeviceEditor = (function () {
         lms_player_placeholder: 'Test the connection to list players',
         lms_refresh_interval: 'Refresh interval',
         lms_hide_when_off: 'Hide block when player is off',
+        lms_player_controls: 'Player controls',
         invalid_lms_server: 'Enter the Lyrion Music Server address.',
         invalid_lms_port: 'Enter a valid port (1-65535).',
         invalid_lms_player: 'Test the connection and select a player.',
@@ -4485,8 +4486,9 @@ var DashticzDeviceEditor = (function () {
   function _lmsFieldsHtml(prefix, values) {
     var t = _translations();
     values = values || {};
+    // Server/IP + Port and Username + Password each share one row.
     var html =
-      '<div class="mb-3"><label class="form-label" for="' +
+      '<div class="row g-2 mb-3"><div class="col"><label class="form-label" for="' +
       prefix +
       '-lms-server">' +
       _esc(t.lms_server) +
@@ -4498,7 +4500,7 @@ var DashticzDeviceEditor = (function () {
       _esc(values.server || '') +
       '"></div>';
     html +=
-      '<div class="mb-3"><label class="form-label" for="' +
+      '<div class="col-4 col-sm-3"><label class="form-label" for="' +
       prefix +
       '-lms-port">' +
       _esc(t.lms_port) +
@@ -4508,9 +4510,9 @@ var DashticzDeviceEditor = (function () {
       prefix +
       '-lms-port" value="' +
       _esc(values.port || 9000) +
-      '"></div>';
+      '"></div></div>';
     html +=
-      '<div class="mb-3"><label class="form-label" for="' +
+      '<div class="mb-3"><div class="row g-2"><div class="col-12 col-sm-6"><label class="form-label" for="' +
       prefix +
       '-lms-username">' +
       _esc(t.lms_username) +
@@ -4522,7 +4524,7 @@ var DashticzDeviceEditor = (function () {
       _esc(values.username || '') +
       '"></div>';
     html +=
-      '<div class="mb-3"><label class="form-label" for="' +
+      '<div class="col-12 col-sm-6"><label class="form-label" for="' +
       prefix +
       '-lms-password">' +
       _esc(t.lms_password) +
@@ -4532,12 +4534,12 @@ var DashticzDeviceEditor = (function () {
       prefix +
       '-lms-password" autocomplete="off" value="' +
       _esc(values.password || '') +
-      '">';
+      '"></div></div>';
     html +=
       '<div class="form-text">' + _esc(t.lms_credentials_help) + '</div></div>';
     html += '<div class="mb-3">';
     html +=
-      '<button type="button" class="btn btn-outline-secondary btn-sm de-lms-test" id="' +
+      '<button type="button" class="btn btn-sm dt-btn-green de-lms-test" id="' +
       prefix +
       '-lms-test"><i class="fas fa-plug me-1" aria-hidden="true"></i>' +
       _esc(t.lms_test_connection) +
@@ -4587,15 +4589,18 @@ var DashticzDeviceEditor = (function () {
         '</option>';
     });
     html += '</select></div>';
+    // js/lmsconfig.js adds its Player controls switch right after this one,
+    // inside the same .de-lms-switches row, so the two sit side by side.
     html +=
-      '<label class="form-check form-switch mb-3"><input class="form-check-input de-lms-switch" type="checkbox" id="' +
+      '<div class="de-lms-switches mb-3">' +
+      '<label class="form-check form-switch"><input class="form-check-input de-lms-switch" type="checkbox" id="' +
       prefix +
       '-lms-hide-when-off"' +
       (values.hideWhenOff ? ' checked' : '') +
       '>' +
       '<span class="form-check-label">' +
       _esc(t.lms_hide_when_off) +
-      '</span></label>';
+      '</span></label></div>';
     html += '<h6 class="de-section-title">' + _esc(t.lms_text_style) + '</h6>';
     html += '<div class="row g-2 mb-3">';
     [

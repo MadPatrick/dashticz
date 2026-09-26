@@ -2390,19 +2390,47 @@ body.dle-active {
    next to their switch. Drop the switch by one small label line so it lines
    up with the inputs instead of their labels, unless the fields are hidden
    because the switch is off. */
-/* Automation "Add automation" button: light green, from Bootstrap's
-   success-subtle colors so it also fits dark mode. */
-.btn.dr-add {
+/* Green action buttons (Automation "Add automation", LMS "Test
+   connection"): semi-transparent so they also fit dark mode. The icon is
+   kept at text size (the global .fas rule makes it 30px) and centered with
+   the label. */
+.btn.dt-btn-green {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   color: var(--bs-success-text-emphasis, #0a3622);
-  background-color: var(--bs-success-bg-subtle, #d1e7dd);
-  border-color: var(--bs-success-border-subtle, #a3cfbb);
+  background-color: rgba(25, 135, 84, 0.3);
+  border-color: rgba(25, 135, 84, 0.55);
 }
 
-.btn.dr-add:hover,
-.btn.dr-add:focus-visible {
+.btn.dt-btn-green:hover,
+.btn.dt-btn-green:focus-visible {
   color: var(--bs-success-text-emphasis, #0a3622);
-  background-color: var(--bs-success-border-subtle, #a3cfbb);
-  border-color: var(--bs-success-border-subtle, #a3cfbb);
+  background-color: rgba(25, 135, 84, 0.45);
+  border-color: rgba(25, 135, 84, 0.7);
+}
+
+.btn.dt-btn-green .fas {
+  margin: 0 !important;
+  font-size: 1em !important;
+  line-height: 1;
+}
+
+/* LMS Device Config: Hide-when-off and Player controls (js/lmsconfig.js)
+   switches side by side, wrapping on a narrow popup. */
+.de-lms-switches {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.5rem;
+  row-gap: 0.5rem;
+}
+
+.de-lms-switches > .form-switch {
+  margin-bottom: 0;
+}
+
+.de-lms-switches .form-check-label {
+  margin-left: 5px;
 }
 
 /* Automation rule/action card title line (js/devicerules.js): a grey band

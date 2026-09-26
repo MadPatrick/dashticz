@@ -549,7 +549,8 @@
       "invalid_lms_server": "Enter the Lyrion Music Server address.",
       "invalid_lms_port": "Enter a valid port (1-65535).",
       "invalid_lms_player": "Test the connection and select a player.",
-      "seconds": "seconds"
+      "seconds": "seconds",
+      "lms_player_controls": "Player controls"
     },
     "layouteditor": {
       "title": "Layout Editor",

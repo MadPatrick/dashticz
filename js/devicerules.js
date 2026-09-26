@@ -2953,7 +2953,7 @@
       buildDatalist() +
       '<div class="dr-rules"></div>' +
       '<div class="dr-empty form-text mb-2"></div>' +
-      '<button type="button" class="btn btn-sm dr-add mb-3">' +
+      '<button type="button" class="btn btn-sm dt-btn-green dr-add mb-3">' +
       '<i class="fas fa-plus me-1" aria-hidden="true"></i>' +
       escapeHtml(t.addRule) +
       '</button>' +

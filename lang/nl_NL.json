@@ -151,7 +151,11 @@
     "hpilo_value_off": "Uit",
     "hpilo_value_ok": "OK",
     "hpilo_value_warning": "Waarschuwing",
-    "hpilo_value_critical": "Kritiek"
+    "hpilo_value_critical": "Kritiek",
+    "lms_player_off": "Speler uit",
+    "lms_player_unavailable": "Speler niet beschikbaar",
+    "lms_server_unavailable": "LMS niet beschikbaar",
+    "lms_paused": "Gepauzeerd"
   },
   "settings": {
     "title": "Dashticz-instellingen",
@@ -431,7 +435,36 @@
       "graph_block_groupby_month": "Maand",
       "graph_block_legend": "Legenda tonen",
       "graph_block_height": "Hoogte (px)",
-      "invalid_graph_devices": "Vul minstens één geldig device-ID in."
+      "invalid_graph_devices": "Vul minstens één geldig device-ID in.",
+      "lms_block": "Lyrion Music Server",
+      "lms_title": "Titel",
+      "lms_server": "Server / IP",
+      "lms_port": "Poort",
+      "lms_username": "Gebruikersnaam",
+      "lms_password": "Wachtwoord",
+      "lms_credentials_help": "Alleen nodig als authenticatie in Lyrion Music Server is ingeschakeld.",
+      "lms_test_connection": "Verbinding testen",
+      "lms_testing_connection": "Verbinden…",
+      "lms_connection_ok": "Verbonden met Lyrion Music Server",
+      "lms_players_found": "speler(s) gevonden",
+      "lms_connection_failed": "Kan geen verbinding maken met Lyrion Music Server",
+      "lms_auth_failed": "Authenticatie mislukt",
+      "lms_no_players": "Geen LMS-spelers gevonden",
+      "lms_player": "Speler",
+      "lms_player_placeholder": "Test de verbinding om spelers op te halen",
+      "lms_refresh_interval": "Verversingsinterval",
+      "lms_hide_when_off": "Block verbergen als speler uit staat",
+      "lms_player_controls": "Bedieningsknoppen",
+      "lms_text_style": "Tekststijl",
+      "lms_title_line": "Titel",
+      "lms_artist_line": "Artiest",
+      "lms_station_line": "Zender",
+      "lms_font_size": "Grootte (px)",
+      "lms_font_color": "Kleur",
+      "invalid_lms_server": "Vul het adres van de Lyrion Music Server in.",
+      "invalid_lms_port": "Vul een geldige poort in (1-65535).",
+      "invalid_lms_player": "Test de verbinding en kies een speler.",
+      "seconds": "seconden"
     },
     "layouteditor": {
       "title": "Layout Editor",
@@ -743,7 +776,9 @@
       "timegraph_add_value": "Waarde toevoegen",
       "timegraph_remove_value": "Waarde verwijderen",
       "timegraph_value_required": "Voer een waarde in (bijv. Temp of NettUsage) voor waarde",
-      "devices": "Devices"
+      "devices": "Devices",
+      "lms_block": "Lyrion Music Server",
+      "lms_description": "Nu-afspelen-info van een Lyrion Music Server-speler (Logitech Media Server)."
     },
     "garbage": {
       "garbage_calendar_id": "Google Agenda-ID",
