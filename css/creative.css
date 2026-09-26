@@ -2379,6 +2379,13 @@ body.dle-active {
   line-height: 1;
 }
 
+/* Device Config -> Text alignment buttons: keep the icons button-sized
+   instead of the global 30px .fas size. */
+.de-text-align-group .fas {
+  font-size: 1em !important;
+  line-height: 1;
+}
+
 .de-config-popup {
   z-index: 1070;
 }
@@ -8467,4 +8474,34 @@ canvas {
   height: 100% !important;
   min-height: 0 !important;
   overflow: hidden !important;
+}
+
+/* Device Config -> Text: per-device font size and alignment, set by
+   js/blocks.js applyBlockTextStyle(). Specific enough (and !important) to
+   win over the default and theme .title/.state/.value/.mh rules. */
+.mh.dt-fs-title .col-data .title {
+  font-size: var(--dt-fs-title) !important;
+}
+
+.mh.dt-fs-value .col-data .state,
+.mh.dt-fs-value .col-data .value {
+  font-size: var(--dt-fs-value) !important;
+}
+
+.mh.dt-align-left,
+.mh.dt-align-left .col-data,
+.mh.dt-align-left .col-data > * {
+  text-align: left !important;
+}
+
+.mh.dt-align-center,
+.mh.dt-align-center .col-data,
+.mh.dt-align-center .col-data > * {
+  text-align: center !important;
+}
+
+.mh.dt-align-right,
+.mh.dt-align-right .col-data,
+.mh.dt-align-right .col-data > * {
+  text-align: right !important;
 }
