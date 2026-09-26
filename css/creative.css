@@ -3067,15 +3067,16 @@ body.dle-active {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-/* Compact spacing inside Widget Config's two-column (.we-cfg-cols) and
-   switch rows: half the default field gap, a tighter label. */
-.we-switch-grid > .mb-3,
-.we-cfg-cols > .mb-3 {
-  margin-bottom: 0.5rem !important;
+/* One uniform, compact spacing between Widget Config fields
+   (js/widgeteditor.js _cfgField()), in every widget and layout (single
+   column, .we-cfg-cols, switch rows): 6px between fields, a tighter label.
+   Beats the field's own Bootstrap mb-3 (!important), which is kept for
+   code that looks fields up by that class. */
+.we-cfg-field.mb-3 {
+  margin-bottom: 6px !important;
 }
 
-.we-switch-grid .we-field-label,
-.we-cfg-cols .we-field-label {
+.we-cfg-field > .we-field-label {
   margin-bottom: 0.2rem;
 }
 

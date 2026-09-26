@@ -2700,7 +2700,9 @@ var DashticzWidgetEditor = (function () {
 
   function _cfgField(key, label, type, value, opts, help) {
     var id = 'we-cfg-' + key.replace(/_/g, '-');
-    var html = '<div class="mb-3">';
+    // we-cfg-field: one uniform field spacing in every Widget Config (see
+    // css/creative.css); mb-3 stays for code that looks fields up by it.
+    var html = '<div class="mb-3 we-cfg-field">';
     html +=
       '<label class="form-label we-field-label" for="' +
       _esc(id) +
@@ -3362,7 +3364,7 @@ var DashticzWidgetEditor = (function () {
     var icons = _hpiloIconsMap(iconsValue);
     var inner = _hpiloRowsInnerHtml(keys, icons);
     return (
-      '<div class="mb-3" id="we-hpilo-rows">' +
+      '<div class="mb-3 we-cfg-field" id="we-hpilo-rows">' +
       '<label class="form-label we-field-label">' +
       _esc(lh.hpilo_rows || 'Rows') +
       '</label>' +
@@ -3417,7 +3419,7 @@ var DashticzWidgetEditor = (function () {
         meteo: 'Alternative set of static icons',
       };
       fields +=
-        '<div class="mb-3">' +
+        '<div class="mb-3 we-cfg-field">' +
         '<label class="form-label we-field-label" for="we-cfg-weather-provider">' +
         _t('provider', 'Provider') +
         '</label>' +
@@ -3659,7 +3661,7 @@ var DashticzWidgetEditor = (function () {
       var currentClockType = ccfg.clockType || 'basicclock';
       var showSizeScale = currentClockType !== 'miniclock';
       fields +=
-        '<div class="mb-3">' +
+        '<div class="mb-3 we-cfg-field">' +
         '<label class="form-label we-field-label" for="we-cfg-clock-type">' +
         _t('clock_type', 'Clock type') +
         '</label>' +
@@ -4107,7 +4109,7 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'publictransport') {
       var ptcfg = widgetConfigs.publictransport || {};
       fields +=
-        '<div class="mb-3">' +
+        '<div class="mb-3 we-cfg-field">' +
         '<label class="form-label we-field-label" for="we-cfg-pt-provider">' +
         _t('provider', 'Provider') +
         '</label>' +
@@ -4123,7 +4125,7 @@ var DashticzWidgetEditor = (function () {
         _ptOption('delijnbe', 'De Lijn (BE)', ptcfg.provider || 'treinen') +
         '</select></div>';
       fields +=
-        '<div class="mb-3">' +
+        '<div class="mb-3 we-cfg-field">' +
         '<label class="form-label we-field-label" for="we-cfg-pt-station">' +
         _t('station_stop', 'Station / stop') +
         '</label>' +
@@ -4204,7 +4206,7 @@ var DashticzWidgetEditor = (function () {
     } else if (item.id === 'alarmmeldingen') {
       var acfg = widgetConfigs.alarmmeldingen || {};
       fields +=
-        '<div class="mb-3">' +
+        '<div class="mb-3 we-cfg-field">' +
         '<label class="form-label we-field-label" for="we-cfg-alarm-rss">' +
         _t('rss_feed', 'RSS feed') +
         '</label>' +
@@ -4212,7 +4214,7 @@ var DashticzWidgetEditor = (function () {
         _esc(acfg.rss || '') +
         '"></div>';
       fields +=
-        '<div class="mb-3">' +
+        '<div class="mb-3 we-cfg-field">' +
         '<label class="form-label we-field-label" for="we-cfg-alarm-filter">' +
         _t('filter_optional', 'Filter (optional)') +
         '</label>' +
@@ -4288,7 +4290,7 @@ var DashticzWidgetEditor = (function () {
       var icfg = widgetConfigs.iframe || {};
       var li = lng.widgeteditor || {};
       fields +=
-        '<div class="mb-3">' +
+        '<div class="mb-3 we-cfg-field">' +
         '<label class="form-label we-field-label" for="we-cfg-iframe-url">' +
         (li.iframe_url || 'URL') +
         ' <span class="text-danger" aria-hidden="true">*</span></label>' +
@@ -4353,7 +4355,7 @@ var DashticzWidgetEditor = (function () {
       var xcfg = widgetConfigs.xmltvguide || {};
       var lx = lng.widgeteditor || {};
       fields +=
-        '<div class="mb-3">' +
+        '<div class="mb-3 we-cfg-field">' +
         '<label class="form-label we-field-label" for="we-cfg-xmltv-url">' +
         (lx.xmltv_url || 'XMLTV URL') +
         ' <span class="text-danger" aria-hidden="true">*</span></label>' +
@@ -4527,7 +4529,7 @@ var DashticzWidgetEditor = (function () {
       var tgcfg = widgetConfigs.timegraph || {};
       var ltg = lng.widgeteditor || {};
       fields +=
-        '<div class="mb-3">' +
+        '<div class="mb-3 we-cfg-field">' +
         '<label class="form-label we-field-label" for="we-cfg-idx">' +
         (ltg.timegraph_idx || 'Main IDX') +
         '</label>' +

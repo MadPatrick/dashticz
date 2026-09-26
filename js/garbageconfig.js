@@ -236,7 +236,7 @@
 
   function createScaleField(value) {
     var group = document.createElement('div');
-    group.className = 'mb-3';
+    group.className = 'mb-3 we-cfg-field';
 
     var label = document.createElement('label');
     label.className = 'form-label we-field-label';
