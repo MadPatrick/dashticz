@@ -2806,11 +2806,7 @@ var DashticzWidgetEditor = (function () {
   }
 
   function _cfgHeading(text) {
-    return (
-      '<h6 class="mt-3 mb-2" style="font-size:14px;font-weight:600;color:#495057">' +
-      text +
-      '</h6>'
-    );
+    return '<h6 class="de-section-title">' + text + '</h6>';
   }
 
   function _cameraRowHtml(camera, index) {

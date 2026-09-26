@@ -153,7 +153,7 @@
 
   function createTextStyleColumn(options) {
     var column = document.createElement('div');
-    column.className = 'col-12 col-md-6';
+    column.className = 'garbage-text-style-column';
 
     var title = document.createElement('div');
     title.className = 'small fw-semibold mb-1';
@@ -161,7 +161,7 @@
     column.appendChild(title);
 
     var row = document.createElement('div');
-    row.className = 'd-flex gap-2 align-items-end';
+    row.className = 'garbage-text-style-fields';
 
     var sizeWrap = document.createElement('div');
     sizeWrap.className = 'flex-grow-1';
@@ -211,7 +211,7 @@
     section.appendChild(heading);
 
     var row = document.createElement('div');
-    row.className = 'row g-2 mb-3';
+    row.className = 'garbage-text-style-row mb-3';
     row.appendChild(
       createTextStyleColumn({
         title: garbageUiText('first_pickup_row', 'First pickup row'),
@@ -349,8 +349,7 @@
     var scaleWrapper = document.createElement('div');
     scaleWrapper.className = 'garbage-kliko-scale-fields';
     var scaleHeading = document.createElement('h6');
-    scaleHeading.className = 'mt-3 mb-2';
-    scaleHeading.style.cssText = 'font-size:14px;font-weight:600;color:#495057';
+    scaleHeading.className = 'de-section-title';
     scaleHeading.textContent = garbageUiText('kliko_image', 'Bin image');
     scaleWrapper.appendChild(scaleHeading);
     scaleWrapper.appendChild(createScaleField(scaleValue));

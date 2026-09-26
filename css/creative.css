@@ -2159,13 +2159,27 @@ body.dle-active {
 }
 
 /* -- Device Editor modal --------------------------------------- */
-.de-section-title {
+/* Group heading above a set of fields, in Device Config, Widget Config
+   (js/widgeteditor.js _cfgHeading()) and their helpers (Garbage, LMS,
+   Automation): one uniform style - bold on a light grey band, with a bit
+   more room above it than between the fields themselves. h6 + !important
+   so it also wins over the mt-3 some of these headings still carry. */
+h6.de-section-title {
+  margin: 22px 0 8px !important;
+  padding: 5px 8px;
   font-weight: 600;
   font-size: 14px;
   color: #343a40;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #dee2e6;
-  margin-bottom: 8px;
+  background: var(--bs-secondary-bg, #e9ecef);
+  border: 0;
+  border-radius: var(--bs-border-radius, 0.375rem);
+}
+
+/* Only the popup's very first heading sits flush at the top; a heading
+   that merely opens its own sub-section (e.g. Garbage's Text styling)
+   keeps the extra room above it. */
+.modal-body > h6.de-section-title:first-child {
+  margin-top: 0 !important;
 }
 
 .de-device-list {
@@ -3069,7 +3083,8 @@ body.dle-active {
 
 /* One uniform, compact spacing between Widget Config fields
    (js/widgeteditor.js _cfgField()), in every widget and layout (single
-   column, .we-cfg-cols, switch rows): 6px between fields, a tighter label.
+   column, .we-cfg-cols, switch rows): 6px between fields, a tighter label
+   without the generic .we-field-label's own 10px top margin.
    Beats the field's own Bootstrap mb-3 (!important), which is kept for
    code that looks fields up by that class. */
 .we-cfg-field.mb-3 {
@@ -3077,6 +3092,7 @@ body.dle-active {
 }
 
 .we-cfg-field > .we-field-label {
+  margin-top: 0;
   margin-bottom: 0.2rem;
 }
 
