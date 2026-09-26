@@ -3047,9 +3047,13 @@ var DashticzWidgetEditor = (function () {
           _esc(_t('field', 'Field')) +
           '"><option value="icon"' +
           (lowerField === 'icon' ? ' selected' : '') +
-          '>Icon</option><option value="image"' +
+          '>' +
+          _esc(_t('icon', 'Icon')) +
+          '</option><option value="image"' +
           (lowerField === 'image' ? ' selected' : '') +
-          '>Image</option></select>'
+          '>' +
+          _esc(_t('image', 'Image')) +
+          '</option></select>'
         : '<input type="text" class="form-control we-custom-field-name" placeholder="' +
           _esc(_t('field', 'Field')) +
           '" value="' +
@@ -3432,12 +3436,14 @@ var DashticzWidgetEditor = (function () {
 
     if (item.id === 'weather') {
       var cfg = widgetConfigs.weather || {};
+      // Translated via lang/*.json settings.weather.icons_* (English text
+      // below is only the fallback).
       var iconOpts = {
-        line: 'Dynamic line icons',
-        linestatic: 'Static version of the line icons',
-        fill: 'Dynamic filled icons',
-        static: 'Static icons',
-        meteo: 'Alternative set of static icons',
+        line: lw.icons_line || 'Dynamic line icons',
+        linestatic: lw.icons_linestatic || 'Static version of the line icons',
+        fill: lw.icons_fill || 'Dynamic filled icons',
+        static: lw.icons_static || 'Static icons',
+        meteo: lw.icons_meteo || 'Alternative set of static icons',
       };
       fields +=
         '<div class="mb-3 we-cfg-field">' +

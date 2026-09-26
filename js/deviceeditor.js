@@ -182,6 +182,7 @@ var DashticzDeviceEditor = (function () {
         title: 'Title',
         display_options: 'Display options',
         icon: 'Icon',
+        image: 'Image',
         hide_data: 'Hide data',
         last_update: 'Last update',
         switch: 'Switch',
@@ -2569,9 +2570,13 @@ var DashticzDeviceEditor = (function () {
           _esc(t.field) +
           '"><option value="icon"' +
           (lowerField === 'icon' ? ' selected' : '') +
-          '>Icon</option><option value="image"' +
+          '>' +
+          _esc(t.icon) +
+          '</option><option value="image"' +
           (lowerField === 'image' ? ' selected' : '') +
-          '>Image</option></select>'
+          '>' +
+          _esc(t.image) +
+          '</option></select>'
         : '<input type="text" class="form-control de-custom-field-name" placeholder="' +
           _esc(t.field) +
           '" value="' +

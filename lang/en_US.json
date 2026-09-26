@@ -550,7 +550,9 @@
       "invalid_lms_port": "Enter a valid port (1-65535).",
       "invalid_lms_player": "Test the connection and select a player.",
       "seconds": "seconds",
-      "lms_player_controls": "Player controls"
+      "lms_player_controls": "Player controls",
+      "background": "Background",
+      "image": "Image"
     },
     "layouteditor": {
       "title": "Layout Editor",
@@ -857,7 +859,10 @@
       "timegraph_add_value": "Add value",
       "timegraph_remove_value": "Remove value",
       "timegraph_value_required": "Enter a value (e.g. Temp or NettUsage) for value",
-      "devices": "Devices"
+      "devices": "Devices",
+      "log_maxitems": "Maximum lines",
+      "log_maxitems_help": "Limit the number of log lines shown, so no scrollbar is needed. Leave empty for no limit.",
+      "image": "Image"
     },
     "garbage": {
       "garbage_calendar_id": "Google Calendar ID",
