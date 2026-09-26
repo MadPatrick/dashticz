@@ -2379,10 +2379,25 @@ body.dle-active {
   line-height: 1;
 }
 
-/* Device Config -> Text alignment buttons: keep the icons button-sized
-   instead of the global 30px .fas size. */
+/* Device Config -> Text: the size inputs and the alignment buttons share
+   one height; the buttons are square and their icons scale with them
+   (instead of the global 30px .fas size). */
+.de-text-style-row .form-control-sm {
+  height: 2.125rem;
+}
+
+.de-text-align-group .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  padding: 0;
+}
+
 .de-text-align-group .fas {
-  font-size: 1em !important;
+  margin: 0 !important;
+  font-size: 1.05rem !important;
   line-height: 1;
 }
 
