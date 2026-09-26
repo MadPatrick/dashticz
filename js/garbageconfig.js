@@ -559,6 +559,11 @@
   }
 
   refreshGarbageEnhancements();
+  // Enhance the Widget Config popup as soon as Bootstrap starts showing it
+  // (its markup is complete by then), so it never appears for a moment
+  // without the Text styling/Bin scale fields and then jumps once the poll
+  // below catches up. The poll stays as a fallback.
+  document.addEventListener('show.bs.modal', refreshGarbageEnhancements);
   window.setInterval(refreshGarbageEnhancements, POLL_MS);
 })();
 

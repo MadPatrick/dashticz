@@ -365,6 +365,10 @@
   } else {
     tick();
   }
+  // Add the Player controls switch as soon as Bootstrap starts showing the
+  // Device Config popup, instead of up to POLL_MS after it is visible (which
+  // made the layout jump). The poll stays as a fallback.
+  document.addEventListener('show.bs.modal', tick);
   window.setInterval(tick, POLL_MS);
 })();
 
