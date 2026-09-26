@@ -2390,6 +2390,18 @@ body.dle-active {
    next to their switch. Drop the switch by one small label line so it lines
    up with the inputs instead of their labels, unless the fields are hidden
    because the switch is off. */
+/* Automation rule/action card title line (js/devicerules.js): a grey band
+   across the full card width so the title stands out from the fields.
+   The negative margins cancel the card's p-2 padding. */
+.dr-card-header {
+  margin: -0.5rem -0.5rem 0.5rem;
+  padding: 0.3rem 0.5rem;
+  min-height: 2rem;
+  background: rgba(128, 128, 128, 0.18);
+  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+  border-radius: var(--bs-border-radius) var(--bs-border-radius) 0 0;
+}
+
 /* Automation field rows (js/devicerules.js fieldHtml()): fields sit side
    by side and wrap where the popup is too narrow. Fields without a size
    class stay as narrow as their content (short selects, colors, numbers);

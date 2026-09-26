@@ -1920,7 +1920,7 @@
   function switchBlockHtml(opts) {
     return (
       (opts.title
-        ? '<div class="fw-semibold small mb-1">' +
+        ? '<div class="fw-semibold small dr-card-header">' +
           escapeHtml(opts.title) +
           '</div>'
         : '') +
@@ -2128,7 +2128,7 @@
       '<div class="dt-device-rule border rounded p-2 mb-3" data-rule-id="' +
       escapeHtml(rule.id) +
       '">' +
-      '<div class="d-flex justify-content-between align-items-center mb-1">' +
+      '<div class="d-flex justify-content-between align-items-center dr-card-header">' +
       '<span class="fw-semibold small">' +
       escapeHtml(t.automation) +
       ' \u00b7 ' +
