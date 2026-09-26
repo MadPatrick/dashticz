@@ -2386,6 +2386,72 @@ body.dle-active {
   line-height: 1;
 }
 
+/* Automation (js/devicerules.js switchBlockHtml()): the input fields sit
+   next to their switch. Drop the switch by one small label line so it lines
+   up with the inputs instead of their labels, unless the fields are hidden
+   because the switch is off. */
+/* Automation field rows (js/devicerules.js fieldHtml()): fields sit side
+   by side and wrap where the popup is too narrow. Fields without a size
+   class stay as narrow as their content (short selects, colors, numbers);
+   text fields grow into the remaining space. */
+.dr-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.dr-fields.dr-style-groups {
+  column-gap: 1.25rem;
+}
+
+.dr-field {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.dr-field.dr-field-grow {
+  flex: 1 1 8rem;
+}
+
+.dr-field.dr-field-wide {
+  flex: 1 1 12rem;
+}
+
+.dr-field.dr-field-full {
+  flex: 1 1 100%;
+}
+
+.dr-contents {
+  display: contents;
+}
+
+.dr-fields .dr-input-num {
+  width: 9ch;
+}
+
+/* Content-sized selects: keep room for the value next to the arrow, so a
+   short value such as "2 px" is never cut off. */
+.dr-fields .form-select.w-auto {
+  min-width: 5.5rem;
+}
+
+.dr-switch-row > .min-w-0 {
+  min-width: 0;
+}
+
+.dr-switch-cell {
+  margin: 1.6rem 0 0;
+}
+
+.dr-switch-cell.dr-switch-cell-deep {
+  margin-top: 3.05rem;
+}
+
+.dr-switch-row:has(> .d-none) .dr-switch-cell.dr-switch-cell {
+  margin-top: 0;
+}
+
 .de-config-popup {
   z-index: 1070;
 }
