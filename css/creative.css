@@ -2390,6 +2390,21 @@ body.dle-active {
    next to their switch. Drop the switch by one small label line so it lines
    up with the inputs instead of their labels, unless the fields are hidden
    because the switch is off. */
+/* Automation "Add automation" button: light green, from Bootstrap's
+   success-subtle colors so it also fits dark mode. */
+.btn.dr-add {
+  color: var(--bs-success-text-emphasis, #0a3622);
+  background-color: var(--bs-success-bg-subtle, #d1e7dd);
+  border-color: var(--bs-success-border-subtle, #a3cfbb);
+}
+
+.btn.dr-add:hover,
+.btn.dr-add:focus-visible {
+  color: var(--bs-success-text-emphasis, #0a3622);
+  background-color: var(--bs-success-border-subtle, #a3cfbb);
+  border-color: var(--bs-success-border-subtle, #a3cfbb);
+}
+
 /* Automation rule/action card title line (js/devicerules.js): a grey band
    across the full card width so the title stands out from the fields.
    The negative margins cancel the card's p-2 padding. */
@@ -2555,6 +2570,43 @@ body.dle-active {
 .de-custom-field-row .form-control,
 .we-custom-field-row .form-control {
   min-width: 0;
+}
+
+/* Field column has one fixed share of the row, whether it is a text input
+   or the Icon/Image pulldown - a select otherwise claims its own content
+   width (plus its arrow padding) and pushes its Setting column out of line
+   with the rows around it. Setting fills the rest; nowrap keeps the +/-
+   buttons on the row (the phone-width media query below turns wrapping
+   back on). */
+.de-custom-field-row,
+.we-custom-field-row {
+  flex-wrap: nowrap;
+}
+
+.de-custom-field-row .de-custom-field-name,
+.we-custom-field-row .we-custom-field-name {
+  flex: 0 0 45%;
+  width: auto;
+  min-width: 0;
+}
+
+.de-custom-field-row .de-custom-field-setting,
+.we-custom-field-row .we-custom-field-setting {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+
+/* Same height as the -sm text inputs in the other rows. The global
+   select { font-size: 16px !important } rule (kept for iOS, which zooms in
+   on smaller selects) would otherwise make this row taller, so the height
+   is set from the -sm input's own rem sizes instead of the select's em. */
+.de-custom-field-row .de-icon-source,
+.we-custom-field-row .we-icon-source {
+  height: calc(0.875rem * 1.5 + 0.5rem + 2px);
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.2;
 }
 
 .de-icon-field-row,
