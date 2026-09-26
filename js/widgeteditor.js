@@ -3806,6 +3806,8 @@ var DashticzWidgetEditor = (function () {
       fields += '</div>';
     } else if (item.id === 'garbage') {
       var gcfg = widgetConfigs.garbage || {};
+      // Company/Service keeps its own full-width line; the other text fields
+      // sit in two columns and the switches below three per row.
       fields += _cfgField(
         'garbage_company',
         lg.garbage_company || 'Company / Service',
@@ -3813,6 +3815,7 @@ var DashticzWidgetEditor = (function () {
         gcfg.garbage_company,
         _GARBAGE_COMPANIES
       );
+      fields += '<div class="we-cfg-cols">';
       fields += _cfgField(
         'garbage_zipcode',
         lg.garbage_zipcode || 'Postcode',
@@ -3852,7 +3855,9 @@ var DashticzWidgetEditor = (function () {
         lg.garbage_maxdays_help ||
           'Maximum number of days ahead to search. Default: 32.'
       );
+      fields += '</div>';
       fields += _cfgHeading(_t('ical_google', 'iCal / Google'));
+      fields += '<div class="we-cfg-cols">';
       fields += _cfgField(
         'garbage_icalurl',
         lg.garbage_icalurl || 'iCal URL',
@@ -3873,7 +3878,11 @@ var DashticzWidgetEditor = (function () {
         null,
         lg.garbage_calendar_id_help || ''
       );
-      fields += '<div class="we-switch-grid">';
+      fields += '</div>';
+      // js/garbageconfig.js puts its Bin scale field first in this row, so
+      // scale + Hide icon + Icon colors share one line.
+      fields +=
+        '<div class="we-switch-grid we-switch-grid-three garbage-icon-row">';
       fields += _cfgField(
         'garbage_hideicon',
         lg.garbage_hideicon || 'Hide icon',
@@ -3886,6 +3895,8 @@ var DashticzWidgetEditor = (function () {
         'checkbox',
         gcfg.garbage_icon_use_colors
       );
+      fields += '</div>';
+      fields += '<div class="we-switch-grid we-switch-grid-three">';
       fields += _cfgField(
         'garbage_use_colors',
         lg.garbage_use_colors || 'Use colors',

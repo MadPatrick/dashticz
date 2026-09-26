@@ -355,9 +355,17 @@
     scaleWrapper.appendChild(scaleHeading);
     scaleWrapper.appendChild(createScaleField(scaleValue));
 
+    // Widget Config's .garbage-icon-row (js/widgeteditor.js) holds the Hide
+    // icon and Icon colors switches: the scale heading and text styling go
+    // above that row, the scale field itself becomes its first column.
     var hideIcon = popup.querySelector('#we-cfg-garbage-hideicon');
-    var anchor = hideIcon && hideIcon.closest('.mb-3');
+    var iconRow = hideIcon && hideIcon.closest('.garbage-icon-row');
+    var anchor = iconRow || (hideIcon && hideIcon.closest('.mb-3'));
     if (anchor && anchor.parentNode) {
+      if (iconRow) {
+        iconRow.insertBefore(createScaleField(scaleValue), iconRow.firstChild);
+        scaleWrapper.removeChild(scaleWrapper.lastChild);
+      }
       anchor.parentNode.insertBefore(scaleWrapper, anchor);
       anchor.parentNode.insertBefore(textSection, scaleWrapper);
     } else {
@@ -378,7 +386,7 @@
       });
     }
 
-    var scaleInput = scaleWrapper.querySelector('.garbage-kliko-scale-input');
+    var scaleInput = popup.querySelector('.garbage-kliko-scale-input');
     if (scaleInput) {
       scaleInput.addEventListener('input', function () {
         syncScaleInput(popup);
