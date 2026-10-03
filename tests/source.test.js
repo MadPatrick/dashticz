@@ -8095,4 +8095,12 @@ test('TVgids channel list: five groups, every channel with its own logo', () => 
     .readdirSync(path.join(root, 'img/custom/tvgids'))
     .map((file) => file.replace(/\.png$/, ''));
   assert.deepEqual(logos.sort(), [...ids].sort());
+  // img/custom/.gitignore ignores everything else in img/custom, so the
+  // logos must be excepted explicitly or a commit leaves them out.
+  const ignored = spawnSync(
+    'git',
+    ['check-ignore', '--no-index', 'img/custom/tvgids/npo_1.png'],
+    { cwd: root, encoding: 'utf8' }
+  );
+  assert.equal(ignored.status, 1, 'img/custom/tvgids/*.png is git-ignored');
 });
