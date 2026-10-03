@@ -1,9 +1,9 @@
 .. _tvgids :
 
-TVgids
-======
+TVgids24
+========
 
-The TVgids widget shows today's TV programme of the channels you choose, from
+The TVgids24 widget shows today's TV programme of the channels you choose, from
 `tvgids24.nl <https://www.tvgids24.nl/>`_. Every channel gets its own column
 with its logo above it: the programme on air now (in bold) and the ones after
 it. The columns have a minimum width, so the block shows as many of them next
@@ -15,7 +15,7 @@ The programme is read server-side (``vendor/dashticz/tvgids/``) and cached per
 channel for the poll interval, so several dashboards share one download. It is
 the programme of the current day.
 
-Add it via the Screen Editor: "Add items" -> Widgets -> TVgids (in the "Widgets
+Add it via the Screen Editor: "Add items" -> Widgets -> TVgids24 (in the "Widgets
 (multiple per screen)" section). You can place it several times, for example
 one block per screen. Pick the channels by clicking their logos: they are
 grouped as on tvgids24.nl (General, Other, Regional, Sport and Films), and the
@@ -42,7 +42,7 @@ from the default.
     - Description
   * - tvgids
     - The channels, comma separated, in the order of the columns, for example
-      ``'npo_1,rtl_4,sbs6'``. Required: this property makes the block a TVgids
+      ``'npo_1,rtl_4,sbs6'``. Required: this property makes the block a TVgids24
       widget. The channel ids are those in
       ``vendor/dashticz/tvgids/channels.json``
   * - tvgidsmaxitems
@@ -67,7 +67,7 @@ Example::
 
   blocks['tvgids_1'] = {
     width: 12,
-    title: 'TVgids',
+    title: 'TVgids24',
     icon: 'fas fa-tv',
     tvgids: 'npo_1,npo_2,npo_3,rtl_4,sbs6,omroep_brabant',
     tvgidsmaxitems: 8

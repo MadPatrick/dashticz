@@ -8870,7 +8870,9 @@ canvas {
   object-fit: contain;
 }
 
+/* 2px larger than the programmes, also with a custom tvgidsfontsize. */
 .tvgids-name {
+  font-size: calc(1em + 2px);
   font-weight: bold;
 }
 

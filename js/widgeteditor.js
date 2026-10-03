@@ -2705,7 +2705,7 @@ var DashticzWidgetEditor = (function () {
      popup (DashticzDeviceEditor.openTvgids()), where the channels are
      picked from their logos. */
   function _tvgidsWidgetCardHtml() {
-    var itemTitle = _t('tvgids_title', 'TVgids');
+    var itemTitle = _t('tvgids_title', 'TVgids24');
     return (
       '<div class="we-widget-card we-widget-card-tvgids" data-special-widget="tvgids" ' +
       'role="button" tabindex="0" aria-label="' +
