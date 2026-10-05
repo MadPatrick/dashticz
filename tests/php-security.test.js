@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
+const vm = require('node:vm');
 const { spawn, spawnSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
@@ -706,7 +707,35 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
      the pattern) only touches this one array. */
   assert.match(
     source,
-    /\$specialBlockKinds = \['dummy', 'title', 'custom', 'group', 'cluster', 'html', 'iframe', 'calendar', 'publictransport', 'timegraph', 'xmltvguide', 'lms', 'camera', 'news', 'graph', 'f1', 'tvgids'];/
+    /\$specialBlockKinds = dashticz_widget_kinds\('saved'\);/
+  );
+  // The kinds themselves are in js/widgets.json.
+  const manifest = JSON.parse(read('js/widgets.json'));
+  assert.deepEqual(
+    Object.keys(manifest.kinds).filter((kind) => manifest.kinds[kind].saved),
+    [
+      'title',
+      'dummy',
+      'custom',
+      'group',
+      'cluster',
+      'html',
+      'iframe',
+      'calendar',
+      'publictransport',
+      'timegraph',
+      'xmltvguide',
+      'lms',
+      'camera',
+      'news',
+      'graph',
+      'f1',
+      'tvgids',
+    ].sort(
+      (a, b) =>
+        Object.keys(manifest.kinds).indexOf(a) -
+        Object.keys(manifest.kinds).indexOf(b)
+    )
   );
   assert.match(
     source,
@@ -1368,4 +1397,37 @@ test('dashticz_cached_json caches, falls back to stale data and remembers failur
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('js/widgets.json is read the same way by PHP and by DT_function', () => {
+  const manifest = JSON.parse(read('js/widgets.json'));
+  const dir = path.join(root, 'vendor/dashticz').replace(/\\/g, '/');
+  const php = spawnSync(
+    'php',
+    [
+      '-r',
+      `require '${dir}/security.php'; echo json_encode(array(dashticz_widget_kinds('titleOptional'), dashticz_widget_default_width('tvgids'), dashticz_widget_default_width('f1'), dashticz_widget_default_width('news')));`,
+    ],
+    { encoding: 'utf8' }
+  );
+  assert.equal(php.status, 0, php.stderr);
+  const [titleOptional, tvgidsWidth, f1Width, newsWidth] = JSON.parse(
+    php.stdout
+  );
+  assert.ok(titleOptional.includes('f1') && titleOptional.includes('tvgids'));
+  assert.deepEqual([tvgidsWidth, f1Width, newsWidth], [12, 4, 3]);
+
+  // Same answer from the browser side.
+  const context = {
+    $: { getJSON: () => ({ then: (done) => done(manifest) }) },
+    _DASHTICZ_VERSION: '1',
+  };
+  vm.createContext(context);
+  vm.runInContext(read('js/dt_function.js'), context);
+  context.DT_function.loadWidgetManifest();
+  assert.deepEqual(
+    Array.from(context.DT_function.widgetKinds('titleOptional')),
+    titleOptional
+  );
+  assert.equal(context.DT_function.widgetDefaultWidth('f1'), 4);
 });

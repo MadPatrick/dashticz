@@ -7,6 +7,19 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 
+// The kinds that are found by their reference in the Layout Editor come from
+// js/widgets.json (flag referenceBased).
+function assertReferenceBasedKind(layoutEditor, kind) {
+  assert.match(
+    layoutEditor,
+    /var REFERENCE_BASED_SPECIAL_KINDS = DT_function\.widgetKinds\('referenceBased'\);/
+  );
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(root, 'js/widgets.json'), 'utf8')
+  );
+  assert.equal(manifest.kinds[kind].referenceBased, true);
+}
+
 // These tests verify source tokens and ordering, not a particular formatter's
 // line wrapping. Make their regular expressions insensitive to whitespace so
 // a clean Prettier pass cannot invalidate otherwise unchanged behavior. Text
@@ -5293,10 +5306,7 @@ test('Lyrion Music Server (LMS) block is registered, dispatched and wired throug
   // added to that one array to get both the cog control and correct
   // config routing - see also 'Group block gets the Layout Editor
   // config...' below, which checks the same array for 'group'.
-  assert.match(
-    layoutEditor,
-    /var REFERENCE_BASED_SPECIAL_KINDS = \[[\s\S]{0,400}?'lms'[\s\S]{0,400}?\];/
-  );
+  assertReferenceBasedKind(layoutEditor, 'lms');
   assert.match(
     layoutEditor,
     /isConfigurable =[\s\S]{0,300}?REFERENCE_BASED_SPECIAL_KINDS\.indexOf\(item\.kind\) > -1/
@@ -5846,10 +5856,7 @@ test('Group block gets the Layout Editor config (cog) control, like HTML/LMS blo
   // shared REFERENCE_BASED_SPECIAL_KINDS array (see the LMS test above,
   // which checks the array declaration and both call sites) - here it
   // only needs to be re-checked for 'group' itself.
-  assert.match(
-    layoutEditor,
-    /var REFERENCE_BASED_SPECIAL_KINDS = \[[\s\S]{0,400}?'group'[\s\S]{0,150}?\];/
-  );
+  assertReferenceBasedKind(layoutEditor, 'group');
 });
 
 test('Cluster block gets its own Layout Editor config (cog) control and renders individually-switchable rows', () => {
@@ -5881,10 +5888,7 @@ test('Cluster block gets its own Layout Editor config (cog) control and renders 
     /String\(definition\.type \|\| ''\)\.toLowerCase\(\) === 'cluster'/
   );
   assert.match(layoutEditor, /kind: 'cluster',/);
-  assert.match(
-    layoutEditor,
-    /var REFERENCE_BASED_SPECIAL_KINDS = \[[\s\S]{0,400}?'cluster'[\s\S]{0,150}?\];/
-  );
+  assertReferenceBasedKind(layoutEditor, 'cluster');
 
   // js/deviceeditor.js's own _specialFromReference() recognizes the same
   // type: 'cluster' shape, and the quick-add popup exists.
@@ -6411,10 +6415,7 @@ test('rendered Graph blocks keep the Layout Editor config cog and open their own
     /\(!definition\.type \|\| definition\.type === key\) &&\s*\n\s*Array\.isArray\(definition\.devices\)/
   );
   assert.match(layoutEditor, /kind: 'graph',/);
-  assert.match(
-    layoutEditor,
-    /var REFERENCE_BASED_SPECIAL_KINDS = \[[\s\S]{0,500}?'graph'[\s\S]{0,50}?\];/
-  );
+  assertReferenceBasedKind(layoutEditor, 'graph');
 
   // Clicking that cog routes through Device Editor. It must accept the same
   // key-as-type artifact so openLayoutConfig(reference) resolves the exact

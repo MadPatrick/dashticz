@@ -442,7 +442,36 @@ var DT_function = (function () {
     );
   }
 
+  // js/widgets.json: the special block kinds and their flags, shared by the
+  // editors (and, in PHP, by js/saveblocks.php). Loaded once at startup.
+  var widgetManifest = { kinds: {} };
+
+  function loadWidgetManifest() {
+    return $.getJSON('js/widgets.json?v=' + _DASHTICZ_VERSION).then(
+      function (manifest) {
+        widgetManifest = manifest;
+        return manifest;
+      }
+    );
+  }
+
+  // The kinds that have the given flag, in manifest order.
+  function widgetKinds(flag) {
+    return Object.keys(widgetManifest.kinds).filter(function (kind) {
+      return widgetManifest.kinds[kind][flag];
+    });
+  }
+
+  // Columns of a new block of this kind without a width.
+  function widgetDefaultWidth(kind) {
+    var entry = widgetManifest.kinds[kind];
+    return (entry && entry.defaultWidth) || 3;
+  }
+
   return {
+    loadWidgetManifest: loadWidgetManifest,
+    widgetKinds: widgetKinds,
+    widgetDefaultWidth: widgetDefaultWidth,
     escapeHtml: escapeHtml,
     t: t,
     clampNumber: clampNumber,

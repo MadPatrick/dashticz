@@ -1,5 +1,26 @@
 <?php
 
+/* js/widgets.json: the special block kinds and their flags, shared with the
+   editors (js/dt_function.js). Returns the kinds that have $flag. */
+function dashticz_widget_kinds($flag)
+{
+    $manifest = json_decode((string) @file_get_contents(dirname(__DIR__, 2) . '/js/widgets.json'), true);
+    $kinds = array();
+    foreach (isset($manifest['kinds']) && is_array($manifest['kinds']) ? $manifest['kinds'] : array() as $kind => $entry) {
+        if (!empty($entry[$flag])) {
+            $kinds[] = $kind;
+        }
+    }
+    return $kinds;
+}
+
+// Columns of a new block of this kind without a width.
+function dashticz_widget_default_width($kind)
+{
+    $manifest = json_decode((string) @file_get_contents(dirname(__DIR__, 2) . '/js/widgets.json'), true);
+    return isset($manifest['kinds'][$kind]['defaultWidth']) ? (int) $manifest['kinds'][$kind]['defaultWidth'] : 3;
+}
+
 function dashticz_json_error($status, $message)
 {
     http_response_code($status);

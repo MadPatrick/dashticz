@@ -1,4 +1,4 @@
-/* global Domoticz settings columns columns_standby blocks blocktypes screens standby_screen DashticzScreenSwitcher standbyActive language getBlockTypesBlock DashticzLayoutEditor DashticzDeviceRules b64_to_utf8 */
+/* global Domoticz settings columns columns_standby blocks blocktypes screens standby_screen DashticzScreenSwitcher standbyActive language getBlockTypesBlock DashticzLayoutEditor DashticzDeviceRules DT_function b64_to_utf8 */
 // eslint-disable-next-line no-unused-vars
 var DashticzDeviceEditor = (function () {
   'use strict';
@@ -25,74 +25,15 @@ var DashticzDeviceEditor = (function () {
   // be meaningless for these). 'group' is handled separately just below
   // its own idx is optional-but-real; 'custom'/'dummy'/'timegraph' keep
   // their real parsed idx.
-  var IDX_LESS_SPECIAL_KINDS = [
-    'title',
-    'slidebutton',
-    'cluster',
-    'html',
-    'iframe',
-    'calendar',
-    'publictransport',
-    'xmltvguide',
-    'lms',
-    'camera',
-    'news',
-    'graph',
-    'f1',
-    'tvgids',
-  ];
+  var IDX_LESS_SPECIAL_KINDS = DT_function.widgetKinds('idxLess');
 
   // Title is optional (blank is fine) rather than required.
-  var TITLE_OPTIONAL_SPECIAL_KINDS = [
-    'custom',
-    'group',
-    'cluster',
-    'html',
-    'iframe',
-    'calendar',
-    'publictransport',
-    'timegraph',
-    'xmltvguide',
-    'lms',
-    'camera',
-    'news',
-    'graph',
-    'f1',
-    'tvgids',
-  ];
-
-  // Defaults to a 6-column width instead of the generic 3-column
-  // default - their content needs more horizontal room.
-  var WIDE_DEFAULT_SPECIAL_KINDS = [
-    'lms',
-    'cluster',
-    'iframe',
-    'calendar',
-    'timegraph',
-    'xmltvguide',
-    'graph',
-    'tvgids',
-  ];
+  var TITLE_OPTIONAL_SPECIAL_KINDS = DT_function.widgetKinds('titleOptional');
 
   // No Dial/Bar/Slider visual mode of their own, and only Icon/Last
   // update/Title among the Device Config display options (no Data/
   // Switch) - every special except a plain dummy/custom device.
-  var NO_DIAL_SPECIAL_KINDS = [
-    'group',
-    'cluster',
-    'html',
-    'iframe',
-    'calendar',
-    'publictransport',
-    'timegraph',
-    'xmltvguide',
-    'lms',
-    'camera',
-    'news',
-    'graph',
-    'f1',
-    'tvgids',
-  ];
+  var NO_DIAL_SPECIAL_KINDS = DT_function.widgetKinds('noDial');
 
   // _buildDevicePayload()'s shared "just Icon + Last update (+ Group's
   // own optional idx)" branch - a subset of NO_DIAL_SPECIAL_KINDS
@@ -102,20 +43,7 @@ var DashticzDeviceEditor = (function () {
   // option set. Graph fits here too - like html/iframe/calendar its
   // required data (the devices array, plus graph/legend/groupBy) rides
   // through custom_fields instead of a dedicated top-level property.
-  var SIMPLE_ICON_PAYLOAD_KINDS = [
-    'group',
-    'cluster',
-    'html',
-    'iframe',
-    'calendar',
-    'publictransport',
-    'xmltvguide',
-    'camera',
-    'news',
-    'graph',
-    'f1',
-    'tvgids',
-  ];
+  var SIMPLE_ICON_PAYLOAD_KINDS = DT_function.widgetKinds('simpleIconPayload');
   var deviceNames = {}; // composite key -> device name
   var deviceWidths = {}; // composite key -> block width (1..12)
   var deviceHeights = {}; // composite key -> optional block height
@@ -1287,12 +1215,7 @@ var DashticzDeviceEditor = (function () {
               definition.title || (kind === 'title' ? 'Title' : reference)
             ),
       width: _parseWidth(
-        definition.width ||
-          (kind === 'title'
-            ? 12
-            : WIDE_DEFAULT_SPECIAL_KINDS.indexOf(kind) > -1
-              ? 6
-              : 3)
+        definition.width || DT_function.widgetDefaultWidth(kind)
       ),
 
       height: _parseHeight(definition.height),
