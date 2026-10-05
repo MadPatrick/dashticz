@@ -305,6 +305,47 @@ function dashticz_cache_dir($name)
     return is_dir($baseDir) && is_writable($baseDir) ? $baseDir : null;
 }
 
+/* JSON cache shared by the PHP proxies: $producer() returns the data to
+   cache (and throws a RuntimeException when it can't).
+   - A cache file younger than $ttl seconds, with the same $tag, is returned.
+   - When $producer() fails, stale data is returned instead of an error.
+   - Without stale data the error is remembered for $failTtl seconds, so a
+     site that is down isn't asked again by every dashboard refresh.
+   $file may be null (no writable cache folder): then nothing is cached. */
+function dashticz_cached_json($file, $ttl, $producer, $tag = '', $failTtl = 0)
+{
+    $cached = null;
+    if ($file && is_file($file)) {
+        $cached = json_decode((string) @file_get_contents($file), true);
+        if (!is_array($cached)) {
+            $cached = null;
+        }
+    }
+    $hasData = $cached !== null && array_key_exists('data', $cached) && isset($cached['fetchedAt']);
+    if ($hasData && ($cached['tag'] ?? '') === $tag && time() - $cached['fetchedAt'] < $ttl) {
+        return $cached['data'];
+    }
+    if ($failTtl > 0 && $cached !== null && !$hasData && isset($cached['failedAt'], $cached['error'])
+        && time() - $cached['failedAt'] < $failTtl) {
+        throw new RuntimeException($cached['error']);
+    }
+    try {
+        $data = $producer();
+    } catch (RuntimeException $error) {
+        if ($hasData) {
+            return $cached['data'];
+        }
+        if ($file && $failTtl > 0) {
+            dashticz_atomic_write_file($file, json_encode(array('failedAt' => time(), 'error' => $error->getMessage())));
+        }
+        throw $error;
+    }
+    if ($file) {
+        dashticz_atomic_write_file($file, json_encode(array('fetchedAt' => time(), 'tag' => $tag, 'data' => $data)));
+    }
+    return $data;
+}
+
 function dashticz_protect_cache_root($root)
 {
     $file = $root . '/.htaccess';
