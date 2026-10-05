@@ -9188,10 +9188,13 @@ canvas {
   outline-offset: 1px;
 }
 
-/* A power button: light blue with a white icon when on; the normal
+/* A power button: blue with a white icon when on; the normal
    background with a grey icon when off. */
 .fullykiosk-btn.on {
-  background: var(--dt-info);
+  /* steel blue with a lighter edge and a white icon, as the active power
+     button of the LMS control */
+  background: #314c6c;
+  border: 2px solid #5176a3;
   color: #fff;
 }
 
