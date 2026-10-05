@@ -9099,14 +9099,9 @@ canvas {
 
 .fullykiosk-row {
   display: grid;
-  grid-template-columns: 2.4em minmax(0, 1fr);
+  grid-template-columns: 30% minmax(0, 1fr);
   align-items: center;
   column-gap: 10px;
-}
-
-.fullykiosk-control {
-  text-align: left;
-  line-height: 1;
 }
 
 .fullykiosk-data {
@@ -9143,28 +9138,35 @@ canvas {
   font-weight: bold;
 }
 
-.fullykiosk-switch,
-.fullykiosk-extra-toggle,
-.fullykiosk-loadurl {
+/* The buttons of column 1: a power button that shows its state (filled when
+   on), or a plain button; side by side when a row has two (brightness). */
+.fullykiosk-control {
+  display: flex;
+  gap: 6px;
+}
+
+.fullykiosk-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 2.4em;
+  padding: 0;
+  border: 2px solid var(--dt-info);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dt-info);
+  font-size: 1em;
+  line-height: 1;
   cursor: pointer;
 }
 
-.fullykiosk-switch[aria-disabled='true'],
-.fullykiosk-extra[aria-disabled='true'] {
+.fullykiosk-btn.on {
+  background: var(--dt-info);
+  color: #fff;
+}
+
+.fullykiosk-btn:disabled {
   cursor: default;
   opacity: 0.5;
-}
-
-.fullykiosk-control .fa-toggle-on {
-  color: var(--dt-ok);
-}
-
-.fullykiosk-control .fa-toggle-off {
-  color: var(--text-muted);
-}
-
-.fullykiosk-control .fa-rotate-right {
-  color: var(--dt-info);
 }
 
 .fullykiosk-error {
@@ -9191,8 +9193,10 @@ canvas {
   }
 }
 
-/* Fully Kiosk widget: the brightness slider. */
-.fullykiosk-brightness-input {
-  width: 8em;
-  vertical-align: middle;
+/* The icon in a button: absolute size, legacy per-icon rules further up
+   (.fas.fa-power-off, ...) would otherwise enlarge or shift it. */
+.fullykiosk-block .fullykiosk-btn .fas {
+  margin: 0 !important;
+  font-size: 1.1em !important;
+  line-height: 1;
 }

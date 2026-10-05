@@ -104,18 +104,18 @@ var DT_fullykiosk = (function () {
     nextSwitchPercentage: nextSwitchPercentage,
   };
 
-  // One row of two columns: the switch (or button) and the data.
-  function rowHtml(classes, attrs, control, icon, label, value) {
+  // One row of two columns: the button(s) and the data.
+  function rowHtml(classes, control, icon, label, value) {
     return (
       '<div class="fullykiosk-row ' +
       classes +
-      '"' +
-      (attrs || '') +
-      '><span class="fullykiosk-control">' +
+      '"><span class="fullykiosk-control">' +
       (control || '') +
-      '</span><span class="fullykiosk-data"><i class="fas ' +
-      icon +
-      ' fullykiosk-icon" aria-hidden="true"></i><span class="fullykiosk-label">' +
+      '</span><span class="fullykiosk-data">' +
+      (icon
+        ? '<i class="fas ' + icon + ' fullykiosk-icon" aria-hidden="true"></i>'
+        : '') +
+      '<span class="fullykiosk-label">' +
       label +
       '</span>' +
       (value ? '<span class="fullykiosk-value">' + value + '</span>' : '') +
@@ -123,11 +123,25 @@ var DT_fullykiosk = (function () {
     );
   }
 
-  function toggleHtml(on) {
+  // A button of column 1. on: true/false makes it a power button that shows
+  // its state, undefined a plain button.
+  function buttonHtml(action, icon, label, on, disabled, extra) {
     return (
-      '<i class="fas ' +
-      (on ? 'fa-toggle-on on' : 'fa-toggle-off off') +
-      '" aria-hidden="true"></i>'
+      '<button type="button" class="fullykiosk-btn' +
+      (on === true ? ' on' : '') +
+      '" data-action="' +
+      action +
+      '"' +
+      (extra || '') +
+      (on === undefined ? '' : ' role="switch" aria-checked="' + on + '"') +
+      (disabled ? ' disabled' : '') +
+      ' title="' +
+      label +
+      '" aria-label="' +
+      label +
+      '"><i class="fas ' +
+      icon +
+      '" aria-hidden="true"></i></button>'
     );
   }
 
@@ -314,41 +328,41 @@ var DT_fullykiosk = (function () {
     var level = typeof me.battery === 'number' ? me.battery : null;
     var auto = isOn(block.fullyauto, true);
     var info = me.info || null;
+    var chargeLabel = esc(DT_function.t('fullykiosk_charging', 'Charging'));
     var html = '<div class="fullykiosk-rows">';
     if (isOn(block.fullyshowbattery, true))
       html += rowHtml(
         'fullykiosk-battery',
         '',
-        '',
         batteryIcon(level),
         esc(DT_function.t('fullykiosk_battery', 'Battery')),
         level === null ? '-' : esc(level + ' %')
       );
-    if (auto && charger) {
-      html += rowHtml(
-        'fullykiosk-next',
-        '',
-        '',
-        'fa-arrows-up-down',
-        esc(
+    // The charger switch is the button in column 1; column 2 shows the
+    // percentage at which it is switched next.
+    if (switchIdx(block)) {
+      var next = '';
+      var nextLabel = '';
+      if (auto && charger) {
+        nextLabel = esc(
           charger === 'On'
             ? DT_function.t('fullykiosk_next_stop', 'Stops charging at')
             : DT_function.t('fullykiosk_next_start', 'Starts charging at')
-        ),
-        esc(nextSwitchPercentage(charger, me.targets) + ' %')
-      );
-    }
-    if (switchIdx(block)) {
+        );
+        next = esc(nextSwitchPercentage(charger, me.targets) + ' %');
+      }
       html += rowHtml(
         'fullykiosk-switch',
-        ' role="switch" tabindex="0" aria-checked="' +
-          (charger === 'On') +
-          '"' +
-          (charger ? '' : ' aria-disabled="true"'),
-        toggleHtml(charger === 'On'),
-        'fa-plug',
-        esc(DT_function.t('fullykiosk_charging', 'Charging')),
-        ''
+        buttonHtml(
+          'charger',
+          'fa-power-off',
+          chargeLabel,
+          charger === 'On',
+          !charger
+        ),
+        next ? 'fa-arrows-up-down' : '',
+        nextLabel,
+        next
       );
     }
     EXTRA_ROWS.forEach(function (row) {
@@ -360,59 +374,33 @@ var DT_fullykiosk = (function () {
     }
     html += '</div>';
     me.$mountPoint.find('.dt_state').html(html);
-    me.$mountPoint
-      .find('.fullykiosk-extra-toggle')
-      .on('click keydown', function (event) {
-        if (
-          event.type === 'keydown' &&
-          event.which !== 13 &&
-          event.which !== 32
-        )
-          return;
-        event.preventDefault();
-        event.stopPropagation();
-        var $row = $(this);
-        if ($row.attr('aria-disabled') === 'true') return;
+    me.$mountPoint.find('.fullykiosk-btn').on('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      var $button = $(this);
+      var action = $button.attr('data-action');
+      if (action === 'charger') {
+        if (charger) sendSwitch(me, charger === 'On' ? 'Off' : 'On');
+      } else if (action === 'toggle') {
         sendCommand(
           me,
-          $row.attr('data-command'),
-          $row.attr('aria-checked') === 'true' ? 'off' : 'on'
+          $button.attr('data-command'),
+          $button.attr('aria-checked') === 'true' ? 'off' : 'on'
         );
-      });
-    me.$mountPoint
-      .find('.fullykiosk-brightness-input')
-      .on('click', function (event) {
-        event.stopPropagation();
-      })
-      .on('change', function () {
-        sendCommand(me, 'brightness', parseInt($(this).val(), 10) || 0);
-      });
-    me.$mountPoint
-      .find('.fullykiosk-loadurl')
-      .on('click keydown', function (event) {
-        if (
-          event.type === 'keydown' &&
-          event.which !== 13 &&
-          event.which !== 32
-        )
-          return;
-        event.preventDefault();
-        event.stopPropagation();
+      } else if (action === 'step') {
+        var level = info ? info.brightness : 0;
+        sendCommand(
+          me,
+          'brightness',
+          Math.max(
+            0,
+            Math.min(100, level + parseInt($button.attr('data-step'), 10))
+          )
+        );
+      } else if (action === 'loadurl') {
         sendCommand(me, 'loadurl', '');
-      });
-    me.$mountPoint
-      .find('.fullykiosk-switch')
-      .on('click keydown', function (event) {
-        if (
-          event.type === 'keydown' &&
-          event.which !== 13 &&
-          event.which !== 32
-        )
-          return;
-        event.preventDefault();
-        event.stopPropagation();
-        if (charger) sendSwitch(me, charger === 'On' ? 'Off' : 'On');
-      });
+      }
+    });
   }
 
   function extraRowHtml(row, info) {
@@ -422,30 +410,36 @@ var DT_fullykiosk = (function () {
         row.label
       )
     );
-    var disabled = info ? '' : ' aria-disabled="true"';
+    var offline = !info;
     if (row.key === 'brightness') {
       return rowHtml(
         'fullykiosk-extra',
-        '',
-        '',
+        buttonHtml(
+          'step',
+          'fa-minus',
+          '-',
+          undefined,
+          offline,
+          ' data-step="-10"'
+        ) +
+          buttonHtml(
+            'step',
+            'fa-plus',
+            '+',
+            undefined,
+            offline,
+            ' data-step="10"'
+          ),
         row.icon,
         label,
-        '<input type="range" class="fullykiosk-brightness-input" min="0" max="100" step="1" value="' +
-          (info ? info.brightness : 0) +
-          '"' +
-          (info ? '' : ' disabled') +
-          ' aria-label="' +
-          label +
-          '"> ' +
-          esc((info ? info.brightness : 0) + ' %')
+        esc((info ? info.brightness : 0) + ' %')
       );
     }
     if (row.key === 'loadurl') {
       return rowHtml(
-        'fullykiosk-extra fullykiosk-loadurl',
-        ' role="button" tabindex="0"' + disabled,
-        '<i class="fas ' + row.icon + '" aria-hidden="true"></i>',
-        'fa-link',
+        'fullykiosk-extra',
+        buttonHtml('loadurl', row.icon, label, undefined, offline),
+        '',
         label,
         ''
       );
@@ -454,7 +448,6 @@ var DT_fullykiosk = (function () {
       var plugged = !!(info && info.plugged);
       return rowHtml(
         'fullykiosk-extra fullykiosk-plugged',
-        '',
         '',
         row.icon,
         label,
@@ -468,16 +461,16 @@ var DT_fullykiosk = (function () {
           : '-'
       );
     }
-    var on = !!(info && info[row.field]);
     return rowHtml(
-      'fullykiosk-extra fullykiosk-extra-toggle',
-      ' role="switch" tabindex="0" data-command="' +
-        row.key +
-        '" aria-checked="' +
-        on +
-        '"' +
-        disabled,
-      toggleHtml(on),
+      'fullykiosk-extra',
+      buttonHtml(
+        'toggle',
+        'fa-power-off',
+        label,
+        !!(info && info[row.field]),
+        offline,
+        ' data-command="' + row.key + '"'
+      ),
       row.icon,
       label,
       ''

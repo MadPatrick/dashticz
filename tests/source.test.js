@@ -8356,11 +8356,18 @@ test('Fully Kiosk block renders its rows: switches in column 1, data in column 2
   assert.match(html, /Starts charging at.*27 %/);
   // Every row has the control column and the data column.
   const rows = html.match(/class="fullykiosk-row /g) || [];
-  assert.equal(rows.length, 7);
-  assert.equal((html.match(/class="fullykiosk-control"/g) || []).length, 7);
-  assert.equal((html.match(/class="fullykiosk-data"/g) || []).length, 7);
-  assert.match(html, /fullykiosk-brightness-input/);
-  assert.match(html, /fullykiosk-loadurl/);
+  assert.equal(rows.length, 6);
+  assert.equal((html.match(/class="fullykiosk-control"/g) || []).length, 6);
+  assert.equal((html.match(/class="fullykiosk-data"/g) || []).length, 6);
+  // The charger is a power button in column 1, with no Charging line; the
+  // next switch percentage is the data of that row. No sliders.
+  assert.match(html, /data-action="charger"/);
+  assert.doesNotMatch(html, />Charging</);
+  assert.match(html, /Starts charging at/);
+  assert.doesNotMatch(html, /type="range"/);
+  assert.match(html, /data-step="-10"/);
+  assert.match(html, /data-step="10"/);
+  assert.match(html, /data-action="loadurl"/);
   // The battery row can be switched off.
   me.block.fullyshowbattery = false;
   context.DT_fullykiosk.render(me);
