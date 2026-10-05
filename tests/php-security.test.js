@@ -1431,3 +1431,34 @@ test('js/widgets.json is read the same way by PHP and by DT_function', () => {
   );
   assert.equal(context.DT_function.widgetDefaultWidth('f1'), 4);
 });
+
+test('RWS bridge: same-origin, cached, and used through DT_function.rwsTrafficUrl()', () => {
+  const bridge = read('vendor/dashticz/rws/index.php');
+  assert.match(bridge, /dashticz_require_same_origin\(\)/);
+  assert.match(bridge, /dashticz_cache_dir\('rws'\)/);
+  assert.match(bridge, /dashticz_cached_json\(/);
+  assert.match(
+    bridge,
+    /dashticz_fetch_remote\('https:\/\/api\.rwsverkeersinfo\.nl/
+  );
+
+  const url = (corsPath) => {
+    const context = {
+      $: {},
+      _DASHTICZ_VERSION: '1',
+      settings: { dashticz_php_path: 'vendor/dashticz/' },
+      _CORS_PATH: corsPath,
+    };
+    vm.createContext(context);
+    vm.runInContext(read('js/dt_function.js'), context);
+    return context.DT_function.rwsTrafficUrl();
+  };
+  assert.equal(
+    url('vendor/dashticz/cors.php?'),
+    'vendor/dashticz/rws/index.php'
+  );
+  assert.equal(
+    url('https://proxy.example/'),
+    'https://proxy.example/https://api.rwsverkeersinfo.nl/api/traffic/'
+  );
+});

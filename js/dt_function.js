@@ -1,4 +1,4 @@
-/* global toSlide getRandomInt settings infoMessage _DASHTICZ_VERSION Dashticz */
+/* global toSlide getRandomInt settings infoMessage _DASHTICZ_VERSION _CORS_PATH Dashticz *
 /* from blocks.js */
 /* global convertBlock addBlock2Column*/
 /* from graph.js */
@@ -468,7 +468,19 @@ var DT_function = (function () {
     return (entry && entry.defaultWidth) || 3;
   }
 
+  // Rijkswaterstaat's traffic data (Traffic and Traffic info widgets): the
+  // cached bridge vendor/dashticz/rws/ when PHP is the CORS proxy, else the
+  // configured CORS proxy.
+  function rwsTrafficUrl() {
+    var api = 'https://api.rwsverkeersinfo.nl/api/traffic/';
+    var phpProxy = settings['dashticz_php_path'] + 'cors.php?';
+    return _CORS_PATH === phpProxy
+      ? settings['dashticz_php_path'] + 'rws/index.php'
+      : _CORS_PATH + api;
+  }
+
   return {
+    rwsTrafficUrl: rwsTrafficUrl,
     loadWidgetManifest: loadWidgetManifest,
     widgetKinds: widgetKinds,
     widgetDefaultWidth: widgetDefaultWidth,
