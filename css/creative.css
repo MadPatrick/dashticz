@@ -9200,3 +9200,18 @@ canvas {
   font-size: 1.1em !important;
   line-height: 1;
 }
+
+/* Fully Kiosk widget: no scrollbars. A tile that is too small for its rows
+   still scrolls (touch or wheel), but without a visible scrollbar. */
+.fullykiosk-block,
+.fullykiosk-block .dt_content,
+.fullykiosk-block .dt_state {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.fullykiosk-block::-webkit-scrollbar,
+.fullykiosk-block .dt_content::-webkit-scrollbar,
+.fullykiosk-block .dt_state::-webkit-scrollbar {
+  display: none;
+}
