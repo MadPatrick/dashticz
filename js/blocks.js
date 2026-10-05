@@ -1717,9 +1717,8 @@ function getSelectorSwitch(block) {
             if (!/^[A-Za-z0-9 _-]+$/.test(levelIcon)) levelIcon = '';
           }
           html +=
-            '<label class="btn btn-default dt-btn ' +
+            '<label class="btn btn-default ' +
             st +
-            (st ? ' on' : '') +
             (levelIcon ? ' dt-sc-icon' : '') +
             '"';
           // The level name is hidden visually behind an icon; keep it
