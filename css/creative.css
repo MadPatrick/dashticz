@@ -9235,3 +9235,8 @@ canvas {
 .fullykiosk-block .dt_state::-webkit-scrollbar {
   display: none;
 }
+
+/* The icon of the charger button is 2px bigger than the other buttons'. */
+.fullykiosk-block .fullykiosk-group .fullykiosk-btn .fas {
+  font-size: calc(1.1em + 2px) !important;
+}
