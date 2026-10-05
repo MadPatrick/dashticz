@@ -9138,10 +9138,10 @@ canvas {
   font-weight: bold;
 }
 
-/* The buttons of column 1 use the classes of the LMS control buttons
-   (lms-btn, lms-btn-power, lms-btn-active, js/components/lms.css), so they
-   look the same in every theme; only the size is set here. A power button
-   shows its state (filled when on); side by side when a row has two. */
+/* The buttons of column 1: the same look as the LMS control buttons
+   (js/components/lms.css), kept here so this widget does not depend on LMS.
+   A power button shows its state (filled when on); side by side when a row
+   has two. */
 .fullykiosk-control {
   display: flex;
   gap: 6px;
@@ -9150,11 +9150,42 @@ canvas {
   width: calc(90% - 10px);
 }
 
-.fullykiosk-block .fullykiosk-btn {
+.fullykiosk-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1 1 0;
-  width: auto;
   min-width: 0;
   height: 3.4em;
+  padding: 2px;
+  border: none;
+  border-radius: var(--radius-selector, 4px);
+  background: var(--main-bg-dark);
+  color: var(--text-normal);
+  font-size: var(--font-small);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.fullykiosk-btn:hover {
+  background: var(--main-bg-dark-hover, var(--main-bg-dark));
+}
+
+.fullykiosk-btn:active {
+  transform: scale(0.94);
+}
+
+.fullykiosk-btn:focus-visible {
+  outline: 2px solid var(--button-active);
+  outline-offset: 1px;
+}
+
+.fullykiosk-btn.on {
+  background: var(--button-active);
+  color: var(--main-bg, #fff);
 }
 
 /* The charger button runs over the rows of the charge data. */
@@ -9162,12 +9193,12 @@ canvas {
   align-items: stretch;
 }
 
-.fullykiosk-block .fullykiosk-group .fullykiosk-btn {
+.fullykiosk-group .fullykiosk-btn {
   height: auto;
 }
 
 /* A power button that is off has a grey icon. */
-.fullykiosk-btn[role='switch']:not(.lms-btn-active) {
+.fullykiosk-btn[role='switch']:not(.on) {
   color: var(--text-muted);
 }
 
