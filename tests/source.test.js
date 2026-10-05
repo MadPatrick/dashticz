@@ -8382,3 +8382,24 @@ test('Fully Kiosk block renders its rows: switches in column 1, data in column 2
   context.DT_fullykiosk.render(me);
   assert.doesNotMatch(html, /fullykiosk-battery/);
 });
+
+test('LMS and Fully Kiosk share the .dt-btn button style of creative.css', () => {
+  const css = fs.readFileSync(path.join(root, 'css/creative.css'), 'utf8');
+  const lmsCss = fs.readFileSync(
+    path.join(root, 'js/components/lms.css'),
+    'utf8'
+  );
+  const lms = fs.readFileSync(path.join(root, 'js/components/lms.js'), 'utf8');
+  const fully = fs.readFileSync(
+    path.join(root, 'js/components/fullykiosk.js'),
+    'utf8'
+  );
+  assert.match(css, /\n\.dt-btn \{/);
+  assert.match(css, /\n\.dt-btn\.on \{/);
+  // The look lives in one place; lms.css only sets the size.
+  assert.doesNotMatch(lmsCss, /background:/);
+  assert.match(lms, /transbg hover dt-btn lms-btn/);
+  assert.match(fully, /transbg hover dt-btn fullykiosk-btn/);
+  // The Fully Kiosk widget does not depend on LMS.
+  assert.doesNotMatch(fully, /lms\.css|lms-btn/);
+});
