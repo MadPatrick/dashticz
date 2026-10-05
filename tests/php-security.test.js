@@ -1466,21 +1466,59 @@ test('RWS bridge: same-origin, cached, and used through DT_function.rwsTrafficUr
 
 /* The Fully Kiosk bridge (vendor/dashticz/fullykiosk/fullykiosk.php) keeps the
    battery level between 0 and 100, like the domoticz_fullykiosk plugin. */
-test('Fully Kiosk bridge summarises the device info of the tablet', () => {
+test('Fully Kiosk bridge summarises the device info and maps the commands of the plugin', () => {
   const dir = path.join(root, 'vendor/dashticz').replace(/\\/g, '/');
   const script =
     `require '${dir}/fullykiosk/fullykiosk.php';` +
     ` echo json_encode(array(` +
-    `dashticz_fullykiosk_summary(array('batteryLevel' => 54, 'isPlugged' => true, 'screenOn' => false)),` +
-    `dashticz_fullykiosk_summary(array('batteryLevel' => 140)),` +
-    `dashticz_fullykiosk_summary(array('batteryLevel' => 'abc'))));`;
+    `dashticz_fullykiosk_summary(array('batteryLevel' => 54, 'isPlugged' => true, 'screenOn' => false, 'isInScreensaver' => true, 'motionDetectorStarted' => true, 'screenBrightness' => 40)),` +
+    `dashticz_fullykiosk_summary(array('batteryLevel' => 140, 'screenBrightness' => 500)),` +
+    `dashticz_fullykiosk_summary(array('batteryLevel' => 'abc')),` +
+    `dashticz_fullykiosk_command_params('screen', 'off'),` +
+    `dashticz_fullykiosk_command_params('screensaver', 'on'),` +
+    `dashticz_fullykiosk_command_params('motion', 'on'),` +
+    `dashticz_fullykiosk_command_params('brightness', 250)));`;
   const result = spawnSync('php', ['-r', script], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), [
-    { battery: 54, plugged: true, screenOn: false },
-    { battery: 100, plugged: false, screenOn: false },
-    { battery: null, plugged: false, screenOn: false },
+    {
+      battery: 54,
+      plugged: true,
+      screenOn: false,
+      screensaver: true,
+      motion: true,
+      brightness: 40,
+    },
+    {
+      battery: 100,
+      plugged: false,
+      screenOn: false,
+      screensaver: false,
+      motion: false,
+      brightness: 100,
+    },
+    {
+      battery: null,
+      plugged: false,
+      screenOn: false,
+      screensaver: false,
+      motion: false,
+      brightness: 0,
+    },
+    { cmd: 'screenOff' },
+    { cmd: 'startScreensaver' },
+    { cmd: 'setConfig', key: 'motionDetectionEnabled', value: 'true' },
+    { cmd: 'setScreenBrightness', value: '100' },
   ]);
+  const unknown = spawnSync(
+    'php',
+    [
+      '-r',
+      `require '${dir}/fullykiosk/fullykiosk.php'; dashticz_fullykiosk_command_params('reboot', 'on');`,
+    ],
+    { encoding: 'utf8' }
+  );
+  assert.notEqual(unknown.status, 0);
 });
 
 test('Fully Kiosk bridge is same-origin, never cached and keeps the password out of the URL of the page', () => {

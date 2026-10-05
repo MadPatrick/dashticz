@@ -24,6 +24,12 @@
  *                   at fullyhardmax (95) or higher. When the tablet cannot be
  *                   reached and the charger has been off for 16 hours, the
  *                   charger is switched on as a backup.
+ *   fullyshowscreen, fullyshowscreensaver, fullyshowmotion,
+ *   fullyshowbrightness, fullyshowloadurl
+ *                   extra rows for the other devices of the plugin (default
+ *                   off): screen on/off, screensaver on/off, motion sensor
+ *                   on/off, brightness (0-100) and a button that loads the
+ *                   start URL of the tablet again
  *   fullyfontsize   optional font size in px (8-60); empty = the theme's
  *
  * The charge control runs in the browser, so only while a dashboard with this
@@ -251,6 +257,7 @@ var DT_fullykiosk = (function () {
     var charger = chargerState(me);
     var level = typeof me.battery === 'number' ? me.battery : null;
     var auto = isOn(block.fullyauto, true);
+    var info = me.info || null;
     var html = '<div class="fullykiosk-rows">';
     html +=
       '<div class="fullykiosk-row fullykiosk-battery">' +
@@ -289,11 +296,55 @@ var DT_fullykiosk = (function () {
         (charger === 'On' ? 'fa-toggle-on on' : 'fa-toggle-off off') +
         '" aria-hidden="true"></i></span></div>';
     }
+    EXTRA_ROWS.forEach(function (row) {
+      if (!isOn(block['fullyshow' + row.key], false)) return;
+      html += extraRowHtml(row, info);
+    });
     if (me.error) {
       html += '<div class="fullykiosk-error">' + esc(me.error) + '</div>';
     }
     html += '</div>';
     me.$mountPoint.find('.dt_state').html(html);
+    me.$mountPoint
+      .find('.fullykiosk-extra-toggle')
+      .on('click keydown', function (event) {
+        if (
+          event.type === 'keydown' &&
+          event.which !== 13 &&
+          event.which !== 32
+        )
+          return;
+        event.preventDefault();
+        event.stopPropagation();
+        var $row = $(this);
+        if ($row.attr('aria-disabled') === 'true') return;
+        sendCommand(
+          me,
+          $row.attr('data-command'),
+          $row.attr('aria-checked') === 'true' ? 'off' : 'on'
+        );
+      });
+    me.$mountPoint
+      .find('.fullykiosk-brightness-input')
+      .on('click', function (event) {
+        event.stopPropagation();
+      })
+      .on('change', function () {
+        sendCommand(me, 'brightness', parseInt($(this).val(), 10) || 0);
+      });
+    me.$mountPoint
+      .find('.fullykiosk-loadurl')
+      .on('click keydown', function (event) {
+        if (
+          event.type === 'keydown' &&
+          event.which !== 13 &&
+          event.which !== 32
+        )
+          return;
+        event.preventDefault();
+        event.stopPropagation();
+        sendCommand(me, 'loadurl', '');
+      });
     me.$mountPoint
       .find('.fullykiosk-switch')
       .on('click keydown', function (event) {
@@ -307,6 +358,112 @@ var DT_fullykiosk = (function () {
         event.stopPropagation();
         if (charger) sendSwitch(me, charger === 'On' ? 'Off' : 'On');
       });
+  }
+
+  // The extra rows (the other devices of the plugin): command, icon, label.
+  var EXTRA_ROWS = [
+    { key: 'screen', icon: 'fa-display', label: 'Screen', field: 'screenOn' },
+    {
+      key: 'screensaver',
+      icon: 'fa-moon',
+      label: 'Screensaver',
+      field: 'screensaver',
+    },
+    {
+      key: 'motion',
+      icon: 'fa-person-walking',
+      label: 'Motion sensor',
+      field: 'motion',
+    },
+    { key: 'brightness', icon: 'fa-sun', label: 'Brightness' },
+    { key: 'loadurl', icon: 'fa-rotate-right', label: 'Load start URL' },
+  ];
+
+  function extraRowHtml(row, info) {
+    var label = esc(DT_function.t('fullykiosk_' + row.key, row.label));
+    var icon =
+      '<i class="fas ' + row.icon + ' fullykiosk-icon" aria-hidden="true"></i>';
+    var disabled = info ? '' : ' aria-disabled="true"';
+    if (row.key === 'brightness') {
+      return (
+        '<div class="fullykiosk-row fullykiosk-extra">' +
+        icon +
+        '<span class="fullykiosk-label">' +
+        label +
+        '</span><span class="fullykiosk-value"><input type="range" class="fullykiosk-brightness-input" min="0" max="100" step="1" value="' +
+        (info ? info.brightness : 0) +
+        '"' +
+        (info ? '' : ' disabled') +
+        ' aria-label="' +
+        label +
+        '"> ' +
+        esc((info ? info.brightness : 0) + ' %') +
+        '</span></div>'
+      );
+    }
+    if (row.key === 'loadurl') {
+      return (
+        '<div class="fullykiosk-row fullykiosk-extra fullykiosk-loadurl" role="button" tabindex="0"' +
+        disabled +
+        '>' +
+        icon +
+        '<span class="fullykiosk-label">' +
+        label +
+        '</span></div>'
+      );
+    }
+    var on = !!(info && info[row.field]);
+    return (
+      '<div class="fullykiosk-row fullykiosk-extra fullykiosk-extra-toggle" role="switch" tabindex="0" data-command="' +
+      row.key +
+      '" aria-checked="' +
+      on +
+      '"' +
+      disabled +
+      '>' +
+      icon +
+      '<span class="fullykiosk-label">' +
+      label +
+      '</span><span class="fullykiosk-value"><i class="fas ' +
+      (on ? 'fa-toggle-on on' : 'fa-toggle-off off') +
+      '" aria-hidden="true"></i></span></div>'
+    );
+  }
+
+  function connection(block, extra) {
+    return $.extend(
+      {
+        host: block.fullyhost,
+        port: DT_function.clampNumber(block.fullyport, 2323, 1, 65535, true),
+        password: block.fullypassword || '',
+        https: isOn(block.fullyhttps, false),
+      },
+      extra
+    );
+  }
+
+  // A command for the tablet (screen, screensaver, motion, brightness,
+  // loadurl), then a refresh to show the new state.
+  function sendCommand(me, command, value) {
+    DT_function.bridge(
+      'fullykiosk/index.php',
+      connection(me.block, {
+        action: 'command',
+        command: command,
+        value: value,
+      })
+    ).then(
+      function () {
+        refresh(me);
+      },
+      function (jqXHR) {
+        me.error = DT_function.bridgeError(
+          jqXHR,
+          DT_function.t('fullykiosk_error', 'Unable to reach the tablet.')
+        );
+        render(me);
+      }
+    );
   }
 
   function sendSwitch(me, command) {
@@ -360,14 +517,10 @@ var DT_fullykiosk = (function () {
       render(me);
       return;
     }
-    DT_function.bridge('fullykiosk/index.php', {
-      host: block.fullyhost,
-      port: DT_function.clampNumber(block.fullyport, 2323, 1, 65535, true),
-      password: block.fullypassword || '',
-      https: isOn(block.fullyhttps, false),
-    }).then(
+    DT_function.bridge('fullykiosk/index.php', connection(block)).then(
       function (res) {
         me.error = '';
+        me.info = res || null;
         me.battery =
           res && typeof res.battery === 'number' ? res.battery : null;
         render(me);
@@ -379,6 +532,7 @@ var DT_fullykiosk = (function () {
           DT_function.t('fullykiosk_error', 'Unable to reach the tablet.')
         );
         me.battery = null;
+        me.info = null;
         render(me);
         backup(me);
       }

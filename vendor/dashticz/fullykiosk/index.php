@@ -10,17 +10,21 @@ header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 
 /* Backend bridge for the Fully Kiosk widget (js/components/fullykiosk.js).
- * It reads the battery level of a tablet from the Fully Kiosk Remote Admin
- * REST API (?cmd=getDeviceInfo&type=json), the same call the
- * domoticz_fullykiosk plugin makes. The tablet is only reachable from the
- * LAN, so the browser never talks to it directly and the Remote Admin
- * password never ends up in a URL of the page.
+ * It talks to the Fully Kiosk Remote Admin REST API of a tablet, the same
+ * calls the domoticz_fullykiosk plugin makes. The tablet is only reachable
+ * from the LAN, so the browser never talks to it directly and the Remote
+ * Admin password never ends up in a URL of the page.
  *
  * Request (JSON): {"host": "192.168.1.50", "port": 2323, "password": "...",
- *                  "https": false}
- * Response: {"battery": 0-100|null, "plugged": bool, "screenOn": bool}
+ *                  "https": false, "action": "status"}
+ *   action 'status' (default): ?cmd=getDeviceInfo, the response is
+ *     {"battery": 0-100|null, "plugged": bool, "screenOn": bool,
+ *      "screensaver": bool, "motion": bool, "brightness": 0-100}
+ *   action 'command': "command" is screen, screensaver, motion (value
+ *     'on'/'off'), brightness (value 0-100) or loadurl (loads the start URL
+ *     of the tablet again); the response is {"ok": true}
  *
- * Nothing is cached: the widget uses the value to decide whether the charger
+ * Nothing is cached: the widget uses the values to decide whether the charger
  * has to be switched. A tablet with HTTPS enabled uses a self-signed
  * certificate, so, like the plugin, certificate verification is skipped for
  * that (user configured, LAN) connection.
@@ -41,14 +45,39 @@ try {
     if ($port < 1 || $port > 65535) {
         $port = 2323;
     }
-    $password = isset($input['password']) ? (string) $input['password'] : '';
-    $scheme = !empty($input['https']) ? 'https' : 'http';
+    $tablet = array(
+        'base' => (!empty($input['https']) ? 'https' : 'http') . '://' . $host . ':' . $port . '/',
+        'password' => isset($input['password']) ? (string) $input['password'] : '',
+    );
 
-    $ch = curl_init($scheme . '://' . $host . ':' . $port . '/?' . http_build_query(array(
-        'cmd' => 'getDeviceInfo',
-        'type' => 'json',
-        'password' => $password,
-    )));
+    $action = isset($input['action']) ? (string) $input['action'] : 'status';
+    if ($action === 'command') {
+        $command = isset($input['command']) ? (string) $input['command'] : '';
+        if ($command === 'loadurl') {
+            $info = json_decode(dashticz_fullykiosk_get($tablet, array('cmd' => 'getDeviceInfo', 'type' => 'json')), true);
+            if (is_array($info) && !empty($info['startUrl']) && is_string($info['startUrl'])) {
+                dashticz_fullykiosk_get($tablet, array('cmd' => 'loadUrl', 'url' => $info['startUrl']));
+            }
+        } else {
+            dashticz_fullykiosk_get(
+                $tablet,
+                dashticz_fullykiosk_command_params($command, isset($input['value']) ? $input['value'] : '')
+            );
+        }
+        echo json_encode(array('ok' => true));
+    } else {
+        $body = dashticz_fullykiosk_get($tablet, array('cmd' => 'getDeviceInfo', 'type' => 'json'));
+        echo json_encode(dashticz_fullykiosk_summary(json_decode($body, true)));
+    }
+} catch (RuntimeException $error) {
+    dashticz_json_error(400, $error->getMessage());
+}
+
+// One Remote Admin request; returns the response body.
+function dashticz_fullykiosk_get($tablet, $params)
+{
+    $params['password'] = $tablet['password'];
+    $ch = curl_init($tablet['base'] . '?' . http_build_query($params));
     curl_setopt_array($ch, array(
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 3,
@@ -71,7 +100,5 @@ try {
     if ($status !== 200) {
         throw new RuntimeException('Fully Kiosk returned HTTP ' . $status . '.');
     }
-    echo json_encode(dashticz_fullykiosk_summary(json_decode((string) $body, true)));
-} catch (RuntimeException $error) {
-    dashticz_json_error(400, $error->getMessage());
+    return (string) $body;
 }

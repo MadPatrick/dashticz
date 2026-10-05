@@ -15,7 +15,10 @@ v4.1.4 (5-10-2026)
   percentage at which its charger is switched next and a switch for the
   charger. Optional automatic charge control with random start and stop
   percentages, a hard minimum and maximum and a 16 hour backup; the battery is
-  read through the new bridge ``vendor/dashticz/fullykiosk/index.php``.
+  read through the new bridge ``vendor/dashticz/fullykiosk/index.php``. The
+  other devices of the plugin (screen, screensaver, motion sensor, brightness
+  and load start URL) can be added as extra rows, each with its own switch in
+  the settings.
 
 * **Fixes**
 

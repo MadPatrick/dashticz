@@ -9167,3 +9167,28 @@ canvas {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Fully Kiosk widget: the extra rows (screen, screensaver, motion sensor,
+   brightness, load start URL). */
+.fullykiosk-extra-toggle,
+.fullykiosk-loadurl {
+  cursor: pointer;
+}
+
+.fullykiosk-extra[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.fullykiosk-extra-toggle .fa-toggle-on {
+  color: var(--dt-ok);
+}
+
+.fullykiosk-extra-toggle .fa-toggle-off {
+  color: var(--text-muted);
+}
+
+.fullykiosk-brightness-input {
+  width: 8em;
+  vertical-align: middle;
+}
