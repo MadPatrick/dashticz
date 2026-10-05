@@ -9138,8 +9138,10 @@ canvas {
   font-weight: bold;
 }
 
-/* The buttons of column 1: a power button that shows its state (filled when
-   on), or a plain button; side by side when a row has two (brightness). */
+/* The buttons of column 1 use the classes of the LMS control buttons
+   (lms-btn, lms-btn-power, lms-btn-active, js/components/lms.css), so they
+   look the same in every theme; only the size is set here. A power button
+   shows its state (filled when on); side by side when a row has two. */
 .fullykiosk-control {
   display: flex;
   gap: 6px;
@@ -9148,57 +9150,24 @@ canvas {
   width: calc(90% - 10px);
 }
 
+.fullykiosk-block .fullykiosk-btn {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  height: 3.4em;
+}
+
 /* The charger button runs over the rows of the charge data. */
 .fullykiosk-group {
   align-items: stretch;
 }
 
-.fullykiosk-group .fullykiosk-btn {
-  /* The same look as the buttons of the LMS control (js/components/lms.css) */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 0;
-  min-width: 0;
-  height: 3.4em;
-  padding: 2px;
-  border: none;
-  border-radius: var(--radius-selector, 4px);
-  background: var(--main-bg-dark);
-  color: var(--text-normal);
-  font-size: var(--font-small);
-  line-height: 1;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+.fullykiosk-block .fullykiosk-group .fullykiosk-btn {
+  height: auto;
 }
 
-.fullykiosk-btn:hover {
-  background: var(--main-bg-dark-hover, var(--main-bg-dark));
-}
-
-.fullykiosk-btn:active {
-  transform: scale(0.94);
-}
-
-.fullykiosk-btn:focus-visible {
-  outline: 2px solid var(--button-active);
-  outline-offset: 1px;
-}
-
-/* A power button: blue with a white icon when on; the normal
-   background with a grey icon when off. */
-.fullykiosk-btn.on {
-  /* steel blue with a lighter edge and a white icon, as the active power
-     button of the LMS control */
-  background: #314c6c;
-  border: 2px solid #5176a3;
-  color: #fff;
-}
-
-.fullykiosk-btn[role='switch']:not(.on) {
+/* A power button that is off has a grey icon. */
+.fullykiosk-btn[role='switch']:not(.lms-btn-active) {
   color: var(--text-muted);
 }
 

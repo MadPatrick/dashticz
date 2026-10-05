@@ -77,6 +77,10 @@ var DT_fullykiosk = (function () {
     canHandle: function (block) {
       return !!(block && block.fullymode === 'charge');
     },
+    // The buttons use the classes of the LMS control buttons.
+    init: function () {
+      return DT_function.loadCSS('./js/components/lms.css');
+    },
     defaultCfg: {
       width: 4,
       icon: 'fas fa-tablet-screen-button',
@@ -138,8 +142,9 @@ var DT_fullykiosk = (function () {
   // its state, undefined a plain button.
   function buttonHtml(action, icon, label, on, disabled, extra) {
     return (
-      '<button type="button" class="transbg hover fullykiosk-btn' +
-      (on === true ? ' on' : '') +
+      '<button type="button" class="transbg hover lms-btn fullykiosk-btn' +
+      (on === undefined ? '' : ' lms-btn-power') +
+      (on === true ? ' lms-btn-active on' : '') +
       '" data-action="' +
       action +
       '"' +
