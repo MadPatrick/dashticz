@@ -138,7 +138,7 @@ var DT_fullykiosk = (function () {
   // its state, undefined a plain button.
   function buttonHtml(action, icon, label, on, disabled, extra) {
     return (
-      '<button type="button" class="fullykiosk-btn' +
+      '<button type="button" class="transbg hover fullykiosk-btn' +
       (on === true ? ' on' : '') +
       '" data-action="' +
       action +
@@ -150,9 +150,9 @@ var DT_fullykiosk = (function () {
       label +
       '" aria-label="' +
       label +
-      '"><i class="fas ' +
+      '"><em class="fas fa-small ' +
       icon +
-      '" aria-hidden="true"></i></button>'
+      '" aria-hidden="true"></em></button>'
     );
   }
 

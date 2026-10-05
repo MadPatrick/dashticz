@@ -9154,34 +9154,43 @@ canvas {
 }
 
 .fullykiosk-group .fullykiosk-btn {
-  height: auto;
-}
-
-.fullykiosk-groupdata {
+  /* The same look as the buttons of the LMS control (js/components/lms.css) */
   display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  gap: 10px;
-  min-width: 0;
-}
-
-.fullykiosk-btn {
+  align-items: center;
+  justify-content: center;
   flex: 1 1 0;
   min-width: 0;
   height: 3.4em;
-  padding: 0;
-  border: 2px solid var(--dt-info);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--dt-info);
-  font-size: 1em;
+  padding: 2px;
+  border: none;
+  border-radius: var(--radius-selector, 4px);
+  background: var(--main-bg-dark);
+  color: var(--text-normal);
+  font-size: var(--font-small);
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.fullykiosk-btn:hover {
+  background: var(--main-bg-dark-hover, var(--main-bg-dark));
+}
+
+.fullykiosk-btn:active {
+  transform: scale(0.94);
+}
+
+.fullykiosk-btn:focus-visible {
+  outline: 2px solid var(--button-active);
+  outline-offset: 1px;
 }
 
 .fullykiosk-btn.on {
-  background: var(--dt-info);
-  color: #fff;
+  background: var(--button-active);
+  color: var(--main-bg, #fff);
 }
 
 .fullykiosk-btn:disabled {
@@ -9217,7 +9226,7 @@ canvas {
    (.fas.fa-power-off, ...) would otherwise enlarge or shift it. */
 .fullykiosk-block .fullykiosk-btn .fas {
   margin: 0 !important;
-  font-size: 1.1em !important;
+  font-size: calc(var(--font-small) + 4px) !important;
   line-height: 1;
 }
 
@@ -9238,5 +9247,5 @@ canvas {
 
 /* The icon of the charger button is 2px bigger than the other buttons'. */
 .fullykiosk-block .fullykiosk-group .fullykiosk-btn .fas {
-  font-size: calc(1.1em + 2px) !important;
+  font-size: calc(var(--font-small) + 6px) !important;
 }
