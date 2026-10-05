@@ -9099,7 +9099,7 @@ canvas {
 
 .fullykiosk-row {
   display: grid;
-  grid-template-columns: 30% minmax(0, 1fr);
+  grid-template-columns: 25% minmax(0, 1fr);
   align-items: center;
   column-gap: 10px;
 }
@@ -9148,7 +9148,7 @@ canvas {
 .fullykiosk-btn {
   flex: 1 1 0;
   min-width: 0;
-  height: 2.4em;
+  height: 3.4em;
   padding: 0;
   border: 2px solid var(--dt-info);
   border-radius: 8px;
