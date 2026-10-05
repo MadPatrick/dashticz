@@ -7940,7 +7940,12 @@ function loadTvgidsModule() {
     settings: { dashticz_php_path: 'vendor/dashticz/' },
     Dashticz: { register: () => {} },
   };
-  vm.runInNewContext(source, context);
+  vm.createContext(context);
+  vm.runInContext(
+    fs.readFileSync(path.join(root, 'js/dt_function.js'), 'utf8'),
+    context
+  );
+  vm.runInContext(source, context);
   return context.DT_tvgids;
 }
 

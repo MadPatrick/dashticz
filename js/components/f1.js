@@ -1,4 +1,4 @@
-/* global Dashticz settings language */
+/* global Dashticz DT_function settings */
 //# sourceURL=js/components/f1.js
 /* F1 widget: shows the upcoming Formula 1 race weekend, based on the
  * domoticz_F1 plugin (https://github.com/MadPatrick/domoticz_F1). It is
@@ -97,10 +97,6 @@ var DT_f1 = (function () {
     refresh: refresh,
   };
 
-  function misc() {
-    return (typeof language !== 'undefined' && language.misc) || {};
-  }
-
   // Compatibility for the original singleton F1 widgets. Their mode lived
   // in block.type and all other options in global settings. Device Editor
   // writes this normalized shape back as per-block fields on the next save.
@@ -137,8 +133,7 @@ var DT_f1 = (function () {
   }
 
   function num(block, key, def, min, max) {
-    var value = parseFloat(block[key]);
-    return isNaN(value) ? def : Math.min(max, Math.max(min, value));
+    return DT_function.clampNumber(block[key], def, min, max);
   }
 
   function lang(block) {
@@ -153,16 +148,8 @@ var DT_f1 = (function () {
     );
   }
 
-  function esc(text) {
-    return String(text).replace(/[&<>"']/g, function (c) {
-      return {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-      }[c];
-    });
+  function esc(value) {
+    return DT_function.escapeHtml(value);
   }
 
   function pad(n) {
@@ -345,15 +332,9 @@ var DT_f1 = (function () {
       '--font-device-title',
       fontSize >= 8 && fontSize <= 60 ? fontSize + 'px' : ''
     );
-    $.ajax({
-      url: settings['dashticz_php_path'] + 'f1/index.php',
-      method: 'POST',
-      contentType: 'application/json',
-      dataType: 'json',
-      data: JSON.stringify({
-        url: feedUrl(block),
-        pollMinutes: num(block, 'f1pollminutes', 60, 5, 1440),
-      }),
+    DT_function.bridge('f1/index.php', {
+      url: feedUrl(block),
+      pollMinutes: num(block, 'f1pollminutes', 60, 5, 1440),
     }).then(
       function (res) {
         var now = Math.floor(Date.now() / 1000);
@@ -386,9 +367,10 @@ var DT_f1 = (function () {
       function (jqXHR) {
         showError(
           me,
-          (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) ||
-            misc().f1_error ||
-            'Unable to fetch the F1 calendar.'
+          DT_function.bridgeError(
+            jqXHR,
+            DT_function.t('f1_error', 'Unable to fetch the F1 calendar.')
+          )
         );
       }
     );
