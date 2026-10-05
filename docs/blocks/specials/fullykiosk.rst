@@ -11,12 +11,12 @@ logic.
 
 The block combines:
 
-- the battery percentage of the tablet;
+- the battery percentage of the tablet (can be hidden);
 - the percentage at which the charger is switched next: the stop percentage
   while the charger is on, the start percentage while it is off;
 - a switch to turn the charger on or off by hand;
 - optionally the other devices of the plugin as extra rows, each with its own
-  on/off switch in the settings: screen on/off, screensaver on/off, motion
+  on/off switch in the settings: charging state (plugged in), screen on/off, screensaver on/off, motion
   sensor on/off, brightness (0-100) and a button that loads the start URL of
   the tablet again.
 
@@ -95,6 +95,11 @@ from the default.
     - Charging always starts at or below this percentage. Default: 15
   * - fullyhardmax
     - Charging always stops at or above this percentage. Default: 95
+  * - fullyshowbattery
+    - ``false``: hide the battery percentage row. Default: true
+  * - fullyshowcharging
+    - ``true``: show whether the tablet is plugged in (the Charging device of
+      the plugin). Default: false
   * - fullyshowscreen, fullyshowscreensaver, fullyshowmotion, fullyshowbrightness, fullyshowloadurl
     - ``true``: show that extra row (screen, screensaver, motion sensor,
       brightness, load start URL). Default: false

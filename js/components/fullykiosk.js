@@ -24,6 +24,11 @@
  *                   at fullyhardmax (95) or higher. When the tablet cannot be
  *                   reached and the charger has been off for 16 hours, the
  *                   charger is switched on as a backup.
+ *   fullyshowbattery
+ *                   the battery percentage row (default on)
+ *   fullyshowcharging
+ *                   a row with the charging state of the tablet, whether it
+ *                   is plugged in (default off)
  *   fullyshowscreen, fullyshowscreensaver, fullyshowmotion,
  *   fullyshowbrightness, fullyshowloadurl
  *                   extra rows for the other devices of the plugin (default
@@ -259,16 +264,17 @@ var DT_fullykiosk = (function () {
     var auto = isOn(block.fullyauto, true);
     var info = me.info || null;
     var html = '<div class="fullykiosk-rows">';
-    html +=
-      '<div class="fullykiosk-row fullykiosk-battery">' +
-      '<i class="fas ' +
-      batteryIcon(level) +
-      ' fullykiosk-icon" aria-hidden="true"></i>' +
-      '<span class="fullykiosk-label">' +
-      esc(DT_function.t('fullykiosk_battery', 'Battery')) +
-      '</span><span class="fullykiosk-value">' +
-      (level === null ? '-' : esc(level + ' %')) +
-      '</span></div>';
+    if (isOn(block.fullyshowbattery, true))
+      html +=
+        '<div class="fullykiosk-row fullykiosk-battery">' +
+        '<i class="fas ' +
+        batteryIcon(level) +
+        ' fullykiosk-icon" aria-hidden="true"></i>' +
+        '<span class="fullykiosk-label">' +
+        esc(DT_function.t('fullykiosk_battery', 'Battery')) +
+        '</span><span class="fullykiosk-value">' +
+        (level === null ? '-' : esc(level + ' %')) +
+        '</span></div>';
     if (auto && charger) {
       html +=
         '<div class="fullykiosk-row fullykiosk-next">' +
@@ -369,6 +375,7 @@ var DT_fullykiosk = (function () {
       label: 'Screensaver',
       field: 'screensaver',
     },
+    { key: 'charging', icon: 'fa-plug', label: 'Plugged in', readonly: true },
     {
       key: 'motion',
       icon: 'fa-person-walking',
@@ -380,7 +387,12 @@ var DT_fullykiosk = (function () {
   ];
 
   function extraRowHtml(row, info) {
-    var label = esc(DT_function.t('fullykiosk_' + row.key, row.label));
+    var label = esc(
+      DT_function.t(
+        'fullykiosk_' + (row.key === 'charging' ? 'charging_row' : row.key),
+        row.label
+      )
+    );
     var icon =
       '<i class="fas ' + row.icon + ' fullykiosk-icon" aria-hidden="true"></i>';
     var disabled = info ? '' : ' aria-disabled="true"';
@@ -409,6 +421,25 @@ var DT_fullykiosk = (function () {
         icon +
         '<span class="fullykiosk-label">' +
         label +
+        '</span></div>'
+      );
+    }
+    if (row.readonly) {
+      var plugged = !!(info && info.plugged);
+      return (
+        '<div class="fullykiosk-row fullykiosk-extra fullykiosk-plugged">' +
+        icon +
+        '<span class="fullykiosk-label">' +
+        label +
+        '</span><span class="fullykiosk-value">' +
+        (info
+          ? esc(
+              DT_function.t(
+                plugged ? 'fullykiosk_on' : 'fullykiosk_off',
+                plugged ? 'On' : 'Off'
+              )
+            )
+          : '-') +
         '</span></div>'
       );
     }

@@ -8279,7 +8279,7 @@ var DashticzDeviceEditor = (function () {
     labelPrefix: 'fully_block_',
     fieldClass: 'de-fully-field',
     saveOrder:
-      'host port password https switch auto startmin startmax stopmin stopmax hardmin hardmax showscreen showscreensaver showmotion showbrightness showloadurl fontsize',
+      'host port password https switch auto startmin startmax stopmin stopmax hardmin hardmax showbattery showcharging showscreen showscreensaver showmotion showbrightness showloadurl fontsize',
     settings: [
       { key: 'host', type: 'text', def: '', max: 100 },
       { key: 'port', type: 'number', def: 2323, range: [1, 65535, 1] },
@@ -8294,6 +8294,8 @@ var DashticzDeviceEditor = (function () {
       { key: 'hardmin', type: 'number', def: 15, range: [0, 100, 1] },
       { key: 'hardmax', type: 'number', def: 95, range: [1, 100, 1] },
       // The other devices of the plugin, as extra rows of the block.
+      { key: 'showbattery', type: 'switch', def: true },
+      { key: 'showcharging', type: 'switch', def: false },
       { key: 'showscreen', type: 'switch', def: false },
       { key: 'showscreensaver', type: 'switch', def: false },
       { key: 'showmotion', type: 'switch', def: false },
