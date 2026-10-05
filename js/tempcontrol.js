@@ -251,7 +251,12 @@ function switchEvoZone(block, setpoint, override) {
 
   Domoticz.syncRequest(
     idx,
-    'type=setused&idx=' + idx + '&setpoint=' + setpoint + mode + '&used=true',
+    'type=command&param=setused&idx=' +
+      idx +
+      '&setpoint=' +
+      setpoint +
+      mode +
+      '&used=true',
     true
   ).then(function () {
     if (override) block.device.SetPoint = setpoint;
@@ -403,7 +408,7 @@ function switchEvoHotWater(block, state, override) {
   }
   Domoticz.syncRequest(
     idx,
-    'type=setused&idx=' +
+    'type=command&param=setused&idx=' +
       idx +
       '&setpoint=60&state=' +
       state +
