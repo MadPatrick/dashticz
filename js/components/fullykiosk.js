@@ -339,6 +339,12 @@ var DT_fullykiosk = (function () {
     var level = typeof me.battery === 'number' ? me.battery : null;
     var auto = isOn(block.fullyauto, true);
     var info = me.info || null;
+    // The tile icon follows the charger switch, like the icon of a normal
+    // switch: dimmed (off) while the charger is off.
+    me.$mountPoint
+      .find('.col-icon .icon')
+      .toggleClass('on', charger === 'On')
+      .toggleClass('off', charger === 'Off');
     var chargeLabel = esc(DT_function.t('fullykiosk_charging', 'Charging'));
     var html = '<div class="fullykiosk-rows">';
     var batteryHtml = isOn(block.fullyshowbattery, true)

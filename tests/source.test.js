@@ -8308,6 +8308,7 @@ test('Fully Kiosk is a repeatable Widgets card with its own settings table', () 
 
 test('Fully Kiosk block renders its rows: switches in column 1, data in column 2', () => {
   let html = '';
+  const classes = {};
   const chain = {
     css: () => chain,
     html: (value) => {
@@ -8316,6 +8317,10 @@ test('Fully Kiosk block renders its rows: switches in column 1, data in column 2
     },
     find: () => chain,
     on: () => chain,
+    toggleClass: (name, state) => {
+      classes[name] = state;
+      return chain;
+    },
   };
   // Domoticz is a global of the dashboard.
   const context = {
@@ -8370,6 +8375,8 @@ test('Fully Kiosk block renders its rows: switches in column 1, data in column 2
   assert.match(html, /data-step="-10"/);
   assert.match(html, /data-step="10"/);
   assert.match(html, /data-action="loadurl"/);
+  // The tile icon follows the charger switch (Off here).
+  assert.deepEqual(classes, { on: false, off: true });
   // The battery row can be switched off.
   me.block.fullyshowbattery = false;
   context.DT_fullykiosk.render(me);

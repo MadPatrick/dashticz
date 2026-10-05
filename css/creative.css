@@ -9143,8 +9143,9 @@ canvas {
 .fullykiosk-control {
   display: flex;
   gap: 6px;
-  /* 10% narrower than the column */
-  width: 90%;
+  /* 10 px free from the left, and 10% narrower than the column */
+  margin-left: 10px;
+  width: calc(90% - 10px);
 }
 
 /* The charger button runs over the rows of the charge data. */
