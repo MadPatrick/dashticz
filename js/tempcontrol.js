@@ -372,7 +372,7 @@ function getEvohomeHotWaterBlock(block) {
   templateEngine.load('thermostat_evo_hw').then(function (template) {
     var dataObject = {
       idx: device.idx,
-      toggle: device.State.toLowerCase(),
+      toggle: String(choose(device.State, '')).toLowerCase(),
       name: name,
       state: device.State,
       temp: temp,
@@ -416,6 +416,7 @@ function switchEvoHotWater(block, state, override) {
       '&used=true',
     true
   ).then(function () {
+    block.device.State = state;
     dial ? DT_dial.make(block) : getEvohomeHotWaterBlock(block);
   });
 }
