@@ -9188,9 +9188,15 @@ canvas {
   outline-offset: 1px;
 }
 
+/* A power button: light blue with a white icon when on; the normal
+   background with a grey icon when off. */
 .fullykiosk-btn.on {
-  background: var(--button-active);
-  color: var(--main-bg, #fff);
+  background: var(--dt-info);
+  color: #fff;
+}
+
+.fullykiosk-btn[role='switch']:not(.on) {
+  color: var(--text-muted);
 }
 
 .fullykiosk-btn:disabled {
