@@ -7372,7 +7372,13 @@ var DashticzDeviceEditor = (function () {
   //   full  - the field spans both columns
   var F1_SETTINGS = [
     { key: 'language', type: 'select', def: 'en' },
-    { key: 'utcoffset', type: 'number', def: 1, range: [-24, 24, 1], help: 1 },
+    {
+      key: 'utcoffset',
+      type: 'number',
+      def: null,
+      range: [-24, 24, 1],
+      help: 1,
+    },
     {
       key: 'pollminutes',
       type: 'number',
@@ -7675,7 +7681,9 @@ var DashticzDeviceEditor = (function () {
       } else if (setting.type === 'number' && setting.def === null) {
         var whole = parseInt(raw, 10);
         value =
-          whole > 0 ? Math.min(range[1], Math.max(range[0], whole)) : null;
+          !isNaN(whole) && (whole > 0 || range[0] < 0)
+            ? Math.min(range[1], Math.max(range[0], whole))
+            : null;
       } else if (setting.type === 'number') {
         var number = parseFloat($field(setting.key).val());
         value = isNaN(number)

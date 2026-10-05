@@ -58,10 +58,26 @@ var DT_trafficinfo = {
   refresh: function (me) {
     var dataURL = _CORS_PATH + 'https://api.rwsverkeersinfo.nl/api/traffic/';
 
-    $.getJSON(dataURL, function (data) {
-      var result = _buildRWSDataPart(me, data);
-      _renderTrafficInfo(me, result.dataPart, result.noData, result.roadArray);
-    });
+    $.getJSON(dataURL)
+      .done(function (data) {
+        var result = _buildRWSDataPart(me, data);
+        _renderTrafficInfo(
+          me,
+          result.dataPart,
+          result.noData,
+          result.roadArray
+        );
+      })
+      .fail(function () {
+        $(me.mountPoint + ' .dt_state').html(
+          '<div class="empty">' +
+            _escapeTraffic(
+              language.misc.traffic_error ||
+                'Unable to fetch the traffic information.'
+            ) +
+            '</div>'
+        );
+      });
   },
 };
 

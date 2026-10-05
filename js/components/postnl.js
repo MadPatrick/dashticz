@@ -30,8 +30,9 @@ var DT_postnl = (function () {
       refresh: (parseInt(settings['postnl_pollminutes'], 10) || 60) * 60,
       containerClass: 'postnl-block',
     },
+    // Mounting calls refresh() itself when block.refresh is set.
     run: function (me) {
-      refresh(me);
+      if (!me.block.refresh) refresh(me);
     },
     refresh: refresh,
   };

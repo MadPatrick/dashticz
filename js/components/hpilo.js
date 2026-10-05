@@ -79,8 +79,9 @@ var DT_hpilo = (function () {
       // the whole block height.
       template: 1,
     },
+    // Mounting calls refresh() itself when block.refresh is set.
     run: function (me) {
-      refresh(me);
+      if (!me.block.refresh) refresh(me);
     },
     refresh: refresh,
   };

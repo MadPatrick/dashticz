@@ -38,8 +38,9 @@ var DT_tvgids = (function () {
       refresh: 300,
       containerClass: 'tvgids-block',
     },
+    // Mounting calls refresh() itself when block.refresh is set.
     run: function (me) {
-      refresh(me);
+      if (!me.block.refresh) refresh(me);
     },
     refresh: refresh,
     // Exposed for the tests.
