@@ -9118,6 +9118,16 @@ canvas {
   color: var(--main-bg, #fff);
 }
 
+/* The themes give every .transbg (so these buttons too) their panel
+   background and edge with !important; the active state has to win from
+   that, with the theme's active border colour as the edge. */
+.transbg.dt-btn.on:not(.dial) {
+  background: var(--button-active) !important;
+  box-shadow: inset 0 0 0 var(--main-border-width, 1px)
+    var(--border-color-active) !important;
+  color: #fff;
+}
+
 /* Fully Kiosk widget (js/components/fullykiosk.js): battery, next switch
    percentage and the charger switch, painted into .dt_state like the HP iLO
    widget above. Every row has two columns: the switch (or button) and the
