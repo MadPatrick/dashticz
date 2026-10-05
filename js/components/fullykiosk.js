@@ -400,6 +400,19 @@ var DT_fullykiosk = (function () {
     }
     html += '</div>';
     me.$mountPoint.find('.dt_state').html(html);
+    me.$mountPoint
+      .find('.fullykiosk-brightness-input')
+      .on('click', function (event) {
+        event.stopPropagation();
+      })
+      .on('input', function () {
+        $(this)
+          .next('.fullykiosk-brightness-value')
+          .text($(this).val() + ' %');
+      })
+      .on('change', function () {
+        sendCommand(me, 'brightness', parseInt($(this).val(), 10) || 0);
+      });
     me.$mountPoint.find('.fullykiosk-btn').on('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -412,16 +425,6 @@ var DT_fullykiosk = (function () {
           me,
           $button.attr('data-command'),
           $button.attr('aria-checked') === 'true' ? 'off' : 'on'
-        );
-      } else if (action === 'step') {
-        var level = info ? info.brightness : 0;
-        sendCommand(
-          me,
-          'brightness',
-          Math.max(
-            0,
-            Math.min(100, level + parseInt($button.attr('data-step'), 10))
-          )
         );
       } else if (action === 'loadurl') {
         sendCommand(me, 'loadurl', '');
@@ -438,27 +441,22 @@ var DT_fullykiosk = (function () {
     );
     var offline = !info;
     if (row.key === 'brightness') {
+      // A dimmer slider (0-100) in the data column, sent when released.
+      var level = info ? info.brightness : 0;
       return rowHtml(
         'fullykiosk-extra',
-        buttonHtml(
-          'step',
-          'fa-minus',
-          '-',
-          undefined,
-          offline,
-          ' data-step="-10"'
-        ) +
-          buttonHtml(
-            'step',
-            'fa-plus',
-            '+',
-            undefined,
-            offline,
-            ' data-step="10"'
-          ),
+        '',
         row.icon,
         label,
-        esc((info ? info.brightness : 0) + ' %')
+        '<input type="range" class="fullykiosk-brightness-input" min="0" max="100" step="1" value="' +
+          level +
+          '"' +
+          (info ? '' : ' disabled') +
+          ' aria-label="' +
+          label +
+          '"><span class="fullykiosk-brightness-value">' +
+          esc(level + ' %') +
+          '</span>'
       );
     }
     if (row.key === 'loadurl') {

@@ -9274,3 +9274,18 @@ canvas {
 .fullykiosk-block .fullykiosk-group .fullykiosk-btn .fas {
   font-size: calc(var(--font-small) + 6px) !important;
 }
+
+/* Fully Kiosk widget: the brightness dimmer slider and its value. */
+.fullykiosk-brightness-input {
+  width: 8em;
+  max-width: 60%;
+  margin-right: 8px;
+  vertical-align: middle;
+  accent-color: var(--button-active);
+}
+
+.fullykiosk-brightness-value {
+  display: inline-block;
+  min-width: 3em;
+  text-align: right;
+}

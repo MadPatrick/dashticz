@@ -17,7 +17,7 @@ The block combines:
 - a switch to turn the charger on or off by hand;
 - optionally the other devices of the plugin as extra rows, each with its own
   on/off switch in the settings: charging state (plugged in), screen on/off, screensaver on/off, motion
-  sensor on/off, brightness (0-100) and a button that loads the start URL of
+  sensor on/off, brightness (a 0-100 slider) and a button that loads the start URL of
   the tablet again.
 
 The battery level is read from the Remote Admin API of Fully Kiosk by a

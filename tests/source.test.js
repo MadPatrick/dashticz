@@ -8371,9 +8371,9 @@ test('Fully Kiosk block renders its rows: switches in column 1, data in column 2
   assert.match(html, /data-action="charger"/);
   assert.doesNotMatch(html, />Charging</);
   assert.match(html, /Starts charging at/);
-  assert.doesNotMatch(html, /type="range"/);
-  assert.match(html, /data-step="-10"/);
-  assert.match(html, /data-step="10"/);
+  // The brightness is a dimmer slider, without minus and plus buttons.
+  assert.match(html, /type="range" class="fullykiosk-brightness-input"/);
+  assert.doesNotMatch(html, /data-step|fa-minus|fa-plus/);
   assert.match(html, /data-action="loadurl"/);
   // The tile icon follows the charger switch (Off here).
   assert.deepEqual(classes, { on: false, off: true });
