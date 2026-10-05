@@ -8163,3 +8163,145 @@ test('TVgids channel list: five groups, every channel with its own logo', () => 
   );
   assert.equal(ignored.status, 1, 'img/custom/tvgids/*.png is git-ignored');
 });
+
+function loadFullykioskModule() {
+  const context = {
+    language: { misc: {} },
+    settings: { dashticz_php_path: 'vendor/dashticz/' },
+    Dashticz: { register: () => {} },
+  };
+  vm.createContext(context);
+  vm.runInContext(
+    fs.readFileSync(path.join(root, 'js/dt_function.js'), 'utf8'),
+    context
+  );
+  vm.runInContext(
+    fs.readFileSync(path.join(root, 'js/components/fullykiosk.js'), 'utf8'),
+    context
+  );
+  return context.DT_fullykiosk;
+}
+
+test('Fully Kiosk block: dispatched on its mode, percentages kept in order', () => {
+  const fully = loadFullykioskModule();
+  assert.equal(fully.canHandle({ fullymode: 'charge' }), true);
+  assert.equal(fully.canHandle({ fullymode: '' }), false);
+  assert.equal(fully.canHandle({ tvgids: 'npo_1' }), false);
+  assert.deepEqual(JSON.parse(JSON.stringify(fully.limits({}))), {
+    startmin: 25,
+    startmax: 30,
+    stopmin: 80,
+    stopmax: 90,
+    hardmin: 15,
+    hardmax: 95,
+  });
+  const swapped = fully.limits({ fullystartmin: 40, fullystartmax: 20 });
+  assert.equal(swapped.startmin, 20);
+  assert.equal(swapped.startmax, 40);
+  // Both ends of a range can be picked, like random.randint.
+  assert.equal(
+    fully.randomBetween(80, 90, () => 0),
+    80
+  );
+  assert.equal(
+    fully.randomBetween(80, 90, () => 0.999999),
+    90
+  );
+});
+
+test('Fully Kiosk charge control follows the domoticz_fullykiosk plugin', () => {
+  const fully = loadFullykioskModule();
+  const lim = fully.limits({});
+  const targets = { start: 27, stop: 85 };
+  const decide = (battery, charger, random) =>
+    JSON.parse(
+      JSON.stringify(
+        fully.decide(battery, charger, targets, lim, random || (() => 0))
+      )
+    );
+
+  // Between the percentages nothing is switched.
+  assert.equal(decide(50, 'Off').command, null);
+  assert.equal(decide(50, 'On').command, null);
+  // Starts at the start percentage and picks both percentages again.
+  let result = decide(27, 'Off');
+  assert.equal(result.command, 'On');
+  assert.deepEqual(result.targets, { start: 25, stop: 80 });
+  // Always starts at the hard minimum, whatever the start percentage.
+  result = decide(15, 'Off');
+  assert.equal(result.command, 'On');
+  // Stops at the stop percentage and only picks a new start percentage.
+  result = decide(85, 'On', () => 0.999999);
+  assert.equal(result.command, 'Off');
+  assert.deepEqual(result.targets, { start: 30, stop: 85 });
+  // Always stops at the hard maximum and when full.
+  assert.equal(decide(95, 'On').command, 'Off');
+  assert.equal(decide(100, 'On').command, 'Off');
+  // A charger that is already in the right state is left alone.
+  assert.equal(decide(10, 'On').command, null);
+  assert.equal(decide(96, 'Off').command, null);
+  // The next switch percentage depends on the state of the charger.
+  assert.equal(fully.nextSwitchPercentage('On', targets), 85);
+  assert.equal(fully.nextSwitchPercentage('Off', targets), 27);
+});
+
+test('Fully Kiosk is a repeatable Widgets card with its own settings table', () => {
+  const editor = fs.readFileSync(path.join(root, 'js/deviceeditor.js'), 'utf8');
+  const widgets = fs.readFileSync(
+    path.join(root, 'js/widgeteditor.js'),
+    'utf8'
+  );
+  const layout = fs.readFileSync(path.join(root, 'js/layouteditor.js'), 'utf8');
+  const dashticz = fs.readFileSync(path.join(root, 'js/dashticz.js'), 'utf8');
+  const save = fs.readFileSync(path.join(root, 'js/saveblocks.php'), 'utf8');
+  const writer = fs.readFileSync(
+    path.join(root, 'js/configwriter.php'),
+    'utf8'
+  );
+
+  assertReferenceBasedKind(layout, 'fullykiosk');
+  assert.match(widgets, /html \+= _fullykioskWidgetCardHtml\(\);/);
+  assert.equal(
+    (
+      widgets.match(
+        /=== 'fullykiosk'\) \{\s*_openFullykioskFromWidgets\(\);/g
+      ) || []
+    ).length,
+    2
+  );
+  assert.match(widgets, /DashticzDeviceEditor\.openFullykiosk\(\);/);
+  assert.match(editor, /openFullykiosk: openFullykiosk,/);
+  assert.match(editor, /fullykiosk: 'fullykiosk_',/);
+  assert.match(editor, /kind = 'fullykiosk';/);
+  assert.match(
+    editor,
+    /if \(isFullyBlock\) html \+= _fullyFieldsHtml\('de-config', fullyValues\);/
+  );
+  assert.match(layout, /kind: 'fullykiosk',/);
+  assert.match(dashticz, /'tvgids',\s*'fullykiosk',/);
+  assert.match(save, /\$kind === 'fullykiosk'/);
+  assert.match(writer, /\$kind === 'fullykiosk'/);
+
+  for (const locale of ['en_US', 'nl_NL', 'fr_FR']) {
+    const lang = JSON.parse(
+      fs.readFileSync(path.join(root, `lang/${locale}.json`), 'utf8')
+    );
+    const de = lang.settings.deviceeditor;
+    for (const key of [
+      'fully_block',
+      'fully_block_host',
+      'fully_block_switch',
+      'fully_block_auto',
+      'fully_block_startmin',
+      'fully_block_stopmax',
+      'invalid_fully_block_host',
+    ]) {
+      assert.ok(de[key], `${locale} ${key}`);
+    }
+    assert.ok(
+      lang.settings.widgeteditor.fullykiosk_title,
+      `${locale} fullykiosk_title`
+    );
+    assert.ok(lang.misc.fullykiosk_battery, `${locale} fullykiosk_battery`);
+  }
+});

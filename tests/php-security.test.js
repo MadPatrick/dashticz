@@ -731,6 +731,7 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
       'graph',
       'f1',
       'tvgids',
+      'fullykiosk',
     ].sort(
       (a, b) =>
         Object.keys(manifest.kinds).indexOf(a) -
@@ -1461,4 +1462,31 @@ test('RWS bridge: same-origin, cached, and used through DT_function.rwsTrafficUr
     url('https://proxy.example/'),
     'https://proxy.example/https://api.rwsverkeersinfo.nl/api/traffic/'
   );
+});
+
+/* The Fully Kiosk bridge (vendor/dashticz/fullykiosk/fullykiosk.php) keeps the
+   battery level between 0 and 100, like the domoticz_fullykiosk plugin. */
+test('Fully Kiosk bridge summarises the device info of the tablet', () => {
+  const dir = path.join(root, 'vendor/dashticz').replace(/\\/g, '/');
+  const script =
+    `require '${dir}/fullykiosk/fullykiosk.php';` +
+    ` echo json_encode(array(` +
+    `dashticz_fullykiosk_summary(array('batteryLevel' => 54, 'isPlugged' => true, 'screenOn' => false)),` +
+    `dashticz_fullykiosk_summary(array('batteryLevel' => 140)),` +
+    `dashticz_fullykiosk_summary(array('batteryLevel' => 'abc'))));`;
+  const result = spawnSync('php', ['-r', script], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), [
+    { battery: 54, plugged: true, screenOn: false },
+    { battery: 100, plugged: false, screenOn: false },
+    { battery: null, plugged: false, screenOn: false },
+  ]);
+});
+
+test('Fully Kiosk bridge is same-origin, never cached and keeps the password out of the URL of the page', () => {
+  const source = read('vendor/dashticz/fullykiosk/index.php');
+  assert.match(source, /dashticz_require_same_origin\(\);/);
+  assert.match(source, /Cache-Control: no-store/);
+  assert.match(source, /dashticz_normalize_host_input\(/);
+  assert.match(source, /CURLOPT_FOLLOWLOCATION => false/);
 });

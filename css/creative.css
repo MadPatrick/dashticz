@@ -9077,3 +9077,93 @@ canvas {
 .mh.dt-align-right .col-data > * {
   text-align: right !important;
 }
+
+/* Fully Kiosk widget (js/components/fullykiosk.js): battery, next switch
+   percentage and the charger switch, painted into .dt_state like the HP iLO
+   widget above. */
+.fullykiosk-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.fullykiosk-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.fullykiosk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* margin: 0 !important - same reasoning as .hpilo-icon above. */
+.fullykiosk-block .dt_state .fullykiosk-icon {
+  flex: none;
+  width: 1.4em;
+  margin: 0 !important;
+  font-size: 1em;
+  line-height: 1;
+  text-align: center;
+  color: var(--dt-info);
+}
+
+.fullykiosk-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fullykiosk-value {
+  flex: none;
+  margin-left: auto;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fullykiosk-battery .fullykiosk-value {
+  font-weight: bold;
+}
+
+.fullykiosk-switch {
+  cursor: pointer;
+}
+
+.fullykiosk-switch[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.fullykiosk-switch .fa-toggle-on {
+  color: var(--dt-ok);
+}
+
+.fullykiosk-switch .fa-toggle-off {
+  color: var(--text-muted);
+}
+
+.fullykiosk-error {
+  font-size: inherit;
+  color: var(--dt-error);
+}
+
+/* Device Config / quick-add -> Fully Kiosk section
+   (js/deviceeditor.js _fullyFieldsHtml()): two columns, one on a phone. */
+.de-fully-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  align-items: start;
+}
+
+.de-fully-grid > .de-fully-field-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 575px) {
+  .de-fully-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
