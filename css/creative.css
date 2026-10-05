@@ -9080,11 +9080,14 @@ canvas {
 
 /* Fully Kiosk widget (js/components/fullykiosk.js): battery, next switch
    percentage and the charger switch, painted into .dt_state like the HP iLO
-   widget above. */
+   widget above. Every row has two columns: the switch (or button) and the
+   data; no margin or padding to the left of the rows. */
 .fullykiosk-block .dt_state {
   display: flex;
   flex-direction: column;
   overflow: auto;
+  margin-left: 0;
+  padding-left: 0;
 }
 
 .fullykiosk-rows {
@@ -9095,9 +9098,22 @@ canvas {
 }
 
 .fullykiosk-row {
+  display: grid;
+  grid-template-columns: 2.4em minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+}
+
+.fullykiosk-control {
+  text-align: left;
+  line-height: 1;
+}
+
+.fullykiosk-data {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 /* margin: 0 !important - same reasoning as .hpilo-icon above. */
@@ -9127,21 +9143,28 @@ canvas {
   font-weight: bold;
 }
 
-.fullykiosk-switch {
+.fullykiosk-switch,
+.fullykiosk-extra-toggle,
+.fullykiosk-loadurl {
   cursor: pointer;
 }
 
-.fullykiosk-switch[aria-disabled='true'] {
+.fullykiosk-switch[aria-disabled='true'],
+.fullykiosk-extra[aria-disabled='true'] {
   cursor: default;
   opacity: 0.5;
 }
 
-.fullykiosk-switch .fa-toggle-on {
+.fullykiosk-control .fa-toggle-on {
   color: var(--dt-ok);
 }
 
-.fullykiosk-switch .fa-toggle-off {
+.fullykiosk-control .fa-toggle-off {
   color: var(--text-muted);
+}
+
+.fullykiosk-control .fa-rotate-right {
+  color: var(--dt-info);
 }
 
 .fullykiosk-error {
@@ -9168,26 +9191,7 @@ canvas {
   }
 }
 
-/* Fully Kiosk widget: the extra rows (screen, screensaver, motion sensor,
-   brightness, load start URL). */
-.fullykiosk-extra-toggle,
-.fullykiosk-loadurl {
-  cursor: pointer;
-}
-
-.fullykiosk-extra[aria-disabled='true'] {
-  cursor: default;
-  opacity: 0.5;
-}
-
-.fullykiosk-extra-toggle .fa-toggle-on {
-  color: var(--dt-ok);
-}
-
-.fullykiosk-extra-toggle .fa-toggle-off {
-  color: var(--text-muted);
-}
-
+/* Fully Kiosk widget: the brightness slider. */
 .fullykiosk-brightness-input {
   width: 8em;
   vertical-align: middle;

@@ -8305,3 +8305,64 @@ test('Fully Kiosk is a repeatable Widgets card with its own settings table', () 
     assert.ok(lang.misc.fullykiosk_battery, `${locale} fullykiosk_battery`);
   }
 });
+
+test('Fully Kiosk block renders its rows: switches in column 1, data in column 2', () => {
+  let html = '';
+  const chain = {
+    css: () => chain,
+    html: (value) => {
+      html = value;
+      return chain;
+    },
+    find: () => chain,
+    on: () => chain,
+  };
+  // Domoticz is a global of the dashboard.
+  const context = {
+    language: { misc: {} },
+    settings: { dashticz_php_path: 'vendor/dashticz/' },
+    Dashticz: { register: () => {} },
+    Domoticz: {
+      getAllDevices: () => ({ 123: { Status: 'Off' } }),
+    },
+  };
+  vm.createContext(context);
+  vm.runInContext(
+    fs.readFileSync(path.join(root, 'js/dt_function.js'), 'utf8'),
+    context
+  );
+  vm.runInContext(
+    fs.readFileSync(path.join(root, 'js/components/fullykiosk.js'), 'utf8'),
+    context
+  );
+  const me = {
+    key: 'k',
+    block: {
+      fullymode: 'charge',
+      fullyswitch: '123',
+      fullyshowscreen: true,
+      fullyshowcharging: true,
+      fullyshowbrightness: true,
+      fullyshowloadurl: true,
+    },
+    $mountPoint: chain,
+    battery: 49,
+    info: { brightness: 14, plugged: false, screenOn: true },
+    targets: { start: 27, stop: 85 },
+  };
+  context.DT_fullykiosk.render(me);
+  assert.match(html, /fullykiosk-battery/);
+  assert.match(html, /49 %/);
+  assert.match(html, /Starts charging at.*27 %/);
+  // Every row has the control column and the data column.
+  const rows = html.match(/class="fullykiosk-row /g) || [];
+  assert.equal(rows.length, 7);
+  assert.equal((html.match(/class="fullykiosk-control"/g) || []).length, 7);
+  assert.equal((html.match(/class="fullykiosk-data"/g) || []).length, 7);
+  assert.match(html, /fullykiosk-brightness-input/);
+  assert.match(html, /fullykiosk-loadurl/);
+  // The battery row can be switched off.
+  me.block.fullyshowbattery = false;
+  context.DT_fullykiosk.render(me);
+  assert.doesNotMatch(html, /fullykiosk-battery/);
+});

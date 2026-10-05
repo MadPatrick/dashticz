@@ -52,6 +52,26 @@ var DT_fullykiosk = (function () {
     hardmax: 95,
   };
 
+  // The extra rows (the other devices of the plugin): command, icon, label.
+  var EXTRA_ROWS = [
+    { key: 'screen', icon: 'fa-display', label: 'Screen', field: 'screenOn' },
+    {
+      key: 'screensaver',
+      icon: 'fa-moon',
+      label: 'Screensaver',
+      field: 'screensaver',
+    },
+    { key: 'charging', icon: 'fa-plug', label: 'Plugged in', readonly: true },
+    {
+      key: 'motion',
+      icon: 'fa-person-walking',
+      label: 'Motion sensor',
+      field: 'motion',
+    },
+    { key: 'brightness', icon: 'fa-sun', label: 'Brightness' },
+    { key: 'loadurl', icon: 'fa-rotate-right', label: 'Load start URL' },
+  ];
+
   return {
     name: 'fullykiosk',
     canHandle: function (block) {
@@ -62,6 +82,9 @@ var DT_fullykiosk = (function () {
       icon: 'fas fa-tablet-screen-button',
       refresh: 60,
       containerClass: 'fullykiosk-block dt-widget-rows',
+      // Icon and title in their own header row, so the rows below use the
+      // full width of the block (same as the HP iLO widget).
+      template: 1,
     },
     run: function (me) {
       me.targets = loadTargets(me);
@@ -74,11 +97,39 @@ var DT_fullykiosk = (function () {
     },
     refresh: refresh,
     // Exposed for the tests.
+    render: render,
     limits: limits,
     randomBetween: randomBetween,
     decide: decide,
     nextSwitchPercentage: nextSwitchPercentage,
   };
+
+  // One row of two columns: the switch (or button) and the data.
+  function rowHtml(classes, attrs, control, icon, label, value) {
+    return (
+      '<div class="fullykiosk-row ' +
+      classes +
+      '"' +
+      (attrs || '') +
+      '><span class="fullykiosk-control">' +
+      (control || '') +
+      '</span><span class="fullykiosk-data"><i class="fas ' +
+      icon +
+      ' fullykiosk-icon" aria-hidden="true"></i><span class="fullykiosk-label">' +
+      label +
+      '</span>' +
+      (value ? '<span class="fullykiosk-value">' + value + '</span>' : '') +
+      '</span></div>'
+    );
+  }
+
+  function toggleHtml(on) {
+    return (
+      '<i class="fas ' +
+      (on ? 'fa-toggle-on on' : 'fa-toggle-off off') +
+      '" aria-hidden="true"></i>'
+    );
+  }
 
   function esc(value) {
     return DT_function.escapeHtml(value);
@@ -265,42 +316,40 @@ var DT_fullykiosk = (function () {
     var info = me.info || null;
     var html = '<div class="fullykiosk-rows">';
     if (isOn(block.fullyshowbattery, true))
-      html +=
-        '<div class="fullykiosk-row fullykiosk-battery">' +
-        '<i class="fas ' +
-        batteryIcon(level) +
-        ' fullykiosk-icon" aria-hidden="true"></i>' +
-        '<span class="fullykiosk-label">' +
-        esc(DT_function.t('fullykiosk_battery', 'Battery')) +
-        '</span><span class="fullykiosk-value">' +
-        (level === null ? '-' : esc(level + ' %')) +
-        '</span></div>';
+      html += rowHtml(
+        'fullykiosk-battery',
+        '',
+        '',
+        batteryIcon(level),
+        esc(DT_function.t('fullykiosk_battery', 'Battery')),
+        level === null ? '-' : esc(level + ' %')
+      );
     if (auto && charger) {
-      html +=
-        '<div class="fullykiosk-row fullykiosk-next">' +
-        '<i class="fas fa-arrows-up-down fullykiosk-icon" aria-hidden="true"></i>' +
-        '<span class="fullykiosk-label">' +
+      html += rowHtml(
+        'fullykiosk-next',
+        '',
+        '',
+        'fa-arrows-up-down',
         esc(
           charger === 'On'
             ? DT_function.t('fullykiosk_next_stop', 'Stops charging at')
             : DT_function.t('fullykiosk_next_start', 'Starts charging at')
-        ) +
-        '</span><span class="fullykiosk-value">' +
-        esc(nextSwitchPercentage(charger, me.targets) + ' %') +
-        '</span></div>';
+        ),
+        esc(nextSwitchPercentage(charger, me.targets) + ' %')
+      );
     }
     if (switchIdx(block)) {
-      html +=
-        '<div class="fullykiosk-row fullykiosk-switch" role="switch" tabindex="0" aria-checked="' +
-        (charger === 'On') +
-        '"' +
-        (charger ? '' : ' aria-disabled="true"') +
-        '><i class="fas fa-plug fullykiosk-icon" aria-hidden="true"></i>' +
-        '<span class="fullykiosk-label">' +
-        esc(DT_function.t('fullykiosk_charging', 'Charging')) +
-        '</span><span class="fullykiosk-value"><i class="fas ' +
-        (charger === 'On' ? 'fa-toggle-on on' : 'fa-toggle-off off') +
-        '" aria-hidden="true"></i></span></div>';
+      html += rowHtml(
+        'fullykiosk-switch',
+        ' role="switch" tabindex="0" aria-checked="' +
+          (charger === 'On') +
+          '"' +
+          (charger ? '' : ' aria-disabled="true"'),
+        toggleHtml(charger === 'On'),
+        'fa-plug',
+        esc(DT_function.t('fullykiosk_charging', 'Charging')),
+        ''
+      );
     }
     EXTRA_ROWS.forEach(function (row) {
       if (!isOn(block['fullyshow' + row.key], false)) return;
@@ -366,26 +415,6 @@ var DT_fullykiosk = (function () {
       });
   }
 
-  // The extra rows (the other devices of the plugin): command, icon, label.
-  var EXTRA_ROWS = [
-    { key: 'screen', icon: 'fa-display', label: 'Screen', field: 'screenOn' },
-    {
-      key: 'screensaver',
-      icon: 'fa-moon',
-      label: 'Screensaver',
-      field: 'screensaver',
-    },
-    { key: 'charging', icon: 'fa-plug', label: 'Plugged in', readonly: true },
-    {
-      key: 'motion',
-      icon: 'fa-person-walking',
-      label: 'Motion sensor',
-      field: 'motion',
-    },
-    { key: 'brightness', icon: 'fa-sun', label: 'Brightness' },
-    { key: 'loadurl', icon: 'fa-rotate-right', label: 'Load start URL' },
-  ];
-
   function extraRowHtml(row, info) {
     var label = esc(
       DT_function.t(
@@ -393,71 +422,65 @@ var DT_fullykiosk = (function () {
         row.label
       )
     );
-    var icon =
-      '<i class="fas ' + row.icon + ' fullykiosk-icon" aria-hidden="true"></i>';
     var disabled = info ? '' : ' aria-disabled="true"';
     if (row.key === 'brightness') {
-      return (
-        '<div class="fullykiosk-row fullykiosk-extra">' +
-        icon +
-        '<span class="fullykiosk-label">' +
-        label +
-        '</span><span class="fullykiosk-value"><input type="range" class="fullykiosk-brightness-input" min="0" max="100" step="1" value="' +
-        (info ? info.brightness : 0) +
-        '"' +
-        (info ? '' : ' disabled') +
-        ' aria-label="' +
-        label +
-        '"> ' +
-        esc((info ? info.brightness : 0) + ' %') +
-        '</span></div>'
+      return rowHtml(
+        'fullykiosk-extra',
+        '',
+        '',
+        row.icon,
+        label,
+        '<input type="range" class="fullykiosk-brightness-input" min="0" max="100" step="1" value="' +
+          (info ? info.brightness : 0) +
+          '"' +
+          (info ? '' : ' disabled') +
+          ' aria-label="' +
+          label +
+          '"> ' +
+          esc((info ? info.brightness : 0) + ' %')
       );
     }
     if (row.key === 'loadurl') {
-      return (
-        '<div class="fullykiosk-row fullykiosk-extra fullykiosk-loadurl" role="button" tabindex="0"' +
-        disabled +
-        '>' +
-        icon +
-        '<span class="fullykiosk-label">' +
-        label +
-        '</span></div>'
+      return rowHtml(
+        'fullykiosk-extra fullykiosk-loadurl',
+        ' role="button" tabindex="0"' + disabled,
+        '<i class="fas ' + row.icon + '" aria-hidden="true"></i>',
+        'fa-link',
+        label,
+        ''
       );
     }
     if (row.readonly) {
       var plugged = !!(info && info.plugged);
-      return (
-        '<div class="fullykiosk-row fullykiosk-extra fullykiosk-plugged">' +
-        icon +
-        '<span class="fullykiosk-label">' +
-        label +
-        '</span><span class="fullykiosk-value">' +
-        (info
+      return rowHtml(
+        'fullykiosk-extra fullykiosk-plugged',
+        '',
+        '',
+        row.icon,
+        label,
+        info
           ? esc(
               DT_function.t(
                 plugged ? 'fullykiosk_on' : 'fullykiosk_off',
                 plugged ? 'On' : 'Off'
               )
             )
-          : '-') +
-        '</span></div>'
+          : '-'
       );
     }
     var on = !!(info && info[row.field]);
-    return (
-      '<div class="fullykiosk-row fullykiosk-extra fullykiosk-extra-toggle" role="switch" tabindex="0" data-command="' +
-      row.key +
-      '" aria-checked="' +
-      on +
-      '"' +
-      disabled +
-      '>' +
-      icon +
-      '<span class="fullykiosk-label">' +
-      label +
-      '</span><span class="fullykiosk-value"><i class="fas ' +
-      (on ? 'fa-toggle-on on' : 'fa-toggle-off off') +
-      '" aria-hidden="true"></i></span></div>'
+    return rowHtml(
+      'fullykiosk-extra fullykiosk-extra-toggle',
+      ' role="switch" tabindex="0" data-command="' +
+        row.key +
+        '" aria-checked="' +
+        on +
+        '"' +
+        disabled,
+      toggleHtml(on),
+      row.icon,
+      label,
+      ''
     );
   }
 
