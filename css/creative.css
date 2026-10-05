@@ -9143,6 +9143,25 @@ canvas {
 .fullykiosk-control {
   display: flex;
   gap: 6px;
+  /* 10% narrower than the column */
+  width: 90%;
+}
+
+/* The charger button runs over the rows of the charge data. */
+.fullykiosk-group {
+  align-items: stretch;
+}
+
+.fullykiosk-group .fullykiosk-btn {
+  height: auto;
+}
+
+.fullykiosk-groupdata {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 10px;
+  min-width: 0;
 }
 
 .fullykiosk-btn {

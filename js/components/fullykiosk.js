@@ -104,14 +104,12 @@ var DT_fullykiosk = (function () {
     nextSwitchPercentage: nextSwitchPercentage,
   };
 
-  // One row of two columns: the button(s) and the data.
-  function rowHtml(classes, control, icon, label, value) {
+  // The data column of a row: icon, label and value.
+  function dataHtml(icon, label, value, extraClass) {
     return (
-      '<div class="fullykiosk-row ' +
-      classes +
-      '"><span class="fullykiosk-control">' +
-      (control || '') +
-      '</span><span class="fullykiosk-data">' +
+      '<span class="fullykiosk-data' +
+      (extraClass ? ' ' + extraClass : '') +
+      '">' +
       (icon
         ? '<i class="fas ' + icon + ' fullykiosk-icon" aria-hidden="true"></i>'
         : '') +
@@ -119,7 +117,20 @@ var DT_fullykiosk = (function () {
       label +
       '</span>' +
       (value ? '<span class="fullykiosk-value">' + value + '</span>' : '') +
-      '</span></div>'
+      '</span>'
+    );
+  }
+
+  // One row of two columns: the button(s) and the data.
+  function rowHtml(classes, control, icon, label, value) {
+    return (
+      '<div class="fullykiosk-row ' +
+      classes +
+      '"><span class="fullykiosk-control">' +
+      (control || '') +
+      '</span>' +
+      dataHtml(icon, label, value) +
+      '</div>'
     );
   }
 
@@ -330,40 +341,49 @@ var DT_fullykiosk = (function () {
     var info = me.info || null;
     var chargeLabel = esc(DT_function.t('fullykiosk_charging', 'Charging'));
     var html = '<div class="fullykiosk-rows">';
-    if (isOn(block.fullyshowbattery, true))
-      html += rowHtml(
-        'fullykiosk-battery',
-        '',
-        batteryIcon(level),
-        esc(DT_function.t('fullykiosk_battery', 'Battery')),
-        level === null ? '-' : esc(level + ' %')
-      );
-    // The charger switch is the button in column 1; column 2 shows the
-    // percentage at which it is switched next.
+    var batteryHtml = isOn(block.fullyshowbattery, true)
+      ? dataHtml(
+          batteryIcon(level),
+          esc(DT_function.t('fullykiosk_battery', 'Battery')),
+          level === null ? '-' : esc(level + ' %'),
+          'fullykiosk-battery'
+        )
+      : '';
     if (switchIdx(block)) {
-      var next = '';
-      var nextLabel = '';
+      // The charger switch is one button in column 1, as high as the charge
+      // data next to it: the battery and the percentage at which the charger
+      // is switched next.
+      var nextHtml = '';
       if (auto && charger) {
-        nextLabel = esc(
-          charger === 'On'
-            ? DT_function.t('fullykiosk_next_stop', 'Stops charging at')
-            : DT_function.t('fullykiosk_next_start', 'Starts charging at')
+        nextHtml = dataHtml(
+          'fa-arrows-up-down',
+          esc(
+            charger === 'On'
+              ? DT_function.t('fullykiosk_next_stop', 'Stops charging at')
+              : DT_function.t('fullykiosk_next_start', 'Starts charging at')
+          ),
+          esc(nextSwitchPercentage(charger, me.targets) + ' %')
         );
-        next = esc(nextSwitchPercentage(charger, me.targets) + ' %');
       }
-      html += rowHtml(
-        'fullykiosk-switch',
+      html +=
+        '<div class="fullykiosk-row fullykiosk-switch fullykiosk-group">' +
+        '<span class="fullykiosk-control">' +
         buttonHtml(
           'charger',
           'fa-power-off',
           chargeLabel,
           charger === 'On',
           !charger
-        ),
-        next ? 'fa-arrows-up-down' : '',
-        nextLabel,
-        next
-      );
+        ) +
+        '</span><span class="fullykiosk-groupdata">' +
+        batteryHtml +
+        nextHtml +
+        '</span></div>';
+    } else if (batteryHtml) {
+      html +=
+        '<div class="fullykiosk-row fullykiosk-battery"><span class="fullykiosk-control"></span>' +
+        batteryHtml +
+        '</div>';
     }
     EXTRA_ROWS.forEach(function (row) {
       if (!isOn(block['fullyshow' + row.key], false)) return;
