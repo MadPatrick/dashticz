@@ -16,7 +16,7 @@ var DT_trafficinfo = {
       (Domoticz.getAllDevices()['_settings'] || {}).Location || {};
     return {
       icon: 'fas fa-car',
-      containerClass: 'trafficinforow',
+      containerClass: 'trafficinforow dt-widget-rows',
       refresh: 300,
       url: 'https://www.rwsverkeersinfo.nl/',
       newwindow: 1,

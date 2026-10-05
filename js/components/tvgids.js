@@ -36,7 +36,7 @@ var DT_tvgids = (function () {
       // Moves the "on air now" marker along; the bridge only downloads a
       // channel again after tvgidspollminutes.
       refresh: 300,
-      containerClass: 'tvgids-block',
+      containerClass: 'tvgids-block dt-widget-rows',
     },
     // Mounting calls refresh() itself when block.refresh is set.
     run: function (me) {

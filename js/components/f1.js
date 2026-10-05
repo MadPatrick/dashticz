@@ -88,7 +88,7 @@ var DT_f1 = (function () {
       width: 4,
       icon: 'fas fa-flag-checkered',
       refresh: 60,
-      containerClass: 'f1-block',
+      containerClass: 'f1-block dt-widget-rows',
     },
     // Mounting calls refresh() itself when block.refresh is set.
     run: function (me) {
