@@ -9435,7 +9435,7 @@ canvas {
 }
 
 .weatherinfo-svg .wi-drift {
-  animation: wi-drift 6s ease-in-out infinite alternate;
+  animation: wi-drift 3s ease-in-out infinite alternate;
 }
 
 .weatherinfo-svg .wi-glow {
@@ -9478,10 +9478,10 @@ canvas {
 
 @keyframes wi-drift {
   from {
-    transform: translateX(-2px);
+    transform: translate(-5px, 1px);
   }
   to {
-    transform: translateX(2px);
+    transform: translate(5px, -2px);
   }
 }
 
