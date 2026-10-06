@@ -19,7 +19,7 @@ The tile shows two lines, like the Text device of the plugin:
   now``);
 * the weather: temperature, description, wind (direction and force in Beaufort,
   for example ``NW4``) and a weather icon, for example ``19,7°C ● Bewolkt ● NW4
-  ●`` followed by the icon. Which parts are shown is the *Text* setting.
+  ●`` followed by the icon. Which parts are shown, and in which order, is the *Text parts* setting.
 
 The plugin's Rainfall device (the current rain intensity) is an optional extra
 row, see ``wishowrainfall``. The accumulated rain (mm) of that device is a
@@ -58,12 +58,14 @@ from the default. The first column shows the matching option of the plugin.
     - Plugin option *Language*. ``'nl'`` (default) or ``'en'``: the language of
       the status text, the weather description and the wind direction
       (``NO``/``ZW`` or ``NE``/``SW``)
-  * - wiformat
-    - Plugin option *Text device*: what follows the rain status.
-      ``'temp'`` (status - temperature), ``'temp_logo'`` (status - temperature
-      - logo), ``'temp_logo_wind'`` (status - temperature - wind - logo) or
-      ``'temp_desc_logo_wind'`` (status - temperature - description - wind -
-      logo; default)
+  * - wiparts
+    - Plugin option *Text device*, with a free choice: the parts of the text
+      and their order, comma separated. Parts: ``status`` (the rain status, on
+      a row of its own), ``temp``, ``desc`` (weather description), ``wind``
+      and ``logo`` (the weather icon); the parts after each other form one
+      row. Default: ``'status,temp,desc,wind,logo'``, the plugin's default. In
+      the config of the widget you tick the parts you want and drag the rows
+      to set the order
   * - wishowrainfall
     - ``true``: an extra row with the current rain intensity in mm/h. Default:
       false
@@ -84,5 +86,5 @@ Example
     width: 4,
     wimode: 'forecast',
     wilanguage: 'en',
-    wiformat: 'temp_logo_wind'
+    wiparts: 'status,temp,wind,logo'
   };

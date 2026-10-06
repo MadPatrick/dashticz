@@ -7419,6 +7419,23 @@ var DashticzDeviceEditor = (function () {
     return allowed.indexOf(value) > -1 ? value : setting.def;
   }
 
+  // An ordered list of parts ('status,temp,wind'): only known parts, each
+  // once, in the given order; an empty or missing list -> the default.
+  function _settingParts(setting, value) {
+    var allowed = setting.options({}).map(function (option) {
+      return option[0];
+    });
+    var parts = String(value === undefined || value === null ? '' : value)
+      .split(',')
+      .map(function (part) {
+        return $.trim(part);
+      })
+      .filter(function (part, index, list) {
+        return allowed.indexOf(part) > -1 && list.indexOf(part) === index;
+      });
+    return parts.length ? parts.join(',') : setting.def;
+  }
+
   // '#rrggbb' or 'transparent'; anything else -> the default.
   function _settingColor(value, def) {
     var text = $.trim(
@@ -7440,6 +7457,8 @@ var DashticzDeviceEditor = (function () {
       var raw = stored[_settingField(section, setting)];
       if (setting.type === 'select') {
         values[setting.key] = _settingOption(setting, raw);
+      } else if (setting.type === 'parts') {
+        values[setting.key] = _settingParts(setting, raw);
       } else if (setting.type === 'number') {
         values[setting.key] =
           raw !== undefined && raw !== null
@@ -7461,6 +7480,51 @@ var DashticzDeviceEditor = (function () {
   }
 
   function _settingControlHtml(id, setting, value, t) {
+    if (setting.type === 'parts') {
+      // A list of parts to show or hide, in the order of the block; the
+      // enabled parts come first. Dragged by the handle (_wireSettingParts).
+      var enabled = _settingParts(setting, value).split(',');
+      var options = setting.options(t);
+      var ordered = enabled
+        .map(function (key) {
+          return options.filter(function (option) {
+            return option[0] === key;
+          })[0];
+        })
+        .concat(
+          options.filter(function (option) {
+            return enabled.indexOf(option[0]) < 0;
+          })
+        );
+      return (
+        '<ul class="de-parts-list list-unstyled mb-0" id="' +
+        id +
+        '">' +
+        ordered
+          .map(function (option) {
+            return (
+              '<li class="de-parts-item" data-part="' +
+              _esc(option[0]) +
+              '"><span class="de-parts-handle" aria-hidden="true"><i class="fas fa-grip-vertical"></i></span>' +
+              '<div class="form-check mb-0"><input class="form-check-input de-parts-check" type="checkbox" id="' +
+              id +
+              '-' +
+              _esc(option[0]) +
+              '"' +
+              (enabled.indexOf(option[0]) > -1 ? ' checked' : '') +
+              '><label class="form-check-label" for="' +
+              id +
+              '-' +
+              _esc(option[0]) +
+              '">' +
+              _esc(option[1]) +
+              '</label></div></li>'
+            );
+          })
+          .join('') +
+        '</ul>'
+      );
+    }
     if (setting.type === 'select') {
       return (
         '<select class="form-select" id="' +
@@ -7658,6 +7722,21 @@ var DashticzDeviceEditor = (function () {
     var raw = $.trim(String($field.val() || ''));
     var range = setting.range || [];
     if (setting.type === 'select') return _settingOption(setting, raw);
+    if (setting.type === 'parts') {
+      return _settingParts(
+        setting,
+        $field
+          .find('.de-parts-item')
+          .filter(function () {
+            return $(this).find('.de-parts-check').is(':checked');
+          })
+          .map(function () {
+            return $(this).data('part');
+          })
+          .get()
+          .join(',')
+      );
+    }
     if (setting.type === 'switch') return $field.is(':checked');
     if (setting.type === 'color') {
       return $('#' + $field.attr('id') + '-transparent').is(':checked')
@@ -8502,7 +8581,7 @@ var DashticzDeviceEditor = (function () {
     idPart: 'weatherinfo',
     labelPrefix: 'weatherinfo_block_',
     fieldClass: 'de-weatherinfo-field',
-    saveOrder: 'lat lon pollminutes language format showrainfall fontsize',
+    saveOrder: 'lat lon pollminutes language parts showrainfall fontsize',
     settings: [
       { key: 'lat', type: 'text', def: '', max: 12 },
       { key: 'lon', type: 'text', def: '', max: 12 },
@@ -8518,20 +8597,20 @@ var DashticzDeviceEditor = (function () {
           ];
         },
       },
+      // The parts of the text, shown in this order: the rain status on a row
+      // of its own, the other parts after each other (plugin: Text device).
       {
-        key: 'format',
-        type: 'select',
-        def: 'temp_desc_logo_wind',
+        key: 'parts',
+        type: 'parts',
+        def: 'status,temp,desc,wind,logo',
         full: 1,
         options: function (t) {
           return [
-            ['temp', t.weatherinfo_block_format_temp],
-            ['temp_logo', t.weatherinfo_block_format_temp_logo],
-            ['temp_logo_wind', t.weatherinfo_block_format_temp_logo_wind],
-            [
-              'temp_desc_logo_wind',
-              t.weatherinfo_block_format_temp_desc_logo_wind,
-            ],
+            ['status', t.weatherinfo_block_part_status],
+            ['temp', t.weatherinfo_block_part_temp],
+            ['desc', t.weatherinfo_block_part_desc],
+            ['wind', t.weatherinfo_block_part_wind],
+            ['logo', t.weatherinfo_block_part_logo],
           ];
         },
       },
@@ -8576,6 +8655,17 @@ var DashticzDeviceEditor = (function () {
     });
     html += '</div></div>';
     return html;
+  }
+
+  // Drag the parts of the text into the order they are shown in.
+  function _wireWeatherinfoFields($popup) {
+    if (!$.fn.sortable) return;
+    $popup.find('.de-parts-list').sortable({
+      handle: '.de-parts-handle',
+      axis: 'y',
+      tolerance: 'pointer',
+      containment: 'parent',
+    });
   }
 
   function _readWeatherinfoFields(prefix) {
@@ -8664,6 +8754,7 @@ var DashticzDeviceEditor = (function () {
     $('body').append(html);
     var $popup = $('#weatherinfoblockpopup');
     _wireQuickOptions('weatherinfo', $popup);
+    _wireWeatherinfoFields($popup);
     _wireBackButton('weatherinfoblockpopup');
 
     $('#weatherinfo-save-btn').on('click', function () {
@@ -9898,6 +9989,7 @@ var DashticzDeviceEditor = (function () {
     if (isLmsBlock) _wireLmsFields('de-config', $popup);
     if (isF1Block) _wireF1Fields('de-config', $popup);
     if (isTvgidsBlock) _wireTvgidsFields('de-config', $popup);
+    if (isWeatherinfoBlock) _wireWeatherinfoFields($popup);
     if (isCalendarBlock)
       _wireCalendarFields('de-config', $popup, calendarSources, t);
     if (isClusterBlock) {

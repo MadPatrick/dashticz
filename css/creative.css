@@ -9357,3 +9357,26 @@ canvas {
 .weatherinfo-error {
   color: var(--dt-error);
 }
+
+/* Weather Info settings: the parts of the text, shown or hidden and dragged
+   into order (js/deviceeditor.js, type 'parts'). */
+.de-parts-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  border: 1px solid var(--bs-border-color, #ced4da);
+  border-radius: 6px;
+  background: var(--bs-body-bg, #fff);
+}
+
+.de-parts-handle {
+  cursor: grab;
+  opacity: 0.6;
+  touch-action: none;
+}
+
+.de-parts-item.ui-sortable-helper {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}

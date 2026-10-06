@@ -15,21 +15,18 @@
  *   wipollminutes  how often the rain forecast is downloaded (default 5)
  *   wilanguage     'nl' (default) | 'en': language of the status text, the
  *                  weather description and the wind direction
- *   wiformat       what follows the rain status, like the plugin's Text device:
- *                  'temp' | 'temp_logo' | 'temp_logo_wind' |
- *                  'temp_desc_logo_wind' (default)
+ *   wiparts        the parts of the text and their order, comma separated;
+ *                  parts: status (the rain status, a row of its own), temp,
+ *                  desc, wind and logo (the weather icon), which follow each
+ *                  other on a row. Default 'status,temp,desc,wind,logo' (the
+ *                  plugin's Text device); a part that is left out is hidden
  *   wishowrainfall an extra row with the current rain intensity in mm/h, the
  *                  value of the plugin's Rainfall device (default off)
  *   wifontsize     optional font size in px (8-60); empty = the theme's
  */
 var DT_weatherinfo = (function () {
-  var FORMATS = {
-    temp: { description: false, icon: false, wind: false },
-    temp_logo: { description: false, icon: true, wind: false },
-    temp_logo_wind: { description: false, icon: true, wind: true },
-    temp_desc_logo_wind: { description: true, icon: true, wind: true },
-  };
-  var DEFAULT_FORMAT = 'temp_desc_logo_wind';
+  var PARTS = ['status', 'temp', 'desc', 'wind', 'logo'];
+  var DEFAULT_PARTS = PARTS.join(',');
 
   var TEXTS = {
     en: {
@@ -194,7 +191,8 @@ var DT_weatherinfo = (function () {
     beaufort: beaufort,
     compass: compass,
     weatherIcon: weatherIcon,
-    weatherSuffix: weatherSuffix,
+    partsList: partsList,
+    partsHtml: partsHtml,
     render: render,
     parseCoordinate: parseCoordinate,
   };
@@ -207,8 +205,19 @@ var DT_weatherinfo = (function () {
     return block.wilanguage === 'en' ? 'en' : 'nl';
   }
 
-  function format(block) {
-    return FORMATS[block.wiformat] ? block.wiformat : DEFAULT_FORMAT;
+  // block.wiparts -> the known parts, each once, in the order of the block.
+  function partsList(block) {
+    var parts = String(
+      block && typeof block.wiparts === 'string' ? block.wiparts : DEFAULT_PARTS
+    )
+      .split(',')
+      .map(function (part) {
+        return part.trim();
+      })
+      .filter(function (part, index, list) {
+        return PARTS.indexOf(part) > -1 && list.indexOf(part) === index;
+      });
+    return parts.length ? parts : PARTS.slice();
   }
 
   // One decimal, with a comma in Dutch.
@@ -351,50 +360,69 @@ var DT_weatherinfo = (function () {
     );
   }
 
-  // The part after the rain status: temperature, description, wind and icon
-  // as the format of the block asks. Returns html, or '' when there is nothing.
-  function weatherSuffix(weather, block) {
-    if (!weather) return '';
+  // The html of one part of the text, or '' when there is nothing to show.
+  function partHtml(part, res, block) {
     var language = lang(block);
-    var mode = FORMATS[format(block)];
-    var parts = [];
-    if (typeof weather.temperature === 'number') {
-      parts.push(esc(fmt(weather.temperature, language) + '°C'));
+    var weather = res.weather;
+    if (part === 'status') {
+      return res.rain ? rainStatus(parseRain(res.rain), language) : '';
     }
-    var text = description(weather, language);
-    if (mode.description && text) parts.push(esc(text));
-    var wind = windText(weather, language);
-    if (mode.wind && wind) parts.push(esc(wind));
-    if (mode.icon) {
+    if (!weather) return '';
+    if (part === 'temp') {
+      return typeof weather.temperature === 'number'
+        ? esc(fmt(weather.temperature, language) + '°C')
+        : '';
+    }
+    if (part === 'desc') return esc(description(weather, language));
+    if (part === 'wind') return esc(windText(weather, language));
+    if (part === 'logo') {
       var icon = weatherIcon(weather);
-      parts.push(
+      return (
         '<span class="weatherinfo-icon" title="' +
-          esc(text) +
-          '" style="color:' +
-          icon[1] +
-          '">' +
-          SHAPES[icon[0]] +
-          '</span>'
+        esc(description(weather, language)) +
+        '" style="color:' +
+        icon[1] +
+        '">' +
+        SHAPES[icon[0]] +
+        '</span>'
       );
     }
-    return parts.join('<span class="weatherinfo-dot"> ● </span>');
+    return '';
+  }
+
+  // The rows of the text: the rain status on a row of its own, the other
+  // parts after each other on a row, all in the order of the block.
+  function partsHtml(res, block) {
+    var html = '';
+    var group = [];
+    function flush() {
+      if (group.length) {
+        html +=
+          '<div class="weatherinfo-row weatherinfo-weather">' +
+          group.join('<span class="weatherinfo-dot"> ● </span>') +
+          '</div>';
+      }
+      group = [];
+    }
+    partsList(block).forEach(function (part) {
+      var text = partHtml(part, res, block);
+      if (!text) return;
+      if (part === 'status') {
+        flush();
+        html +=
+          '<div class="weatherinfo-row weatherinfo-status">' + text + '</div>';
+      } else {
+        group.push(text);
+      }
+    });
+    flush();
+    return html;
   }
 
   function render(me, res) {
     var block = me.block;
     var language = lang(block);
-    var html = '';
-    if (res.rain) {
-      html +=
-        '<div class="weatherinfo-row weatherinfo-status">' +
-        rainStatus(parseRain(res.rain), language) +
-        '</div>';
-    }
-    var suffix = weatherSuffix(res.weather, block);
-    if (suffix) {
-      html +=
-        '<div class="weatherinfo-row weatherinfo-weather">' + suffix + '</div>';
-    }
+    var html = partsHtml(res, block);
     if (res.rain && showRainfall(block)) {
       var texts = TEXTS[language];
       html +=

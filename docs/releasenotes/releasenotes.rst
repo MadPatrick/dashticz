@@ -12,7 +12,7 @@ v4.1.5 (6-10-2026)
   Open-Meteo (temperature, description, wind and a weather icon). The options
   of the plugin are settings of the widget: the location (empty = the location
   of Domoticz), the poll interval, the language (Dutch or English) and the
-  content of the text. An extra row can show the current rain intensity in
+  parts of the text (each shown or hidden, in the order you drag them). An extra row can show the current rain intensity in
   mm/h. Both feeds are read through the new bridge
   ``vendor/dashticz/weatherinfo/index.php``.
 

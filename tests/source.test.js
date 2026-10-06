@@ -8516,36 +8516,66 @@ test('Weather Info weather line: wind, icon and text format', () => {
   assert.equal(wi.weatherIcon({ weatherCode: 63 })[0], 'rain_cloud');
   assert.equal(wi.weatherIcon({ weatherCode: 999 })[0], 'cloud');
   assert.equal(wi.weatherIcon({})[0], 'cloud');
-  const weather = {
-    temperature: 19.74,
-    windSpeed: 21.5,
-    windDirection: 310,
-    weatherCode: 3,
-    isDay: true,
+  const plain = (value) => JSON.parse(JSON.stringify(value));
+  const res = {
+    weather: {
+      temperature: 19.74,
+      windSpeed: 21.5,
+      windDirection: 310,
+      weatherCode: 3,
+      isDay: true,
+    },
+    rain: [[0, '12:00']],
   };
   const strip = (html) => html.replace(/<[^>]+>/g, '');
-  const line = (block) => strip(wi.weatherSuffix(weather, block));
-  assert.equal(
-    line({ wiformat: 'temp' }),
-    '19,7\u00b0C'.replace('\u00b0', '\u00b0')
+  const rows = (block) =>
+    wi
+      .partsHtml(res, block)
+      .split('</div>')
+      .filter(Boolean)
+      .map((row) => strip(row));
+  // Default: the status on a row of its own, then the rest on one row.
+  assert.deepEqual(plain(wi.partsList({})), [
+    'status',
+    'temp',
+    'desc',
+    'wind',
+    'logo',
+  ]);
+  assert.equal(rows({})[0], 'Voorlopig droog');
+  assert.match(rows({})[1], /^19,7°C ● Bewolkt ● NW4 ● /);
+  assert.match(rows({ wilanguage: 'en' })[1], /^19\.7°C ● Cloudy ● NW4 ● /);
+  // Parts can be left out and put in any order; unknown parts are ignored.
+  assert.deepEqual(plain(wi.partsList({ wiparts: 'wind, temp,wind,foo' })), [
+    'wind',
+    'temp',
+  ]);
+  assert.deepEqual(
+    plain(wi.partsList({ wiparts: '' })),
+    plain(wi.partsList({}))
   );
-  assert.match(line({}), /^19,7°C ● Bewolkt ● NW4 ● /);
-  assert.match(line({ wilanguage: 'en' }), /^19\.7°C ● Cloudy ● NW4 ● /);
-  assert.match(line({ wiformat: 'temp_logo' }), /^19,7°C ● /);
-  assert.doesNotMatch(line({ wiformat: 'temp_logo' }), /Bewolkt|NW4/);
-  assert.match(line({ wiformat: 'temp_logo_wind' }), /^19,7°C ● NW4 ● /);
-  assert.doesNotMatch(line({ wiformat: 'temp_logo_wind' }), /Bewolkt/);
-  // Wind is left out when the direction is not known.
-  assert.doesNotMatch(
-    strip(
-      wi.weatherSuffix(
-        { temperature: 3, windSpeed: 10 },
-        { wiformat: 'temp_logo_wind' }
+  assert.deepEqual(rows({ wiparts: 'status,temp' }), [
+    'Voorlopig droog',
+    '19,7°C',
+  ]);
+  assert.deepEqual(rows({ wiparts: 'wind,temp' }), ['NW4 ● 19,7°C']);
+  // A status in the middle splits the other parts over two rows.
+  assert.deepEqual(rows({ wiparts: 'temp,status,wind' }), [
+    '19,7°C',
+    'Voorlopig droog',
+    'NW4',
+  ]);
+  // Wind is left out when the direction is not known; no weather = no parts.
+  assert.deepEqual(
+    wi
+      .partsHtml(
+        { weather: { temperature: 3, windSpeed: 10 } },
+        { wiparts: 'temp,wind' }
       )
-    ),
-    /NW|\d ●.*\d/
+      .match(/NW|\d+ ●/),
+    null
   );
-  assert.equal(wi.weatherSuffix(null, {}), '');
+  assert.equal(wi.partsHtml({ weather: null }, { wiparts: 'temp,logo' }), '');
   // The location: a comma is accepted; nothing set means Domoticz'.
   assert.equal(wi.parseCoordinate('52,37'), 52.37);
   assert.equal(wi.parseCoordinate(''), null);
@@ -8628,7 +8658,7 @@ test('Weather Info is a repeatable Widgets card with its own settings table', ()
     'lon',
     'pollminutes',
     'language',
-    'format',
+    'parts',
     'showrainfall',
     'fontsize',
   ]) {
@@ -8646,11 +8676,12 @@ test('Weather Info is a repeatable Widgets card with its own settings table', ()
       'weatherinfo_block_lon',
       'weatherinfo_block_pollminutes',
       'weatherinfo_block_language',
-      'weatherinfo_block_format',
-      'weatherinfo_block_format_temp',
-      'weatherinfo_block_format_temp_logo',
-      'weatherinfo_block_format_temp_logo_wind',
-      'weatherinfo_block_format_temp_desc_logo_wind',
+      'weatherinfo_block_parts',
+      'weatherinfo_block_part_status',
+      'weatherinfo_block_part_temp',
+      'weatherinfo_block_part_desc',
+      'weatherinfo_block_part_wind',
+      'weatherinfo_block_part_logo',
       'weatherinfo_block_showrainfall',
       'weatherinfo_block_fontsize',
       'invalid_weatherinfo_block_location',
