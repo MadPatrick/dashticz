@@ -9289,3 +9289,71 @@ canvas {
   min-width: 3em;
   text-align: right;
 }
+
+/* Device Config / quick-add -> Weather Info section
+   (js/deviceeditor.js _weatherinfoFieldsHtml()): two columns, one on a
+   phone. */
+.de-weatherinfo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  align-items: start;
+}
+
+.de-weatherinfo-grid > .de-weatherinfo-field-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 575px) {
+  .de-weatherinfo-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Weather Info widget (js/components/weatherinfo.js): the rain status, and
+   below it the temperature, description, wind and icon, centered like the
+   F1 'next' tile. */
+.weatherinfo-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  /* The cluster's font size option sets --font-device-title on the tile. */
+  font-size: var(--font-device-title);
+}
+
+.weatherinfo-rows {
+  padding: 4px 0;
+  text-align: center;
+}
+
+.weatherinfo-row {
+  padding: 2px 0;
+}
+
+.weatherinfo-hl {
+  color: var(--dt-warn);
+  font-weight: bold;
+}
+
+.weatherinfo-dot {
+  color: var(--dt-ok);
+  white-space: pre;
+}
+
+.weatherinfo-icon {
+  vertical-align: middle;
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+.weatherinfo-rainfall {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+}
+
+.weatherinfo-error {
+  color: var(--dt-error);
+}

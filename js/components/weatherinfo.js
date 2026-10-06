@@ -1,0 +1,476 @@
+/* global Dashticz DT_function Domoticz */
+//# sourceURL=js/components/weatherinfo.js
+/* Weather Info widget: the rain forecast and the current weather of a
+ * location, based on the domoticz_weatherinfo plugin
+ * (https://github.com/MadPatrick/domoticz_weatherinfo). It is standalone - no
+ * Domoticz device needed. The Buienradar rain forecast and the Open-Meteo
+ * current weather are downloaded by vendor/dashticz/weatherinfo/index.php, a
+ * same-origin PHP bridge like the F1 and HP iLO widgets; the texts below
+ * mirror the plugin's status line.
+ *
+ * It is a repeatable block (Widgets -> Weather info, multiple per screen),
+ * configured per block, and dispatched on wimode ('forecast'):
+ *
+ *   wilat, wilon   optional location; empty = the location of Domoticz
+ *   wipollminutes  how often the rain forecast is downloaded (default 5)
+ *   wilanguage     'nl' (default) | 'en': language of the status text, the
+ *                  weather description and the wind direction
+ *   wiformat       what follows the rain status, like the plugin's Text device:
+ *                  'temp' | 'temp_logo' | 'temp_logo_wind' |
+ *                  'temp_desc_logo_wind' (default)
+ *   wishowrainfall an extra row with the current rain intensity in mm/h, the
+ *                  value of the plugin's Rainfall device (default off)
+ *   wifontsize     optional font size in px (8-60); empty = the theme's
+ */
+var DT_weatherinfo = (function () {
+  var FORMATS = {
+    temp: { description: false, icon: false, wind: false },
+    temp_logo: { description: false, icon: true, wind: false },
+    temp_logo_wind: { description: false, icon: true, wind: true },
+    temp_desc_logo_wind: { description: true, icon: true, wind: true },
+  };
+  var DEFAULT_FORMAT = 'temp_desc_logo_wind';
+
+  var TEXTS = {
+    en: {
+      rainingNow: 'Raining now',
+      rainExpected: 'Rain expected',
+      rainExpectedAt: 'rain expected at',
+      dry: 'Dry for now',
+      range: 'to',
+      unit: 'mm/h',
+    },
+    nl: {
+      rainingNow: 'Het regent nu',
+      rainExpected: 'Regen verwacht',
+      rainExpectedAt: 'regen verwacht om',
+      dry: 'Voorlopig droog',
+      range: 'tot',
+      unit: 'mm/u',
+    },
+  };
+
+  var COMPASS = {
+    nl: ['N', 'NO', 'O', 'ZO', 'Z', 'ZW', 'W', 'NW'],
+    en: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'],
+  };
+
+  // WMO weather code -> description, like the plugin.
+  var WMO = {
+    nl: {
+      0: 'Onbewolkt',
+      1: 'Hoofdzakelijk helder',
+      2: 'Gedeeltelijk bewolkt',
+      3: 'Bewolkt',
+      45: 'Mist',
+      48: 'IJsmist',
+      51: 'Motregen',
+      53: 'Motregen',
+      55: 'Motregen',
+      56: 'IJzel',
+      57: 'IJzel',
+      61: 'Lichte regen',
+      63: 'Regen',
+      65: 'Zware regen',
+      66: 'IJzel',
+      67: 'IJzel',
+      71: 'Lichte sneeuw',
+      73: 'Sneeuw',
+      75: 'Zware sneeuw',
+      77: 'Sneeuwkorrels',
+      80: 'Lichte bui',
+      81: 'Bui',
+      82: 'Zware bui',
+      85: 'Lichte sneeuwbui',
+      86: 'Zware sneeuwbui',
+      95: 'Onweer',
+      96: 'Onweer met hagel',
+      99: 'Onweer met zware hagel',
+    },
+    en: {
+      0: 'Clear',
+      1: 'Mainly clear',
+      2: 'Partly cloudy',
+      3: 'Cloudy',
+      45: 'Fog',
+      48: 'Rime fog',
+      51: 'Drizzle',
+      53: 'Drizzle',
+      55: 'Drizzle',
+      56: 'Freezing drizzle',
+      57: 'Freezing drizzle',
+      61: 'Light rain',
+      63: 'Rain',
+      65: 'Heavy rain',
+      66: 'Freezing rain',
+      67: 'Freezing rain',
+      71: 'Light snow',
+      73: 'Snow',
+      75: 'Heavy snow',
+      77: 'Snow grains',
+      80: 'Light showers',
+      81: 'Showers',
+      82: 'Heavy showers',
+      85: 'Light snow showers',
+      86: 'Heavy snow showers',
+      95: 'Thunderstorm',
+      96: 'Thunderstorm with hail',
+      99: 'Thunderstorm with heavy hail',
+    },
+  };
+
+  // The plugin's icons: plain Unicode with U+FE0F (full colour emoji), in the
+  // colour of the plugin.
+  var SHAPES = {
+    sun: '☀️',
+    moon: '🌙️',
+    cloud: '☁️',
+    sun_cloud: '⛅️',
+    moon_cloud: '🌙️☁️',
+    fog: '🌫️',
+    rain_cloud: '🌧️',
+    snow: '❄️',
+    lightning: '⚡️',
+  };
+  var WMO_ICONS = {
+    0: ['sun', '#FFC107'],
+    1: ['sun_cloud', '#FFC107'],
+    2: ['sun_cloud', '#FFC107'],
+    3: ['cloud', '#D3D3D3'],
+    45: ['fog', '#B0B0B0'],
+    48: ['fog', '#B0B0B0'],
+    51: ['rain_cloud', '#4FC3F7'],
+    53: ['rain_cloud', '#4FC3F7'],
+    55: ['rain_cloud', '#4FC3F7'],
+    56: ['rain_cloud', '#7FB3D5'],
+    57: ['rain_cloud', '#7FB3D5'],
+    61: ['rain_cloud', '#4FC3F7'],
+    63: ['rain_cloud', '#3B82C4'],
+    65: ['rain_cloud', '#3B82C4'],
+    66: ['rain_cloud', '#7FB3D5'],
+    67: ['rain_cloud', '#7FB3D5'],
+    71: ['snow', '#E0F7FA'],
+    73: ['snow', '#E0F7FA'],
+    75: ['snow', '#E0F7FA'],
+    77: ['snow', '#E0F7FA'],
+    80: ['rain_cloud', '#5DADE2'],
+    81: ['rain_cloud', '#5DADE2'],
+    82: ['rain_cloud', '#3B82C4'],
+    85: ['snow', '#E0F7FA'],
+    86: ['snow', '#E0F7FA'],
+    95: ['lightning', '#FFC107'],
+    96: ['lightning', '#FFC107'],
+    99: ['lightning', '#FFC107'],
+  };
+  // The codes whose icon differs after dark.
+  var WMO_ICONS_NIGHT = {
+    0: ['moon', '#4A6FA5'],
+    1: ['moon_cloud', '#4A6FA5'],
+    2: ['moon_cloud', '#4A6FA5'],
+  };
+  var DEFAULT_ICON = ['cloud', '#D3D3D3'];
+  var BEAUFORT = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
+
+  return {
+    name: 'weatherinfo',
+    canHandle: function (block) {
+      return !!(block && block.wimode === 'forecast');
+    },
+    defaultCfg: {
+      width: 4,
+      icon: 'fas fa-cloud-sun-rain',
+      refresh: 60,
+      containerClass: 'weatherinfo-block dt-widget-rows',
+    },
+    // Mounting calls refresh() itself when block.refresh is set.
+    run: function (me) {
+      if (!me.block.refresh) refresh(me);
+    },
+    refresh: refresh,
+    // Exposed for the tests.
+    parseRain: parseRain,
+    rainStatus: rainStatus,
+    rawToMm: rawToMm,
+    beaufort: beaufort,
+    compass: compass,
+    weatherIcon: weatherIcon,
+    weatherSuffix: weatherSuffix,
+    render: render,
+    parseCoordinate: parseCoordinate,
+  };
+
+  function esc(value) {
+    return DT_function.escapeHtml(value);
+  }
+
+  function lang(block) {
+    return block.wilanguage === 'en' ? 'en' : 'nl';
+  }
+
+  function format(block) {
+    return FORMATS[block.wiformat] ? block.wiformat : DEFAULT_FORMAT;
+  }
+
+  // One decimal, with a comma in Dutch.
+  function fmt(value, language) {
+    var text = value.toFixed(1);
+    return language === 'nl' ? text.replace('.', ',') : text;
+  }
+
+  // Raw Buienradar value (0-255) -> mm/h.
+  function rawToMm(raw) {
+    return raw === 0 ? 0 : Math.pow(10, (raw - 109) / 32);
+  }
+
+  function beaufort(kmh) {
+    for (var bft = 0; bft < BEAUFORT.length; bft++) {
+      if (kmh < BEAUFORT[bft]) return bft;
+    }
+    return 12;
+  }
+
+  function compass(degrees, language) {
+    var dirs = COMPASS[language] || COMPASS.nl;
+    return dirs[((Math.floor((degrees + 22.5) / 45) % 8) + 8) % 8];
+  }
+
+  // A latitude or longitude from the block ("52,37" is accepted) -> number,
+  // or null when it is empty or not a number.
+  function parseCoordinate(value) {
+    var text = String(value === undefined || value === null ? '' : value)
+      .trim()
+      .replace(',', '.');
+    var number = parseFloat(text);
+    return text !== '' && isFinite(text) && !isNaN(number) ? number : null;
+  }
+
+  // The location of the block, else the one of Domoticz: {lat, lon} or null.
+  function location(block) {
+    var lat = parseCoordinate(block.wilat);
+    var lon = parseCoordinate(block.wilon);
+    if (lat === null || lon === null) {
+      var domoticz = {};
+      try {
+        domoticz = (Domoticz.getAllDevices()['_settings'] || {}).Location || {};
+      } catch (e) {
+        domoticz = {};
+      }
+      if (lat === null) lat = parseCoordinate(domoticz.Latitude);
+      if (lon === null) lon = parseCoordinate(domoticz.Longitude);
+    }
+    return lat === null || lon === null ? null : { lat: lat, lon: lon };
+  }
+
+  // [[raw, 'HH:MM'], ...] -> the numbers of the plugin's parse_buienradar().
+  function parseRain(rows) {
+    var result = {
+      maxNowRaw: 0,
+      maxSoonRaw: 0,
+      maxRaw: 0,
+      firstRainAt: '',
+    };
+    (rows || []).forEach(function (row, counter) {
+      var raw = parseInt(row[0], 10);
+      if (isNaN(raw)) return;
+      if (counter <= 1 && raw > result.maxNowRaw) result.maxNowRaw = raw;
+      if (counter <= 3 && raw > result.maxSoonRaw) result.maxSoonRaw = raw;
+      if (result.firstRainAt === '' && raw > 0)
+        result.firstRainAt = row[1] || '';
+      if (raw > result.maxRaw) result.maxRaw = raw;
+    });
+    result.mmNow = rawToMm(result.maxNowRaw);
+    result.mmSoon = rawToMm(result.maxSoonRaw);
+    result.mmMax = rawToMm(result.maxRaw);
+    return result;
+  }
+
+  function hl(text) {
+    return '<span class="weatherinfo-hl">' + esc(text) + '</span>';
+  }
+
+  // "Raining now 0.8 mm/h", "Rain expected 1.2 to 2.4 mm/h", "Rain expected at
+  // 14:35: 2.4 mm/h" or "Dry for now", as html.
+  function rainStatus(parsed, language) {
+    var texts = TEXTS[language] || TEXTS.nl;
+    function amount(prefix, now, max) {
+      return (
+        esc(prefix) +
+        ' ' +
+        (max !== null && max > now
+          ? hl(fmt(now, language)) +
+            ' ' +
+            esc(texts.range) +
+            ' ' +
+            hl(fmt(max, language) + ' ' + texts.unit)
+          : hl(fmt(now, language) + ' ' + texts.unit))
+      );
+    }
+    if (parsed.maxNowRaw > 0) {
+      return amount(texts.rainingNow, parsed.mmNow, parsed.mmMax);
+    }
+    if (parsed.maxSoonRaw > 0) {
+      return amount(texts.rainExpected, parsed.mmSoon, parsed.mmMax);
+    }
+    if (parsed.firstRainAt) {
+      return (
+        hl(fmt(parsed.mmMax, language) + ' ' + texts.unit) +
+        ' ' +
+        esc(texts.rainExpectedAt) +
+        ' ' +
+        hl(parsed.firstRainAt)
+      );
+    }
+    return esc(texts.dry);
+  }
+
+  // The icon of the plugin: the WMO code decides, day or night; [shape, colour].
+  function weatherIcon(weather) {
+    var code = weather.weatherCode;
+    var icon;
+    if (typeof code === 'number') {
+      if (weather.isDay === false) icon = WMO_ICONS_NIGHT[code];
+      icon = icon || WMO_ICONS[code];
+    }
+    return icon || DEFAULT_ICON;
+  }
+
+  function description(weather, language) {
+    return (WMO[language] || WMO.nl)[weather.weatherCode] || '';
+  }
+
+  // Direction and force: "NW4"; empty when one of the two is unknown.
+  function windText(weather, language) {
+    if (
+      typeof weather.windSpeed !== 'number' ||
+      typeof weather.windDirection !== 'number'
+    ) {
+      return '';
+    }
+    return (
+      compass(weather.windDirection, language) + beaufort(weather.windSpeed)
+    );
+  }
+
+  // The part after the rain status: temperature, description, wind and icon
+  // as the format of the block asks. Returns html, or '' when there is nothing.
+  function weatherSuffix(weather, block) {
+    if (!weather) return '';
+    var language = lang(block);
+    var mode = FORMATS[format(block)];
+    var parts = [];
+    if (typeof weather.temperature === 'number') {
+      parts.push(esc(fmt(weather.temperature, language) + '°C'));
+    }
+    var text = description(weather, language);
+    if (mode.description && text) parts.push(esc(text));
+    var wind = windText(weather, language);
+    if (mode.wind && wind) parts.push(esc(wind));
+    if (mode.icon) {
+      var icon = weatherIcon(weather);
+      parts.push(
+        '<span class="weatherinfo-icon" title="' +
+          esc(text) +
+          '" style="color:' +
+          icon[1] +
+          '">' +
+          SHAPES[icon[0]] +
+          '</span>'
+      );
+    }
+    return parts.join('<span class="weatherinfo-dot"> ● </span>');
+  }
+
+  function render(me, res) {
+    var block = me.block;
+    var language = lang(block);
+    var html = '';
+    if (res.rain) {
+      html +=
+        '<div class="weatherinfo-row weatherinfo-status">' +
+        rainStatus(parseRain(res.rain), language) +
+        '</div>';
+    }
+    var suffix = weatherSuffix(res.weather, block);
+    if (suffix) {
+      html +=
+        '<div class="weatherinfo-row weatherinfo-weather">' + suffix + '</div>';
+    }
+    if (res.rain && showRainfall(block)) {
+      var texts = TEXTS[language];
+      html +=
+        '<div class="weatherinfo-row weatherinfo-rainfall"><span class="weatherinfo-label">' +
+        esc(DT_function.t('weatherinfo_rainfall', 'Rainfall')) +
+        '</span><span class="weatherinfo-value">' +
+        esc(fmt(parseRain(res.rain).mmNow, language) + ' ' + texts.unit) +
+        '</span></div>';
+    }
+    if (res.errors && res.errors.length) {
+      html +=
+        '<div class="weatherinfo-row weatherinfo-error">' +
+        esc(res.errors.join(' ')) +
+        '</div>';
+    }
+    me.$mountPoint
+      .find('.dt_state')
+      .html('<div class="weatherinfo-rows">' + html + '</div>');
+  }
+
+  function showRainfall(block) {
+    return (
+      block.wishowrainfall === true ||
+      block.wishowrainfall === 1 ||
+      String(block.wishowrainfall).toLowerCase() === 'true'
+    );
+  }
+
+  function showError(me, text) {
+    me.$mountPoint
+      .find('.dt_state')
+      .html(
+        '<div class="weatherinfo-rows"><div class="weatherinfo-row weatherinfo-error">' +
+          esc(text) +
+          '</div></div>'
+      );
+  }
+
+  function refresh(me) {
+    var block = me.block;
+    // Set on every refresh; empty removes the override.
+    var fontSize = parseInt(block.wifontsize, 10);
+    me.$mountPoint.css(
+      '--font-device-title',
+      fontSize >= 8 && fontSize <= 60 ? fontSize + 'px' : ''
+    );
+    var where = location(block);
+    if (!where) {
+      showError(
+        me,
+        DT_function.t(
+          'weatherinfo_nolocation',
+          'No location found. Enter the latitude and longitude in the widget settings.'
+        )
+      );
+      return;
+    }
+    DT_function.bridge('weatherinfo/index.php', {
+      lat: where.lat,
+      lon: where.lon,
+      pollMinutes: DT_function.clampNumber(block.wipollminutes, 5, 1, 60, true),
+    }).then(
+      function (res) {
+        render(me, res || {});
+      },
+      function (jqXHR) {
+        showError(
+          me,
+          DT_function.bridgeError(
+            jqXHR,
+            DT_function.t('weatherinfo_error', 'Unable to fetch the weather.')
+          )
+        );
+      }
+    );
+  }
+})();
+
+Dashticz.register(DT_weatherinfo);
