@@ -9313,10 +9313,30 @@ canvas {
 /* Weather Info widget (js/components/weatherinfo.js): the rain status, and
    below it the temperature, description, wind and icon, centered like the
    F1 'next' tile. */
+/* The text is centered horizontally and vertically in the block. */
+.weatherinfo-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weatherinfo-block .dt_content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+  text-align: center;
+}
+
 .weatherinfo-block .dt_state {
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
+  width: 100%;
   overflow: hidden;
   /* The cluster's font size option sets --font-device-title on the tile. */
   font-size: var(--font-device-title);
