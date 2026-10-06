@@ -8581,7 +8581,7 @@ var DashticzDeviceEditor = (function () {
     idPart: 'weatherinfo',
     labelPrefix: 'weatherinfo_block_',
     fieldClass: 'de-weatherinfo-field',
-    saveOrder: 'lat lon pollminutes language parts showrainfall fontsize',
+    saveOrder: 'lat lon pollminutes language icons parts showrainfall fontsize',
     settings: [
       { key: 'lat', type: 'text', def: '', max: 12 },
       { key: 'lon', type: 'text', def: '', max: 12 },
@@ -8611,6 +8611,17 @@ var DashticzDeviceEditor = (function () {
             ['desc', t.weatherinfo_block_part_desc],
             ['wind', t.weatherinfo_block_part_wind],
             ['logo', t.weatherinfo_block_part_logo],
+          ];
+        },
+      },
+      {
+        key: 'icons',
+        type: 'select',
+        def: 'animated',
+        options: function (t) {
+          return [
+            ['animated', t.weatherinfo_block_icons_animated],
+            ['emoji', t.weatherinfo_block_icons_emoji],
           ];
         },
       },

@@ -13,12 +13,12 @@ v4.1.5 (6-10-2026)
   of the plugin are settings of the widget: the location (empty = the location
   of Domoticz), the poll interval, the language (Dutch or English) and the
   parts of the text (each shown or hidden, in the order you drag them). An extra row can show the current rain intensity in
-  mm/h. Both feeds are read through the new bridge
+  mm/h, and the weather icons are animated (or the plugin's emoji). Both feeds are read through the new bridge
   ``vendor/dashticz/weatherinfo/index.php``.
 
 * **Code**
 
-- ``_DASHTICZ_VERSION`` raised to 197.
+- ``_DASHTICZ_VERSION`` raised to 198.
 
 v4.1.4 (5-10-2026)
 ----------------------

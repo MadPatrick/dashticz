@@ -63,6 +63,11 @@ from the default. The first column shows the matching option of the plugin.
       row. Default: ``'status,temp,desc,wind,logo'``, the plugin's default. In
       the config of the widget you tick the parts you want and drag the rows
       to set the order
+  * - wiicons
+    - ``'animated'`` (default): animated SVG weather icons (turning sun, drifting
+      clouds, falling rain and snow, flashing lightning; no images needed, and
+      the animation stops when the browser asks for reduced motion) or
+      ``'emoji'``: the static emoji of the plugin
   * - wishowrainfall
     - ``true``: an extra row with the current rain intensity in mm/h. Default:
       false

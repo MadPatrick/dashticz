@@ -9379,3 +9379,148 @@ canvas {
 .de-parts-item.ui-sortable-helper {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
+
+/* Weather Info animated icons (js/components/weatherinfo.js, SVG_ICONS). */
+.weatherinfo-svg {
+  width: 2.6em;
+  height: 2.6em;
+  vertical-align: middle;
+  overflow: visible;
+}
+
+.weatherinfo-svg * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.weatherinfo-svg .wi-spin {
+  animation: wi-spin 24s linear infinite;
+}
+
+.weatherinfo-svg .wi-drift {
+  animation: wi-drift 6s ease-in-out infinite alternate;
+}
+
+.weatherinfo-svg .wi-glow {
+  animation: wi-glow 4s ease-in-out infinite alternate;
+}
+
+.weatherinfo-svg .wi-twinkle {
+  animation: wi-twinkle 2.4s ease-in-out infinite;
+}
+
+.weatherinfo-svg .wi-fall {
+  animation: wi-fall 1s linear infinite;
+}
+
+.weatherinfo-svg .wi-snowfall {
+  animation: wi-snowfall 2.4s linear infinite;
+}
+
+.weatherinfo-svg .wi-flash {
+  animation: wi-flash 2.2s ease-in-out infinite;
+}
+
+.weatherinfo-svg .wi-slide {
+  animation: wi-slide 4s ease-in-out infinite alternate;
+}
+
+.weatherinfo-svg .wi-d2 {
+  animation-delay: -0.4s;
+}
+
+.weatherinfo-svg .wi-d3 {
+  animation-delay: -0.8s;
+}
+
+@keyframes wi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wi-drift {
+  from {
+    transform: translateX(-2px);
+  }
+  to {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes wi-glow {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wi-twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes wi-fall {
+  0% {
+    transform: translateY(-3px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+}
+
+@keyframes wi-snowfall {
+  0% {
+    transform: translate(-1px, -4px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(2px, 6px);
+    opacity: 0;
+  }
+}
+
+@keyframes wi-flash {
+  0%,
+  55%,
+  100% {
+    opacity: 0.25;
+  }
+  60%,
+  70% {
+    opacity: 1;
+  }
+  65% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes wi-slide {
+  from {
+    transform: translateX(-3px);
+  }
+  to {
+    transform: translateX(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weatherinfo-svg * {
+    animation: none !important;
+  }
+}

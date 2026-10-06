@@ -19,6 +19,8 @@
  *                  parts: status (the rain status), temp, desc, wind and logo
  *                  (the weather icon), shown after each other on one row. Default 'status,temp,desc,wind,logo' (the
  *                  plugin's Text device); a part that is left out is hidden
+ *   wiicons        'animated' (default): animated SVG weather icons; 'emoji':
+ *                  the emoji of the plugin
  *   wishowrainfall an extra row with the current rain intensity in mm/h, the
  *                  value of the plugin's Rainfall device (default off)
  *   wifontsize     optional font size in px (8-60); empty = the theme's
@@ -165,6 +167,54 @@ var DT_weatherinfo = (function () {
     2: ['moon_cloud', '#4A6FA5'],
   };
   var DEFAULT_ICON = ['cloud', '#D3D3D3'];
+
+  // The animated icons: inline SVG (64x64) animated by css/creative.css
+  // (.weatherinfo-svg), no images or libraries. Keyed like SHAPES.
+  var CLOUD =
+    '<path class="wi-drift" fill="#E3E9F0" d="M20 48h27a10.5 10.5 0 0 0 1.6-20.9A14.5 14.5 0 0 0 21 30.5 8.8 8.8 0 0 0 20 48z"/>';
+  var DARK_CLOUD =
+    '<path class="wi-drift" fill="#9AA5B1" d="M20 40h27a10.5 10.5 0 0 0 1.6-20.9A14.5 14.5 0 0 0 21 22.5 8.8 8.8 0 0 0 20 40z"/>';
+  var SUN =
+    '<g class="wi-spin"><g stroke="#FFB300" stroke-width="3" stroke-linecap="round">' +
+    '<path d="M32 6v7M32 51v7M6 32h7M51 32h7M13.6 13.6l5 5M45.4 45.4l5 5M13.6 50.4l5-5M45.4 18.6l5-5"/>' +
+    '</g></g><circle cx="32" cy="32" r="12" fill="#FFC107"/>';
+  var MOON =
+    '<path class="wi-glow" fill="#FFE082" d="M40 10a22 22 0 1 0 14 38A18 18 0 0 1 40 10z"/>' +
+    '<circle class="wi-twinkle" cx="50" cy="16" r="1.8" fill="#FFF8E1"/>' +
+    '<circle class="wi-twinkle wi-d2" cx="56" cy="28" r="1.3" fill="#FFF8E1"/>';
+  var DROPS =
+    '<g stroke="#4FC3F7" stroke-width="3" stroke-linecap="round">' +
+    '<path class="wi-fall" d="M25 52l-2 5"/><path class="wi-fall wi-d2" d="M34 52l-2 5"/>' +
+    '<path class="wi-fall wi-d3" d="M43 52l-2 5"/></g>';
+  var FLAKES =
+    '<g fill="#E0F7FA"><circle class="wi-snowfall" cx="25" cy="54" r="2.2"/>' +
+    '<circle class="wi-snowfall wi-d2" cx="34" cy="54" r="2.2"/>' +
+    '<circle class="wi-snowfall wi-d3" cx="43" cy="54" r="2.2"/></g>';
+  var BOLT =
+    '<path class="wi-flash" fill="#FFC107" d="M35 38l-9 13h7l-3 10 12-15h-7l4-8z"/>';
+  var FOG =
+    '<g stroke="#B0BEC5" stroke-width="4" stroke-linecap="round">' +
+    '<path class="wi-slide" d="M14 24h36"/><path class="wi-slide wi-d2" d="M10 34h40"/>' +
+    '<path class="wi-slide wi-d3" d="M16 44h34"/></g>';
+  var SVG_ICONS = {
+    sun: SUN,
+    moon: MOON,
+    cloud: CLOUD,
+    sun_cloud:
+      '<svg x="0" y="-4" width="42" height="42" viewBox="0 0 64 64">' +
+      SUN +
+      '</svg>' +
+      CLOUD,
+    moon_cloud:
+      '<svg x="0" y="-4" width="42" height="42" viewBox="0 0 64 64">' +
+      MOON +
+      '</svg>' +
+      CLOUD,
+    fog: FOG,
+    rain_cloud: CLOUD + DROPS,
+    snow: CLOUD + FLAKES,
+    lightning: DARK_CLOUD + BOLT,
+  };
   var BEAUFORT = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
 
   return {
@@ -376,6 +426,17 @@ var DT_weatherinfo = (function () {
     if (part === 'wind') return esc(windText(weather, language));
     if (part === 'logo') {
       var icon = weatherIcon(weather);
+      if (block.wiicons !== 'emoji') {
+        return (
+          '<svg class="weatherinfo-svg" viewBox="0 0 64 64" role="img" aria-label="' +
+          esc(description(weather, language)) +
+          '"><title>' +
+          esc(description(weather, language)) +
+          '</title>' +
+          SVG_ICONS[icon[0]] +
+          '</svg>'
+        );
+      }
       return (
         '<span class="weatherinfo-icon" title="' +
         esc(description(weather, language)) +
