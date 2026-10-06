@@ -8534,7 +8534,7 @@ test('Weather Info weather line: wind, icon and text format', () => {
       .split('</div>')
       .filter(Boolean)
       .map((row) => strip(row));
-  // Default: the status on a row of its own, then the rest on one row.
+  // Default: all parts after each other on one row.
   assert.deepEqual(plain(wi.partsList({})), [
     'status',
     'temp',
@@ -8542,9 +8542,12 @@ test('Weather Info weather line: wind, icon and text format', () => {
     'wind',
     'logo',
   ]);
-  assert.equal(rows({})[0], 'Voorlopig droog');
-  assert.match(rows({})[1], /^19,7°C ● Bewolkt ● NW4 ● /);
-  assert.match(rows({ wilanguage: 'en' })[1], /^19\.7°C ● Cloudy ● NW4 ● /);
+  assert.equal(rows({}).length, 1);
+  assert.match(rows({})[0], /^Voorlopig droog ● 19,7°C ● Bewolkt ● NW4 ● /);
+  assert.match(
+    rows({ wilanguage: 'en' })[0],
+    /^Dry for now ● 19\.7°C ● Cloudy ● NW4 ● /
+  );
   // Parts can be left out and put in any order; unknown parts are ignored.
   assert.deepEqual(plain(wi.partsList({ wiparts: 'wind, temp,wind,foo' })), [
     'wind',
@@ -8555,15 +8558,11 @@ test('Weather Info weather line: wind, icon and text format', () => {
     plain(wi.partsList({}))
   );
   assert.deepEqual(rows({ wiparts: 'status,temp' }), [
-    'Voorlopig droog',
-    '19,7°C',
+    'Voorlopig droog ● 19,7°C',
   ]);
   assert.deepEqual(rows({ wiparts: 'wind,temp' }), ['NW4 ● 19,7°C']);
-  // A status in the middle splits the other parts over two rows.
   assert.deepEqual(rows({ wiparts: 'temp,status,wind' }), [
-    '19,7°C',
-    'Voorlopig droog',
-    'NW4',
+    '19,7°C ● Voorlopig droog ● NW4',
   ]);
   // Wind is left out when the direction is not known; no weather = no parts.
   assert.deepEqual(
@@ -8604,13 +8603,13 @@ test('Weather Info block renders its rows and the optional rainfall row', () => 
     ],
     weather: { temperature: 12, weatherCode: 61, isDay: true },
   });
-  assert.match(html, /weatherinfo-status[^>]*>Raining now/);
+  assert.match(html, /weatherinfo-weather[^>]*>Raining now/);
   assert.match(html, /weatherinfo-weather/);
   assert.match(html, /weatherinfo-rainfall/);
   assert.match(html, /1\.0 mm\/h/);
   me.block.wishowrainfall = false;
   wi.render(me, { rain: [[0, '12:00']], weather: null, errors: ['Oops'] });
-  assert.doesNotMatch(html, /weatherinfo-rainfall|weatherinfo-weather"/);
+  assert.doesNotMatch(html, /weatherinfo-rainfall/);
   assert.match(html, /Dry for now/);
   assert.match(html, /weatherinfo-error[^>]*>Oops/);
 });

@@ -587,7 +587,7 @@
       "weatherinfo_block_language": "Langue",
       "weatherinfo_block_language_help": "Langue du texte d'état, de la description du temps et de la direction du vent.",
       "weatherinfo_block_parts": "Éléments du texte",
-      "weatherinfo_block_parts_help": "Choisissez ce qui est affiché et faites glisser les lignes pour définir l'ordre. L'état de la pluie a sa propre ligne ; les autres éléments se suivent sur une ligne.",
+      "weatherinfo_block_parts_help": "Choisissez ce qui est affiché et faites glisser les lignes pour définir l'ordre.",
       "weatherinfo_block_part_status": "État de la pluie",
       "weatherinfo_block_part_temp": "Température",
       "weatherinfo_block_part_desc": "Description",

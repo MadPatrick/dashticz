@@ -16,9 +16,8 @@
  *   wilanguage     'nl' (default) | 'en': language of the status text, the
  *                  weather description and the wind direction
  *   wiparts        the parts of the text and their order, comma separated;
- *                  parts: status (the rain status, a row of its own), temp,
- *                  desc, wind and logo (the weather icon), which follow each
- *                  other on a row. Default 'status,temp,desc,wind,logo' (the
+ *                  parts: status (the rain status), temp, desc, wind and logo
+ *                  (the weather icon), shown after each other on one row. Default 'status,temp,desc,wind,logo' (the
  *                  plugin's Text device); a part that is left out is hidden
  *   wishowrainfall an extra row with the current rain intensity in mm/h, the
  *                  value of the plugin's Rainfall device (default off)
@@ -390,33 +389,19 @@ var DT_weatherinfo = (function () {
     return '';
   }
 
-  // The rows of the text: the rain status on a row of its own, the other
-  // parts after each other on a row, all in the order of the block.
+  // The text: all parts after each other on one row, in the order of the
+  // block.
   function partsHtml(res, block) {
-    var html = '';
-    var group = [];
-    function flush() {
-      if (group.length) {
-        html +=
-          '<div class="weatherinfo-row weatherinfo-weather">' +
-          group.join('<span class="weatherinfo-dot"> ● </span>') +
-          '</div>';
-      }
-      group = [];
-    }
-    partsList(block).forEach(function (part) {
-      var text = partHtml(part, res, block);
-      if (!text) return;
-      if (part === 'status') {
-        flush();
-        html +=
-          '<div class="weatherinfo-row weatherinfo-status">' + text + '</div>';
-      } else {
-        group.push(text);
-      }
-    });
-    flush();
-    return html;
+    var texts = partsList(block)
+      .map(function (part) {
+        return partHtml(part, res, block);
+      })
+      .filter(Boolean);
+    return texts.length
+      ? '<div class="weatherinfo-row weatherinfo-weather">' +
+          texts.join('<span class="weatherinfo-dot"> ● </span>') +
+          '</div>'
+      : '';
   }
 
   function render(me, res) {

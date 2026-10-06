@@ -11,15 +11,13 @@ from the Buienradar ``raintext`` feed, the current weather from Open-Meteo.
 Both are downloaded server-side (``vendor/dashticz/weatherinfo/index.php``) and
 cached, so several connected dashboards share one download.
 
-The tile shows two lines, like the Text device of the plugin:
-
-* the rain status: ``Het regent nu 0,8 mm/u``, ``Regen verwacht 1,2 tot 2,4
-  mm/u``, ``2,4 mm/u regen verwacht om 14:35`` or ``Voorlopig droog`` (in
-  English ``Raining now``, ``Rain expected``, ``rain expected at`` and ``Dry for
-  now``);
-* the weather: temperature, description, wind (direction and force in Beaufort,
-  for example ``NW4``) and a weather icon, for example ``19,7°C ● Bewolkt ● NW4
-  ●`` followed by the icon. Which parts are shown, and in which order, is the *Text parts* setting.
+The tile shows one line, like the Text device of the plugin, with the parts
+separated by dots: the rain status (``Het regent nu 0,8 mm/u``, ``Regen
+verwacht 1,2 tot 2,4 mm/u``, ``2,4 mm/u regen verwacht om 14:35`` or
+``Voorlopig droog``; in English ``Raining now``, ``Rain expected``, ``rain
+expected at`` and ``Dry for now``), the temperature, the weather description,
+the wind (direction and force in Beaufort, for example ``NW4``) and a weather
+icon. Which parts are shown, and in which order, is the *Text parts* setting.
 
 The plugin's Rainfall device (the current rain intensity) is an optional extra
 row, see ``wishowrainfall``. The accumulated rain (mm) of that device is a
@@ -60,9 +58,8 @@ from the default. The first column shows the matching option of the plugin.
       (``NO``/``ZW`` or ``NE``/``SW``)
   * - wiparts
     - Plugin option *Text device*, with a free choice: the parts of the text
-      and their order, comma separated. Parts: ``status`` (the rain status, on
-      a row of its own), ``temp``, ``desc`` (weather description), ``wind``
-      and ``logo`` (the weather icon); the parts after each other form one
+      and their order, comma separated. Parts: ``status`` (the rain status), ``temp``, ``desc`` (weather description), ``wind``
+      and ``logo`` (the weather icon); the parts are shown after each other on one
       row. Default: ``'status,temp,desc,wind,logo'``, the plugin's default. In
       the config of the widget you tick the parts you want and drag the rows
       to set the order

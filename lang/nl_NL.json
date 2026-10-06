@@ -501,7 +501,7 @@
       "weatherinfo_block_language": "Taal",
       "weatherinfo_block_language_help": "Taal van de statustekst, de weersomschrijving en de windrichting.",
       "weatherinfo_block_parts": "Tekstonderdelen",
-      "weatherinfo_block_parts_help": "Kies wat getoond wordt en sleep de regels om de volgorde te bepalen. De regenstatus heeft een eigen regel; de andere onderdelen staan achter elkaar op een regel.",
+      "weatherinfo_block_parts_help": "Kies wat getoond wordt en sleep de regels om de volgorde te bepalen.",
       "weatherinfo_block_part_status": "Regenstatus",
       "weatherinfo_block_part_temp": "Temperatuur",
       "weatherinfo_block_part_desc": "Omschrijving",

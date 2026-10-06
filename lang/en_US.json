@@ -587,7 +587,7 @@
       "weatherinfo_block_language": "Language",
       "weatherinfo_block_language_help": "Language of the status text, the weather description and the wind direction.",
       "weatherinfo_block_parts": "Text parts",
-      "weatherinfo_block_parts_help": "Choose what is shown and drag the rows to set the order. The rain status has a row of its own; the other parts follow each other on a row.",
+      "weatherinfo_block_parts_help": "Choose what is shown and drag the rows to set the order.",
       "weatherinfo_block_part_status": "Rain status",
       "weatherinfo_block_part_temp": "Temperature",
       "weatherinfo_block_part_desc": "Description",
