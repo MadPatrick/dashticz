@@ -9331,6 +9331,21 @@ canvas {
   text-align: center;
 }
 
+.weatherinfo-block .dt_state,
+.dt-grid-screen
+  > .dt-grid-layout
+  > .dt-grid-item
+  > .weatherinfo-block
+  .dt_state {
+  /* No scrollbar: the text is centered in the block. */
+  overflow: hidden !important;
+  scrollbar-width: none;
+}
+
+.weatherinfo-block .dt_state::-webkit-scrollbar {
+  display: none;
+}
+
 .weatherinfo-block .dt_state {
   display: flex;
   flex-direction: column;
@@ -9405,6 +9420,8 @@ canvas {
   width: 2.6em;
   height: 2.6em;
   vertical-align: middle;
+  /* The icon must not make the row taller than the text. */
+  margin: -0.6em 0;
   overflow: visible;
 }
 
