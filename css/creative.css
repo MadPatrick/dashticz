@@ -9538,9 +9538,3 @@ canvas {
     transform: translateX(3px);
   }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .weatherinfo-svg * {
-    animation: none !important;
-  }
-}

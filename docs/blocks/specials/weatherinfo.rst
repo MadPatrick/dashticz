@@ -65,8 +65,8 @@ from the default. The first column shows the matching option of the plugin.
       to set the order
   * - wiicons
     - ``'animated'`` (default): animated SVG weather icons (turning sun, drifting
-      clouds, falling rain and snow, flashing lightning; no images needed, and
-      the animation stops when the browser asks for reduced motion) or
+      clouds, falling rain and snow, flashing lightning; no images needed; the
+      animation runs whatever the reduced-motion setting of the system is) or
       ``'emoji'``: the static emoji of the plugin
   * - wishowrainfall
     - ``true``: an extra row with the current rain intensity in mm/h. Default:

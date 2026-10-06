@@ -18,7 +18,7 @@ v4.1.5 (6-10-2026)
 
 * **Code**
 
-- ``_DASHTICZ_VERSION`` raised to 199.
+- ``_DASHTICZ_VERSION`` raised to 200.
 
 v4.1.4 (5-10-2026)
 ----------------------
