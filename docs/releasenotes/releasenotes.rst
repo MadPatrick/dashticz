@@ -6,9 +6,10 @@ v4.1.6 (7-10-2026)
 
 * **Fixes**
 
-- The Weather Info icon becomes a rain cloud while Buienradar reports rain
-  right now, so it agrees with the rain status when Open-Meteo still reports a
-  dry sky (cloudy, fog or clear). Snow and thunderstorm icons are kept.
+- The Weather Info icon and description follow the rain status: while
+  Buienradar reports rain right now and Open-Meteo still reports a dry sky
+  (clear, cloudy or fog), the icon becomes a rain cloud and the description
+  light rain, rain or heavy rain by intensity. Snow and thunderstorm are kept.
 
 * **Code**
 

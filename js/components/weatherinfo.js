@@ -167,6 +167,7 @@ var DT_weatherinfo = (function () {
     2: ['moon_cloud', '#4A6FA5'],
   };
   var DEFAULT_ICON = ['cloud', '#D3D3D3'];
+  var DRY_CODES = [0, 1, 2, 3, 45, 48];
   var DRY_SHAPES = ['sun', 'moon', 'sun_cloud', 'moon_cloud', 'cloud', 'fog'];
 
   // The animated icons: inline SVG (64x64) animated by css/creative.css
@@ -398,8 +399,15 @@ var DT_weatherinfo = (function () {
       : icon;
   }
 
-  function description(weather, language) {
-    return (WMO[language] || WMO.nl)[weather.weatherCode] || '';
+  // The WMO description. While Buienradar reports rain right now (mm/h), a
+  // dry description (clear, cloudy, fog) is replaced by light rain, rain or
+  // heavy rain, like the icon.
+  function description(weather, language, rainMm) {
+    var texts = WMO[language] || WMO.nl;
+    if (rainMm > 0 && DRY_CODES.indexOf(weather.weatherCode) > -1) {
+      return texts[rainMm < 2.5 ? 61 : rainMm < 7.6 ? 63 : 65];
+    }
+    return texts[weather.weatherCode] || '';
   }
 
   // Direction and force: "NW4"; empty when one of the two is unknown.
@@ -423,24 +431,23 @@ var DT_weatherinfo = (function () {
       return res.rain ? rainStatus(parseRain(res.rain), language) : '';
     }
     if (!weather) return '';
+    var rain = res.rain ? parseRain(res.rain) : null;
+    var rainMm = rain ? rain.mmNow : 0;
     if (part === 'temp') {
       return typeof weather.temperature === 'number'
         ? esc(fmt(weather.temperature, language) + '°C')
         : '';
     }
-    if (part === 'desc') return esc(description(weather, language));
+    if (part === 'desc') return esc(description(weather, language, rainMm));
     if (part === 'wind') return esc(windText(weather, language));
     if (part === 'logo') {
-      var icon = weatherIcon(
-        weather,
-        !!res.rain && parseRain(res.rain).maxNowRaw > 0
-      );
+      var icon = weatherIcon(weather, rainMm > 0);
       if (block.wiicons !== 'emoji') {
         return (
           '<svg class="weatherinfo-svg" viewBox="0 0 64 64" role="img" aria-label="' +
-          esc(description(weather, language)) +
+          esc(description(weather, language, rainMm)) +
           '"><title>' +
-          esc(description(weather, language)) +
+          esc(description(weather, language, rainMm)) +
           '</title>' +
           SVG_ICONS[icon[0]] +
           '</svg>'
@@ -448,7 +455,7 @@ var DT_weatherinfo = (function () {
       }
       return (
         '<span class="weatherinfo-icon" title="' +
-        esc(description(weather, language)) +
+        esc(description(weather, language, rainMm)) +
         '" style="color:' +
         icon[1] +
         '">' +

@@ -19,6 +19,12 @@ expected at`` and ``Dry for now``), the temperature, the weather description,
 the wind (direction and force in Beaufort, for example ``NW4``) and a weather
 icon. Which parts are shown, and in which order, is the *Text parts* setting.
 
+The weather comes from a model (Open-Meteo) and the rain from the radar
+(Buienradar), so they can disagree. While the radar reports rain right now and
+the model still says clear, cloudy or fog, the widget shows a rain cloud icon
+and the description light rain, rain or heavy rain, so the line stays
+consistent.
+
 The plugin's Rainfall device (the current rain intensity) is an optional extra
 row, see ``wishowrainfall``. The accumulated rain (mm) of that device is a
 running total in Domoticz and is not shown by the widget.

@@ -8525,6 +8525,19 @@ test('Weather Info weather line: wind, icon and text format', () => {
   );
   assert.equal(wi.weatherIcon({ weatherCode: 73 }, true)[0], 'snow');
   assert.equal(wi.weatherIcon({ weatherCode: 95 }, true)[0], 'lightning');
+  // The description follows: light rain, rain or heavy rain by intensity.
+  const desc = (code, raw, language) =>
+    wi
+      .partsHtml(
+        { weather: { weatherCode: code }, rain: [[raw, '12:00']] },
+        { wiparts: 'desc', wilanguage: language }
+      )
+      .replace(/<[^>]+>/g, '');
+  assert.equal(desc(3, 109, 'nl'), 'Lichte regen');
+  assert.equal(desc(3, 130, 'en'), 'Rain');
+  assert.equal(desc(3, 160, 'en'), 'Heavy rain');
+  assert.equal(desc(3, 0, 'nl'), 'Bewolkt');
+  assert.equal(desc(73, 109, 'nl'), 'Sneeuw');
   assert.match(
     wi.partsHtml(
       { weather: { weatherCode: 3 }, rain: [[109, '12:00']] },
