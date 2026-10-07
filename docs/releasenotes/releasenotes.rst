@@ -1,6 +1,19 @@
 Release Notes
 =============
 
+v4.1.6 (7-10-2026)
+----------------------
+
+* **Fixes**
+
+- The Weather Info icon becomes a rain cloud while Buienradar reports rain
+  right now, so it agrees with the rain status when Open-Meteo still reports a
+  dry sky (cloudy, fog or clear). Snow and thunderstorm icons are kept.
+
+* **Code**
+
+- ``_DASHTICZ_VERSION`` raised to 203.
+
 v4.1.5 (6-10-2026)
 ----------------------
 

@@ -8516,6 +8516,29 @@ test('Weather Info weather line: wind, icon and text format', () => {
   assert.equal(wi.weatherIcon({ weatherCode: 63 })[0], 'rain_cloud');
   assert.equal(wi.weatherIcon({ weatherCode: 999 })[0], 'cloud');
   assert.equal(wi.weatherIcon({})[0], 'cloud');
+  // Raining right now (Buienradar): a dry icon becomes a rain cloud, snow and
+  // lightning stay.
+  assert.equal(wi.weatherIcon({ weatherCode: 3 }, true)[0], 'rain_cloud');
+  assert.equal(
+    wi.weatherIcon({ weatherCode: 0, isDay: false }, true)[0],
+    'rain_cloud'
+  );
+  assert.equal(wi.weatherIcon({ weatherCode: 73 }, true)[0], 'snow');
+  assert.equal(wi.weatherIcon({ weatherCode: 95 }, true)[0], 'lightning');
+  assert.match(
+    wi.partsHtml(
+      { weather: { weatherCode: 3 }, rain: [[109, '12:00']] },
+      { wiparts: 'logo' }
+    ),
+    /class="wi-fall/
+  );
+  assert.doesNotMatch(
+    wi.partsHtml(
+      { weather: { weatherCode: 3 }, rain: [[0, '12:00']] },
+      { wiparts: 'logo' }
+    ),
+    /class="wi-fall/
+  );
   const plain = (value) => JSON.parse(JSON.stringify(value));
   const res = {
     weather: {

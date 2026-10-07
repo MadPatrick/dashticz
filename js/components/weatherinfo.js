@@ -167,6 +167,7 @@ var DT_weatherinfo = (function () {
     2: ['moon_cloud', '#4A6FA5'],
   };
   var DEFAULT_ICON = ['cloud', '#D3D3D3'];
+  var DRY_SHAPES = ['sun', 'moon', 'sun_cloud', 'moon_cloud', 'cloud', 'fog'];
 
   // The animated icons: inline SVG (64x64) animated by css/creative.css
   // (.weatherinfo-svg), no images or libraries. Keyed like SHAPES.
@@ -382,14 +383,19 @@ var DT_weatherinfo = (function () {
   }
 
   // The icon of the plugin: the WMO code decides, day or night; [shape, colour].
-  function weatherIcon(weather) {
+  // While Buienradar reports rain right now, a dry icon (sun, moon, cloud or
+  // fog) becomes a rain cloud, so the icon agrees with the rain status.
+  function weatherIcon(weather, raining) {
     var code = weather.weatherCode;
     var icon;
     if (typeof code === 'number') {
       if (weather.isDay === false) icon = WMO_ICONS_NIGHT[code];
       icon = icon || WMO_ICONS[code];
     }
-    return icon || DEFAULT_ICON;
+    icon = icon || DEFAULT_ICON;
+    return raining && DRY_SHAPES.indexOf(icon[0]) > -1
+      ? ['rain_cloud', '#4FC3F7']
+      : icon;
   }
 
   function description(weather, language) {
@@ -425,7 +431,10 @@ var DT_weatherinfo = (function () {
     if (part === 'desc') return esc(description(weather, language));
     if (part === 'wind') return esc(windText(weather, language));
     if (part === 'logo') {
-      var icon = weatherIcon(weather);
+      var icon = weatherIcon(
+        weather,
+        !!res.rain && parseRain(res.rain).maxNowRaw > 0
+      );
       if (block.wiicons !== 'emoji') {
         return (
           '<svg class="weatherinfo-svg" viewBox="0 0 64 64" role="img" aria-label="' +
