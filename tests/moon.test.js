@@ -55,3 +55,44 @@ test('moon phase image index stays within the 100 images of img/moon', () => {
     );
   }
 });
+
+/* The quarter methods and age() are not used by the dashboard yet, but they
+   used to throw or return NaN because the quarters were never calculated. */
+test('moon quarters, next quarters and age are calculated', () => {
+  const MoonPhase = loadMoonPhase();
+  const minutes = 60;
+  const close = (seconds, iso, label) =>
+    assert.ok(
+      Math.abs(seconds - Date.parse(iso) / 1000) < 5 * minutes,
+      `${label}: ${new Date(seconds * 1000).toISOString()} vs ${iso}`
+    );
+
+  const january = new MoonPhase(new Date('2000-01-10T00:00:00Z'));
+  close(january.newMoon(), '2000-01-06T18:14:00Z', 'new moon');
+  close(january.firstQuarter(), '2000-01-14T13:34:00Z', 'first quarter');
+  close(january.fullMoon(), '2000-01-21T04:40:00Z', 'full moon');
+  close(january.lastQuarter(), '2000-01-28T07:57:00Z', 'last quarter');
+  close(january.nextNewMoon(), '2000-02-05T13:03:00Z', 'next new moon');
+
+  const october = new MoonPhase(new Date('2026-10-25T12:00:00Z'));
+  close(october.newMoon(), '2026-10-10T15:50:00Z', 'new moon 2026');
+
+  for (const iso of ['2000-01-10T00:00:00Z', '2026-10-25T12:00:00Z']) {
+    const moon = new MoonPhase(new Date(iso));
+    const sequence = [
+      moon.newMoon(),
+      moon.firstQuarter(),
+      moon.fullMoon(),
+      moon.lastQuarter(),
+      moon.nextNewMoon(),
+      moon.nextFirstQuarter(),
+      moon.nextFullMoon(),
+      moon.nextLastQuarter(),
+    ];
+    for (let i = 1; i < sequence.length; i++) {
+      const days = (sequence[i] - sequence[i - 1]) / 86400;
+      assert.ok(days > 6.5 && days < 8.5, `${iso}: step ${i} is ${days} days`);
+    }
+    assert.ok(moon.age() >= 0 && moon.age() < 29.6, `${iso} age ${moon.age()}`);
+  }
+});
