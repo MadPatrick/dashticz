@@ -1451,7 +1451,7 @@ test('device and widget config editors share full widget config and preserve hid
   // SEPARATOR_DEFAULT_ICON to it.
   assert.match(
     deviceEditor,
-    /\(kind === 'title'\s*\n\s*\? typeof definition\.icon === 'string' && definition\.icon !== ''/
+    /\(kind === 'title' \|\| kind === 'slidebutton'\s*\n\s*\? typeof definition\.icon === 'string' && definition\.icon !== ''/
   );
   assert.doesNotMatch(
     deviceEditor,

@@ -1304,9 +1304,11 @@ var DashticzDeviceEditor = (function () {
         // A separator without an icon property renders without an icon
         // (#169, js/components/blocktitle.js), so show its Icon option as
         // off: reading it as on added fas fa-divide on the next save.
+        // A slide button without an icon property renders without one (the
+        // writer leaves an empty icon out), so it reads as off as well.
         icon:
           hasConfiguredImage ||
-          (kind === 'title'
+          (kind === 'title' || kind === 'slidebutton'
             ? typeof definition.icon === 'string' && definition.icon !== ''
             : typeof definition.icon === 'undefined' || definition.icon !== ''),
         // Icon and Image are one source selector in the editor. Prefer the
@@ -3014,6 +3016,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('customdevicepopup'));
       _save();
     });
@@ -3036,18 +3040,28 @@ var DashticzDeviceEditor = (function () {
   function _multiDeviceRowHtml(row) {
     var t = _translations();
     row = row || { idx: '', value: '' };
+    // A hand-written row can hold more than idx and value (title, unit...);
+    // the whole row is kept so a save writes it back.
+    var original = '';
+    try {
+      original = JSON.stringify(row);
+    } catch (ignore) {
+      original = '';
+    }
     return (
-      '<div class="md-value-row input-group input-group-sm mb-2">' +
-      '<input type="number" min="1" step="1" class="form-control md-value-idx" ' +
+      '<div class="md-value-row input-group input-group-sm mb-2" data-md-original="' +
+      _esc(original) +
+      '">' +
+      '<input type="text" class="form-control md-value-idx" ' +
       'style="max-width:110px" placeholder="' +
       _esc(t.multi_device_row_idx) +
       '" value="' +
-      _esc(row.idx || '') +
+      _esc(row.idx === undefined || row.idx === null ? '' : row.idx) +
       '">' +
       '<input type="text" class="form-control md-value-value" placeholder="' +
       _esc(t.multi_device_row_value) +
       '" value="' +
-      _esc(row.value || '') +
+      _esc(row.value === undefined || row.value === null ? '' : row.value) +
       '">' +
       '<button type="button" class="btn btn-outline-success md-value-add" title="' +
       _esc(t.add_value_row) +
@@ -3517,6 +3531,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('multidevicepopup'));
       _save();
     });
@@ -3716,6 +3732,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('groupblockpopup'));
       _save();
     });
@@ -4587,6 +4605,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('clusterblockpopup'));
       _save();
     });
@@ -5130,7 +5150,7 @@ var DashticzDeviceEditor = (function () {
         lmsStationColor: lms.stationColor,
       };
       managedOrder.push(orderKey);
-      // The modal fades out, so a second click would add a second block.
+      // The modal fades out; a second click must not add a second block.
       $(this).prop('disabled', true);
       _hideModal(document.getElementById('lmsblockpopup'));
       _save();
@@ -5306,6 +5326,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('htmlblockpopup'));
       _save();
     });
@@ -5536,6 +5558,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('iframeblockpopup'));
       _save();
     });
@@ -6094,6 +6118,8 @@ var DashticzDeviceEditor = (function () {
         if (!configured && typeof settings[name] !== 'undefined')
           pendingWidgetSettings[name] = String(settings[name]);
       });
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('calendarblockpopup'));
       _save();
     });
@@ -6322,6 +6348,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('publictransportblockpopup'));
       _save();
     });
@@ -6533,6 +6561,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('timegraphblockpopup'));
       _save();
     });
@@ -6764,6 +6794,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('xmltvguideblockpopup'));
       _save();
     });
@@ -6973,6 +7005,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('camerablockpopup'));
       _save();
     });
@@ -7143,6 +7177,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('newsblockpopup'));
       _save();
     });
@@ -7466,6 +7502,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('graphblockpopup'));
       _save();
     });
@@ -8405,7 +8443,7 @@ var DashticzDeviceEditor = (function () {
       var chosen = _tvgidsChannelList($input.val());
       var position = chosen.indexOf(id);
       if (position > -1) chosen.splice(position, 1);
-      else chosen.push(id);
+      else if (chosen.length < 50) chosen.push(id); // saveblocks.php allows 50
       $input.val(chosen.join(','));
       showOrder();
     });
@@ -8417,8 +8455,10 @@ var DashticzDeviceEditor = (function () {
     function $field(key) {
       return $('#' + prefix + '-tvgids-' + key);
     }
+    var channelList = _tvgidsChannelList($field('channels').val());
     var values = {
-      channels: _tvgidsChannelList($field('channels').val()).join(','),
+      // More than the 50 saveblocks.php accepts counts as no valid choice.
+      channels: channelList.length > 50 ? '' : channelList.join(','),
     };
     TVGIDS_SETTINGS.forEach(function (setting) {
       values[setting.key] = _settingValue(TVGIDS_SECTION, prefix, setting);
@@ -8543,6 +8583,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('tvgidsblockpopup'));
       _save();
     });
@@ -8667,6 +8709,14 @@ var DashticzDeviceEditor = (function () {
         values[pair[0]] = low;
       }
     });
+    // saveblocks.php accepts these host characters only; anything else
+    // counts as no host, so the popup says so before it closes.
+    var plainHost = String(values.host || '')
+      .replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')
+      .replace(/[/?#].*$/, '');
+    if (!/^[A-Za-z0-9.\-_:[\]]{1,253}$/.test(plainHost)) {
+      values.host = '';
+    }
     return values;
   }
 
@@ -8787,6 +8837,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('fullykioskblockpopup'));
       _save();
     });
@@ -9058,6 +9110,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('weatherinfoblockpopup'));
       _save();
     });
@@ -9268,6 +9322,8 @@ var DashticzDeviceEditor = (function () {
         preservedFields: {},
       };
       managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('slidebuttonpopup'));
       _save();
     });
@@ -9295,6 +9351,9 @@ var DashticzDeviceEditor = (function () {
       return;
     }
     var editor = document.getElementById('deviceeditorpopup');
+    // A second click while the editor is still fading out must not open the
+    // popup twice.
+    if (editor && $(editor).data('de-config-transition')) return;
     var editorModal =
       editor && window.bootstrap && window.bootstrap.Modal
         ? window.bootstrap.Modal.getInstance(editor)
@@ -9314,6 +9373,7 @@ var DashticzDeviceEditor = (function () {
 
   function _openWidgetConfigPopup(orderKey) {
     var editor = document.getElementById('deviceeditorpopup');
+    if (editor && $(editor).data('de-config-transition')) return;
     var editorModal =
       editor && window.bootstrap && window.bootstrap.Modal
         ? window.bootstrap.Modal.getInstance(editor)
@@ -9322,55 +9382,63 @@ var DashticzDeviceEditor = (function () {
     if (!widget) return;
 
     function openFullWidgetConfig() {
-      DT_function.loadDTScript('js/widgeteditor.js').then(function () {
-        if (
-          !DashticzWidgetEditor ||
-          typeof DashticzWidgetEditor.openConfig !== 'function'
-        ) {
-          _showParentEditor(editor);
-          return;
-        }
-        DashticzWidgetEditor.openConfig(widget.id, {
-          draft: widget.editorDraft || null,
-          onApply: function (result) {
-            if (!result || !result.entry) return;
-            widget.pendingPayload = result.entry;
-            widget.editorDraft = result.draft || null;
-            var draftRows =
-              widget.editorDraft &&
-              widget.editorDraft.blockOptions &&
-              widget.editorDraft.blockOptions.customFields
-                ? widget.editorDraft.blockOptions.customFields
-                : [];
-            draftRows.some(function (row) {
-              if (_normaliseCustomFieldName(row && row.field) !== 'title')
-                return false;
-              widgetTitles[orderKey] = String(row.setting || '');
-              widget.pendingTitleEdited = true;
-              return true;
-            });
-            pendingWidgetSettings = $.extend(
-              {},
-              pendingWidgetSettings,
-              result.configSettings || {}
-            );
-            var entry = result.entry;
-            widgetOptions[orderKey] = $.extend({}, widgetOptions[orderKey], {
-              icon: typeof entry.icon === 'undefined' || entry.icon !== '',
-              iconValue:
-                typeof entry.icon === 'string' && entry.icon !== ''
-                  ? entry.icon
-                  : null,
-              hide_data: entry.hide_data === true,
-              last_update: entry.last_update === true,
-            });
-            widgetTitleVisible[orderKey] = entry.hide_title !== true;
-          },
-          onClose: function () {
+      DT_function.loadDTScript('js/widgeteditor.js').then(
+        function () {
+          if (
+            typeof DashticzWidgetEditor === 'undefined' ||
+            !DashticzWidgetEditor ||
+            typeof DashticzWidgetEditor.openConfig !== 'function'
+          ) {
             _showParentEditor(editor);
-          },
-        });
-      });
+            return;
+          }
+          DashticzWidgetEditor.openConfig(widget.id, {
+            draft: widget.editorDraft || null,
+            onApply: function (result) {
+              if (!result || !result.entry) return;
+              widget.pendingPayload = result.entry;
+              widget.editorDraft = result.draft || null;
+              var draftRows =
+                widget.editorDraft &&
+                widget.editorDraft.blockOptions &&
+                widget.editorDraft.blockOptions.customFields
+                  ? widget.editorDraft.blockOptions.customFields
+                  : [];
+              draftRows.some(function (row) {
+                if (_normaliseCustomFieldName(row && row.field) !== 'title')
+                  return false;
+                widgetTitles[orderKey] = String(row.setting || '');
+                widget.pendingTitleEdited = true;
+                return true;
+              });
+              pendingWidgetSettings = $.extend(
+                {},
+                pendingWidgetSettings,
+                result.configSettings || {}
+              );
+              var entry = result.entry;
+              widgetOptions[orderKey] = $.extend({}, widgetOptions[orderKey], {
+                icon: typeof entry.icon === 'undefined' || entry.icon !== '',
+                iconValue:
+                  typeof entry.icon === 'string' && entry.icon !== ''
+                    ? entry.icon
+                    : null,
+                hide_data: entry.hide_data === true,
+                last_update: entry.last_update === true,
+              });
+              widgetTitleVisible[orderKey] = entry.hide_title !== true;
+            },
+            onClose: function () {
+              _showParentEditor(editor);
+            },
+          });
+        },
+        function () {
+          // widgeteditor.js did not load: bring the Device Editor back instead
+          // of leaving the page without a dialog.
+          _showParentEditor(editor);
+        }
+      );
     }
 
     if (editor && editorModal && $(editor).hasClass('show')) {
@@ -9894,11 +9962,19 @@ var DashticzDeviceEditor = (function () {
     // it's now an independent toggle living in .de-config-options-icons
     // below (#195), same as Data/Updated/Title/Background, so every device
     // gets it (previously only Group/HTML/LMS/Separator specials did).
+    // A slide button and an LMS block never write last_update (see
+    // _buildDevicePayload), so the Updated toggle is not offered for them.
+    var writesNoLastUpdate = !!(
+      special &&
+      (special.specialType === 'slidebutton' || special.specialType === 'lms')
+    );
     var configOptions = isTitle
       ? ['icon', 'show_title']
-      : isNoDialSpecial
-        ? ['icon', 'last_update', 'show_title']
-        : ['icon', 'hide_data', 'last_update', 'show_title'];
+      : writesNoLastUpdate
+        ? ['icon', 'show_title']
+        : isNoDialSpecial
+          ? ['icon', 'last_update', 'show_title']
+          : ['icon', 'hide_data', 'last_update', 'show_title'];
     html += '<h6 class="de-section-title">' + _esc(t.display_options) + '</h6>';
 
     // Icon/Data/Updated/Title/Background: independent toggle buttons, never
@@ -10918,9 +10994,26 @@ var DashticzDeviceEditor = (function () {
         // barsteps this is a plain tri-state (see _specialFromReference()),
         // so "hidden" simply keeps whatever was already stored, including
         // still-undefined (auto-detect from the device's own SwitchType).
-        updated.inverse = inverseApplies(pendingVisualMode)
-          ? $('#de-config-inverse').prop('checked')
-          : options.inverse;
+        // An untouched switch leaves the tri-state alone, so the automatic
+        // detection from the device's SwitchType keeps working.
+        var inverseNow = $('#de-config-inverse').prop('checked');
+        updated.inverse =
+          inverseApplies(pendingVisualMode) && inverseNow !== inverseChecked
+            ? inverseNow
+            : options.inverse;
+        // Dial and Bar default to showing the update time, other displays
+        // follow the global setting. Changing between the two groups changes
+        // what "inherited" means, so keep the state the toggle shows.
+        var wasDialLike = options.dial === true || options.bar === true;
+        var isDialLike =
+          pendingVisualMode === 'dial' || pendingVisualMode === 'bar';
+        if (
+          wasDialLike !== isDialLike &&
+          options.last_update_inherited === true &&
+          typeof updated.last_update === 'boolean'
+        ) {
+          updated.last_update_inherited = false;
+        }
       }
 
       $popup.find('.de-custom-field-row').each(function () {
@@ -11040,6 +11133,25 @@ var DashticzDeviceEditor = (function () {
           $(this).find('.de-custom-field-setting').trigger('focus');
           return;
         }
+        // The target screen of a slide button: a whole number from 1.
+        if (
+          special &&
+          special.specialType === 'slidebutton' &&
+          lowerField === 'slide' &&
+          !(
+            typeof parsedSetting.value === 'number' &&
+            parsedSetting.value >= 1 &&
+            Math.floor(parsedSetting.value) === parsedSetting.value
+          )
+        ) {
+          valid = false;
+          $popup
+            .find('.de-config-message')
+            .addClass('text-danger')
+            .text(t.invalid_setting);
+          $(this).find('.de-custom-field-setting').trigger('focus');
+          return;
+        }
         pendingCustomFields.push({
           field: field,
           setting: rawSetting,
@@ -11069,10 +11181,26 @@ var DashticzDeviceEditor = (function () {
             $(this).find('.md-value-value').trigger('focus');
             return;
           }
-          var rowEntry = { value: rawValue };
+          var originalRow = {};
+          try {
+            originalRow = JSON.parse($(this).attr('data-md-original') || '{}');
+          } catch (ignore) {
+            originalRow = {};
+          }
+          if (!originalRow || typeof originalRow !== 'object') originalRow = {};
+          var rowEntry = $.extend({}, originalRow);
+          // An untouched value keeps its type (0, false, a number).
+          rowEntry.value =
+            typeof originalRow.value !== 'undefined' &&
+            String(originalRow.value) === rawValue
+              ? originalRow.value
+              : rawValue;
+          delete rowEntry.idx;
           if (rawRowIdx) {
-            var rowIdx = parseInt(rawRowIdx, 10);
-            if (!(rowIdx > 0 && String(rowIdx) === rawRowIdx)) {
+            // The forms the Custom device accepts: 12, v3, s3 and 12_1.
+            if (
+              !/^(?:v\d+|s[1-9]\d*|[1-9]\d*_[1-9]\d*|[1-9]\d*)$/.test(rawRowIdx)
+            ) {
               valid = false;
               $popup
                 .find('.de-config-message')
@@ -11081,7 +11209,9 @@ var DashticzDeviceEditor = (function () {
               $(this).find('.md-value-idx').trigger('focus');
               return;
             }
-            rowEntry.idx = rowIdx;
+            rowEntry.idx = /^\d+$/.test(rawRowIdx)
+              ? parseInt(rawRowIdx, 10)
+              : rawRowIdx;
           }
           pendingValues.push(rowEntry);
         });
@@ -11276,6 +11406,23 @@ var DashticzDeviceEditor = (function () {
         });
       }
 
+      // Layout Editor route: the change is only kept when the server accepts
+      // it, so remember what to put back.
+      var rollbackConfig = null;
+      if (persistOnly) {
+        rollbackConfig = isSpecial
+          ? { special: $.extend(true, {}, special) }
+          : {
+              title: deviceTitles[ck],
+              customFields: $.extend(true, [], deviceCustomFields[ck] || []),
+              titleVisible: deviceTitleVisible[ck],
+              options: $.extend(true, {}, deviceOptions[ck] || {}),
+              hadOptions: Object.prototype.hasOwnProperty.call(
+                deviceOptions,
+                ck
+              ),
+            };
+      }
       if (isSpecial) {
         special.title = pendingTitle;
         special.customFields = storedRows;
@@ -11338,6 +11485,24 @@ var DashticzDeviceEditor = (function () {
             _hideModal(document.getElementById('de-config-popup'));
           })
           .fail(function (xhr) {
+            if (rollbackConfig) {
+              if (rollbackConfig.special) {
+                // In place: the popup keeps working on the same object.
+                Object.keys(special).forEach(function (key) {
+                  delete special[key];
+                });
+                $.extend(special, rollbackConfig.special);
+              } else {
+                deviceTitles[ck] = rollbackConfig.title;
+                deviceCustomFields[ck] = rollbackConfig.customFields;
+                deviceTitleVisible[ck] = rollbackConfig.titleVisible;
+                if (rollbackConfig.hadOptions) {
+                  deviceOptions[ck] = rollbackConfig.options;
+                } else {
+                  delete deviceOptions[ck];
+                }
+              }
+            }
             var msg =
               xhr.responseJSON && xhr.responseJSON.error
                 ? xhr.responseJSON.error
@@ -12404,6 +12569,15 @@ var DashticzDeviceEditor = (function () {
               special.reference
           ).slice(0, 100);
           specialEntry.icon = slideOptions.iconValue || '';
+          // slide and button_key are sent above, validated; saveblocks.php
+          // refuses them as custom fields.
+          if (specialEntry.custom_fields) {
+            delete specialEntry.custom_fields.slide;
+            delete specialEntry.custom_fields.button_key;
+            if (!Object.keys(specialEntry.custom_fields).length) {
+              delete specialEntry.custom_fields;
+            }
+          }
         } else if (special.specialType === 'title') {
           var titleOptions = special.options || {};
           if (titleOptions.icon === false) {
