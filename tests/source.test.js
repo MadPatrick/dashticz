@@ -5569,14 +5569,17 @@ test('Lyrion Music Server Title/Artist/Station text style (size/color) is config
     deviceEditor,
     /id="' \+\s*\n?\s*prefix \+ '-lms-' \+ line\.key \+ '-color"/
   );
+  // An empty size or an untouched colour is read as undefined, so the
+  // form defaults are not pinned into CONFIG.js (DE-203).
   assert.match(
     deviceEditor,
-    /titleSize:[\s\S]{0,20}parseInt\(\$popup\.find\('#' \+ prefix \+ '-lms-title-size'\)\.val\(\), 10\)[\s\S]{0,10}\|\|[\s\S]{0,10}16,/
+    /titleSize: _readLmsSize\(\$popup, prefix \+ '-lms-title-size'\),/
   );
   assert.match(
     deviceEditor,
-    /titleColor: String\([\s\S]{0,80}\$popup\.find\('#' \+ prefix \+ '-lms-title-color'\)\.val\(\) \|\| '#ffffff'[\s\S]{0,10}\),/
+    /titleColor: _readLmsColor\(\$popup, prefix \+ '-lms-title-color'\),/
   );
+  assert.match(deviceEditor, /defaultColor: '#ffffff'/);
   // Both save paths (the quick-add popup's managedSpecials[orderKey] entry,
   // and the edit popup's special.lmsXxx = pendingLms.xxx assignment) carry
   // the 6 new fields through to the specialEntry the rest of _save() posts.
