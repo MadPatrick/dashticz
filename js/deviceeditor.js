@@ -1614,6 +1614,26 @@ var DashticzDeviceEditor = (function () {
     return text;
   }
 
+  // Byte length of a string once saved as UTF-8 (saveblocks.php limits bytes).
+  function _utf8Length(text) {
+    return unescape(encodeURIComponent(String(text))).length;
+  }
+
+  // Cuts text to at most `max` bytes without splitting a character, like
+  // configwriter_cut_bytes() on the server.
+  function _cutUtf8(text, max) {
+    var out = '';
+    var used = 0;
+    var chars = Array.from(String(text));
+    for (var i = 0; i < chars.length; i++) {
+      var size = _utf8Length(chars[i]);
+      if (used + size > max) break;
+      out += chars[i];
+      used += size;
+    }
+    return out;
+  }
+
   function _normaliseCustomFieldName(value) {
     value = $.trim(String(value || '')).replace(/[\s-]+/g, '_');
     if (value) value = value.charAt(0).toLowerCase() + value.slice(1);
@@ -2886,8 +2906,8 @@ var DashticzDeviceEditor = (function () {
         return;
       }
 
-      var title = $.trim(String($('#cd-device-title').val() || '')).slice(
-        0,
+      var title = _cutUtf8(
+        $.trim(String($('#cd-device-title').val() || '')),
         100
       );
       var customRows = [];
@@ -3389,7 +3409,10 @@ var DashticzDeviceEditor = (function () {
       var reference = $.trim(String($('#md-device-name').val() || ''));
       var rawIdx = $.trim(String($('#md-device-idx').val() || ''));
       var idx = parseInt(rawIdx, 10);
-      var title = $.trim(String($('#md-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#md-device-title').val() || '')),
+        100
+      );
       if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
         $message.addClass('text-danger').text(t.invalid_multi_device_name);
         $('#md-device-name').trigger('focus');
@@ -3590,7 +3613,10 @@ var DashticzDeviceEditor = (function () {
         .removeClass('text-danger')
         .text('');
       var reference = $.trim(String($('#gb-device-name').val() || ''));
-      var title = $.trim(String($('#gb-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#gb-device-title').val() || '')),
+        100
+      );
       if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
         $message.addClass('text-danger').text(t.invalid_group_name);
         $('#gb-device-name').trigger('focus');
@@ -4376,7 +4402,7 @@ var DashticzDeviceEditor = (function () {
 
     $('#cl-device-pending').on('input', '.cl-name-input', function () {
       var idx = parseInt($(this).attr('data-idx'), 10);
-      var title = $.trim(String($(this).val() || ''));
+      var title = _cutUtf8($.trim(String($(this).val() || '')), 100);
       var target = pendingDevices.find(function (d) {
         return d.idx === idx;
       });
@@ -4430,7 +4456,10 @@ var DashticzDeviceEditor = (function () {
         .removeClass('text-danger')
         .text('');
       var reference = $.trim(String($('#cl-device-name').val() || ''));
-      var title = $.trim(String($('#cl-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#cl-device-title').val() || '')),
+        100
+      );
       if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
         $message.addClass('text-danger').text(t.invalid_cluster_name);
         $('#cl-device-name').trigger('focus');
@@ -5027,7 +5056,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#lm-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#lm-device-title').val() || '')),
+        100
+      );
       var lms = _readLmsFields('lm', $popup);
       if (!lms.server) {
         $message.addClass('text-danger').text(t.invalid_lms_server);
@@ -5193,8 +5225,16 @@ var DashticzDeviceEditor = (function () {
         .removeClass('text-danger')
         .text('');
       var reference = $.trim(String($('#hb-device-name').val() || ''));
-      var title = $.trim(String($('#hb-device-title').val() || ''));
-      if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference)) {
+      var title = _cutUtf8(
+        $.trim(String($('#hb-device-title').val() || '')),
+        100
+      );
+      // Same pattern as saveblocks.php, without the names that the editors
+      // read as a dummy or device block.
+      if (
+        !/^[A-Za-z_][A-Za-z0-9_]*$/.test(reference) ||
+        /^(?:dummyblock|device)_\d+$/.test(reference)
+      ) {
         $message.addClass('text-danger').text(t.invalid_html_block_name);
         $('#hb-device-name').trigger('focus');
         return;
@@ -5389,7 +5429,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#if-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#if-device-title').val() || '')),
+        100
+      );
       var frameurl = $.trim(String($('#if-device-url').val() || ''));
       if (!frameurl || frameurl.length > 2048) {
         $message.addClass('text-danger').text(t.invalid_iframe_block_url);
@@ -5530,7 +5573,12 @@ var DashticzDeviceEditor = (function () {
           color: typeof source.color === 'string' ? source.color : 'blue',
         });
       });
-      if (out.length) return out;
+      if (out.length) {
+        // A saved name -> {ics, color} object stays an object, also with one
+        // source, so its name and colour survive a save.
+        out.keepObject = true;
+        return out;
+      }
     }
     return [{ name: '', ics: '', color: 'white' }];
   }
@@ -5628,8 +5676,12 @@ var DashticzDeviceEditor = (function () {
     );
   }
 
+  function _calendarIsMulti(sources) {
+    return sources.length > 1 || sources.keepObject === true;
+  }
+
   function _calendarFieldsHtml(prefix, sources, t) {
-    var multi = sources.length > 1;
+    var multi = _calendarIsMulti(sources);
     var html =
       '<div class="de-calendar-fields" data-calendar-prefix="' +
       _esc(prefix) +
@@ -5654,7 +5706,7 @@ var DashticzDeviceEditor = (function () {
      above) so a value typed but not yet blurred is never lost on
      add/remove/Save. */
   function _captureCalendarFields(prefix, $popup, sources) {
-    var multi = sources.length > 1;
+    var multi = _calendarIsMulti(sources);
     $popup
       .find('[data-calendar-prefix="' + prefix + '"] .de-calendar-row')
       .each(function () {
@@ -5686,7 +5738,7 @@ var DashticzDeviceEditor = (function () {
               prefix,
               source,
               index,
-              sources.length > 1,
+              _calendarIsMulti(sources),
               t
             );
           })
@@ -5726,21 +5778,33 @@ var DashticzDeviceEditor = (function () {
      name -> {ics, color} object js/components/calendar.js accepts. */
   function _readCalendarFields(prefix, $popup, sources, t) {
     _captureCalendarFields(prefix, $popup, sources);
-    if (sources.length <= 1) {
+    if (!_calendarIsMulti(sources)) {
       var single = $.trim((sources[0] && sources[0].ics) || '');
       if (!single || single.length > 2048) {
         return { valid: false, reason: 'url' };
       }
       return { valid: true, icalurl: single };
     }
-    var names = {};
-    var result = {};
+    // Same limits as saveblocks.php: 20 sources, names of at most 100 bytes,
+    // http(s) or webcal sources. The maps have no prototype so a name like
+    // __proto__ or toString is an ordinary key.
+    if (sources.length > 20) return { valid: false, reason: 'toomany' };
+    var names = Object.create(null);
+    var result = Object.create(null);
     for (var i = 0; i < sources.length; i++) {
       var name = $.trim(sources[i].name || '');
       var ics = $.trim(sources[i].ics || '');
-      if (!name) return { valid: false, reason: 'name' };
+      if (!name || _utf8Length(name) > 100) {
+        return { valid: false, reason: 'name' };
+      }
       if (names[name]) return { valid: false, reason: 'duplicate' };
-      if (!ics || ics.length > 2048) return { valid: false, reason: 'url' };
+      if (
+        !ics ||
+        ics.length > 2048 ||
+        !/^(?:https?|webcal):\/\/[^\s]+$/i.test(ics)
+      ) {
+        return { valid: false, reason: 'url' };
+      }
       names[name] = true;
       result[name] = { ics: ics, color: sources[i].color || 'blue' };
     }
@@ -5774,6 +5838,8 @@ var DashticzDeviceEditor = (function () {
       return t.calendar_name_required || 'Enter a name for every calendar.';
     if (reason === 'duplicate')
       return t.calendar_duplicate_name || 'Calendar names must be unique.';
+    if (reason === 'toomany')
+      return t.calendar_too_many || 'At most 20 calendars are allowed.';
     return t.invalid_calendar_block_icalurl;
   }
 
@@ -5903,7 +5969,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#cal-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#cal-device-title').val() || '')),
+        100
+      );
       var calendarResult = _readCalendarFields(
         'cal-device',
         $popup,
@@ -6160,7 +6229,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#pt-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#pt-device-title').val() || '')),
+        100
+      );
       var station = $.trim(String($('#pt-device-station').val() || ''));
       var tpc = $.trim(String($('#pt-device-tpc').val() || ''));
       if (!station && !tpc) {
@@ -6369,7 +6441,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#tg-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#tg-device-title').val() || '')),
+        100
+      );
       var idx = parseInt($('#tg-device-idx').val(), 10) || 0;
       if (idx < 1) {
         $message.addClass('text-danger').text(t.invalid_timegraph_block_idx);
@@ -6477,9 +6552,9 @@ var DashticzDeviceEditor = (function () {
      catalog's singleton 'xmltvguide' entry (always the fixed
      'widget_xmltvguide' key, and whose settings additionally fall back to
      global settings['xmltv_*'] when a block leaves a field unset -
-     js/components/xmltvguide.js's defaultCfg). Every field below is
-     always written explicitly onto the new block, so a repeatable
-     instance never depends on those globals. js/components/xmltvguide.js
+     js/components/xmltvguide.js's defaultCfg). Layout and channels are
+     always written onto the new block; a left-empty maximum or refresh
+     still follows those globals. js/components/xmltvguide.js
      dispatches on a truthy xmltvurl (or an explicit type:'xmltvguide') -
      see _specialFromReference()'s matching 'xmltvguide' branch, which
      excludes the legacy 'widget_xmltvguide' key. */
@@ -6586,7 +6661,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#xtv-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#xtv-device-title').val() || '')),
+        100
+      );
       var xmltvurl = $.trim(String($('#xtv-device-url').val() || ''));
       if (!xmltvurl || xmltvurl.length > 2048) {
         $message.addClass('text-danger').text(t.invalid_xmltvguide_block_url);
@@ -6630,13 +6708,14 @@ var DashticzDeviceEditor = (function () {
         setting: xmltvurl,
         value: xmltvurl,
       });
-      if (channels.length) {
-        customRows.push({
-          field: 'channels',
-          setting: channels.join(', '),
-          value: channels,
-        });
-      }
+      // Layout and channels are always written, also when 0 / empty: an
+      // omitted value falls back to the global xmltv_* settings of the
+      // Widget Editor. An empty channels list shows every channel.
+      customRows.push({
+        field: 'channels',
+        setting: channels.length ? channels.join(', ') : '[]',
+        value: channels,
+      });
       if (maxitems) {
         var maxitemsInt = parseInt(maxitems, 10) || 0;
         if (maxitemsInt > 0) {
@@ -6647,13 +6726,11 @@ var DashticzDeviceEditor = (function () {
           });
         }
       }
-      if (layout !== '0') {
-        customRows.push({
-          field: 'layout',
-          setting: layout,
-          value: parseInt(layout, 10),
-        });
-      }
+      customRows.push({
+        field: 'layout',
+        setting: layout,
+        value: parseInt(layout, 10) || 0,
+      });
       if (refresh) {
         var refreshInt = parseInt(refresh, 10) || 0;
         if (refreshInt > 0) {
@@ -6808,7 +6885,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#cam-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#cam-device-title').val() || '')),
+        100
+      );
       var imageUrl = $.trim(String($('#cam-device-imageurl').val() || ''));
       if (!imageUrl || imageUrl.length > 2048) {
         $message.addClass('text-danger').text(t.invalid_camera_block_imageurl);
@@ -6990,7 +7070,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#nw-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#nw-device-title').val() || '')),
+        100
+      );
       var feed = $.trim(String($('#nw-device-feed').val() || ''));
       if (!feed || feed.length > 2048) {
         $message.addClass('text-danger').text(t.invalid_news_block_feed);
@@ -7311,7 +7394,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#gr-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#gr-device-title').val() || '')),
+        100
+      );
 
       var graphFields = _readGraphFields('gr');
       if (!graphFields.validDevices) {
@@ -7439,7 +7525,7 @@ var DashticzDeviceEditor = (function () {
         },
       },
       // Optional whole number: empty = the time zone of the browser.
-      { key: 'utcoffset', type: 'number', def: null, range: [-24, 24, 1] },
+      { key: 'utcoffset', type: 'number', def: null, range: [-24, 24, 0.25] },
       { key: 'pollminutes', type: 'number', def: 60, range: [5, 1440, 5] },
       {
         key: 'sessions',
@@ -7526,6 +7612,22 @@ var DashticzDeviceEditor = (function () {
     return /^#[0-9a-f]{6}$/i.test(text) ? text.toLowerCase() : def;
   }
 
+  // A switch the components read as on: true, 1, 'true', '1' or 'on'
+  // (js/components/f1.js and tvgids.js accept the same forms).
+  function _settingIsOn(raw) {
+    if (raw === true || raw === 1) return true;
+    var text = String(raw).toLowerCase();
+    return text === 'true' || text === '1' || text === 'on';
+  }
+
+  // Rounds to the step of the setting: whole numbers unless the step is
+  // fractional (a time zone offset such as 5.5 or 5.75 stays as it is).
+  function _settingRound(number, range) {
+    var step = range[2] > 0 && range[2] < 1 ? range[2] : 1;
+    var rounded = Math.round(number / step) * step;
+    return Math.min(range[1], Math.max(range[0], rounded));
+  }
+
   // Stored custom-field rows -> {key: value} of every setting of a section.
   function _settingsFromRows(section, rows, ownFields) {
     var stored = {};
@@ -7549,7 +7651,7 @@ var DashticzDeviceEditor = (function () {
               : setting.def;
       } else if (setting.type === 'switch') {
         values[setting.key] =
-          raw === undefined ? !!setting.def : raw === true || raw === 'true';
+          raw === undefined ? !!setting.def : _settingIsOn(raw);
       } else if (setting.type === 'color') {
         values[setting.key] = _settingColor(raw, setting.def);
       } else {
@@ -7838,12 +7940,10 @@ var DashticzDeviceEditor = (function () {
       if (setting.def === null) {
         // Optional number: empty (or 0 when 0 is out of range) = the default.
         return !isNaN(number) && (number > 0 || range[0] < 0)
-          ? Math.min(range[1], Math.max(range[0], Math.round(number)))
+          ? _settingRound(number, range)
           : null;
       }
-      return isNaN(number)
-        ? setting.def
-        : Math.min(range[1], Math.max(range[0], Math.round(number)));
+      return isNaN(number) ? setting.def : _settingRound(number, range);
     }
     return raw.slice(0, setting.max);
   }
@@ -8390,7 +8490,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#tvgids-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#tvgids-device-title').val() || '')),
+        100
+      );
       var tvgids = _readTvgidsFields('tvgids');
       if (!tvgids.channels) {
         $message.addClass('text-danger').text(t.invalid_tvgids_block_channels);
@@ -8630,7 +8733,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#fullykiosk-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#fullykiosk-device-title').val() || '')),
+        100
+      );
       var fully = _readFullyFields('fullykiosk');
       if (!fully.host) {
         $message.addClass('text-danger').text(t.invalid_fully_block_host);
@@ -8897,7 +9003,10 @@ var DashticzDeviceEditor = (function () {
         .find('.cd-custom-message')
         .removeClass('text-danger')
         .text('');
-      var title = $.trim(String($('#weatherinfo-device-title').val() || ''));
+      var title = _cutUtf8(
+        $.trim(String($('#weatherinfo-device-title').val() || '')),
+        100
+      );
       var weatherinfo = _readWeatherinfoFields('weatherinfo');
       var locationError = _weatherinfoLocationError(weatherinfo, t);
       if (locationError) {
@@ -9125,7 +9234,7 @@ var DashticzDeviceEditor = (function () {
       var iconIsImage =
         iconSource === 'image' && iconValue !== '' && !fullImage;
       var slideButtonDefinition = {
-        title: buttonTitle.slice(0, 100),
+        title: _cutUtf8(buttonTitle, 100),
         slide: slideTarget,
       };
       if (iconIsImage) slideButtonDefinition.image = iconValue.slice(0, 100);
@@ -9139,7 +9248,7 @@ var DashticzDeviceEditor = (function () {
         reference: reference,
         definition: {},
         idx: null,
-        title: buttonTitle.slice(0, 100),
+        title: _cutUtf8(buttonTitle, 100),
         width: 12,
         height: null,
         showTitle: true,
@@ -9154,7 +9263,7 @@ var DashticzDeviceEditor = (function () {
         slideTarget: slideTarget,
         customFields: _deviceCustomFieldRows(
           slideButtonDefinition,
-          buttonTitle.slice(0, 100)
+          _cutUtf8(buttonTitle, 100)
         ),
         preservedFields: {},
       };
@@ -9483,6 +9592,11 @@ var DashticzDeviceEditor = (function () {
       });
     }
     var graphFields = null;
+    // What the popup shows for graph/legend/groupBy, and what CONFIG.js had:
+    // a value the popup cannot represent (legend as an object, graph as an
+    // array, an unknown groupBy) is written back unless the user changes it.
+    var graphInitial = null;
+    var graphOriginal = {};
     if (isGraphBlock) {
       var graphValues = {};
       customRows.forEach(function (row) {
@@ -9498,6 +9612,19 @@ var DashticzDeviceEditor = (function () {
         groupBy: String(graphValues.groupby || ''),
         legend: graphValues.legend === true,
         height: special.height,
+      };
+      graphOriginal = {
+        graph: graphValues.graph,
+        legend: graphValues.legend,
+        groupby: graphValues.groupby,
+      };
+      graphInitial = {
+        graphType: graphFields.graphType,
+        legend: graphFields.legend,
+        groupBy:
+          ['hour', 'day', 'week', 'month'].indexOf(graphFields.groupBy) < 0
+            ? ''
+            : graphFields.groupBy,
       };
       customRows = customRows.filter(function (row) {
         var field = _normaliseCustomFieldName(row && row.field).toLowerCase();
@@ -10220,7 +10347,7 @@ var DashticzDeviceEditor = (function () {
         '#de-config-cluster-pending .cl-name-input',
         function () {
           var idx = parseInt($(this).attr('data-idx'), 10);
-          var title = $.trim(String($(this).val() || ''));
+          var title = _cutUtf8($.trim(String($(this).val() || '')), 100);
           var target = clusterPendingDevices.find(function (d) {
             return d.idx === idx;
           });
@@ -11004,13 +11131,51 @@ var DashticzDeviceEditor = (function () {
           setting: JSON.stringify(pendingGraph.devices),
           value: pendingGraph.devices,
         });
-        if (pendingGraph.graphType === 'bar') {
+        var keepOriginal = function (field, key, pendingValue, initialValue) {
+          if (
+            typeof graphOriginal[key] === 'undefined' ||
+            pendingValue !== initialValue
+          )
+            return false;
+          storedRows.push({
+            field: field,
+            setting: _settingToText(graphOriginal[key]),
+            value: graphOriginal[key],
+          });
+          return true;
+        };
+        if (
+          !keepOriginal(
+            'graph',
+            'graph',
+            pendingGraph.graphType,
+            graphInitial.graphType
+          ) &&
+          pendingGraph.graphType === 'bar'
+        ) {
           storedRows.push({ field: 'graph', setting: 'bar', value: 'bar' });
         }
-        if (pendingGraph.legend) {
+        if (
+          !keepOriginal(
+            'legend',
+            'legend',
+            pendingGraph.legend,
+            graphInitial.legend
+          ) &&
+          pendingGraph.legend
+        ) {
           storedRows.push({ field: 'legend', setting: 'true', value: true });
         }
-        if (pendingGraph.groupBy) {
+        if (
+          keepOriginal(
+            'groupBy',
+            'groupby',
+            pendingGraph.groupBy,
+            graphInitial.groupBy
+          )
+        ) {
+          // unchanged: the original groupBy is written above
+        } else if (pendingGraph.groupBy) {
           storedRows.push({
             field: 'groupBy',
             setting: pendingGraph.groupBy,
