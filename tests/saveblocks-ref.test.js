@@ -257,3 +257,65 @@ test('a device that another classic screen already owns gets its own block', () 
     fs.rmSync(fixture, { recursive: true, force: true });
   }
 });
+
+test('calendar names that look like numbers and webcal:// sources are accepted', () => {
+  const fixture = makeFixture();
+  try {
+    const result = post(fixture, {
+      devices: [
+        {
+          kind: 'calendar',
+          key: 'calendar_1',
+          title: 'Agenda',
+          custom_fields: {
+            icalurl: {
+              2024: { ics: 'webcal://x.nl/a.ics', color: 'red' },
+              Werk: { ics: 'https://x.nl/b.ics', color: 'blue' },
+            },
+          },
+        },
+      ],
+    });
+    assert.equal(result.json.success, true, JSON.stringify(result.json));
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('the slide button target and key cannot be overwritten by a custom field', () => {
+  const fixture = makeFixture();
+  try {
+    ['slide', 'button_key'].forEach((field) => {
+      const result = post(fixture, {
+        devices: [
+          {
+            kind: 'slidebutton',
+            key: 'slide_1',
+            slide: 2,
+            custom_fields: { [field]: 0 },
+          },
+        ],
+      });
+      assert.equal(
+        result.json.error,
+        'Invalid or reserved custom device field.',
+        field
+      );
+    });
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('a special block key that the layout save would refuse fails before anything is written', () => {
+  const fixture = makeFixture();
+  try {
+    const result = post(fixture, {
+      devices: [{ kind: 'title', key: 'T$1', title: 'Rij', width: 12 }],
+    });
+    assert.equal(result.json.error, 'Invalid special block key.');
+    assert.equal(readConfig(fixture), '');
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
