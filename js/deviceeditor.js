@@ -1348,8 +1348,8 @@ var DashticzDeviceEditor = (function () {
         needle: definition.needle === true,
         // Selector Switch "Compact" layout (js/blocks.js getSelectorSwitch()).
         compactSelector: definition.compactSelector === true,
-        fontsizeTitle: _parseTextFontSize(definition.fontsize_title),
-        fontsizeValue: _parseTextFontSize(definition.fontsize_value),
+        fontsizeTitle: _parseTextFontSize(definition.fontsize_title, true),
+        fontsizeValue: _parseTextFontSize(definition.fontsize_value, true),
         textalign: _parseTextAlign(definition.textalign),
         compactIcons:
           definition.compactIcons && typeof definition.compactIcons === 'object'
@@ -1892,9 +1892,12 @@ var DashticzDeviceEditor = (function () {
   // custom fields, like compactSelector.
   var TEXT_ALIGN_VALUES = ['left', 'center', 'right'];
 
-  function _parseTextFontSize(value) {
+  // keepOutOfRange: a stored size outside 6-100 (the components accept any
+  // positive size) is passed on as it is until the user changes the field.
+  function _parseTextFontSize(value, keepOutOfRange) {
     var size = parseInt(value, 10);
-    return size > 0 ? Math.min(100, Math.max(6, size)) : null;
+    if (!(size > 0)) return null;
+    return keepOutOfRange ? size : Math.min(100, Math.max(6, size));
   }
 
   function _parseTextAlign(value) {
@@ -2565,8 +2568,8 @@ var DashticzDeviceEditor = (function () {
         needle: configured.needle === true,
         // Selector Switch "Compact" layout (js/blocks.js getSelectorSwitch()).
         compactSelector: configured.compactSelector === true,
-        fontsizeTitle: _parseTextFontSize(configured.fontsize_title),
-        fontsizeValue: _parseTextFontSize(configured.fontsize_value),
+        fontsizeTitle: _parseTextFontSize(configured.fontsize_title, true),
+        fontsizeValue: _parseTextFontSize(configured.fontsize_value, true),
         textalign: _parseTextAlign(configured.textalign),
         compactIcons:
           configured.compactIcons && typeof configured.compactIcons === 'object'
@@ -3877,7 +3880,7 @@ var DashticzDeviceEditor = (function () {
         '">' +
         _esc(d.name) +
         ' (IDX ' +
-        d.idx +
+        _esc(d.idx) +
         ')</option>';
     });
     return html;
@@ -4009,7 +4012,7 @@ var DashticzDeviceEditor = (function () {
           _esc(t.cluster_row_name) +
           '">' +
           '<span class="cl-pending-idx">IDX ' +
-          d.idx +
+          _esc(d.idx) +
           '</span>' +
           '</span>' +
           _clusterIconPickerHtml(t, d) +
@@ -4117,7 +4120,7 @@ var DashticzDeviceEditor = (function () {
         '>' +
         _esc(d.name) +
         ' (IDX ' +
-        d.idx +
+        _esc(d.idx) +
         ')</option>';
     });
     return html;
@@ -9863,6 +9866,15 @@ var DashticzDeviceEditor = (function () {
           ? clusterValues.icons
           : {};
       var allDevicesForCluster = Domoticz.getAllDevices();
+      // Hand-written lists may hold '12' as text: use whole numbers only.
+      clusterDeviceIdxList = clusterDeviceIdxList
+        .map(function (idx) {
+          var number = parseInt(idx, 10);
+          return String(number) === String(idx).trim() ? number : 0;
+        })
+        .filter(function (idx) {
+          return idx > 0;
+        });
       clusterPendingDevices = clusterDeviceIdxList.map(function (idx) {
         var live = allDevicesForCluster ? allDevicesForCluster[idx] : null;
         var usageIdx = parseInt(clusterUsageMap[idx], 10) || null;
@@ -10388,6 +10400,10 @@ var DashticzDeviceEditor = (function () {
       _esc(t.custom_fields) +
       '</h6>';
     html += '<p class="form-text">' + _esc(t.custom_fields_help) + '</p>';
+    var originalFieldNames = {};
+    customRows.forEach(function (row) {
+      originalFieldNames[String((row && row.field) || '')] = true;
+    });
     html += '<div class="de-custom-fields">';
     customRows.forEach(function (row) {
       html += _customFieldRowHtml(row);
@@ -11054,10 +11070,14 @@ var DashticzDeviceEditor = (function () {
       }
       if (supportsTextStyle) {
         updated.fontsizeTitle = _parseTextFontSize(
-          $('#de-config-fontsize-title').val()
+          $('#de-config-fontsize-title').val(),
+          String(options.fontsizeTitle) ===
+            String(parseInt($('#de-config-fontsize-title').val(), 10))
         );
         updated.fontsizeValue = _parseTextFontSize(
-          $('#de-config-fontsize-value').val()
+          $('#de-config-fontsize-value').val(),
+          String(options.fontsizeValue) ===
+            String(parseInt($('#de-config-fontsize-value').val(), 10))
         );
         updated.textalign = _parseTextAlign(
           $popup.find('input[name="de-config-textalign"]:checked').val()
@@ -11136,7 +11156,13 @@ var DashticzDeviceEditor = (function () {
           $(this).find('.de-custom-field-setting').val() || ''
         );
         if (!rawField && !rawSetting) return;
-        var field = _normaliseCustomFieldName(rawField);
+        // A stored property keeps its spelling (Naam stays Naam) as long as
+        // the server accepts it; only new or invalid names are normalised.
+        var field =
+          originalFieldNames[rawField] &&
+          /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(rawField)
+            ? rawField
+            : _normaliseCustomFieldName(rawField);
         var lowerField = field.toLowerCase();
         if (!field || !/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(field)) {
           valid = false;
@@ -12466,6 +12492,7 @@ var DashticzDeviceEditor = (function () {
     });
 
     $list.on('dragend', '.de-device-item', function () {
+      dragSrcEl = null;
       $(this).removeClass('de-drag-dragging');
       $list
         .find('.de-drag-over-top, .de-drag-over-bottom')
@@ -12492,7 +12519,18 @@ var DashticzDeviceEditor = (function () {
 
     $list.on('drop', '.de-device-item', function (e) {
       e.preventDefault();
-      if (!dragSrcEl || this === dragSrcEl) return;
+      // Only a row dragged from this list moves: text, links or files
+      // dropped from elsewhere carry other data.
+      var dropped = e.originalEvent.dataTransfer
+        ? e.originalEvent.dataTransfer.getData('text/plain')
+        : '';
+      if (
+        !dragSrcEl ||
+        this === dragSrcEl ||
+        dropped !== String($(dragSrcEl).attr('data-order-key'))
+      ) {
+        return;
+      }
       var rect = this.getBoundingClientRect();
       var above = e.originalEvent.clientY < rect.top + rect.height / 2;
       if (above) {
