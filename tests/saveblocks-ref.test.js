@@ -175,3 +175,85 @@ test('custom fields cannot overwrite the validated LMS settings', () => {
     fs.rmSync(fixture, { recursive: true, force: true });
   }
 });
+
+function blockLines(fixture) {
+  const script = path.join(fixture, 'lines.php');
+  fs.writeFileSync(
+    script,
+    `<?php require_once ${JSON.stringify(path.join(root, 'js', 'configwriter.php'))};
+echo json_encode(configwriter_extract_block_lines(file_get_contents(${JSON.stringify(path.join(fixture, 'custom', 'CONFIG.js'))})));`
+  );
+  return JSON.parse(spawnSync('php', [script], { encoding: 'utf8' }).stdout);
+}
+
+const savedClassicScreen = (blocks, screen = 1) =>
+  `var config = {}\n// [dashboard-editor${screen === 1 ? '' : '-s' + screen}-start]\n${blocks}\n// [dashboard-editor${screen === 1 ? '' : '-s' + screen}-end]\n`;
+
+test('a special block that the editor saved before can be edited again (classic screen)', () => {
+  const fixture = makeFixture();
+  try {
+    fs.writeFileSync(
+      path.join(fixture, 'custom', 'CONFIG.js'),
+      savedClassicScreen(
+        "blocks['Title_1'] = {type:'blocktitle', title:'Old title', width:12};"
+      )
+    );
+    const result = post(fixture, {
+      devices: [
+        { kind: 'title', key: 'Title_1', title: 'NEW title', width: 12 },
+      ],
+    });
+    assert.equal(result.json.success, true, JSON.stringify(result.json));
+    assert.match(blockLines(fixture).Title_1, /NEW title/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('a hand-written special block outside the editor sections stays as it is', () => {
+  const fixture = makeFixture();
+  try {
+    fs.writeFileSync(
+      path.join(fixture, 'custom', 'CONFIG.js'),
+      "var config = {}\nblocks['Title_1'] = {type:'blocktitle', title:'Mine', extra:1};\n"
+    );
+    const result = post(fixture, {
+      devices: [
+        { kind: 'title', key: 'Title_1', title: 'NEW title', width: 12 },
+      ],
+    });
+    assert.equal(result.json.success, true, JSON.stringify(result.json));
+    assert.match(blockLines(fixture).Title_1, /Mine/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test('a device that another classic screen already owns gets its own block', () => {
+  const fixture = makeFixture();
+  try {
+    fs.writeFileSync(
+      path.join(fixture, 'custom', 'CONFIG.js'),
+      savedClassicScreen(
+        "blocks['device_5'] = {idx:5, title:'My lamp title'};"
+      ) + 'config["x"] = 1;\nscreens[1] = {};\nscreens[2] = {};\n'
+    );
+    const result = post(fixture, {
+      screen: 2,
+      devices: [
+        {
+          idx: 5,
+          name: 'Lamp',
+          width: 6,
+          title: 'Screen two title',
+          key: 'device_5',
+        },
+      ],
+    });
+    assert.equal(result.json.success, true, JSON.stringify(result.json));
+    assert.deepEqual(result.json.blockKeys, ['screen2_device_5']);
+    assert.match(blockLines(fixture).device_5, /My lamp title/);
+  } finally {
+    fs.rmSync(fixture, { recursive: true, force: true });
+  }
+});

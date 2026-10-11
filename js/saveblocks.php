@@ -887,32 +887,32 @@ $config = rtrim($config);
 $blockKeys = [];
 $blocksOnly = !empty($data['blocksOnly']);
 if (!empty($devices)) {
-    $keyCollisionConfig = $config;
-    if ($blocksOnly) {
-        /* The active screen's editor sections are replaced by savegridlayout.php
-         * immediately after this request. Ignore their keys for collision
-         * detection so device_1498 is reused instead of becoming device_1498_2.
-         * Hand-written blocks outside these sections still reserve their keys. */
-        $keyCollisionConfig = configwriter_remove_editor_sections(
-            $keyCollisionConfig,
-            $screenNumber
-        );
-        list($gridStartMarker, $gridEndMarker) = configwriter_editor_markers(
-            'grid-layout',
-            $screenNumber
-        );
+    /* The active screen's editor sections are replaced by this request and
+     * by savelayout.php/savegridlayout.php right after it. Ignore their keys
+     * for collision detection, so device_1498 is reused instead of becoming
+     * device_1498_2, and so a special block (title, dummy, custom, slide
+     * button) that the editor saved before is written again with the edits
+     * of this request instead of being kept as if it were hand-written.
+     * Hand-written blocks outside these sections still reserve their keys. */
+    $keyCollisionConfig = configwriter_remove_editor_sections(
+        $config,
+        $screenNumber
+    );
+    list($gridStartMarker, $gridEndMarker) = configwriter_editor_markers(
+        'grid-layout',
+        $screenNumber
+    );
+    $keyCollisionConfig = configwriter_remove_section(
+        $keyCollisionConfig,
+        $gridStartMarker,
+        $gridEndMarker
+    );
+    if ($screenNumber === 0) {
         $keyCollisionConfig = configwriter_remove_section(
             $keyCollisionConfig,
-            $gridStartMarker,
-            $gridEndMarker
+            '// [standby-editor-start]',
+            '// [standby-editor-end]'
         );
-        if ($screenNumber === 0) {
-            $keyCollisionConfig = configwriter_remove_section(
-                $keyCollisionConfig,
-                '// [standby-editor-start]',
-                '// [standby-editor-end]'
-            );
-        }
     }
     $usedKeys = array_keys(
         configwriter_extract_declared_block_refs($keyCollisionConfig)
