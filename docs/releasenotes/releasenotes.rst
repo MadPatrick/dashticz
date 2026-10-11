@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-v4.1.8 (11-10-2026)
+v4.20.1 (11-10-2026)
 ----------------------
 
 * **Fixes**
@@ -9,6 +9,38 @@ v4.1.8 (11-10-2026)
 - Fully Kiosk widget: the label of every switch is shown right next to the
   switch, and the switches are laid out in 3 columns (2 columns on a narrow
   screen, 1 on a phone).
+
+v4.20.0 (11-10-2026)
+----------------------
+
+* **Fixes**
+
+- Info in Config no longer shows ``undefined`` after the version number, and
+  the update check falls back to the ``master`` branch when ``version.txt``
+  does not name a branch.
+- Widget Editor: only the first block of a kind (iframe, camera, ...) is
+  managed as a widget, so a screen with several of them can be saved again.
+- Widget Editor: an empty number setting is no longer written as ``0`` (a map
+  with zoom level 0 showed the whole world).
+- Layout Editor: no config icon for a special block whose key the Device
+  Editor cannot open.
+- A setting with a ``;`` in its text (a password, for example) is no longer
+  cut off when CONFIG.js is rewritten.
+- Saving a grid screen without tiles empties the screen instead of deleting
+  it and renumbering the later screens.
+- A text value of a custom field that looks like a number or ``true``
+  (``007``) stays a string in the Device and Widget Editor.
+- The garbage, cors and nocache bridges check the origin of a request; the
+  moon phase calculation and its quarter functions work again; the graph
+  header expression only takes numeric values.
+- The Coins block uses the CoinGecko API (the CoinMarketCap v1 and LiteBit
+  endpoints are gone); ``key`` is the CoinGecko coin id.
+
+* **Code**
+
+- ics-parser 3.6.0 and PHP 8.1+ deprecation fixes in the iCal bridge.
+- New tests for the iCal and garbage bridges, the moon phase, the thermostat
+  block, the editors and the language files.
 
 v4.1.7 (10-10-2026)
 ----------------------
