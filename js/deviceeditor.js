@@ -70,6 +70,7 @@ var DashticzDeviceEditor = (function () {
   var gridPositions = {}; // order key -> {x,y,w,h}
   var gridRefs = {}; // order key -> block reference
   var gridExtras = []; // non-device/widget blocks
+  var columnExtras = []; // classic screens: blocks the editor does not manage
   var DEFAULT_GRID_WIDTH = 6;
   var DEFAULT_GRID_HEIGHT = 6;
   var TITLE_GRID_HEIGHT = 2;
@@ -81,6 +82,7 @@ var DashticzDeviceEditor = (function () {
   // instead of persisting immediately and reloading (see
   // _graftIntoLayoutEditor). Null whenever the Layout Editor isn't active.
   var layoutEditorBaseline = null;
+  var layoutEditorBaselineState = null; // _graftSignature() when the editor opened
   // Devices present on the screen when this popup opened (idx/subidx/
   // reference, from managedOrder/deviceRefs before the user made any
   // changes). _save() diffs this against the final managedOrder to find
@@ -650,6 +652,7 @@ var DashticzDeviceEditor = (function () {
     gridPositions = {};
     gridRefs = {};
     gridExtras = [];
+    columnExtras = [];
     gridConfig = gridMode ? _readGridConfig() : null;
 
     (gridMode ? _getAllManagedGridItems() : _getAllManagedItems()).forEach(
@@ -718,6 +721,7 @@ var DashticzDeviceEditor = (function () {
       DashticzLayoutEditor.isActive()
         ? managedOrder.slice()
         : null;
+    layoutEditorBaselineState = null;
 
     openDeviceEntries = managedOrder
       .filter(function (orderKey) {
@@ -834,6 +838,22 @@ var DashticzDeviceEditor = (function () {
   /* Build the same immutable reference that saveblocks.php uses. Supplying the
      reference in the initial request keeps a newly added device addressable
      throughout the complete blocks -> layout save chain. */
+  // The key a device block has on the page, when that is a key the server
+  // accepts; the stable device_<idx> key otherwise.
+  function _existingDeviceReference(ck) {
+    var reference = deviceRefs[ck];
+    if (
+      typeof reference === 'string' &&
+      /^[A-Za-z_][A-Za-z0-9_]*$/.test(reference) &&
+      typeof blocks !== 'undefined' &&
+      blocks[reference] &&
+      _toCompositeKey(blocks[reference]) === ck
+    ) {
+      return reference;
+    }
+    return _stableDeviceReference(ck);
+  }
+
   function _stableDeviceReference(ck) {
     if (_isGroupCk(ck)) return String(ck);
     var parsed = _parseCk(ck);
@@ -1979,7 +1999,7 @@ var DashticzDeviceEditor = (function () {
         'icons',
       ]);
     } else if (widget.id === 'calendar') {
-      entry.icalurl = definition.icalurl || '';
+      entry.icalurl = definition.icalurl || _legacyCalendarIcalurl(definition);
       _copyDefinedWidgetProperties(entry, definition, ['maxitems']);
     } else if (widget.id === 'clock') {
       entry.clockType = definition.type || 'basicclock';
@@ -2174,6 +2194,26 @@ var DashticzDeviceEditor = (function () {
       : null;
   }
 
+  // The old calendars: [{calendar: {icalurl}, color}] form of a Calendar
+  // widget, as js/components/calendar.js converts it, so that saving the
+  // screen does not fail on a widget without icalurl.
+  function _legacyCalendarIcalurl(definition) {
+    var result = {};
+    var count = 0;
+    var legacy = definition && definition.calendars;
+    if (!Array.isArray(legacy)) return '';
+    legacy.forEach(function (item, index) {
+      var ics = item && item.calendar && item.calendar.icalurl;
+      if (typeof ics !== 'string' || !ics) return;
+      result['calendar' + index] = {
+        ics: ics,
+        color: (item && item.color) || 'white',
+      };
+      count++;
+    });
+    return count ? result : '';
+  }
+
   function _getAllManagedGridItems() {
     var ordered = [];
     var seen = {};
@@ -2186,13 +2226,17 @@ var DashticzDeviceEditor = (function () {
           typeof blocks !== 'undefined' && blocks[reference]
             ? blocks[reference]
             : null;
-        if (!definition) return;
         var grid = {
           x: _gridValue(this, '--dt-grid-x', 1),
           y: _gridValue(this, '--dt-grid-y', index + 1),
           w: _gridValue(this, '--dt-grid-w', 1),
           h: _gridValue(this, '--dt-grid-h', 1),
         };
+        if (!definition) {
+          // A tile without a blocks[] definition stays on the grid as it is.
+          if (reference) gridExtras.push({ ref: reference, grid: grid });
+          return;
+        }
         var special = _specialFromReference(reference);
         if (special) {
           if (!seen[special.orderKey]) {
@@ -2356,6 +2400,23 @@ var DashticzDeviceEditor = (function () {
           if (widget && !seen[widget.orderKey]) {
             seen[widget.orderKey] = true;
             ordered.push(widget);
+            return;
+          }
+          // Anything else that is declared in blocks[] (a second clock, a
+          // component of its own) is carried along unchanged. The standby
+          // screen has its own path (_preserveStandbyExtraBlocks).
+          if (
+            !standbyScreen &&
+            typeof b === 'string' &&
+            typeof blocks !== 'undefined' &&
+            blocks[b] &&
+            !seen['extra:' + b]
+          ) {
+            seen['extra:' + b] = true;
+            columnExtras.push({
+              ref: b,
+              width: _parseWidth(blocks[b].width),
+            });
           }
         });
       }
@@ -2527,7 +2588,57 @@ var DashticzDeviceEditor = (function () {
       devicePreservedFields[ck] = _devicePreservedFieldValues(configured);
     });
 
+    if (layoutEditorBaseline && layoutEditorBaselineState === null) {
+      layoutEditorBaselineState = _graftSignature(layoutEditorBaseline);
+    }
     return { available: available, allDomoticz: allDomoticz };
+  }
+
+  // Everything the editor holds for these items (width, height, title,
+  // options, custom fields...), to see whether an existing item was edited.
+  function _graftSignature(orderKeys) {
+    try {
+      return JSON.stringify(
+        orderKeys.map(function (orderKey) {
+          if (orderKey.indexOf('device:') === 0) {
+            var ck = orderKey.slice(7);
+            return [
+              deviceWidths[ck],
+              deviceHeights[ck],
+              deviceTitles[ck],
+              deviceOptions[ck],
+              deviceCustomFields[ck],
+              deviceTitleVisible[ck],
+              devicePreservedFields[ck],
+            ];
+          }
+          if (orderKey.indexOf('widget:') === 0) {
+            return [
+              widgetWidths[orderKey],
+              widgetHeights[orderKey],
+              widgetTitles[orderKey],
+              widgetOptions[orderKey],
+              widgetTitleVisible[orderKey],
+              managedWidgets[orderKey] &&
+                managedWidgets[orderKey].pendingPayload,
+            ];
+          }
+          var special = managedSpecials[orderKey];
+          return special
+            ? [
+                special.width,
+                special.height,
+                special.title,
+                special.options,
+                special.customFields,
+                special.showTitle,
+              ]
+            : null;
+        })
+      );
+    } catch (ignore) {
+      return 'unreadable:' + Math.random();
+    }
   }
 
   function _buildAndShowModal() {
@@ -12432,7 +12543,7 @@ var DashticzDeviceEditor = (function () {
      saveblocks.php replaces the whole device section for the screen, so
      both callers must submit every currently managed device, not just the
      one that changed. */
-  function _buildDevicePayload() {
+  function _buildDevicePayload(keepRefs) {
     var orderedBlockKeys = managedOrder.filter(function (orderKey) {
       return orderKey.indexOf('widget:') !== 0;
     });
@@ -12630,6 +12741,7 @@ var DashticzDeviceEditor = (function () {
         width: _parseWidth(deviceWidths[ck]),
         key: _stableDeviceReference(ck),
       };
+      if (keepRefs) entry.key = _existingDeviceReference(ck);
       var title = String(deviceTitles[ck] || '').trim();
       var options = deviceOptions[ck] || {};
       if (title) entry.title = title;
@@ -12718,7 +12830,9 @@ var DashticzDeviceEditor = (function () {
         return _postEditorData(
           'js/saveblocks.php',
           {
-            devices: _buildDevicePayload(),
+            // keepRefs: the Layout Editor keeps pointing at the key a block
+            // already has, so the change must be written under that key.
+            devices: _buildDevicePayload(true),
             screen: _activeScreenPayload(),
             blocksOnly: true,
           },
@@ -12757,6 +12871,14 @@ var DashticzDeviceEditor = (function () {
         return orderKey === layoutEditorBaseline[index];
       });
     if (!existingUntouched) return false;
+    // An edit of an existing item (width, title, Device Config...) does not
+    // change the order, but must not be lost: use the normal save.
+    if (
+      layoutEditorBaselineState === null ||
+      _graftSignature(layoutEditorBaseline) !== layoutEditorBaselineState
+    ) {
+      return false;
+    }
 
     var newOrderKeys = managedOrder.filter(function (orderKey) {
       return layoutEditorBaseline.indexOf(orderKey) === -1;
@@ -12768,6 +12890,16 @@ var DashticzDeviceEditor = (function () {
       if (orderKey.indexOf('device:') === 0) {
         var ck = orderKey.slice(7);
         var p = _parseCk(ck);
+        // A title, option or custom field typed for the new device would be
+        // dropped by the Layout Editor, so that goes through the normal save.
+        if (
+          String(deviceTitles[ck] || '').trim() ||
+          (deviceCustomFields[ck] || []).some(function (row) {
+            return !row.system;
+          })
+        ) {
+          return false;
+        }
         entries.push({
           kind: 'device',
           idx: p.idx,
@@ -12881,8 +13013,14 @@ var DashticzDeviceEditor = (function () {
     return sources;
   }
 
+  var saveInFlight = false;
+
   function _save() {
     if (layoutEditorBaseline && _graftIntoLayoutEditor()) return;
+    // One save chain at a time: a double click must not start a second one.
+    if (saveInFlight) return;
+    // Set once saveblocks.php has written; a later step can still fail.
+    var blocksWritten = false;
 
     var t = _translations();
     var $btn = $('#de-save-btn').prop('disabled', true).text(t.saving);
@@ -12909,6 +13047,7 @@ var DashticzDeviceEditor = (function () {
 
     var deviceRuleSourcesToDelete = _removedDeviceRuleSources();
 
+    saveInFlight = true;
     $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
       .then(function (data) {
         var token = data.token;
@@ -12921,6 +13060,7 @@ var DashticzDeviceEditor = (function () {
           },
           token
         ).then(function (deviceResult) {
+          blocksWritten = true;
           // Widget display options must also be persisted on grid screens.
           // Passing the stable grid key lets savewidgets.php rebuild only the
           // editor-owned widget blocks before savegridlayout.php rewrites order.
@@ -13053,6 +13193,8 @@ var DashticzDeviceEditor = (function () {
             });
             if (_activeScreenTarget() === 'standby') {
               layoutItems = _preserveStandbyExtraBlocks(layoutItems);
+            } else {
+              layoutItems = layoutItems.concat(columnExtras);
             }
             return _postEditorData(
               'js/savelayout.php',
@@ -13090,8 +13232,18 @@ var DashticzDeviceEditor = (function () {
           xhr.responseJSON && xhr.responseJSON.error
             ? xhr.responseJSON.error
             : t.save_failed;
+        saveInFlight = false;
         $btn.prop('disabled', false).text(t.save);
-        alert(t.error_prefix + ' ' + msg);
+        alert(
+          t.error_prefix +
+            ' ' +
+            msg +
+            (blocksWritten
+              ? '\n\n' +
+                (t.partial_save_hint ||
+                  'The blocks were saved, but the layout was not. Press Save again before you leave this screen.')
+              : '')
+        );
       });
   }
 
@@ -13101,21 +13253,32 @@ var DashticzDeviceEditor = (function () {
       if (item && item.ref) known[item.ref] = true;
     });
     var preserved = [];
-    if (
-      typeof columns_standby !== 'undefined' &&
-      columns_standby &&
-      columns_standby[1] &&
-      Array.isArray(columns_standby[1].blocks)
-    ) {
-      columns_standby[1].blocks.forEach(function (ref) {
-        if (typeof ref !== 'string' || known[ref]) return;
-        // Keep simple/hand-written standby blocks (clock, weather, …).
-        if (_toCompositeKey(ref) || _widgetFromReference(ref)) return;
-        preserved.push({ ref: ref, width: 12 });
-        known[ref] = true;
+    if (typeof columns_standby !== 'undefined' && columns_standby) {
+      Object.keys(columns_standby).forEach(function (colKey) {
+        var col = columns_standby[colKey];
+        if (!col || !Array.isArray(col.blocks)) return;
+        col.blocks.forEach(function (ref) {
+          if (typeof ref !== 'string' || known[ref]) return;
+          // Keep simple/hand-written standby blocks (clock, weather, ...).
+          // A reference that points at a device, special or widget block is
+          // managed by the editor and comes back through layoutItems under
+          // its own key, so it is not preserved a second time.
+          var definition =
+            typeof blocks !== 'undefined' && blocks[ref] ? blocks[ref] : null;
+          if (
+            _specialFromReference(ref) ||
+            _toCompositeKey(ref) ||
+            (definition && _toCompositeKey(definition)) ||
+            _widgetFromReference(ref)
+          ) {
+            return;
+          }
+          preserved.push({ ref: ref, width: 12 });
+          known[ref] = true;
+        });
       });
     }
-    return preserved.concat(layoutItems);
+    return layoutItems.concat(preserved);
   }
 
   function _postEditorData(url, payload, token) {
@@ -13302,79 +13465,102 @@ var DashticzDeviceEditor = (function () {
     ) {
       return blocks[reference];
     }
+    // A bare reference has no block of its own. Take the block of this
+    // screen, never a Custom block or a block of another screen that merely
+    // shares the idx.
+    var screenBlock = _getConfiguredScreenBlockForCk(ck);
+    if (screenBlock) return screenBlock;
     var keys = Object.keys(blocks);
     for (var i = 0; i < keys.length; i++) {
-      if (_toCompositeKey(blocks[keys[i]]) === ck) return blocks[keys[i]];
+      if (
+        _toCompositeKey(blocks[keys[i]]) === ck &&
+        !_specialFromReference(keys[i]) &&
+        !/^(?:screen\d+_)/.test(keys[i])
+      ) {
+        return blocks[keys[i]];
+      }
+    }
+    return null;
+  }
+
+  // The column objects of the screen that is being edited (standby included).
+  function _activeColumnObjects() {
+    var result = [];
+    if (typeof columns === 'undefined') return result;
+    var standby = _activeScreenTarget() === 'standby';
+    var seenKeys = {};
+    function add(rawKey) {
+      var key = String(rawKey);
+      if (key === 'bar') return;
+      if (standby) key = key.replace(/^standby/, '');
+      if (seenKeys[key]) return;
+      seenKeys[key] = true;
+      var col =
+        standby &&
+        typeof columns_standby !== 'undefined' &&
+        columns_standby[key]
+          ? columns_standby[key]
+          : columns[standby ? 'standby' + key : key];
+      if (col && Array.isArray(col.blocks)) result.push(col);
+    }
+    _activeScreenDom()
+      .find('[data-colindex]')
+      .each(function () {
+        add($(this).attr('data-colindex'));
+      });
+    if (standby && typeof columns_standby !== 'undefined' && columns_standby) {
+      Object.keys(columns_standby).forEach(add);
+    }
+    return result;
+  }
+
+  // The configured block of a managed device on the active screen: the exact
+  // reference first, then the columns of this screen only (the same device
+  // may sit on other screens with another width or height).
+  function _getConfiguredScreenBlockForCk(ck) {
+    var reference = deviceRefs[ck];
+    if (
+      reference &&
+      typeof blocks !== 'undefined' &&
+      blocks[reference] &&
+      _toCompositeKey(blocks[reference]) === ck
+    ) {
+      return blocks[reference];
+    }
+    var cols = _activeColumnObjects();
+    for (var i = 0; i < cols.length; i++) {
+      for (var j = 0; j < cols[i].blocks.length; j++) {
+        var ref = cols[i].blocks[j];
+        var block = null;
+        var refCk = _toCompositeKey(ref);
+        if (
+          typeof ref === 'string' &&
+          typeof blocks !== 'undefined' &&
+          blocks[ref]
+        ) {
+          block = blocks[ref];
+          if (!refCk) refCk = _toCompositeKey(block);
+        } else if (typeof ref === 'object' && ref !== null) {
+          block = ref;
+        }
+        if (refCk === ck && block) return block;
+      }
     }
     return null;
   }
 
   function _getConfiguredWidthForCk(ck) {
-    if (typeof columns !== 'undefined') {
-      var colKeys = Object.keys(columns);
-      for (var i = 0; i < colKeys.length; i++) {
-        var col = columns[colKeys[i]];
-        if (!col || !Array.isArray(col.blocks)) continue;
-        for (var j = 0; j < col.blocks.length; j++) {
-          var ref = col.blocks[j];
-          var block = null;
-          var refCk = _toCompositeKey(ref);
-          if (
-            typeof ref === 'string' &&
-            typeof blocks !== 'undefined' &&
-            blocks[ref]
-          ) {
-            block = blocks[ref];
-            if (!refCk) refCk = _toCompositeKey(block);
-          } else if (typeof ref === 'object' && ref !== null) {
-            block = ref;
-          }
-          if (refCk === ck && block && typeof block.width !== 'undefined') {
-            return _parseWidth(block.width);
-          }
-        }
-      }
-    }
-
-    if (typeof blocks !== 'undefined') {
-      var blockKeys = Object.keys(blocks);
-      for (var bi = 0; bi < blockKeys.length; bi++) {
-        var b = blocks[blockKeys[bi]];
-        if (_toCompositeKey(b) === ck && b && typeof b.width !== 'undefined') {
-          return _parseWidth(b.width);
-        }
-      }
-    }
-    return 3;
+    var block = _getConfiguredScreenBlockForCk(ck);
+    return block && typeof block.width !== 'undefined'
+      ? _parseWidth(block.width)
+      : 3;
   }
 
   function _getConfiguredHeightForCk(ck) {
-    if (typeof columns !== 'undefined') {
-      var colKeys = Object.keys(columns);
-      for (var i = 0; i < colKeys.length; i++) {
-        var col = columns[colKeys[i]];
-        if (!col || !Array.isArray(col.blocks)) continue;
-        for (var j = 0; j < col.blocks.length; j++) {
-          var ref = col.blocks[j];
-          var block = null;
-          var refCk = _toCompositeKey(ref);
-          if (
-            typeof ref === 'string' &&
-            typeof blocks !== 'undefined' &&
-            blocks[ref]
-          ) {
-            block = blocks[ref];
-            if (!refCk) refCk = _toCompositeKey(block);
-          } else if (typeof ref === 'object' && ref !== null) {
-            block = ref;
-          }
-          if (refCk === ck && block && typeof block.height !== 'undefined') {
-            return _parseHeight(block.height);
-          }
-        }
-      }
-    }
-    return null;
+    var block = _getConfiguredScreenBlockForCk(ck);
+    return block && typeof block.height !== 'undefined'
+      ? _parseHeight(block.height)
+      : null;
   }
 
   function _parseHeight(value) {
