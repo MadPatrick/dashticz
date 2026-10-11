@@ -1347,7 +1347,7 @@ var DashticzDeviceEditor = (function () {
       slideTarget:
         parseInt(definition.slide, 10) > 0 ? parseInt(definition.slide, 10) : 1,
       showTitle: definition.hide_title !== true,
-      customFields: _deviceCustomFieldRows(definition, definition.title),
+      customFields: _deviceCustomFieldRows(definition, definition.title, kind),
       preservedFields: _devicePreservedFieldValues(definition),
     };
   }
@@ -1556,31 +1556,6 @@ var DashticzDeviceEditor = (function () {
     // in the visual mode selector below (see _showConfigPopup), not the
     // generic custom-fields grid. Has no meaning outside subtype: 'bar'.
     barsteps: true,
-    // Lyrion Music Server (LMS) block fields - managed by the dedicated
-    // Server/Port/Username/Password/Player/Refresh/Hide-when-off section of
-    // the Lyrion Music Server popup below, not the generic custom-fields grid.
-    server: true,
-    port: true,
-    username: true,
-    password: true,
-    player: true,
-    refresh: true,
-    hide_when_off: true,
-    // Title/Artist/Station text style (size/color) - managed by the
-    // dedicated Text style section of the Lyrion Music Server popup above,
-    // not the generic custom-fields grid. Without this, these six
-    // properties were double-carried: once correctly through the dedicated
-    // lmsTitleSize/etc. fields, and once more as stale generic custom-field
-    // rows (hydrated from CONFIG.js when the popup first opened and never
-    // touched again). configwriter.php's special-block-props builder
-    // unconditionally applies custom_fields last, so that stale copy
-    // silently overwrote every real edit on save (#217 follow-up).
-    title_size: true,
-    title_color: true,
-    artist_size: true,
-    artist_color: true,
-    station_size: true,
-    station_color: true,
     // Per-device text style - managed by the dedicated Text section of
     // Device Config (see _applyTextStyleFields()).
     fontsize_title: true,
@@ -1590,6 +1565,33 @@ var DashticzDeviceEditor = (function () {
     prototype: true,
     constructor: true,
   };
+
+  // Lyrion Music Server (LMS) block fields - managed by the dedicated
+  // sections of the LMS popup, not the generic custom-fields grid. They are
+  // only reserved on an LMS block (saveblocks.php does the same): on an
+  // iframe, camera or XMLTV block a field like refresh is an ordinary one.
+  var lmsOnlyCustomProperties = {
+    server: true,
+    port: true,
+    username: true,
+    password: true,
+    player: true,
+    refresh: true,
+    hide_when_off: true,
+    title_size: true,
+    title_color: true,
+    artist_size: true,
+    artist_color: true,
+    station_size: true,
+    station_color: true,
+  };
+
+  function _isProtectedCustomProperty(lowerProperty, kind) {
+    return !!(
+      protectedCustomDeviceProperties[lowerProperty] ||
+      (kind === 'lms' && lmsOnlyCustomProperties[lowerProperty])
+    );
+  }
 
   function _settingToText(value) {
     if (value !== null && typeof value === 'object') {
@@ -1664,7 +1666,7 @@ var DashticzDeviceEditor = (function () {
     return value;
   }
 
-  function _deviceCustomFieldRows(definition, titleValue) {
+  function _deviceCustomFieldRows(definition, titleValue, kind) {
     var rows = [
       {
         field: 'title',
@@ -1704,7 +1706,7 @@ var DashticzDeviceEditor = (function () {
       var lowerProperty = property.toLowerCase();
       if (
         lowerProperty === 'image' ||
-        protectedCustomDeviceProperties[lowerProperty] ||
+        _isProtectedCustomProperty(lowerProperty, kind) ||
         /^_dashticz/i.test(property)
       )
         return;
@@ -2143,6 +2145,13 @@ var DashticzDeviceEditor = (function () {
     };
   }
 
+  // widget_* catalog keys always name a widget, also when the block has an idx.
+  function _catalogWidgetFromReference(reference) {
+    return typeof reference === 'string' && /^widget_/.test(reference)
+      ? _widgetFromReference(reference)
+      : null;
+  }
+
   function _getAllManagedGridItems() {
     var ordered = [];
     var seen = {};
@@ -2163,10 +2172,22 @@ var DashticzDeviceEditor = (function () {
           h: _gridValue(this, '--dt-grid-h', 1),
         };
         var special = _specialFromReference(reference);
-        if (special && !seen[special.orderKey]) {
-          seen[special.orderKey] = true;
-          special.grid = grid;
-          ordered.push(special);
+        if (special) {
+          if (!seen[special.orderKey]) {
+            seen[special.orderKey] = true;
+            special.grid = grid;
+            ordered.push(special);
+          }
+          return;
+        }
+        var catalogWidget = _catalogWidgetFromReference(reference);
+        if (catalogWidget) {
+          if (!seen[catalogWidget.orderKey]) {
+            seen[catalogWidget.orderKey] = true;
+            catalogWidget.reference = reference;
+            catalogWidget.grid = grid;
+            ordered.push(catalogWidget);
+          }
           return;
         }
         var ck = _toCompositeKey(definition);
@@ -2234,44 +2255,55 @@ var DashticzDeviceEditor = (function () {
 
     var columnKeys = [];
     var $activeScreen = _activeScreenDom();
-    $activeScreen.find('[data-colindex]').each(function () {
-      var columnKey = String($(this).attr('data-colindex'));
+    var standbyScreen = _activeScreenTarget() === 'standby';
+    function addColumnKey(rawKey) {
+      var columnKey = String(rawKey);
+      // The topbar column is not managed by the editor.
+      if (columnKey === 'bar') return;
+      // The standby DOM prefixes its columns with 'standby'; columns_standby
+      // does not, so strip it before looking for duplicates.
+      if (standbyScreen) columnKey = columnKey.replace(/^standby/, '');
       if (columnKeys.indexOf(columnKey) < 0) {
         columnKeys.push(columnKey);
       }
+    }
+    $activeScreen.find('[data-colindex]').each(function () {
+      addColumnKey($(this).attr('data-colindex'));
     });
 
     // Standby uses columns_standby, not screens[].
     if (_activeScreenTarget() === 'standby') {
       if (typeof columns_standby !== 'undefined' && columns_standby) {
-        Object.keys(columns_standby).forEach(function (colKey) {
-          if (columnKeys.indexOf(String(colKey)) < 0) {
-            columnKeys.push(String(colKey));
-          }
-        });
+        Object.keys(columns_standby).forEach(addColumnKey);
       }
     }
 
     columnKeys.forEach(function (colKey) {
       var lookupKey = String(colKey);
-      if (_activeScreenTarget() === 'standby' && /^standby/.test(lookupKey)) {
-        lookupKey = lookupKey.replace(/^standby/, '');
-      }
       var col =
-        _activeScreenTarget() === 'standby' &&
+        standbyScreen &&
         typeof columns_standby !== 'undefined' &&
         columns_standby[lookupKey]
           ? columns_standby[lookupKey]
-          : columns[colKey];
-      if (!col && typeof columns !== 'undefined') {
-        col = columns[lookupKey];
-      }
+          : columns[standbyScreen ? 'standby' + lookupKey : lookupKey];
       if (col && Array.isArray(col.blocks)) {
         col.blocks.forEach(function (b) {
           var special = _specialFromReference(b);
-          if (special && !seen[special.orderKey]) {
-            seen[special.orderKey] = true;
-            ordered.push(special);
+          if (special) {
+            if (!seen[special.orderKey]) {
+              seen[special.orderKey] = true;
+              ordered.push(special);
+            }
+            return;
+          }
+          // A catalog widget (widget_timegraph carries an idx) is a widget,
+          // not a device.
+          var catalogWidget = _catalogWidgetFromReference(b);
+          if (catalogWidget) {
+            if (!seen[catalogWidget.orderKey]) {
+              seen[catalogWidget.orderKey] = true;
+              ordered.push(catalogWidget);
+            }
             return;
           }
           var ck = _toCompositeKey(b);
@@ -4565,6 +4597,33 @@ var DashticzDeviceEditor = (function () {
     return host.replace(/\.+$/, '');
   }
 
+  // The ":port" that _normalizeLmsServer() cuts off a pasted address.
+  function _lmsPortFromServer(value) {
+    var host = String(value || '')
+      .replace(/^[a-z][a-z0-9+.-]*:\/\//i, '')
+      .replace(/[/?#].*$/, '');
+    if (host.indexOf('[') === -1 && (host.match(/:/g) || []).length === 1) {
+      var port = parseInt(host.slice(host.indexOf(':') + 1), 10);
+      return port > 0 && port <= 65535 ? port : 0;
+    }
+    return 0;
+  }
+
+  // Cleans the Server field and moves a pasted ":port" to the Port field
+  // while that still holds the default.
+  function _cleanLmsServerInput($popup, prefix) {
+    var $serverInput = $popup.find('#' + prefix + '-lms-server');
+    var $portInput = $popup.find('#' + prefix + '-lms-port');
+    var pastedPort = _lmsPortFromServer($serverInput.val());
+    var server = _normalizeLmsServer($serverInput.val());
+    $serverInput.val(server);
+    var currentPort = parseInt($portInput.val(), 10);
+    if (pastedPort && (!currentPort || currentPort === 9000)) {
+      $portInput.val(pastedPort);
+    }
+    return server;
+  }
+
   function _lmsFieldsHtml(prefix, values) {
     var t = _translations();
     values = values || {};
@@ -4658,7 +4717,17 @@ var DashticzDeviceEditor = (function () {
       _esc(t.lms_refresh_interval) +
       '</label>';
     html += '<select class="form-select" id="' + prefix + '-lms-refresh">';
-    LMS_REFRESH_OPTIONS.forEach(function (seconds) {
+    // A hand-written interval (15, 120...) stays selectable instead of the
+    // browser silently picking the first option.
+    var refreshOptions = LMS_REFRESH_OPTIONS.slice();
+    var currentRefresh = parseInt(values.refresh, 10);
+    if (currentRefresh > 0 && refreshOptions.indexOf(currentRefresh) < 0) {
+      refreshOptions.push(currentRefresh);
+      refreshOptions.sort(function (a, b) {
+        return a - b;
+      });
+    }
+    refreshOptions.forEach(function (seconds) {
       html +=
         '<option value="' +
         seconds +
@@ -4689,20 +4758,26 @@ var DashticzDeviceEditor = (function () {
       {
         key: 'title',
         label: t.lms_title_line,
-        size: values.titleSize || 16,
-        color: values.titleColor || '#ffffff',
+        size: values.titleSize,
+        color: values.titleColor,
+        defaultSize: 16,
+        defaultColor: '#ffffff',
       },
       {
         key: 'artist',
         label: t.lms_artist_line,
-        size: values.artistSize || 14,
-        color: values.artistColor || '#cccccc',
+        size: values.artistSize,
+        color: values.artistColor,
+        defaultSize: 14,
+        defaultColor: '#cccccc',
       },
       {
         key: 'station',
         label: t.lms_station_line,
-        size: values.stationSize || 14,
-        color: values.stationColor || '#999999',
+        size: values.stationSize,
+        color: values.stationColor,
+        defaultSize: 14,
+        defaultColor: '#999999',
       },
     ].forEach(function (line) {
       html += '<div class="col-12 col-md-4">';
@@ -4723,7 +4798,9 @@ var DashticzDeviceEditor = (function () {
         '-lms-' +
         line.key +
         '-size" value="' +
-        _esc(line.size) +
+        _esc(line.size || '') +
+        '" placeholder="' +
+        _esc(line.defaultSize) +
         '"></div>';
       html +=
         '<div><label class="form-label small mb-1" for="' +
@@ -4739,8 +4816,12 @@ var DashticzDeviceEditor = (function () {
         '-lms-' +
         line.key +
         '-color" value="' +
-        _esc(line.color) +
-        '" title="' +
+        _esc(line.color || line.defaultColor) +
+        '"' +
+        // A colour input cannot be empty: until it is touched the block has
+        // no colour of its own and the theme keeps deciding.
+        (line.color ? '' : ' data-lms-unset="1"') +
+        ' title="' +
         _esc(t.lms_font_color) +
         '"></div>';
       html += '</div></div>';
@@ -4752,13 +4833,15 @@ var DashticzDeviceEditor = (function () {
   /* Call once after appending markup built with _lmsFieldsHtml() above. */
   function _wireLmsFields(prefix, $popup) {
     var t = _translations();
+    $popup.on('input change', 'input[data-lms-unset]', function () {
+      $(this).removeAttr('data-lms-unset');
+    });
     $popup.on('click', '#' + prefix + '-lms-test', function () {
       var $btn = $(this);
       var $status = $popup.find('.de-lms-test-status');
       var $player = $popup.find('#' + prefix + '-lms-player');
       var $serverInput = $popup.find('#' + prefix + '-lms-server');
-      var server = _normalizeLmsServer($serverInput.val());
-      $serverInput.val(server);
+      var server = _cleanLmsServerInput($popup, prefix);
       var port =
         parseInt($popup.find('#' + prefix + '-lms-port').val(), 10) || 9000;
       if (!server) {
@@ -4843,11 +4926,23 @@ var DashticzDeviceEditor = (function () {
     });
   }
 
+  // An empty size or an untouched colour means "not set": undefined keeps the
+  // property out of CONFIG.js so the stylesheet defaults stay in charge.
+  function _readLmsSize($popup, id) {
+    var size = parseInt($popup.find('#' + id).val(), 10);
+    return size > 0 ? size : undefined;
+  }
+
+  function _readLmsColor($popup, id) {
+    var $input = $popup.find('#' + id);
+    return $input.is('[data-lms-unset]')
+      ? undefined
+      : String($input.val() || '');
+  }
+
   function _readLmsFields(prefix, $popup) {
     return {
-      server: _normalizeLmsServer(
-        $popup.find('#' + prefix + '-lms-server').val()
-      ),
+      server: _cleanLmsServerInput($popup, prefix),
       port: parseInt($popup.find('#' + prefix + '-lms-port').val(), 10) || 9000,
       username: $.trim(
         String($popup.find('#' + prefix + '-lms-username').val() || '')
@@ -4862,23 +4957,12 @@ var DashticzDeviceEditor = (function () {
       hideWhenOff: $popup
         .find('#' + prefix + '-lms-hide-when-off')
         .is(':checked'),
-      titleSize:
-        parseInt($popup.find('#' + prefix + '-lms-title-size').val(), 10) || 16,
-      titleColor: String(
-        $popup.find('#' + prefix + '-lms-title-color').val() || '#ffffff'
-      ),
-      artistSize:
-        parseInt($popup.find('#' + prefix + '-lms-artist-size').val(), 10) ||
-        14,
-      artistColor: String(
-        $popup.find('#' + prefix + '-lms-artist-color').val() || '#cccccc'
-      ),
-      stationSize:
-        parseInt($popup.find('#' + prefix + '-lms-station-size').val(), 10) ||
-        14,
-      stationColor: String(
-        $popup.find('#' + prefix + '-lms-station-color').val() || '#999999'
-      ),
+      titleSize: _readLmsSize($popup, prefix + '-lms-title-size'),
+      titleColor: _readLmsColor($popup, prefix + '-lms-title-color'),
+      artistSize: _readLmsSize($popup, prefix + '-lms-artist-size'),
+      artistColor: _readLmsColor($popup, prefix + '-lms-artist-color'),
+      stationSize: _readLmsSize($popup, prefix + '-lms-station-size'),
+      stationColor: _readLmsColor($popup, prefix + '-lms-station-color'),
     };
   }
 
@@ -4938,6 +5022,7 @@ var DashticzDeviceEditor = (function () {
     _wireBackButton('lmsblockpopup');
 
     $('#lm-save-btn').on('click', function () {
+      if ($(this).prop('disabled')) return;
       var $message = $popup
         .find('.cd-custom-message')
         .removeClass('text-danger')
@@ -5013,6 +5098,8 @@ var DashticzDeviceEditor = (function () {
         lmsStationColor: lms.stationColor,
       };
       managedOrder.push(orderKey);
+      // The modal fades out, so a second click would add a second block.
+      $(this).prop('disabled', true);
       _hideModal(document.getElementById('lmsblockpopup'));
       _save();
     });
@@ -10803,16 +10890,16 @@ var DashticzDeviceEditor = (function () {
           pendingIconValue = rawSetting;
           return;
         }
-        if (!rawSetting || protectedCustomDeviceProperties[lowerField]) {
+        var fieldProtected = _isProtectedCustomProperty(
+          lowerField,
+          isLmsBlock ? 'lms' : ''
+        );
+        if (!rawSetting || fieldProtected) {
           valid = false;
           $popup
             .find('.de-config-message')
             .addClass('text-danger')
-            .text(
-              protectedCustomDeviceProperties[lowerField]
-                ? t.duplicate_field
-                : t.invalid_field
-            );
+            .text(fieldProtected ? t.duplicate_field : t.invalid_field);
           $(this).find('.de-custom-field-name').trigger('focus');
           return;
         }
