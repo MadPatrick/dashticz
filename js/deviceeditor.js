@@ -5250,7 +5250,7 @@ var DashticzDeviceEditor = (function () {
     html +=
       '<input type="number" class="form-control" id="if-device-height" min="0" autocomplete="off"></div>';
     html +=
-      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="if-device-scrollbars">';
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="if-device-scrollbars" checked>';
     html +=
       '<label class="form-check-label" for="if-device-scrollbars">' +
       _esc(t.iframe_block_scrollbars) +
@@ -5340,21 +5340,13 @@ var DashticzDeviceEditor = (function () {
         setting: frameurl,
         value: frameurl,
       });
-      if (height) {
-        var heightInt = parseInt(height, 10) || 0;
-        if (heightInt > 0) {
-          customRows.push({
-            field: 'height',
-            setting: String(heightInt),
-            value: heightInt,
-          });
-        }
-      }
-      if (scrollbars) {
+      var blockHeight = height ? _parseHeight(height) : null;
+      // The scrollbars show unless the block says scrollbars: false.
+      if (!scrollbars) {
         customRows.push({
           field: 'scrollbars',
-          setting: 'true',
-          value: true,
+          setting: 'false',
+          value: false,
         });
       }
       if (scaletofit) {
@@ -5403,7 +5395,7 @@ var DashticzDeviceEditor = (function () {
         idx: null,
         title: title,
         width: 6,
-        height: null,
+        height: blockHeight,
         showTitle: quickOptions.showTitle,
         options: {
           icon: quickOptions.icon,
@@ -6332,16 +6324,7 @@ var DashticzDeviceEditor = (function () {
           });
         }
       }
-      if (height) {
-        var heightInt = parseInt(height, 10) || 0;
-        if (heightInt > 0) {
-          customRows.push({
-            field: 'height',
-            setting: String(heightInt),
-            value: heightInt,
-          });
-        }
-      }
+      var blockHeight = height ? _parseHeight(height) : null;
       if (xTicks) {
         var xTicksInt = parseInt(xTicks, 10) || 0;
         if (xTicksInt > 0) {
@@ -6377,7 +6360,7 @@ var DashticzDeviceEditor = (function () {
         idx: idx,
         title: title,
         width: 6,
-        height: null,
+        height: blockHeight,
         showTitle: quickOptions.showTitle,
         options: {
           icon: quickOptions.icon,
@@ -6710,7 +6693,7 @@ var DashticzDeviceEditor = (function () {
     html +=
       '<input type="number" class="form-control" id="cam-device-refresh" min="0" autocomplete="off"></div>';
     html +=
-      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="cam-device-forcerefresh">';
+      '<div class="mb-3 form-check form-switch"><input class="form-check-input de-switch" type="checkbox" id="cam-device-forcerefresh" checked>';
     html +=
       '<label class="form-check-label" for="cam-device-forcerefresh">' +
       _esc(t.camera_block_forcerefresh) +
@@ -6781,16 +6764,7 @@ var DashticzDeviceEditor = (function () {
           value: videoUrl,
         });
       }
-      if (height) {
-        var heightInt = parseInt(height, 10) || 0;
-        if (heightInt > 0) {
-          customRows.push({
-            field: 'height',
-            setting: String(heightInt),
-            value: heightInt,
-          });
-        }
-      }
+      var blockHeight = height ? _parseHeight(height) : null;
       if (refresh) {
         var refreshInt = parseInt(refresh, 10) || 0;
         if (refreshInt > 0) {
@@ -6801,11 +6775,12 @@ var DashticzDeviceEditor = (function () {
           });
         }
       }
-      if (forcerefresh) {
+      // The camera adds a cache buster unless the block says forcerefresh: 0.
+      if (!forcerefresh) {
         customRows.push({
           field: 'forcerefresh',
-          setting: 'true',
-          value: true,
+          setting: '0',
+          value: 0,
         });
       }
 
@@ -6820,7 +6795,7 @@ var DashticzDeviceEditor = (function () {
         idx: null,
         title: title,
         width: 3,
-        height: null,
+        height: blockHeight,
         showTitle: quickOptions.showTitle,
         options: {
           icon: quickOptions.icon,
