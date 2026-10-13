@@ -41,10 +41,15 @@ test('Garbage icon and Kliko layout enhancements stay available', () => {
     /removeManagedCustomRow\(popup, 'kliko_height'\)/,
     'the previous pixel height field must be removed from the editor'
   );
-  assert.doesNotMatch(
+  assert.match(
     helper,
-    /setProperty\('left'/,
-    'the Kliko image must not be shifted, it would overlap the table text'
+    /if \(hasNonDefaultTheme\(\)\) \{[^}]*setProperty\('left', '70px', 'important'\)/,
+    'the Kliko image is only shifted 70px to the right in non-default themes'
+  );
+  assert.match(
+    helper,
+    /removeProperty\('left'\)/,
+    'the default theme must not shift the Kliko image'
   );
   assert.match(
     helper,
