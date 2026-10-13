@@ -504,8 +504,8 @@
       var title = block.querySelector('.dt_title');
       if (title) title.style.setProperty('text-align', 'left', 'important');
 
-      image.style.setProperty('position', 'relative', 'important');
-      image.style.setProperty('left', '70px', 'important');
+      image.style.removeProperty('position');
+      image.style.removeProperty('left');
 
       var scale = positiveNumber(definition[SCALE_FIELD]);
       if (scale) {
