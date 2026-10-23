@@ -9136,22 +9136,34 @@ canvas {
 }
 
 /* Block without an icon (Icon toggle off): the empty .col-icon column still
-   takes up space, which pushed centered/right aligned text off the middle of
-   the block. Drop the empty column, let the data span the full width, and
-   center the content vertically for centered text. */
-.mh.dt-align-center .col-icon:empty,
-.mh.dt-align-right .col-icon:empty {
+   takes up space, which pushed aligned text off the block. Drop the empty
+   column and let the data span the full width. */
+.mh[class*='dt-align-'] .col-icon:empty {
   display: none;
 }
 
-.mh.dt-align-center .col-icon:empty + .col-data,
-.mh.dt-align-right .col-icon:empty + .col-data {
+.mh[class*='dt-align-'] .col-icon:empty + .col-data {
   width: 100%;
 }
 
-.mh.dt-align-center:has(> .col-icon:empty) {
+/* Vertical alignment of the content in the block (Device Config -> Text ->
+   Vertical, block.textvalign). */
+.mh.dt-valign-top,
+.mh.dt-valign-middle,
+.mh.dt-valign-bottom {
   display: flex;
+}
+
+.mh.dt-valign-top {
+  align-items: flex-start;
+}
+
+.mh.dt-valign-middle {
   align-items: center;
+}
+
+.mh.dt-valign-bottom {
+  align-items: flex-end;
 }
 
 /* Shared widget button (.dt-btn): a rounded, themed button for the controls of
