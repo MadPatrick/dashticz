@@ -1148,7 +1148,7 @@ function postHookLux(block) {
     gradId +
     ')" stroke-dasharray="' +
     Math.round(fraction * 1000) / 10 +
-    ' 100"/>' +
+    ' 200"/>' +
     '<circle class="lux-arc-glow" cx="' +
     sunX +
     '" cy="' +
