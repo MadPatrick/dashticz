@@ -1106,14 +1106,18 @@ var LUX_SLIDER_MAX = 1000;
 
 /**
  * Appends a read-only slider to a lux block. The knob position and the
- * glow follow the current lux value (scale 0 - LUX_SLIDER_MAX, values above
+ * glow follow the current lux value (logarithmic scale 0 - LUX_SLIDER_MAX, values above
  * the maximum are clamped).
  * @param {object} block
  */
 function postHookLux(block) {
   var lux = parseFloat(block.device && block.device['Data']);
   if (isNaN(lux)) return;
-  var fraction = Math.min(Math.max(lux / LUX_SLIDER_MAX, 0), 1);
+  // Logarithmic scale: 0 lux at the far left, LUX_SLIDER_MAX at the far right
+  var fraction = Math.min(
+    Math.max(Math.log(1 + lux) / Math.log(1 + LUX_SLIDER_MAX), 0),
+    1
+  );
   var pct = Math.round(fraction * 1000) / 10;
   var html =
     '<div class="lux-slider" style="--lux-pct:' +
