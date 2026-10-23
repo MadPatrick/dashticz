@@ -3690,6 +3690,9 @@ div.mh.lux-has-slider:not(.multiline) {
   bottom: 0;
   width: var(--lux-pct, 0%);
   border-radius: 4px;
+  /* gradient colors are tied to the full 0-100% track, not to the fill */
+  background-size: var(--lux-bg-size, 100%) 100%;
+  background-repeat: no-repeat;
   background: linear-gradient(
     90deg,
     #1565c0,

@@ -1122,6 +1122,8 @@ function postHookLux(block) {
   var html =
     '<div class="lux-slider" style="--lux-pct:' +
     pct +
+    '%;--lux-bg-size:' +
+    (pct > 0 ? Math.round(10000 / pct) : 100) +
     '%;--lux-level:' +
     fraction.toFixed(2) +
     '">' +
