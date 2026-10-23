@@ -1102,7 +1102,7 @@ function handleDevice(block) {
 }
 
 /*exported postHookLux */
-var LUX_SLIDER_MAX = 1000;
+var LUX_SLIDER_MAX = 2200;
 
 /**
  * Appends a read-only slider to a lux block. The knob position and the
@@ -1129,10 +1129,7 @@ function postHookLux(block) {
     '<div class="lux-slider-track"><div class="lux-slider-fill"></div>' +
     '<div class="lux-slider-knob"></div></div>' +
     '<em class="fas fa-sun lux-slider-sun lux-slider-sun-high"></em>' +
-    '<span class="lux-slider-label lux-slider-label-low">0</span>' +
-    '<span class="lux-slider-label lux-slider-label-high">' +
-    LUX_SLIDER_MAX +
-    '</span></div>';
+    '</div>';
   block.$mountPoint
     .find('[data-id="' + block.key + '"]')
     .addClass('lux-has-slider')

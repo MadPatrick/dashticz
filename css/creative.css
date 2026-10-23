@@ -3651,7 +3651,6 @@ div.mh.lux-has-slider:not(.multiline) {
   column-gap: 8px;
   width: 100%;
   padding: 2px 15px 0;
-  margin-bottom: -8px;
 }
 
 .lux-slider .lux-slider-sun {
@@ -3712,24 +3711,6 @@ div.mh.lux-has-slider:not(.multiline) {
   box-shadow:
     0 0 6px 2px rgba(255, 214, 0, calc(0.25 + var(--lux-level, 0) * 0.65)),
     0 0 14px 4px rgba(255, 214, 0, calc(var(--lux-level, 0) * 0.5));
-}
-
-.lux-slider-label {
-  grid-row: 2;
-  margin-top: 0;
-  font-size: 10px;
-  line-height: 1.1;
-  color: #8d99ae;
-}
-
-.lux-slider-label-low {
-  grid-column: 1;
-  justify-self: center;
-}
-
-.lux-slider-label-high {
-  grid-column: 3;
-  justify-self: center;
 }
 
 /*To change the default height of the graph popup adapt the height value in custom.css
