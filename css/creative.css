@@ -3690,16 +3690,17 @@ div.mh.lux-has-slider:not(.multiline) {
   bottom: 0;
   width: var(--lux-pct, 0%);
   border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    #6b7686 0%,
+    #8d96a6 35%,
+    #d9cf8a 65%,
+    #ffd600 85%,
+    #ffb300 100%
+  );
   /* gradient colors are tied to the full 0-100% track, not to the fill */
   background-size: var(--lux-bg-size, 100%) 100%;
   background-repeat: no-repeat;
-  background: linear-gradient(
-    90deg,
-    #1565c0,
-    #29b6f6 40%,
-    #fff176 75%,
-    #ffd600
-  );
 }
 
 .lux-slider-knob {
@@ -3712,8 +3713,8 @@ div.mh.lux-has-slider:not(.multiline) {
   border-radius: 50%;
   background: #fff;
   box-shadow:
-    0 0 6px 2px rgba(255, 214, 0, calc(0.25 + var(--lux-level, 0) * 0.65)),
-    0 0 14px 4px rgba(255, 214, 0, calc(var(--lux-level, 0) * 0.5));
+    0 0 6px 2px rgba(255, 214, 0, 0.6),
+    0 0 12px 4px rgba(255, 214, 0, 0.3);
 }
 
 /*To change the default height of the graph popup adapt the height value in custom.css
