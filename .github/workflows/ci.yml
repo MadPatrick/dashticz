@@ -87,6 +87,9 @@ jobs:
   browsers:
     name: Playwright ${{ matrix.browser }}
     runs-on: ubuntu-latest
+    # A healthy run takes about 2 minutes. install-deps (apt) can hang on a
+    # bad mirror/runner; fail after 15 minutes instead of the 6 hour default.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
