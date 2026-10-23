@@ -3650,11 +3650,33 @@ div.mh.lux-has-slider:not(.multiline) {
   text-align: center;
 }
 
-.lux-slider svg {
+.lux-arc {
+  position: relative;
   width: 100%;
   max-width: 130px;
+  margin: 0 auto;
+}
+
+.lux-arc svg {
+  display: block;
+  width: 100%;
   height: auto;
   overflow: visible;
+}
+
+.lux-arc-value {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4%;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.lux-has-value .col-data .value {
+  display: none;
 }
 
 .lux-arc-track,

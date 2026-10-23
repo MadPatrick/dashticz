@@ -1126,7 +1126,7 @@ function postHookLux(block) {
   var arc = 'M10 58 A50 50 0 0 1 110 58';
   var gradId = 'luxgrad_' + String(block.key).replace(/\W/g, '_');
   var html =
-    '<div class="lux-slider"><svg viewBox="0 0 120 66" focusable="false">' +
+    '<div class="lux-slider"><div class="lux-arc"><svg viewBox="0 0 120 66" focusable="false">' +
     '<defs><linearGradient id="' +
     gradId +
     '" gradientUnits="userSpaceOnUse" x1="10" y1="0" x2="110" y2="0">' +
@@ -1161,11 +1161,16 @@ function postHookLux(block) {
     '" cy="' +
     sunY +
     '" r="5.5"/>' +
-    '</svg></div>';
-  block.$mountPoint
-    .find('[data-id="' + block.key + '"]')
-    .addClass('lux-has-slider')
-    .append(html);
+    '</svg>' +
+    '<div class="lux-arc-value"></div></div></div>';
+  var $block = block.$mountPoint.find('[data-id="' + block.key + '"]');
+  // The value moves from the text column into the middle of the arc
+  var $value = $block.find('.col-data .value').first();
+  $block.addClass('lux-has-slider').append(html);
+  if ($value.length) {
+    $block.find('.lux-arc-value').text($value.text());
+    $block.addClass('lux-has-value');
+  }
 }
 
 /*exported postHookLogitechMediaServer */
