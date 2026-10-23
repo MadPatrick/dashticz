@@ -9135,6 +9135,25 @@ canvas {
   text-align: right !important;
 }
 
+/* Block without an icon (Icon toggle off): the empty .col-icon column still
+   takes up space, which pushed centered/right aligned text off the middle of
+   the block. Drop the empty column, let the data span the full width, and
+   center the content vertically for centered text. */
+.mh.dt-align-center .col-icon:empty,
+.mh.dt-align-right .col-icon:empty {
+  display: none;
+}
+
+.mh.dt-align-center .col-icon:empty + .col-data,
+.mh.dt-align-right .col-icon:empty + .col-data {
+  width: 100%;
+}
+
+.mh.dt-align-center:has(> .col-icon:empty) {
+  display: flex;
+  align-items: center;
+}
+
 /* Shared widget button (.dt-btn): a rounded, themed button for the controls of
    a widget, used by the LMS control and the Fully Kiosk widget. Add .on for
    the active state of a power or toggle button. The size is set by the widget
