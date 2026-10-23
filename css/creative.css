@@ -3631,7 +3631,7 @@ a.playlist {
   white-space: nowrap;
 }
 
-/* Lux slider (read-only), see postHookLux in js/blocks.js */
+/* Lux sun arc (read-only), see postHookLux in js/blocks.js */
 div.mh.lux-has-slider:not(.multiline) {
   height: auto;
   min-height: 85px;
@@ -3645,79 +3645,36 @@ div.mh.lux-has-slider:not(.multiline) {
 .lux-slider {
   clear: both;
   flex: 0 0 100%;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  column-gap: 8px;
   width: 100%;
-  padding: 2px 15px 0;
-  margin-top: -5px;
+  padding: 0 10px;
+  text-align: center;
 }
 
-.lux-slider .lux-slider-sun {
-  width: auto;
-  line-height: 1;
-  margin: 0;
-  grid-row: 1;
-  font-size: 16px;
+.lux-slider svg {
+  width: 100%;
+  max-width: 130px;
+  height: auto;
+  overflow: visible;
 }
 
-.lux-slider .lux-slider-sun-low {
-  grid-column: 1;
-  color: #7d8aa3;
-  opacity: 0.8;
+.lux-arc-track,
+.lux-arc-fill {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
 }
 
-.lux-slider .lux-slider-sun-high {
-  grid-column: 3;
-  color: #ffb400;
-  font-size: 20px;
-  filter: drop-shadow(0 0 4px rgba(255, 180, 0, 0.6));
+.lux-arc-track {
+  stroke: rgba(125, 138, 163, 0.35);
 }
 
-.lux-slider-track {
-  position: relative;
-  grid-column: 2;
-  grid-row: 1;
-  height: 8px;
-  border-radius: 4px;
-  background: rgba(125, 138, 163, 0.35);
+.lux-arc-glow {
+  fill: rgba(255, 214, 0, 0.8);
 }
 
-.lux-slider-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: var(--lux-pct, 0%);
-  border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    #6b7686 0%,
-    #8fa3bf 15%,
-    #e8dc8c 40%,
-    #ffd600 65%,
-    #ffb300 100%
-  );
-  /* gradient colors are tied to the full 0-100% track, not to the fill */
-  background-size: var(--lux-bg-size, 100%) 100%;
-  background-repeat: no-repeat;
+.lux-arc-sun {
+  fill: #fff;
 }
-
-.lux-slider-knob {
-  position: absolute;
-  top: 50%;
-  left: var(--lux-pct, 0%);
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow:
-    0 0 6px 2px rgba(255, 214, 0, 0.6),
-    0 0 12px 4px rgba(255, 214, 0, 0.3);
-}
-
 /*To change the default height of the graph popup adapt the height value in custom.css
   Example:
 .graphheight {

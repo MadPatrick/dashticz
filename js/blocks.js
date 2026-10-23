@@ -1105,8 +1105,8 @@ function handleDevice(block) {
 var LUX_SLIDER_MAX = 2200;
 
 /**
- * Appends a read-only slider to a lux block. The knob position and the
- * glow follow the current lux value (logarithmic scale 0 - LUX_SLIDER_MAX, values above
+ * Appends a read-only sun arc to a lux block. The sun moves along the arc
+ * with the current lux value (logarithmic scale 0 - LUX_SLIDER_MAX, values above
  * the maximum are clamped).
  * @param {object} block
  */
@@ -1118,20 +1118,50 @@ function postHookLux(block) {
     Math.max(Math.log(1 + lux) / Math.log(1 + LUX_SLIDER_MAX), 0),
     1
   );
-  var pct = Math.round(fraction * 1000) / 10;
+  // Half circle from (10,58) to (110,58) around (60,58), radius 50. The sun
+  // sits on the arc at the position that belongs to the current lux value.
+  var angle = Math.PI * fraction;
+  var sunX = Math.round((60 - 50 * Math.cos(angle)) * 10) / 10;
+  var sunY = Math.round((58 - 50 * Math.sin(angle)) * 10) / 10;
+  var arc = 'M10 58 A50 50 0 0 1 110 58';
+  var gradId = 'luxgrad_' + String(block.key).replace(/\W/g, '_');
   var html =
-    '<div class="lux-slider" style="--lux-pct:' +
-    pct +
-    '%;--lux-bg-size:' +
-    (pct > 0 ? Math.round(10000 / pct) : 100) +
-    '%;--lux-level:' +
-    fraction.toFixed(2) +
-    '">' +
-    '<em class="fas fa-sun lux-slider-sun lux-slider-sun-low"></em>' +
-    '<div class="lux-slider-track"><div class="lux-slider-fill"></div>' +
-    '<div class="lux-slider-knob"></div></div>' +
-    '<em class="fas fa-sun lux-slider-sun lux-slider-sun-high"></em>' +
-    '</div>';
+    '<div class="lux-slider"><svg viewBox="0 0 120 66" focusable="false">' +
+    '<defs><linearGradient id="' +
+    gradId +
+    '" gradientUnits="userSpaceOnUse" x1="10" y1="0" x2="110" y2="0">' +
+    '<stop offset="0" stop-color="#6b7686"/>' +
+    '<stop offset="0.15" stop-color="#8fa3bf"/>' +
+    '<stop offset="0.4" stop-color="#e8dc8c"/>' +
+    '<stop offset="0.65" stop-color="#ffd600"/>' +
+    '<stop offset="1" stop-color="#ffb300"/></linearGradient>' +
+    '<filter id="' +
+    gradId +
+    '_glow" x="-100%" y="-100%" width="300%" height="300%">' +
+    '<feGaussianBlur stdDeviation="3"/></filter></defs>' +
+    '<path class="lux-arc-track" d="' +
+    arc +
+    '" pathLength="100"/>' +
+    '<path class="lux-arc-fill" d="' +
+    arc +
+    '" pathLength="100" stroke="url(#' +
+    gradId +
+    ')" stroke-dasharray="' +
+    Math.round(fraction * 1000) / 10 +
+    ' 100"/>' +
+    '<circle class="lux-arc-glow" cx="' +
+    sunX +
+    '" cy="' +
+    sunY +
+    '" r="9" filter="url(#' +
+    gradId +
+    '_glow)"/>' +
+    '<circle class="lux-arc-sun" cx="' +
+    sunX +
+    '" cy="' +
+    sunY +
+    '" r="5.5"/>' +
+    '</svg></div>';
   block.$mountPoint
     .find('[data-id="' + block.key + '"]')
     .addClass('lux-has-slider')
