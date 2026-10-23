@@ -3715,3 +3715,6139 @@ a.playlist {
   grid-column: 3;
   justify-self: center;
 }
+
+/*To change the default height of the graph popup adapt the height value in custom.css
+  Example:
+.graphheight {
+	height: 300px;
+}
+*/
+.modal-dialog-custom .modal-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.modal-body {
+  height: 100%;
+}
+
+/*
+.modal.openpopup .frameclose {
+  background-color: var(--text-light);
+  color: var(--text-dark);
+  margin: 5px;
+}
+*/
+
+/* Relying on .block_graph's flex stretch (display:flex; flex-direction:
+   column) to give this its width wasn't reliable in practice - the canvas
+   Chart.js creates inside kept its browser-default intrinsic width instead
+   of the block's actual width (#280). Set it explicitly instead. */
+.graphcontent {
+  width: 100%;
+  height: 100%;
+  min-height: 1px;
+}
+
+.modal .graphcontent {
+  height: calc(100vh - 250px);
+}
+
+/* graphwidth for small screens.*/
+
+.graphwidth {
+  min-width: 30px;
+  width: 80%;
+}
+
+@media (max-width: 768px) {
+  /*  .graphwidth {
+    width: 100vw;
+  }*/
+  .modal-dialog {
+    width: 100%;
+  }
+}
+
+.graphheader {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.graphtitle {
+  font-size: 150%;
+}
+
+.graphtitle span .fas {
+  font-size: 16px !important;
+}
+
+/* createHeader() (js/components/graph.js) builds its own header instead of
+   going through getColIcon() (js/dashticz.js), so its icon previously had
+   a hardcoded 20px inline style rather than a theme's icon size. --icon-
+   font-size is a plain custom property set at :root by a theme (e.g.
+   themes/modern-dark/modern-dark.css), so referencing it here picks up
+   that value without needing the .col-icon ancestor its other consumer
+   (.col-icon .icon) requires. */
+.graphtitle .icon {
+  font-size: var(--icon-font-size, 20px) !important;
+}
+
+/* Graph buttons default to a white fill with a mid-grey icon
+   (buttonsFill/buttonsIcon in js/components/graph.js's getBlockDefaults()).
+   Dimming the whole button with opacity washes both toward the same
+   backdrop color, collapsing the icon-vs-fill contrast rather than just
+   toning the button down - on the base theme (no themes/*.css override)
+   this left inactive range buttons close to invisible (#280). A lighter
+   dimming keeps the active/inactive distinction without erasing that
+   contrast. */
+.graphbuttons .btn {
+  opacity: 0.75;
+}
+
+.graphbuttons .btn.active {
+  opacity: 1;
+}
+
+.graph {
+  flex: 1;
+}
+
+.block_graph {
+  display: flex;
+  flex-direction: column;
+}
+
+.selectedbutton {
+  background-color: #abc !important;
+}
+
+.blockchange {
+  background-color: #aaa !important;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  background-color: #000;
+  overflow: hidden;
+}
+
+hr {
+  border-color: var(--text-light);
+  border-width: 2px;
+  max-width: 100%;
+  opacity: 0.5;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.standby .swiper-slide:not(.screenstandby) {
+  background-image: none !important;
+  background-color: var(--home-bg);
+}
+
+.standby .screenstandby {
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 0;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background-color: var(--home-bg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+body.standby-edit .screenstandby.dle-grid-screen-editing {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.standby .screenstandby .far,
+.standby .screenstandby .far.fa-small,
+.standby .screenstandby .fas,
+.standby .screenstandby .fas.fa-small,
+.standby .screenstandby .fab,
+.standby .screenstandby .fab.fa-small {
+  color: var(--text-light) !important;
+}
+
+.standby .row {
+  opacity: 0.7;
+}
+
+.standby .imgblock {
+  opacity: 0.2;
+}
+
+a {
+  -webkit-transition: all 0.35s;
+  -moz-transition: all 0.35s;
+  transition: all 0.35s;
+  color: var(--button-active);
+}
+
+div.morris-hover-point {
+  color: #000 !important;
+}
+
+.auto_switches,
+.auto_states,
+.auto_dimmers,
+.auto_media,
+.auto_buttons {
+  clear: both;
+}
+
+a:hover,
+a:focus {
+  color: #eb3812;
+}
+
+.fas.fa-newspaper,
+.far.fa-newspaper {
+  margin-left: 1px;
+}
+
+.fas.fa-lightbulb,
+.far.fa-lightbulb {
+  margin-top: 1px;
+  margin-left: 6px;
+}
+
+.hidden {
+  display: none;
+}
+
+.mh {
+  --col1width: 30px;
+  --col2width: 30px;
+}
+
+/* Default styling for a device in Domoticz timeout state (docs:
+   domoticzStyling) - override .mh.timeout in custom.css for a different
+   color. */
+.mh.timeout {
+  background-color: rgba(255, 0, 0, 0.3);
+}
+
+div.mh:not(.multiline) {
+  height: 85px;
+}
+
+div.mh h3 {
+  padding-top: 6px;
+}
+
+/*
+div.big {
+  padding-top: 20px !important;
+  padding-left: 18px !important;
+}
+*/
+
+.sunriseholder,
+.sunriseholder .wi {
+  font-size: 14px !important;
+}
+
+.sunriseholder .sunrise-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 5px;
+  /* sunriseholder is text-center (for the sunrise/sunset line below, kept
+     centered as before), but every other device/widget's icon+title sits
+     flush at the top of the block, not centered - align-self: stretch
+     (instead of the shrink-to-fit default) makes this row span the full
+     tile width like every other block's icon+content row, both so it
+     doesn't end up centered as a whole (align-items: center on the grid
+     rule above centers a shrink-to-fit box, not just text inside it) and
+     so .dt_title below actually has room to align into - text-align has
+     no visible effect on a box no wider than its own content. */
+  align-self: stretch;
+}
+
+/* The title reuses the standard .dt_title class (see renderSunrise() in
+   js/components/simpleblock.js) purely so a theme's .dt_title rules -
+   including title text-align - apply here like on every other block. Its
+   150% font-size and 5px margin are sized for a full .dt_block header, not
+   this small single-line tile, so they're overridden back down here.
+   flex: 1 fills the rest of the now full-width .sunrise-header row (instead
+   of only the icon's own natural width), giving text-align: right (set per
+   theme - see e.g. themes/modern-dark/modern-dark.css) an actual gap to
+   align into, matching every other block's icon-left/title-right layout. */
+.sunriseholder .sunrise-header .dt_title {
+  flex: 1;
+  min-width: 0;
+  font-size: inherit;
+  font-weight: bold;
+  margin: 0;
+  text-align: left;
+}
+
+.sunriseholder .wi-sunset {
+  padding-left: 10px;
+}
+
+.sunriseholder .wi {
+  padding-right: 5px;
+  padding-top: 5px;
+}
+
+/* Shared icon+title header row for other js/components/simpleblock.js
+   widgets (Moon, Weather, Spotify, ...) that build their own markup
+   instead of going through getContainer()/getColIcon()/renderTitle()
+   (js/dashticz.js) like every other block, and so have no .dt_block flex
+   layout of their own to hang an icon-left/title-right row off of. Reuses
+   .col-icon/.icon (icon size) and .dt_title (title size/color/alignment)
+   so a theme's rules for those classes apply here too, instead of icon
+   and title silently ignoring the active theme. Unlike .sunriseholder's
+   own .sunrise-header (a small, compact single-line tile that overrides
+   .dt_title's size back down), these widgets are full-size tiles, so
+   .dt_title keeps its normal theme-driven size here. */
+.dt-simple-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 5px;
+}
+
+.dt-simple-header .dt_title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The actual "Weather" widget catalog entry (type: 'weather') dispatches
+   to js/components/weather.js's DT_weather, a normal special block that
+   goes through the standard getContainer()/getColIcon()/renderTitle()
+   path (unlike js/components/simpleblock.js's own renderWeather above,
+   only ever reachable via the legacy type: 'wunderground'), so its
+   .col-icon/.dt_title are already there structurally. But DT_weather (and
+   the OWM widget, js/components/owmwidget.js) scales its own .dt_block's
+   font-size dynamically based on tile width, for its internal forecast
+   content - .col-icon .icon and .dt_title inherit that same font-size
+   chain via relative units (.dt_title's 150%) or, on the base/White
+   theme, no absolute override at all, so an early/zero-width refresh()
+   call (before layout has settled) could shrink them to an unreadable or
+   fully invisible size. Pin both to an absolute size immune to that
+   internal scaling; .col-icon .icon still honors a theme's own
+   --icon-font-size when set. */
+.weather.dt_block .dt_title,
+.owmwidget.dt_block .dt_title {
+  font-size: 16px !important;
+}
+
+.weather.dt_block .col-icon .icon,
+.owmwidget.dt_block .col-icon .icon {
+  font-size: var(--icon-font-size, 24px) !important;
+}
+
+/* .dt_block itself is display: flex (see .dt_block above), which is what
+   used to lay the day-forecast tiles (.weatherday, js/components/
+   weather.css) out side by side back when refreshOWM()/refreshOWM3()/
+   refreshKNMI() (js/components/weather.js) wrote them directly into
+   .dt_block - each declares width: 100% and relies on flex-shrink to
+   divide the row between them. Now that they're nested one level deeper,
+   inside .dt_state (so the icon/title fix above didn't get wiped out by
+   the next weather refresh), that flex row context no longer reaches
+   them - .dt_state has no display of its own, so its .weatherday children
+   just stack as ordinary blocks. Give .dt_state that same flex row back. */
+.weather.dt_block .dt_state {
+  display: flex;
+}
+
+select,
+select option {
+  color: #000 !important;
+  width: auto;
+  max-width: 90%;
+  font-size: 16px !important;
+}
+
+.title {
+  font-size: 12px;
+}
+
+.state,
+.value {
+  color: #ffffff !important;
+}
+
+.wi {
+  font-size: 30px;
+}
+
+.wi.wi-rain {
+  margin-top: 0px;
+}
+
+.fas {
+  font-size: 30px;
+}
+
+.far {
+  font-size: 30px;
+}
+
+.fab {
+  font-size: 30px;
+}
+
+.fas.fa-small {
+  font-size: 20px;
+}
+
+.fas.fa-thermometer-half {
+  margin-left: 8px;
+  margin-top: 2px;
+}
+
+.fas.fa-calendar {
+  margin-left: 4px;
+  margin-top: 1px;
+}
+
+.fas.fa-thermometer-half.fa-thermometer-half-switch {
+  margin-left: 4px;
+}
+
+.fas.fa-desktop {
+  margin-top: 5px;
+}
+
+.fas.fa-fire {
+  margin-top: 5px;
+}
+
+.fas.fa-plug {
+  margin-top: 5px;
+}
+
+.fas.fa-music {
+  margin-top: 5px;
+}
+
+.fas.fa-television,
+.fas.fa-microchip {
+  margin-left: 3px;
+  margin-top: 2px;
+}
+
+.containshorizon .fas {
+  margin-top: 8px;
+}
+
+.containsnzbget .fas {
+  margin-top: 8px;
+}
+
+/*
+.fas.fa-tint {
+  margin-left: 5px;
+  margin-top: 4px;
+}
+*/
+
+.fas.fa-trash {
+  margin-left: 8px;
+}
+
+.fas.fa-bolt {
+  margin-left: 8px;
+}
+
+.wi.wi-wind-direction {
+  margin-left: 4px;
+  margin-top: 2px;
+}
+
+.fas.fa-toggle-off {
+  opacity: 0.5;
+  filter: alpha(opacity=50);
+  /* For IE8 and earlier */
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+  margin: 0px;
+  margin-left: 15px;
+}
+
+.smalltitle h3 {
+  font-size: 12px !important;
+  margin-left: 6px;
+}
+
+h1 {
+  font-size: 35px;
+}
+
+p {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.row > div {
+  padding-right: 0px !important;
+  padding-left: 0px !important;
+}
+
+/*
+ * Block mount wrappers (#block_N) are only organizational for Dashticz's
+ * mount/unsubscribe bookkeeping. As normal block boxes they each span the
+ * full column width, so a tall floated tile (e.g. APC UPS) pushes the next
+ * wrapper down and leaves a gap under the shorter neighbour (e.g. Afval ? BMW).
+ *
+ * display: contents makes the floated .mh.col-xs-* tiles participate in the
+ * column's own float context, so the next short tile can rise beside the tall
+ * one. The layout editor overrides this while .dle-item-wrapper is active.
+ */
+.screen .row > [data-colindex] > [id^='block_']:not(.dle-item-wrapper) {
+  display: contents;
+}
+
+/* Ensure the column grows to enclose its floated tiles. */
+.screen .row > [data-colindex]::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+.clear {
+  clear: both;
+}
+
+.transbg {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border: var(--block-gap) solid var(--border-color-block);
+  background: var(--main-bg);
+  background-clip: padding-box;
+}
+
+.transbg.dark {
+  background: var(--main-bg-dark);
+}
+
+.dt_block.popup {
+  background: unset;
+}
+
+.block_clock h1,
+.block_clock h4 {
+  margin-left: 0px !important;
+}
+
+.block_clock {
+  padding-top: 18px !important;
+  padding-bottom: 18px !important;
+}
+
+.with_controls {
+  padding-top: 6px !important;
+}
+
+/*
+Only add this hover on NON touch devices
+*/
+
+@media (hover: hover) {
+  html.non-touch .hover:hover {
+    background: rgba(255, 255, 255, 0.1);
+    background-clip: padding-box;
+    border: var(--block-gap) solid var(--border-color-block);
+  }
+
+  html.non-touch .dial.hover:hover {
+    background: inherit;
+  }
+}
+
+.transbg.hover {
+  cursor: pointer;
+}
+
+.transbg.hover.hovered {
+  background: rgba(255, 255, 255, 0.1);
+  background-clip: padding-box;
+  border: var(--block-gap) solid var(--border-color-block);
+  cursor: pointer;
+}
+
+.iconslider {
+  cursor: pointer;
+}
+
+.cast-button-container {
+  padding: 13px !important;
+}
+
+.cast-button {
+  height: 25px;
+  width: 25px;
+  padding: 1px;
+  vertical-align: middle;
+  display: inline;
+  --disconnected-color: red;
+  --connected-color: green;
+}
+
+.col-xs-1,
+.col-xs-2,
+.col-xs-3,
+.col-xs-4,
+.col-xs-5,
+.col-xs-6,
+.col-xs-7,
+.col-xs-8,
+.col-xs-9,
+.col-xs-10,
+.col-xs-11,
+.col-xs-12 {
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+.containsicalendar .transbg {
+  padding-left: 11px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+.column1.col-xs-5,
+.column2.col-xs-5,
+.column3.col-xs-2 {
+  padding: 0px !important;
+}
+
+.row {
+  margin: 0px !important;
+}
+
+.trainrow,
+.trafficrow {
+  font-size: 14px !important;
+}
+
+.trainrow strong,
+.trafficrow strong {
+  display: inline-block;
+}
+
+.col-icon {
+  width: var(--icon-column-width, 40px) !important;
+  float: left;
+  z-index: 10;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.col-data {
+  width: calc(100% - var(--icon-column-width, 45px));
+  float: left;
+}
+
+.hasbackground .col-data {
+  text-shadow: 0px 0px 10px black;
+}
+
+.right2col {
+  padding-right: calc(var(--col1width) + var(--col2width) + 8px);
+}
+
+.right1col {
+  padding-right: calc(var(--col1width) + 8px);
+}
+
+.no-icon {
+  width: 100%;
+}
+
+.slider {
+  margin-top: 7px;
+  margin-right: 7px;
+}
+
+.rgbcontainer {
+  display: flex;
+}
+
+.rgbcontainer .slider {
+  width: 100%;
+}
+
+.rgbcontainer .rgbholder {
+  flex: 0 0 50px;
+}
+
+.weekday {
+  margin-bottom: 5px;
+}
+
+.ui-widget.ui-widget-content {
+  background-color: #aaa;
+}
+
+.ui-state-default,
+.ui-widget-content .ui-state-default,
+.ui-widget-header .ui-state-default,
+.ui-button,
+html .ui-button.ui-state-disabled:hover,
+html .ui-button.ui-state-disabled:active {
+  width: 20px;
+  height: 20px;
+  margin-top: -4px;
+  margin-left: -4px;
+}
+
+.buttonimg {
+  max-height: 20px;
+}
+
+.ml {
+  margin-left: 10px;
+}
+
+.mr {
+  margin-right: 10px;
+}
+
+.navbar-default {
+  background-color: var(--text-light);
+  border-color: rgba(34, 34, 34, 0.05);
+  font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-transition: all 0.35s;
+  -moz-transition: all 0.35s;
+  transition: all 0.35s;
+}
+
+.navbar-default .navbar-header .navbar-brand {
+  color: var(--button-active);
+  font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.navbar-default .navbar-header .navbar-brand:hover,
+.navbar-default .navbar-header .navbar-brand:focus {
+  color: #eb3812;
+}
+
+.navbar-default .navbar-header .navbar-toggle {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-dark);
+  text-transform: uppercase;
+}
+
+.navbar-default .nav > li > a,
+.navbar-default .nav > li > a:focus {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-dark);
+}
+
+.navbar-default .nav > li > a:hover,
+.navbar-default .nav > li > a:focus:hover {
+  color: var(--button-active);
+}
+
+.navbar-default .nav > li.active > a,
+.navbar-default .nav > li.active > a:focus {
+  color: var(--button-active) !important;
+  background-color: transparent;
+}
+
+.navbar-default .nav > li.active > a:hover,
+.navbar-default .nav > li.active > a:focus:hover {
+  background-color: transparent;
+}
+
+@media (min-width: 768px) {
+  .navbar-default {
+    background-color: transparent;
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+  .navbar-default .navbar-header .navbar-brand {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .navbar-default .navbar-header .navbar-brand:hover,
+  .navbar-default .navbar-header .navbar-brand:focus {
+    color: var(--text-light);
+  }
+  .navbar-default .nav > li > a,
+  .navbar-default .nav > li > a:focus {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .navbar-default .nav > li > a:hover,
+  .navbar-default .nav > li > a:focus:hover {
+    color: var(--text-light);
+  }
+  .navbar-default.affix {
+    background-color: var(--text-light);
+    border-color: rgba(34, 34, 34, 0.05);
+  }
+  .navbar-default.affix .navbar-header .navbar-brand {
+    color: var(--button-active);
+    font-size: 14px;
+  }
+  .navbar-default.affix .navbar-header .navbar-brand:hover,
+  .navbar-default.affix .navbar-header .navbar-brand:focus {
+    color: #eb3812;
+  }
+  .navbar-default.affix .nav > li > a,
+  .navbar-default.affix .nav > li > a:focus {
+    color: var(--text-dark);
+  }
+  .navbar-default.affix .nav > li > a:hover,
+  .navbar-default.affix .nav > li > a:focus:hover {
+    color: var(--button-active);
+  }
+}
+
+img.icon {
+  max-width: 30px;
+}
+
+.off.icon {
+  opacity: 0.4 !important;
+}
+
+.on.icon {
+  opacity: 1 !important;
+}
+
+.mixed.icon {
+  opacity: 1;
+}
+
+/* Reverse icon (block.reverseicon, Device Config -> Reverse): swap which
+   state dims the icon/image. Normally Off is dimmed; with the option the
+   icon is shown at full strength while Off and dimmed while On. */
+.dt-icon-reverse .off.icon {
+  opacity: 1 !important;
+}
+
+.dt-icon-reverse .on.icon {
+  opacity: 0.4 !important;
+}
+
+.blinds .fas.fa-arrow-up,
+.blinds .fas.fa-arrow-down,
+.blinds .fas.fa-stop-circle {
+  font-size: 20px !important;
+  margin-right: 3px !important;
+}
+
+/* "Needle" mode (block.needle === true) for Blinds Percentage/Blinds
+   Inverted Percentage devices and Dimmers: one continuous vertical slider,
+   framed like a small remote - a title header (no icon), then the slider
+   beside a column of icon-only up/stop/down buttons (OPEN/STOP/DICHT for
+   Blinds, ON/OFF for Dimmers - Dimmers never show Stop). This is an
+   alternative to, not a replacement for, Icon mode's own classic thin
+   percentage bar/horizontal slider (getBlindsBlock()'s withPercentage
+   branch and getDimmerBlock()'s own slider, both unchanged) and the
+   separate Dial widget's Dial/Bar modes (js/components/dial.js, also
+   unchanged). Rendered entirely by renderBlindsSliderBlock()/addSlider() in
+   js/switches.js as a single .blinds-slider-block. Icon mode's own classic
+   bar reuses the same addSlider() but never gets a .blinds-slider-wrap
+   ancestor, so none of this applies to it. The underlying jQuery UI slider
+   and all existing Domoticz commands remain unchanged. Dimmers get an
+   extra .dimmer-slider modifier class on .blinds-slider-wrap (see the
+   .ui-slider-range rule below) - their scale runs the opposite way round
+   from Blinds (0% Off at the bottom, 100% On at the top, matching a
+   physical dimmer/volume slider), not top-to-bottom like Blinds'. */
+.blinds-slider-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  /* Needed for its own flex-grow .blinds-slider-wrap child to actually get
+     any height in the classic (non-grid) case below: height:100% here is
+     against an indefinite .mh (height:auto), so per spec it resolves as
+     auto too, and an auto-sized column flex container with no min-height
+     of its own gives a flex-grow child nothing to grow into (it sizes to
+     exactly its non-growing children's content, i.e. the wrap collapses to
+     0). This min-height gives the column a real, non-circular basis to
+     distribute from. Overridden to 0 on grid screens further down, where
+     .mh already gets a real, definite height from the grid row instead. */
+  min-height: 360px;
+  gap: 8px;
+  box-sizing: border-box;
+  padding: 8px 10px 10px;
+  background: rgba(12, 16, 24, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: var(--panel-shadow);
+}
+
+/* On a grid screen, .dt-grid-screen > .dt-grid-layout > .dt-grid-item > .mh
+   further up this file already forces .mh to a real, definite height
+   (height:100% !important of the grid row) - so .blinds-slider-block's own
+   height:100% resolves normally there (no circularity), and this block's
+   min-height above must get out of the way so the block can shrink to fit
+   a small row instead of overflowing it, same as .log/.map/the clock
+   widgets already do for their own min-heights. */
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .mh > .blinds-slider-block {
+  min-height: 0;
+}
+
+/* Every .mh is pinned to the classic 85px block height by default
+   (div.mh:not(.multiline) further up this file - the same escape hatch
+   block types like graphs/dials use via their own multi_line config flag).
+   This block needs real vertical room for its slider, so let it grow like a
+   multiline block, and stretch it (a .dt_block is align-items: flex-start
+   by default) instead of shrink-wrapping to content height. The grid rule
+   above still wins there on specificity, so a grid screen's own row height
+   applies instead of this fallback. */
+.mh:has(.blinds-slider-block) {
+  height: auto !important;
+  min-height: 360px;
+  align-items: stretch;
+}
+
+.blinds-slider-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.blinds-slider-header .title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* The slider and its OPEN/STOP/DICHT buttons sit side by side - the wrap
+   (js/switches.js's renderBlindsSliderBlock()) takes the remaining width,
+   the button column stays a fixed, content-sized width next to it. */
+.blinds-slider-body {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  flex: 1 1 auto;
+  /* Without this, a flex item's default min-height: auto keeps it from
+     ever shrinking below its content's own size - harmless for the fixed-
+     size button column, but it would stop .blinds-slider-wrap below from
+     actually shrinking on a short grid row instead of overflowing it. */
+  min-height: 0;
+}
+
+/* OPEN top, STOP middle, DICHT bottom (or just OPEN/DICHT top/bottom with
+   hide_stop) - justify-content: space-between spreads them across the
+   column's own height, which stretches to match the slider via
+   .blinds-slider-body's align-items: stretch above, keeping every button
+   within the slider's own height as asked. */
+.blinds-slider-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.blinds-slider-action {
+  flex: 0 0 auto;
+}
+
+.blinds-slider-action a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* The blanket .fas/.far/.fab { font-size: 30px } rule further up this file
+   (the codebase's own .fa-small already opts down to 20px, still too big
+   here) would otherwise inflate the icon way past this button's own
+   12px. inherit keeps the icon tied to that size without duplicating the
+   number here. !important: the Modern Dark/Liquid Glass Blue/Liquid Glass
+   Grey themes each carry their own `.fas.fa-chevron-up,
+   .fas.fa-chevron-down { font-size: 40px !important; }` (written for the
+   dimmer's up/down buttons); without !important here too, that theme rule
+   wins outright regardless of this selector's higher specificity - !important
+   always beats a plain declaration, no matter how specific. */
+.blinds-slider-action a .fas {
+  font-size: inherit !important;
+}
+
+.blinds-slider-action-up a,
+.blinds-slider-action-down a {
+  color: #eafff0;
+  background: linear-gradient(
+    180deg,
+    rgba(94, 176, 92, 0.55),
+    rgba(58, 122, 58, 0.55)
+  );
+  border: 1px solid rgba(139, 212, 130, 0.6);
+}
+
+.blinds-slider-action-up a:hover,
+.blinds-slider-action-down a:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(110, 196, 108, 0.65),
+    rgba(66, 138, 66, 0.65)
+  );
+}
+
+/* Dimmer's up/down buttons (js/switches.js's renderBlindsSliderBlock()
+   isDimmer branch) are a genuine On/Off toggle, not a matched pair of
+   "move" actions like Blinds' Open/Close - they get fa-toggle-on/
+   fa-toggle-off icons instead of Blinds' fa-chevron-up/-down, and the
+   down (Off) button is color-coded red instead of sharing Blinds' single
+   green look for both, so On/Off read at a glance the same way a switch's
+   own on/off colors do. On (the up button) keeps the shared green rule
+   above unchanged. */
+.blinds-slider-action-off a {
+  color: #ffeaea;
+  background: linear-gradient(
+    180deg,
+    rgba(220, 53, 69, 0.55),
+    rgba(160, 30, 42, 0.55)
+  );
+  border: 1px solid rgba(235, 110, 120, 0.6);
+}
+
+.blinds-slider-action-off a:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(230, 70, 86, 0.65),
+    rgba(176, 40, 52, 0.65)
+  );
+}
+
+/* The global .fas.fa-toggle-off { opacity: 0.5 } rule further down this
+   file (meant for a small inline status icon) would otherwise wash out
+   this button's own icon against its red background - keep it fully
+   opaque like every other icon in this button row. */
+.blinds-slider-action-off a .fa-toggle-off {
+  opacity: 1;
+}
+
+.blinds-slider-action-stop a {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(220, 53, 69, 0.22);
+  border: 1px solid rgba(220, 53, 69, 0.5);
+}
+
+.blinds-slider-action-stop a:hover {
+  color: var(--text-light);
+  background: rgba(220, 53, 69, 0.32);
+  border-color: rgba(220, 53, 69, 0.65);
+}
+
+/* .slider-scale and .slider used to be centered independently within this
+   wrap via position: absolute + a fixed negative margin-left each - fine
+   while the wrap was always the same width, but the fixed margins didn't
+   know about a narrower block, an increased track width (see .slider
+   below), or the button column now sitting right up against it: the scale
+   (and its percentage labels) could end up positioned partly outside the
+   block, and the empty leftover space in a wide wrap read as a big gap to
+   the buttons even though .blinds-slider-body's own gap is tiny. Both are
+   now plain flex children instead, always staying inside this row -
+   justify-content: flex-end keeps them (and so the visible track) hugging
+   the button column with no leftover space in between, at any width. */
+.blinds-slider-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 2px 0;
+  gap: 6px;
+}
+
+/* !important throughout this rule and the two below it: jQuery UI's own
+   bundled theme CSS (src/index.js's require('jquery-ui-dist/jquery-ui.min.css'))
+   styles .ui-slider/.ui-widget-content/.ui-widget-header (the classes the
+   widget puts on the track and range by default) with its own theme colors
+   (including blue) - these three selectors already outrank those on
+   specificity, but !important removes any doubt a theme's own CSS could
+   still win by loading later. This element's own box (top/bottom: 6px) is
+   left alone since it's what jQuery UI (and this file's own JS) measures
+   0%-100% against for the handle/ticks - its visible background is drawn
+   by ::before below instead, sized 8px (half the handle's own 16px) taller
+   at each end, so the round handle - which can visually overhang up to
+   half its own height past this box's edge at the 0%/100% extremes - stays
+   fully inside the visible track instead of poking out above/below it.
+   width: a flexible range (not a fixed px) instead, so the track scales
+   with the block's own width in both directions - narrower shrinks it
+   down (to a 30px floor, so it never disappears), wider grows it beyond
+   its old fixed 60px too, since .slider-scale above never grows (flex:
+   0 1 90px) and is the only other flex item sharing this row - all of the
+   wrap's own growth goes into the track. */
+.blinds-slider-wrap .slider {
+  position: relative;
+  flex: 1 1 60px;
+  min-width: 30px;
+  margin: 6px 0;
+  height: auto !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer;
+}
+
+.blinds-slider-wrap .slider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -8px;
+  bottom: -8px;
+  z-index: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.14)
+  );
+  pointer-events: none;
+}
+
+/* top: jQuery UI's own theme CSS anchors .ui-slider-range-max at the
+   track's own top (range: 'max' - see js/switches.js's addSlider()) - this
+   pulls that anchor up 8px to match ::before's own extended top above, so
+   the fill can reach all the way into that overhang zone instead of
+   leaving it looking empty there at every value. height is left alone here
+   (jQuery UI sets it inline, as a value-driven %) - js/switches.js's
+   extendRangeFill() tops it up by that same 8px on every value change, so
+   the fill's *bottom* edge (which already correctly tracks the handle)
+   isn't dragged upward by this same shift. */
+.blinds-slider-wrap .slider .ui-slider-range {
+  top: -8px !important;
+  border-radius: 9px;
+  background: linear-gradient(
+    to top,
+    rgba(75, 160, 75, 0.55),
+    rgba(125, 220, 110, 0.95)
+  ) !important;
+}
+
+/* Dimmer's Needle slider (.dimmer-slider, see js/switches.js's addSlider())
+   runs the opposite way round from Blinds - 0% Off at the bottom, 100% On
+   at the top - so its fill must grow the opposite direction too: anchored
+   to the *bottom* (where Off/empty is) and extending upward, instead of
+   Blinds' top anchor. extendRangeFill()'s own height math already produces
+   the right height for either anchor unmodified - only the anchor itself
+   needs to flip. Higher specificity than the base rule above (four classes
+   vs three) wins without needing !important on top here too. */
+.blinds-slider-wrap.dimmer-slider .slider .ui-slider-range {
+  top: auto !important;
+  bottom: -8px !important;
+}
+
+/* A rounded-rectangle handle spanning the full track width, not a small
+   round dot. left: 0/right: 0 with width: auto stretches it to the
+   track's own width instead of a fixed px size; border-radius stays a
+   flat 6px (not 50%, which would draw an ellipse instead of a
+   rectangle). height !important: jQuery UI's own bundled default
+   theme sizes the handle via its own em-based rule (.ui-slider
+   .ui-slider-handle), which this already outranks on specificity, but
+   pin it anyway. jQuery UI positions the handle with "bottom: value%",
+   which places the handle's *bottom edge* (not its center) at that
+   percentage of the track - so without correction the handle visually
+   sits half its own height too high compared to the tick marks, which
+   center on their percentage via transform: translateY(-50%) (see
+   .slider-tick span below). margin-bottom: -8px (half the 16px handle
+   height) shifts the handle back down so its *center* lands on the
+   value's percentage, matching the ticks. The theme's own default
+   (margin-bottom: -.6em) does the same thing for its own default handle
+   size - this isn't overriding a quirk, it's the same compensation
+   re-sized for our handle.
+*/
+/* top/margin-top !important: the Modern Dark/Liquid Glass Blue/Liquid Glass
+   Grey themes each carry their own `.ui-slider-handle { top: 50% !important;
+   margin-top: -20px !important; ... }`, written to vertically-center the
+   dimmer's horizontal-slider handle within its track. That selector has no
+   idea this handle is inside a *vertical* slider - with nothing here to
+   contest top/margin-top, it applied uncontested, pinning the handle to the
+   track's vertical center via top+height (which, once both top and bottom
+   are specified with an explicit height, wins over jQuery UI's own dynamic
+   "bottom: value%" - the box is over-constrained and bottom is dropped) -
+   so the handle visually never moved off dead-center, regardless of the
+   slider's actual value. Resetting top/margin-top back to auto/0 hands
+   vertical positioning back to jQuery UI's own "bottom" entirely. */
+.blinds-slider-wrap .slider .ui-slider-handle {
+  left: 0 !important;
+  right: 0;
+  top: auto !important;
+  width: auto !important;
+  height: 16px !important;
+  margin-left: 0;
+  margin-top: 0 !important;
+  margin-bottom: -8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  border-radius: 6px !important;
+  background: #234824 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  cursor: grab;
+}
+
+.blinds-slider-wrap .slider .ui-slider-handle:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.65);
+  outline-offset: 2px;
+}
+
+/* flex-shrink: 1 (not 0) - its own ticks are position: absolute, so this
+   still needs an explicit width for them to measure their right/width
+   percentages against (an absolutely-positioned child can't contribute to
+   its own parent's intrinsic sizing), but letting it shrink below that on
+   a narrow block keeps it inside the block instead of pushing .slider (or
+   the block itself) wider than available. */
+.slider-scale {
+  position: relative;
+  flex: 0 1 90px;
+  min-width: 0;
+  margin: 6px 0;
+  pointer-events: none;
+}
+
+.slider-tick {
+  position: absolute;
+  right: 0;
+  width: 100%;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.slider-tick::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 10px;
+  border-top: 2px solid rgba(255, 255, 255, 0.55);
+}
+
+.slider-tick span {
+  position: absolute;
+  right: 16px;
+  top: 0;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+}
+
+.slider-tick:hover span,
+.slider-tick:focus span {
+  color: var(--text-light);
+}
+
+/* Marks the tick closest to the slider's current value - the only
+   on-slider indicator of the current reading. Bold in addition to the
+   color change so it still stands out on its own. */
+.slider-tick-active::after {
+  border-top-color: #9ae58b;
+}
+
+.slider-tick-active span {
+  color: #9ae58b;
+  font-weight: 800;
+}
+
+/* Cluster (js/components/cluster.js): a fixed list of devices shown as
+   individually-switchable rows in one block, unlike Group's single
+   combined toggle. Deliberately plain/theme-neutral (unlike the blinds
+   slider handle above, this isn't themed per-theme) so it reads
+   consistently regardless of the active theme. Rows are painted into
+   .dt_state (js/dashticz.js's own content slot), so the block's configured
+   icon/.dt_title - painted once by the framework itself - stay untouched;
+   containerClass: 'cluster-block' (js/components/cluster.js) is only a
+   scoping hook here, same idea as e.g. .weather_1/.weather_2. */
+.cluster-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.cluster-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.cluster-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Scales with --cluster-switch-scale (see .cluster-row-switch below) so
+     a bigger switch doesn't crowd into the usage text next to it. */
+  gap: calc(8px * var(--cluster-switch-scale, 1));
+}
+
+.cluster-row-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* Same size as the block's own title (.dt_title), just not bold - per
+     user request. */
+  font-size: var(--font-device-title);
+  font-weight: normal;
+}
+
+/* Optional row icon (block.icons), the HP iLO look (.hpilo-icon). The size,
+   colour and margin repeat !important because themes size/colour some .fas
+   icons globally, and this file has per-icon margin offsets of its own
+   (.fas.fa-lightbulb, .fas.fa-bolt, .fas.fa-thermometer-half, .fas.fa-plug,
+   .fas.fa-microchip, ...) meant for the big tile icon - autoIcon()
+   (js/components/cluster.js) or a manually picked icon can easily reuse one
+   of those exact classes, and without this override a row using one of them
+   "jumps" a few px out of line with every other row's icon in the same
+   cluster. */
+.cluster-block .dt_state .cluster-row-icon {
+  flex: none;
+  width: 1.4em;
+  margin: 0 !important;
+  color: #3a86d8 !important;
+  font-size: var(--font-device-title, 1em) !important;
+  line-height: 1;
+  text-align: center;
+}
+
+.cluster-row-usage {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: var(--font-device-title);
+  color: var(--text-muted);
+}
+
+/* Temperature and Other mode's own row value (js/components/cluster.js) - unlike
+   the usage span, this is the row's primary value (there is no toggle
+   next to it), so it keeps its own status color instead of the muted one
+   .cluster-row-usage uses for its secondary annotation. */
+.cluster-row-temp {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: var(--font-device-title);
+  font-weight: 600;
+  color: var(--text-status);
+}
+
+.cluster-row-switch {
+  /* --cluster-switch-scale (default 1) resizes the whole switch - .cluster
+     -row-track/-thumb below scale their actual box size via calc() rather
+     than a transform: scale() on this element, so the row's own height
+     (flex align-items: center sizes to its tallest child) and the gap to
+     .cluster-row-usage (see .cluster-row above) grow with it too, instead
+     of the switch visually overlapping its neighbours while its layout
+     box stays the original size. Read with a var() fallback rather than
+     declared here: a declaration on this same selector would always win
+     over one set on an ancestor (custom.css, a theme, or .cluster-block
+     itself), regardless of specificity, which would make such overrides
+     silently do nothing. */
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cluster-row-switch .cluster-row-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.cluster-row-track {
+  position: relative;
+  /* Wider than tall (66x30, vs. a more typical ~2:1 pill) so ON/OFF has
+     more breathing room next to the thumb and reads more easily. */
+  width: calc(66px * var(--cluster-switch-scale, 1));
+  height: calc(30px * var(--cluster-switch-scale, 1));
+  border-radius: 9999px;
+  background: var(--cluster-switch-off, rgba(255, 255, 255, 0.25));
+  border: calc(1px * var(--cluster-switch-scale, 1)) solid
+    var(--cluster-switch-border, rgba(255, 255, 255, 0.3));
+  box-shadow: inset 0 calc(1px * var(--cluster-switch-scale, 1))
+    calc(2px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.15);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.cluster-row-track::after {
+  content: 'OFF';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(7px * var(--cluster-switch-scale, 1));
+  display: flex;
+  align-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: calc(10px * var(--cluster-switch-scale, 1));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--cluster-switch-label, rgba(255, 255, 255, 0.7));
+}
+
+.cluster-row-thumb {
+  position: absolute;
+  top: calc(3px * var(--cluster-switch-scale, 1));
+  left: calc(3px * var(--cluster-switch-scale, 1));
+  width: calc(24px * var(--cluster-switch-scale, 1));
+  height: calc(24px * var(--cluster-switch-scale, 1));
+  border-radius: 50%;
+  background: var(--cluster-switch-thumb, #fff);
+  box-shadow:
+    0 calc(1px * var(--cluster-switch-scale, 1))
+      calc(3px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.35),
+    0 0 0 calc(1px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.04);
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.2s ease;
+}
+
+.cluster-row-checkbox:checked + .cluster-row-track {
+  /* A richer, slightly darker green than a plain #4cd964 keeps the white
+     ON label above legible (~3.3:1, enough for bold 10px text) instead of
+     washing out against a lighter green. */
+  background: var(--cluster-switch-on, #43a047);
+}
+
+.cluster-row-checkbox:checked + .cluster-row-track::after {
+  content: 'ON';
+  right: auto;
+  left: calc(8px * var(--cluster-switch-scale, 1));
+  color: var(--cluster-switch-label-on, rgba(255, 255, 255, 0.95));
+}
+
+.cluster-row-checkbox:checked + .cluster-row-track .cluster-row-thumb {
+  /* 66px track, 1px border eaten by border-box, 24px thumb, 3px padding
+     each side: 66 - 2(border) - 24 - 2(3px padding) = 34, scaled the same
+     as every other dimension here. */
+  transform: translateX(calc(34px * var(--cluster-switch-scale, 1)));
+}
+
+.cluster-row-checkbox:focus-visible + .cluster-row-track {
+  outline: 2px solid var(--button-active);
+  outline-offset: 2px;
+}
+
+/* PostNL widget (js/components/postnl.js): incoming/sent PostNL shipments,
+   fetched via vendor/dashticz/postnl/index.php. Rows are painted into
+   .dt_state (js/dashticz.js's own content slot), same reasoning as Cluster
+   above - the block's configured icon/.dt_title stay untouched;
+   containerClass: 'postnl-block' is only a scoping hook here, same idea as
+   .cluster-block. */
+.postnl-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.postnl-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.postnl-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.postnl-icon {
+  flex: none;
+  font-size: 1em;
+  line-height: 1;
+  width: 1.4em;
+  text-align: center;
+}
+
+.postnl-icon-emoji {
+  font-size: 24px;
+}
+
+.postnl-icon-in {
+  color: var(--dt-ok);
+}
+
+.postnl-icon-out {
+  color: var(--dt-info);
+}
+
+.postnl-row-delivered {
+  color: var(--text-muted, #8a8a8a);
+}
+
+.postnl-row-delivered .postnl-icon {
+  color: #7a7a7a;
+}
+
+.postnl-row-text {
+  font-size: inherit;
+  min-width: 0;
+  text-align: center;
+}
+
+.postnl-error {
+  text-align: center;
+  font-size: inherit;
+  color: var(--text-muted);
+}
+
+/* HP iLO widget (js/components/hpilo.js): clustered server info fetched via
+   vendor/dashticz/hpilo/index.php. Rows are painted into .dt_state, same
+   reasoning as the PostNL widget above. */
+.hpilo-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.hpilo-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.hpilo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#we-hpilo-add:not(:hover),
+.we-hpilo-remove:not(:hover) {
+  background-color: #fff;
+}
+
+.we-hpilo-name {
+  min-width: 0;
+}
+
+/* margin: 0 !important - same reasoning as .cluster-row-icon above: legacy
+   per-icon rules further up this file (.fas.fa-plug, .fas.fa-microchip, ...)
+   would otherwise add a stray margin to the exact Font Awesome classes some
+   METRICS entries use (js/components/hpilo.js), making that row's icon
+   jump out of line with the others. */
+.hpilo-block .dt_state .hpilo-icon {
+  flex: none;
+  width: 1.4em;
+  margin: 0 !important;
+  font-size: 1em;
+  line-height: 1;
+  text-align: center;
+  color: var(--dt-info);
+}
+
+.hpilo-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.hpilo-value {
+  flex: none;
+  margin-left: auto;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.hpilo-warning .hpilo-value {
+  color: var(--dt-warn);
+}
+
+.hpilo-critical .hpilo-value {
+  color: var(--dt-error);
+}
+
+.hpilo-error {
+  font-size: inherit;
+  color: var(--text-muted);
+}
+
+@media (max-width: 975px) {
+  div.mh {
+    height: 75px;
+  }
+  .transbg.col-xs-1,
+  .transbg.col-xs-2,
+  .transbg.col-xs-3,
+  .transbg.col-xs-4,
+  .transbg.col-xs-5,
+  .transbg.col-xs-6,
+  .transbg.col-xs-7,
+  .transbg.col-xs-8,
+  .transbg.col-xs-9,
+  .transbg.col-xs-10,
+  .transbg.col-xs-11,
+  .transbg.col-xs-12 {
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+  .dt_block {
+    padding: 2px !important;
+  }
+
+  /* dirty fix for group component ... */
+
+  .mh.dt_block {
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+  }
+
+  .dt_title,
+  .dt_state {
+    margin: 2px 2px;
+  }
+  .dt_block .col-icon {
+    width: var(--icon-column-width, 36px) !important;
+    margin: 2px;
+  }
+  .button .dt_state,
+  .frame .dt_state {
+    margin: -2px;
+  }
+  .dt_title {
+    font-size: 100%;
+  }
+  .cast-button-container {
+    padding: 3px !important;
+  }
+  h1,
+  h4 {
+    margin-left: 0px !important;
+  }
+  img.icon {
+    max-width: 15px !important;
+  }
+  .col-icon .fas,
+  .col-icon .far,
+  .col-icon .fab,
+  .col-icon .wi {
+    font-size: 15px !important;
+  }
+
+  .fa-tv:before {
+    font-size: 12px;
+  }
+  .big .wi {
+    font-size: 30px !important;
+  }
+  .col-icon {
+    max-width: var(--icon-column-width, 26px) !important;
+  }
+  .col-data {
+    width: calc(100% - var(--icon-column-width, 26px) - 4px);
+  }
+
+  .trashcan {
+    max-width: 15px !important;
+  }
+  .iconheating {
+    margin-top: 0px;
+  }
+  .title-input {
+    font-size: 14px !important;
+    margin-top: 0px;
+  }
+}
+
+div.screen {
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  background-size: cover;
+  -o-background-size: cover;
+  background-position: center;
+  color: var(--text-light);
+}
+
+.section-heading {
+  margin-top: 0;
+}
+
+.text-primary {
+  color: var(--button-active);
+}
+
+.no-gutter > [class*='col-'] {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.btn-default {
+  color: var(--text-dark);
+  background-color: var(--text-light);
+  border-color: var(--text-light);
+  -webkit-transition: all 0.35s;
+  -moz-transition: all 0.35s;
+  transition: all 0.35s;
+}
+
+.btn-default:hover,
+.btn-default:focus,
+.btn-default.focus,
+.btn-default:active,
+.btn-default.active,
+.open > .dropdown-toggle.btn-default {
+  color: var(--text-dark);
+  background-color: #f2f2f2;
+  border-color: #ededed;
+}
+
+.btn-default:active,
+.btn-default.active,
+.open > .dropdown-toggle.btn-default {
+  background-image: none;
+}
+
+.btn-default.disabled,
+.btn-default[disabled],
+fieldset[disabled] .btn-default,
+.btn-default.disabled:hover,
+.btn-default[disabled]:hover,
+fieldset[disabled] .btn-default:hover,
+.btn-default.disabled:focus,
+.btn-default[disabled]:focus,
+fieldset[disabled] .btn-default:focus,
+.btn-default.disabled.focus,
+.btn-default[disabled].focus,
+fieldset[disabled] .btn-default.focus,
+.btn-default.disabled:active,
+.btn-default[disabled]:active,
+fieldset[disabled] .btn-default:active,
+.btn-default.disabled.active,
+.btn-default[disabled].active,
+fieldset[disabled] .btn-default.active {
+  background-color: var(--text-light);
+  border-color: var(--text-light);
+}
+
+.btn-default .badge {
+  color: var(--text-light);
+  background-color: var(--text-dark);
+}
+
+.btn-primary {
+  color: var(--text-light);
+  background-color: var(--button-active);
+  border-color: var(--button-active);
+  -webkit-transition: all 0.35s;
+  -moz-transition: all 0.35s;
+  transition: all 0.35s;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary.focus,
+.btn-primary:active,
+.btn-primary.active,
+.open > .dropdown-toggle.btn-primary {
+  color: var(--text-light);
+  background-color: #ee4b28;
+  border-color: #ed431f;
+}
+
+.btn-primary:active,
+.btn-primary.active,
+.open > .dropdown-toggle.btn-primary {
+  background-image: none;
+}
+
+.btn-primary.disabled,
+.btn-primary[disabled],
+fieldset[disabled] .btn-primary,
+.btn-primary.disabled:hover,
+.btn-primary[disabled]:hover,
+fieldset[disabled] .btn-primary:hover,
+.btn-primary.disabled:focus,
+.btn-primary[disabled]:focus,
+fieldset[disabled] .btn-primary:focus,
+.btn-primary.disabled.focus,
+.btn-primary[disabled].focus,
+fieldset[disabled] .btn-primary.focus,
+.btn-primary.disabled:active,
+.btn-primary[disabled]:active,
+fieldset[disabled] .btn-primary:active,
+.btn-primary.disabled.active,
+.btn-primary[disabled].active,
+fieldset[disabled] .btn-primary.active {
+  background-color: var(--button-active);
+  border-color: var(--button-active);
+}
+
+.btn-primary .badge {
+  color: var(--button-active);
+  background-color: var(--text-light);
+}
+
+.btn {
+  font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 700;
+  padding: 0px 5px 0px 5px;
+  font-size: 120%;
+  margin-right: 5px;
+}
+
+.btn-xl {
+  padding: 15px 30px;
+}
+
+.btn-group .btn {
+  font-size: 12px;
+  font-weight: 400;
+  padding: 2px 6px;
+  margin-right: 2px;
+}
+
+.btn-group .btn.active {
+  font-weight: 700;
+}
+
+.modal-login {
+  max-height: 90%;
+  max-width: 90%;
+  min-width: 25% !important;
+  margin: 0 auto;
+  margin-top: 200px;
+}
+
+.content-login {
+  display: block;
+  font-family: Verdana;
+  font-size: 22px;
+  line-height: 22px;
+  padding: 10px 0 0;
+  color: #000;
+}
+
+.login {
+  text-align: center;
+  padding: 20px;
+}
+
+.login input[type='text'] {
+  height: 30px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 2px;
+  color: #000;
+  font-family: 'Exo', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 4px;
+}
+
+.login input[type='password'] {
+  height: 30px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 2px;
+  color: #000;
+  font-family: 'Exo', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 4px;
+  margin-top: 10px;
+}
+
+.login input[type='button'] {
+  height: 35px;
+  padding: 6px;
+  margin-top: 10px;
+}
+
+.login input[type='button']:hover {
+  opacity: 0.8;
+}
+
+.login input[type='button']:active {
+  opacity: 0.6;
+}
+
+.login input[type='text']:focus {
+  outline: none;
+  border: 1px solid rgba(0, 0, 0, 0.9);
+}
+
+.login input[type='password']:focus {
+  outline: none;
+  border: 1px solid rgba(0, 0, 0, 0.9);
+}
+
+.login input[type='button']:focus {
+  outline: none;
+}
+
+::-webkit-input-placeholder {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+::-moz-input-placeholder {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+::-moz-selection {
+  color: var(--text-light);
+  text-shadow: none;
+  background: var(--text-dark);
+}
+
+::selection {
+  color: var(--text-light);
+  text-shadow: none;
+  background: var(--text-dark);
+}
+
+img::selection {
+  color: var(--text-light);
+  background: transparent;
+}
+
+img::-moz-selection {
+  color: var(--text-light);
+  background: transparent;
+}
+
+body {
+  webkit-tap-highlight-color: var(--text-dark);
+}
+
+#latetrain {
+  color: var(--warning-red);
+}
+
+#notlatetrain {
+  color: var(--success-green);
+}
+
+#departureScheduled {
+  font-size: 10px !important;
+}
+
+a:not([href]) {
+  cursor: pointer;
+}
+
+/* EVOHOME START */
+
+.text-grey {
+  color: #bbb;
+  white-space: nowrap;
+}
+
+.small_fa {
+  font-size: 0.9em;
+}
+
+.select {
+  background: transparent;
+  border: 0;
+  color: var(--text-light) !important;
+}
+
+.select option {
+  border: 0;
+  color: var(--text-light) !important;
+  background-color: var(--text-dark);
+}
+
+.hide {
+  display: none !important;
+}
+
+/* EVOHOME END */
+
+.hr_thin {
+  height: 0.8px;
+  border: none;
+  background-color: var(--text-light);
+  opacity: 0.2;
+  margin-bottom: 0.5rem !important;
+  margin-top: 0.5rem !important;
+}
+
+.modal {
+  text-align: center;
+}
+
+.modal-dialog {
+  display: inline-block;
+  text-align: left;
+  vertical-align: middle;
+  min-width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media screen and (min-width: 768px) {
+  .modal:before {
+    display: inline-block;
+    vertical-align: middle;
+    content: ' ';
+    height: 100%;
+  }
+
+  .modal-dialog-settings {
+    margin: 80px auto;
+    vertical-align: top;
+  }
+}
+
+/* START: NEWS BLOCK*/
+
+#newsTicker {
+  margin: 10px 0 0 15px;
+  color: #333;
+  padding-top: 0px;
+  padding-left: 0px;
+}
+
+#newsTicker li {
+  min-height: 72px;
+  text-overflow: ellipsis;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-light);
+  padding-left: 0px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.news .headline {
+  margin-left: 0.5rem !important;
+}
+
+.news .headline .title,
+.news .headline .description {
+  margin-bottom: 0.5rem !important;
+}
+
+.news .headline .title {
+  font-size: 14px;
+}
+
+.news .headline .description {
+  font-size: 13px;
+}
+
+.news .headline .updated {
+  font-size: 10px;
+  opacity: 0.4;
+}
+
+.news_row {
+  display: flex;
+}
+
+.news_image {
+  flex: 0 0 16%;
+}
+
+.news_image img {
+  width: 90%;
+}
+
+.news .dt_state {
+  overflow: hidden;
+}
+
+/* END: NEWS BLOCK */
+
+/* START: TOOLTIPSTYLE */
+
+canvas {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+.chartjs-tooltip {
+  opacity: 1;
+  position: absolute;
+  background: var(--main-bg-strong);
+  color: var(--text-light);
+  border-radius: 10px;
+  -webkit-transition: all 0.1s ease;
+  transition: all 0.1s ease;
+  pointer-events: none;
+  -webkit-transform: translate(-50%, 0);
+  transform: translate(-50%, 0);
+  padding: 10px;
+  z-index: 3;
+}
+
+.chartjs-tooltip.left {
+  transform: translate(13%, -30%);
+}
+
+.chartjs-tooltip.right {
+  transform: translate(-110%, -30%);
+}
+
+.chartjs-tooltip.bottom {
+  transform: translate(-50%, -150%);
+}
+
+.chartjs-tooltip.left:before,
+.chartjs-tooltip.right:before,
+.chartjs-tooltip.bottom:before {
+  border: solid;
+  border-color: #111 transparent;
+  border-color: var(--main-bg-strong) transparent;
+  border-width: 16px 8px 0 8px;
+  content: '';
+  display: block;
+  top: 57%;
+  position: absolute;
+}
+
+.chartjs-tooltip.left:before {
+  left: 0%;
+  transform: rotate(90deg) translate(-100%, 100%);
+}
+
+.chartjs-tooltip.right:before {
+  left: 100%;
+  transform: rotate(270deg) translate(100%, 0%);
+}
+
+.chartjs-tooltip.bottom:before {
+  left: 50%;
+  top: 100%;
+  transform: rotate(0deg) translate(-50%, 0%);
+}
+
+.chartjs-tooltip thead {
+  border-collapse: collapse;
+  border-bottom: solid thin;
+}
+
+.chartjs-tooltip tr {
+  padding: 2px 0px;
+}
+
+.chartjs-tooltip th {
+  padding-bottom: 5px;
+}
+
+.chartjs-tooltip th i {
+  font-size: 12px;
+  padding-right: 5px;
+}
+
+.chartjs-tooltip tbody tr:first-child td {
+  padding-top: 5px;
+}
+
+.chartjs-tooltip tbody tr td:nth-child(2) {
+  padding-right: 15px;
+  white-space: nowrap;
+}
+
+.chartjs-tooltip tbody tr td:nth-child(3) {
+  text-align: end;
+}
+
+.chartjs-tooltip tr.total {
+  border-top: solid thin;
+  border-bottom: solid thin;
+  height: 25px;
+  border-color: grey;
+}
+
+.chartjs-tooltip-key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 10px;
+  border-width: 2px;
+}
+
+.chartjs-tooltip-fa {
+  font-size: 15px;
+  margin-left: -2px;
+  margin-top: 1px;
+  margin-right: 5px;
+}
+
+/* END: TOOLTIPSTYLE */
+
+/* START: GRAPH-MENU DEBUG */
+
+.flex-row {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+}
+
+.flex-column {
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-yellow {
+  color: #f0ad4e !important;
+}
+
+.text-blue {
+  color: #0275d8 !important;
+}
+
+.text-green {
+  color: #5cb85c !important;
+}
+
+.text-red {
+  color: #d9534f !important;
+}
+
+.graph-menu {
+  color: var(--text-light);
+}
+
+.graphbuttons .dropdown-menu {
+  min-width: 131px !important;
+}
+
+.graph-menu hr {
+  border-width: 1px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.graph-menu .modal-title,
+.graph-menu .fas {
+  font-size: 16px;
+  margin: 0;
+}
+
+.graph-menu .modal-content {
+  background-color: #222;
+}
+
+.graph-menu .modal-title .fas {
+  padding-right: 5px;
+}
+
+.graph-menu div:not(.debug) > .fas {
+  padding-right: 5px;
+}
+
+.graph-menu .flex-row {
+  font-size: 14px;
+}
+
+.graph-menu .flex-row.title {
+  justify-content: space-between;
+}
+
+.graph-menu .label {
+  color: #939393;
+  font-size: inherit;
+  padding: 0;
+  margin-right: 10px;
+}
+
+.graph-menu .devices,
+.graph-menu .input-keys,
+.graph-menu .output-keys,
+.graph-menu .ylabels {
+  padding-right: 20px;
+}
+
+.graph-menu .modal-header {
+  padding-top: 20px;
+  padding-bottom: 0px;
+}
+
+.graph-menu .device-list {
+  width: 100%;
+  flex: 1;
+  background: #222;
+  padding: 0px 10px;
+  border: solid 0.5px white;
+  border-radius: 3px;
+  margin-right: 10px;
+  overflow: scroll;
+  max-height: 500px;
+}
+
+.graph-menu .device-list .device {
+  font-size: 12px;
+  border-bottom: solid 0.5px white;
+  padding: 5px 0px;
+  display: flex;
+}
+
+.graph-menu .device-list .device .idx {
+  font-size: 12px;
+  margin-right: 5px;
+}
+
+.graph-menu .device-list .device .idx .fas {
+  font-size: 12px;
+  margin-right: 5px;
+}
+
+.graph-menu .device-list .device .col-fas {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.graph-menu textarea {
+  width: 60%;
+  background: #222;
+  color: grey;
+}
+
+.graph-menu .btn.debug {
+  color: #222;
+  background-color: var(--text-light);
+}
+
+/* END: GRAPH-MENU DEBUG */
+
+/* START: CAMERA COMPONENT */
+
+.cam-container,
+.cam-container .stream {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  position: absolute;
+  z-index: 20;
+}
+
+.cam-container .carousel-inner {
+  position: relative;
+  width: 100%;
+  overflow: visible !important;
+}
+
+.cam-container .stream {
+  position: fixed;
+  background-color: #2e2e2e;
+}
+
+.cam-container .cam-tray {
+  display: flex;
+  flex: auto;
+  justify-content: center;
+  width: 100%;
+  background-color: #2e2e2e;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  color: var(--text-light);
+  text-align: center;
+  z-index: 31;
+}
+
+.cam-container .cam-tray.open {
+  height: 15vh;
+  box-shadow: 0px -10px 35px 0px rgba(0, 0, 0, 0.7);
+}
+
+.cam-container .cam-tray.shut {
+  height: 0;
+}
+
+.cam-tray-item {
+  padding: 10px;
+  max-width: fit-content;
+}
+
+.cam-tray-caption {
+  position: relative;
+  bottom: 15%;
+}
+
+.cam-container .handle {
+  position: absolute;
+  width: 5%;
+  height: 30px;
+  bottom: 0;
+  border-radius: 5px 5px 0px 0px;
+  color: #5d5d5d;
+  text-align: center;
+  border: 0.5px solid #5d5d5d;
+  border-bottom: 0;
+  z-index: 30;
+  left: 50%;
+  padding-left: 0;
+  margin-left: -2.5%;
+  list-style: none;
+  border: 0;
+  box-shadow: inset 0px 4px 15px 0px rgba(0, 0, 0, 0.7);
+  transition: all 0.1s ease-in-out;
+  animation: pulse 2s infinite;
+}
+
+.cam-container .handle:hover {
+  height: 45px;
+}
+
+.cam-container .handle i {
+  font-size: 1.5vh;
+  margin-top: 5%;
+}
+
+.cam-container .handle:hover i {
+  font-size: 2.5vh;
+  color: var(--text-light);
+}
+
+@-webkit-keyframes pulse {
+  0% {
+    -webkit-box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.4);
+  }
+  70% {
+    -webkit-box-shadow: 0 0 6px 3px rgba(0, 0, 0, 0);
+  }
+  100% {
+    -webkit-box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    -moz-box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.4);
+  }
+  70% {
+    -moz-box-shadow: 0 0 6px 3px rgba(0, 0, 0, 0);
+    box-shadow: 0 0 6px 3px rgba(0, 0, 0, 0);
+  }
+  100% {
+    -moz-box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0);
+    box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0);
+  }
+}
+
+.cam-container .handle.open {
+  display: none;
+}
+
+.cam-container .cam-tray-img {
+  border: 0px;
+  height: 13vh;
+  width: auto;
+  border-radius: 20px;
+  box-shadow: 0px 5px 10px 5px rgba(0, 0, 0, 0.7);
+}
+
+.cam-container .btn-group {
+  top: 0;
+  right: 0;
+  position: absolute;
+  padding: 20px;
+}
+
+.cam-container .carousel-control .glyphicon-chevron-left {
+  left: 30%;
+}
+
+.cam-container .carousel-control .glyphicon-chevron-right {
+  right: 30%;
+}
+
+.cam-container .cam-caption {
+  position: absolute;
+  color: var(--text-light);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  z-index: 30;
+  right: 3%;
+  margin-top: 1%;
+}
+
+.cam-container .carousel-inner .item img {
+  height: 100vh !important;
+}
+
+.cam-container .carousel-indicators {
+  bottom: 5% !important;
+}
+
+.carbon {
+  background:
+    linear-gradient(27deg, #151515 5px, transparent 5px) 0 5px,
+    linear-gradient(207deg, #151515 5px, transparent 5px) 10px 0px,
+    linear-gradient(27deg, #222 5px, transparent 5px) 0px 10px,
+    linear-gradient(207deg, #222 5px, transparent 5px) 10px 5px,
+    linear-gradient(90deg, #1b1b1b 10px, transparent 10px),
+    linear-gradient(
+      #1d1d1d 25%,
+      #1a1a1a 25%,
+      #1a1a1a 50%,
+      transparent 50%,
+      transparent 75%,
+      #242424 75%,
+      #242424
+    );
+  background-color: #131313;
+  background-size: 20px 20px;
+  background-clip: content-box;
+}
+
+/* END: CAMERA COMPONENT */
+
+/* START: CORONAVIRUS */
+
+.coronavirus .graphheader {
+  height: 20px;
+}
+
+.coronavirus .graphtitle {
+  width: 90%;
+}
+
+.coronavirus .graphheader .fx {
+  font-size: 16px !important;
+  margin-left: 10px;
+}
+
+.coronavirus .graphheader img {
+  height: 20%;
+  margin-right: 5px;
+}
+
+.coronavirus.block_report {
+  font-size: 24px !important;
+  padding: 15px 5px !important;
+}
+
+.coronavirus.block_report .fx {
+  font-size: 150% !important;
+}
+
+.coronavirus.block_report .title {
+  font-size: 14px !important;
+  color: #ccc;
+}
+
+.coronavirus.block_report .title {
+  font-weight: 900;
+}
+
+.coronavirus.block_report .flag {
+  max-width: 100%;
+}
+
+.vertical-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+/* END: CORONAVIRUS */
+
+/* START: AGENDA */
+
+.agenda table {
+  border-collapse: separate;
+  border-spacing: 10px 0px;
+  margin-left: -10px;
+}
+
+.agenda td {
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.event .description {
+  white-space: normal;
+}
+
+/* END: AGENDA */
+
+/* START: NEW CALENDAR */
+
+.cal_table {
+  border-collapse: collapse;
+  height: 100% !important;
+}
+
+.cal_table tr {
+  display: flex;
+}
+
+.cal_table td {
+  font-family: Arial, sans-serif;
+  padding: 10px 5px;
+  border-style: solid;
+  border-width: 1px;
+  overflow: hidden;
+  word-break: normal;
+  border-color: var(--text-light);
+  color: var(--text-light);
+  background-color: var(--selector-bg);
+  display: inline-table;
+}
+
+.cal_table td:hover {
+  background-color: #353738;
+}
+
+.cal_table td div {
+  font-size: 1.2em;
+  text-align: left;
+}
+
+.cal_table td > div {
+  text-align: center;
+}
+
+.cal_table table tr div.event {
+  white-space: wrap !important;
+}
+
+.cal_table td > div.historic > div {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.cal_table td > div.header {
+  background-color: #484848;
+  max-width: inherit;
+}
+
+.cal_table td > div.today {
+  background-color: #0275d8;
+}
+
+.cal_table td > div.event:hover,
+.cal_table td > div.event.historic:hover > div {
+  background-color: #f0ad4e;
+  color: var(--selector-bg);
+}
+
+.cal_table td > div.allday {
+  background-color: #d9534f;
+  border-radius: 2px;
+}
+
+.cal_table td > div.allday.hol {
+  background-color: #428442;
+  border-radius: 2px;
+}
+
+.cal_table td > div:not(:first-child) {
+  display: inline-flex;
+  margin: 3px 5px;
+  display: flex;
+}
+
+.cal_table td div div:nth-child(1) {
+  margin-right: 5px;
+}
+
+.cal-modal {
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  background-color: var(--selector-bg);
+  z-index: 100;
+  top: 0;
+  top: 50%;
+  left: 50%;
+  margin-top: -10%;
+  margin-left: -15%;
+  padding: 1%;
+  box-shadow: 0px 20px 20px 20px var(--main-bg-dark);
+  color: var(--text-light);
+  border: solid 2px var(--selector-bg);
+  border-radius: 5px;
+}
+
+.cal-modal > .cal-title {
+  font-size: 1.8em;
+  font-weight: 900;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+}
+
+.cal-modal > .cal-title > .far {
+  float: right !important;
+}
+
+.cal-modal > .cal-info {
+  overflow-y: auto;
+  height: calc(100% - 55px);
+  border-bottom: solid 1px #bebebe;
+  border-top: solid 1px #bebebe;
+  padding-top: 10px;
+}
+
+.cal-modal > .cal-footer {
+  bottom: 0px !important;
+  position: absolute;
+  width: 93%;
+  line-height: 2;
+  text-align: center;
+  height: 30px;
+}
+
+.cal-footer .cal-name {
+  left: 47%;
+  position: absolute;
+}
+
+.cal-modal > .cal-footer a {
+  color: grey;
+}
+
+.cal-modal > .cal-footer a:hover {
+  color: dodgerblue;
+}
+
+.cal-modal > .cal-footer a:nth-child(1) {
+  float: left;
+}
+
+.cal-modal > .cal-footer a:nth-child(2) {
+  float: right;
+}
+
+@media screen and (max-width: 1400px) and (max-height: 800px) {
+  .cal_table td > div:first-child {
+    text-align: center;
+  }
+  .cal_table td div {
+    font-size: 0.9em;
+    text-align: left;
+  }
+}
+
+/* END: CALENDAR */
+
+/* START: SECURITY PANEL */
+
+@font-face {
+  font-family: 'Audiowide';
+  src: url('../font/Audiowide.eot');
+  src:
+    url('../font/Audiowide.eot?#iefix') format('embedded-opentype'),
+    url('../font/Audiowide.woff') format('woff'),
+    url('../font/Audiowide.ttf') format('truetype'),
+    url('../font/Audiowide.svg#../font/Audiowide-7Italic') format('svg');
+}
+
+.sec-modal {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #1e1e1e;
+  z-index: 1001;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #bebebe;
+}
+
+.sec-body {
+  background: rgb(31, 31, 31);
+  height: 100%;
+}
+
+.security-panel {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: inherit;
+  color: #bebebe;
+  background: var(--main-bg);
+}
+
+.sec-modal .sec-frame {
+  position: relative;
+}
+
+.sec-frame {
+  border-radius: 5px;
+  position: relative;
+  width: 12em;
+  margin: 0 auto;
+}
+
+.sec-frame.decorated {
+  background-image: url(../img/bg14.jpg);
+  -webkit-box-shadow: 10px 10px 5px 0px rgba(0, 0, 0, 0.75);
+  -moz-box-shadow: 10px 10px 5px 0px rgba(0, 0, 0, 0.75);
+  box-shadow:
+    0px 6px 20px 5px rgba(0, 0, 0, 0.75),
+    inset 0px 5px 7px -2px rgba(252, 252, 252, 0.2),
+    inset 0 -14px 8px 2px rgba(0, 0, 0, 0.7);
+  padding: 1em;
+}
+
+.sec-frame:not(.decorated) {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.sec-frame .keypad-header {
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 2em;
+  font-size: 100%;
+}
+
+.sec-frame .keypad-header .fas {
+  font-size: 100% !important;
+}
+
+.sec-frame .keypad-header .text {
+  margin: 0;
+  color: #5a5959;
+  text-shadow: 1px 2px 8px rgba(0, 0, 0, 1);
+}
+
+.sec-frame .keypad-header .fas {
+  margin-right: 0.3em;
+  -webkit-animation: rotateY 2s infinite linear;
+  animation: rotateY 2s infinite linear;
+  text-transform: uppercase;
+  background: radial-gradient(circle, white, #000);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@-webkit-keyframes rotateY {
+  to {
+    -webkit-transform: rotateY(360deg);
+  }
+}
+
+@keyframes rotateY {
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.sec-frame .keypad-footer {
+  color: #494848;
+  text-align: center;
+  font-family: monospace;
+  width: 100%;
+  font-size: 50%;
+  line-height: 2;
+}
+
+.sec-frame .keypad-input {
+  margin: 0 2%;
+}
+
+.sec-frame .keypad-input table {
+  border-collapse: separate;
+  border-spacing: 1px;
+  width: 100%;
+  margin: 0;
+}
+
+.sec-frame .keypad-input table td {
+  width: 25%;
+  padding: 2%;
+}
+
+.sec-frame .keypad-input table tr {
+  white-space: nowrap;
+}
+
+.sec-frame .keypad-input .input-container {
+  overflow: hidden;
+  margin: 0 2%;
+}
+
+.sec-frame.decorated .keypad-input .input-container {
+  box-shadow: 0px 2px 9px 1px var(--main-bg-strong);
+}
+
+.sec-frame .keypad-input .key-input {
+  font-family: 'Audiowide' !important;
+  width: 100%;
+  border-radius: 3px;
+  background-color: #161616;
+  border: 0;
+  box-shadow:
+    inset 0px 1px 0px rgba(255, 255, 255, 0.3),
+    inset 0px 0px 3px rgba(255, 255, 255, 0.5),
+    inset 0px 0px 15px 5px var(--main-bg-strong);
+  color: #8fffd0;
+  font-family: monospace;
+  text-align: center;
+  height: 100%;
+  font-size: 70%;
+}
+
+.text-strobe {
+  background: linear-gradient(to right, #e72a3a 10%, #fff 50%, #5bdaff 60%);
+  background-size: auto auto;
+  background-clip: border-box;
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textclip 1.5s linear infinite;
+}
+
+@keyframes textclip {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.sec-frame .keypad-input .key {
+  vertical-align: middle;
+  background: #0a0a0a;
+  color: #bebebe;
+  border-radius: 5px;
+  touch-action: manipulation;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  font-family: monospace;
+  text-transform: uppercase;
+  font-weight: 900;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 100%;
+  line-height: 1.75;
+}
+
+.sec-frame.decorated .keypad-input .key {
+  -webkit-box-shadow:
+    0px 11px 22px #000000,
+    0px 3px 15px rgba(0, 0, 0, 0.4),
+    inset 0px 1px 0px rgba(255, 255, 255, 0.3),
+    inset 0px 0px 3px rgba(255, 255, 255, 0.5);
+  -moz-box-shadow:
+    0px 11px 22px #000000,
+    0px 3px 15px rgba(0, 0, 0, 0.4),
+    inset 0px 1px 0px rgba(255, 255, 255, 0.3),
+    inset 0px 0px 3px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0px 11px 22px #000000,
+    0px 3px 15px rgba(0, 0, 0, 0.4),
+    inset 0px 1px 0px rgba(255, 255, 255, 0.3),
+    inset 0px 0px 3px rgba(255, 255, 255, 0.5);
+}
+
+.sec-frame .keypad-input .key:not(.disabled):hover {
+  filter: brightness(110%);
+}
+
+.sec-frame .keypad-input .key:not(.disabled):active {
+  transform: scale(0.9);
+  -webkit-box-shadow:
+    0px 2px 6px #000000,
+    0px 15px 15px rgba(0, 0, 0, 0.4),
+    inset 0px 1px 0px rgba(255, 255, 255, 1),
+    inset 0px 0px 3px rgba(255, 255, 255, 0.5);
+  -moz-box-shadow:
+    0px 2px 6px #000000,
+    0px 15px 15px rgba(0, 0, 0, 0.4),
+    inset 0px 1px 0px rgba(255, 255, 255, 1),
+    inset 0px 0px 3px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0px 2px 6px #000000,
+    0px 15px 15px rgba(0, 0, 0, 0.4),
+    inset 0px 1px 0px rgba(255, 255, 255, 1),
+    inset 0px 0px 3px rgba(255, 255, 255, 0.5);
+}
+
+.sec-frame .keypad-input .key.h {
+  border: 0 !important;
+  cursor: auto;
+}
+
+.sec-frame .keypad-input .key[data-id='disarm'] {
+  background-color: #1f451f !important;
+}
+
+.sec-frame .keypad-input .key[data-id='armhome'] {
+  background-color: #5f4726 !important;
+}
+
+.sec-frame .keypad-input .key[data-id='armaway'] {
+  background-color: #531e1d !important;
+}
+
+.sec-frame .keypad-input .key[data-id='dashticz'] {
+  background-color: #1a3649 !important;
+}
+
+.sec-frame .keypad-input .digit,
+.sec-frame .keypad-input .cancel,
+.sec-frame .keypad-input .status {
+  text-align: center;
+  height: 100%;
+  width: 100%;
+}
+
+.sec-frame .keypad-input .status:before {
+  position: relative;
+  font-family: 'Font Awesome 7 Free';
+  mix-blend-mode: soft-light;
+  font-weight: 900;
+  font-size: 100%;
+  color: rgba(130, 130, 130, 0.8);
+  text-shadow:
+    -1px -1px 1px var(--main-bg-strong),
+    0 0 0 #000,
+    1px 1px 3px rgba(255, 255, 255, 0.7);
+}
+
+.sec-frame .keypad-input .status[data-id='disarm']:before {
+  content: '\f09c';
+}
+
+.sec-frame .keypad-input .status[data-id='armhome']:before {
+  content: '\e065';
+}
+
+.sec-frame .keypad-input .status[data-id='armaway']:before {
+  content: '\f554';
+}
+
+.sec-frame .keypad-input .status[data-id='dashticz']:before {
+  content: '\f2f6';
+}
+
+.sec-frame .keypad-input .key[data-id='cancel']:before {
+  content: '\f104';
+  font-family: 'Font Awesome 7 Free';
+  font-weight: 900;
+  font-size: 100%;
+}
+
+.no-select {
+  -webkit-user-select: none;
+  /* Safari */
+  -ms-user-select: none;
+  /* IE 10+ and Edge */
+  user-select: none;
+  /* Standard syntax */
+}
+
+.screw {
+  position: absolute;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 100%;
+  background: -moz-linear-gradient(
+    -45deg,
+    #adadad 0%,
+    #e1e1e1 51%,
+    #dddddd 68%,
+    #f6f6f6 100%
+  );
+  background: -webkit-gradient(
+    linear,
+    left top,
+    right bottom,
+    color-stop(0%, #adadad),
+    color-stop(51%, #e1e1e1),
+    color-stop(68%, #dddddd),
+    color-stop(100%, #f6f6f6)
+  );
+  background: -webkit-linear-gradient(
+    -45deg,
+    #adadad 0%,
+    #e1e1e1 51%,
+    #dddddd 68%,
+    #f6f6f6 100%
+  );
+  background: -o-linear-gradient(
+    -45deg,
+    #adadad 0%,
+    #e1e1e1 51%,
+    #dddddd 68%,
+    #f6f6f6 100%
+  );
+  background: -ms-linear-gradient(
+    -45deg,
+    #adadad 0%,
+    #e1e1e1 51%,
+    #dddddd 68%,
+    #f6f6f6 100%
+  );
+  background: linear-gradient(
+    135deg,
+    #adadad 0%,
+    #e1e1e1 51%,
+    #dddddd 68%,
+    #f6f6f6 100%
+  );
+  filter: progid: DXImageTransform.Microsoft.gradient(startColorstr='#adadad', endColorstr='#f6f6f6', GradientType=1);
+  -moz-box-shadow: 0px 2px 4px #000;
+  -webkit-box-shadow: 0px 2px 4px #000;
+  box-shadow:
+    0px 2px 4px #000,
+    -1px 3px 10px 7px var(--main-bg-dark);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-image:
+    -webkit-radial-gradient(
+      50% 0%,
+      8% 50%,
+      hsla(0, 0%, 100%, 0.5) 0%,
+      hsla(0, 0%, 100%, 0) 100%
+    ),
+    -webkit-radial-gradient(
+        50% 100%,
+        12% 50%,
+        hsla(0, 0%, 100%, 0.6) 0%,
+        hsla(0, 0%, 100%, 0) 100%
+      ),
+    -webkit-radial-gradient(
+        0% 50%,
+        50% 7%,
+        hsla(0, 0%, 100%, 0.5) 0%,
+        hsla(0, 0%, 100%, 0) 100%
+      ),
+    -webkit-radial-gradient(
+        100% 50%,
+        50% 5%,
+        hsla(0, 0%, 100%, 0.5) 0%,
+        hsla(0, 0%, 100%, 0) 100%
+      ),
+    -webkit-repeating-radial-gradient(
+        50% 50%,
+        100% 100%,
+        hsla(0, 0%, 0%, 0) 0%,
+        hsla(0, 0%, 0%, 0) 3%,
+        hsla(0, 0%, 0%, 0.1) 3.5%
+      ),
+    -webkit-repeating-radial-gradient(
+        50% 50%,
+        100% 100%,
+        hsla(0, 0%, 100%, 0) 0%,
+        hsla(0, 0%, 100%, 0) 6%,
+        hsla(0, 0%, 100%, 0.1) 7.5%
+      ),
+    -webkit-repeating-radial-gradient(
+        50% 50%,
+        100% 100%,
+        hsla(0, 0%, 100%, 0) 0%,
+        hsla(0, 0%, 100%, 0) 1.2%,
+        hsla(0, 0%, 100%, 0.2) 2.2%
+      ),
+    -webkit-radial-gradient(
+        50% 50%,
+        200% 50%,
+        hsla(0, 0%, 90%, 1) 5%,
+        hsla(0, 0%, 85%, 1) 30%,
+        hsla(0, 0%, 60%, 1) 100%
+      );
+  opacity: 0.5;
+}
+
+.indent {
+  -moz-box-shadow: inset 1px -6px 8px #222;
+  -webkit-box-shadow: inset 1px -6px 8px #222;
+  box-shadow: inset 1px -6px 8px #222;
+  transform: rotate(150deg);
+  -ms-transform: rotate(150deg);
+  -webkit-transform: rotate(150deg);
+  height: 29%;
+  width: 135%;
+  margin-top: 41%;
+  margin-left: -20%;
+}
+
+.sec-frame .screw.tl {
+  top: 0.5em;
+  left: 0.5em;
+}
+
+.sec-frame .screw.tr {
+  top: 0.5em;
+  right: 0.5em;
+}
+
+.sec-frame .screw.bl {
+  bottom: 0.5em;
+  left: 0.5em;
+}
+
+.sec-frame .screw.br {
+  bottom: 0.5em;
+  right: 0.5em;
+}
+
+.sec-frame td .status.key.disabled {
+  background-color: var(--home-bg) !important;
+  cursor: not-allowed;
+}
+
+.sec-frame[data-mode='2'] table tr:nth-child(4) td:nth-child(3) {
+  display: none;
+}
+
+/* END: SECURITY PANEL */
+
+/* START: DIAL */
+
+.transbg.dial {
+  background-color: rgba(0, 0, 0, 0);
+}
+
+.block-center {
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.mh2 {
+  height: 170px !important;
+}
+
+.mh4 {
+  height: 340px !important;
+}
+
+.dt_content .dial {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  /* Backstop only: js/components/dial.js sets an inline font-size that
+     matches the block's actual measured/configured size on every mount. */
+  font-size: 100px;
+  width: 1em;
+  height: 1em;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  -ms-border-radius: 50%;
+  -o-border-radius: 50%;
+  border-radius: 50%;
+  float: left;
+  background-color: #8b8b8b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 5px 10px 2px rgba(0, 0, 0, 0.3),
+    inset 0px 0px 6px 0px rgba(0, 0, 0, 1);
+}
+
+.dial:hover {
+  cursor: default;
+}
+
+.dial.active:not(.fixed):hover:after {
+  top: 0.11em;
+  left: 0.11em;
+  width: 0.78em;
+  height: 0.78em;
+  -webkit-transition: all 0.2s ease-out;
+  -moz-transition: all 0.2s ease-out;
+  -o-transition: all 0.2s ease-out;
+  -ms-transition: all 0.2s ease-out;
+  transition: all 0.2s ease-out;
+}
+
+.dial.p0 .bar,
+.dial.p180 .bar,
+.dial.p180 .fill,
+.dial.p360 .bar,
+.dial.p360 .fill {
+  position: absolute;
+  border: 0.08em solid;
+  width: 0.78em;
+  height: 0.78em;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  -ms-border-radius: 50%;
+  -o-border-radius: 50%;
+  border-radius: 50%;
+  left: 0.03em;
+  top: 0.03em;
+}
+
+.dial.p0 .bar,
+.dial.p180 .bar {
+  clip: rect(0em, 0.47em, 1em, 0em);
+  -webkit-transform: rotate(0deg);
+  -moz-transform: rotate(0deg);
+  -ms-transform: rotate(0deg);
+  -o-transform: rotate(0deg);
+  transform: rotate(0deg);
+}
+
+.dial.p180 .fill,
+.dial.p360 .fill {
+  clip: rect(0em, 0.5em, 1em, 0em);
+  -webkit-transform: scaleX(-1) rotate(360deg);
+  -moz-transform: scaleX(-1) rotate(360deg);
+  -ms-transform: scaleX(-1) rotate(360deg);
+  -o-transform: scaleX(-1) rotate(360deg);
+  transform: scaleX(-1) rotate(360deg);
+}
+
+.dial.p360 .bar,
+.dial.p360 .fill {
+  clip: auto;
+}
+
+.slice.primary {
+  color: #ffa500;
+  color: var(--dial-color);
+}
+
+.slice.secondary {
+  color: #307bbb;
+}
+
+.slice.positive {
+  color: #28a745;
+}
+
+.slice.negative {
+  color: #dc3545;
+}
+
+.dial.p180 .fill:after {
+  content: '';
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -ms-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  transform: rotate(180deg);
+}
+
+.dial *,
+.dial *:before,
+.dial *:after {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+.dial:after {
+  position: absolute;
+  top: 0.08em;
+  left: 0.08em;
+  display: block;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  -ms-border-radius: 50%;
+  -o-border-radius: 50%;
+  border-radius: 50%;
+  background-color: whitesmoke;
+  width: 0.84em;
+  height: 0.84em;
+  -webkit-transition-property: all;
+  -moz-transition-property: all;
+  -o-transition-property: all;
+  transition-property: all;
+  -webkit-transition-duration: 0.2s;
+  -moz-transition-duration: 0.2s;
+  -o-transition-duration: 0.2s;
+  transition-duration: 0.2s;
+  -webkit-transition-timing-function: ease-in;
+  -moz-transition-timing-function: ease-in;
+  -o-transition-timing-function: ease-in;
+  transition-timing-function: ease-in;
+  background-color: transparent;
+}
+
+/* .slice is rotated, so its axis-aligned bounding box is wider/taller than
+   its own 1em x 1em size - left unclipped, that inflated box contributes to
+   the scrollable overflow of any ancestor, which showed up as scrollbars on
+   grid screens (.dt-grid-item has overflow: auto). This wrapper - not .dial
+   itself - contains just that, so .dial-center's own glow/flash effects
+   (which intentionally extend past .dial's own edge) are left untouched. */
+.dial-ring-clip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1em;
+  height: 1em;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.dial .slice {
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-140deg);
+}
+
+.dial .slice.splitdial-plus {
+  transform: translate(-50%, -50%) rotateY(0deg) rotateX(0deg) !important;
+}
+
+.dial .slice.splitdial-minus {
+  transform: translate(-50%, -50%) rotate(180deg) !important;
+}
+
+.dial:not(.p180):not(.p360) .slice,
+.dial.p0 .slice {
+  clip: rect(0em, 1em, 1em, 0.5em);
+}
+
+.dial.p180 .slice,
+.dial.p360 .slice {
+  clip: rect(0em, 1em, 1em, 0em) !important;
+}
+
+.dial .dial-container {
+  position: absolute;
+  width: 93%;
+  height: 93%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -webkit-transition-property: all;
+  -moz-transition-property: all;
+  -o-transition-property: all;
+  transition-property: all;
+  -webkit-transition-duration: 0.2s;
+  -moz-transition-duration: 0.2s;
+  -o-transition-duration: 0.2s;
+  transition-duration: 0.2s;
+  -webkit-transition-timing-function: ease-in;
+  -moz-transition-timing-function: ease-in;
+  -o-transition-timing-function: ease-in;
+  transition-timing-function: ease-in;
+}
+
+.dt_content .dial.active:not(.fixed):hover .dial-container {
+  width: 80%;
+  height: 80%;
+  /*  top: 6%;
+  left: 6%;*/
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -webkit-transition-property: all;
+  -moz-transition-property: all;
+  -o-transition-property: all;
+  transition-property: all;
+  -webkit-transition-duration: 0.2s;
+  -moz-transition-duration: 0.2s;
+  -o-transition-duration: 0.2s;
+  transition-duration: 0.2s;
+  -webkit-transition-timing-function: ease-in;
+  -moz-transition-timing-function: ease-in;
+  -o-transition-timing-function: ease-in;
+  transition-timing-function: ease-in;
+}
+
+/* .dial-needle::before/::after draw the needle via the CSS border-triangle
+   trick, deliberately a little longer than .dial's own radius so the tip
+   reaches the ring - but the border-triangle's own box (further offset by
+   its `top: -53%`) is unclipped, so it always contributed a small amount to
+   the scrollable overflow of any ancestor, regardless of needle rotation.
+   Matches .dial-ring-clip's approach; centered via percentage (rather than
+   .dial-ring-clip's top/left: 0) because this wrapper's parent is
+   .dial-container - a smaller, inset box - not .dial itself. */
+.dial-needle-clip {
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.dial .draggable {
+  width: 1em;
+  height: 1em;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  position: absolute;
+}
+
+.dial .dial-center {
+  width: 88%;
+  height: 88%;
+  font-size: 10%;
+  /*
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto auto;*/
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  position: absolute;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, #333, #444);
+  box-shadow:
+    inset 0 0 3px 0px var(--main-bg-dark),
+    0 0 11px 0px var(--main-bg-strong);
+  -webkit-transition: all 0.2s ease-in;
+  -moz-transition: all 0.2s ease-in;
+  -o-transition: all 0.2s ease-in;
+  -ms-transition: all 0.2s ease-in;
+  transition: all 0.2s ease-in;
+  z-index: 2;
+  user-select: none;
+}
+
+.dt_content .dial.active:not(.fixed):hover .dial-center {
+  width: 65%;
+  height: 65%;
+  -webkit-transition: all 0.2s ease-in;
+  -moz-transition: all 0.2s ease-in;
+  -o-transition: all 0.2s ease-in;
+  -ms-transition: all 0.2s ease-in;
+  transition: all 0.2s ease-in;
+}
+
+.dt_content .dial.fixed .dial-center {
+  width: 95%;
+  height: 95%;
+}
+
+.dial-menu .status {
+  list-style-type: none;
+  padding-left: 0;
+  width: 130%;
+  height: 100%;
+  /*  font-size: 9%;*/
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  text-align: center;
+  text-align-last: center;
+  -moz-text-align-last: center;
+  color: #cccccc;
+  border: 0;
+  overflow-y: hidden;
+  outline: none;
+
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.dial-menu {
+  height: 90%;
+  width: 90%;
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  border-radius: 50%;
+  box-shadow:
+    inset 0px 0.5px 0px rgba(255, 255, 255, 0.3),
+    inset 0px 0px 2px rgba(255, 255, 255, 0.5),
+    inset 0px 5px 8px 5px var(--main-bg-strong);
+  background-color: #2a2a2a;
+  overflow: hidden;
+}
+
+.dial-menu .status li {
+  text-align: center;
+  text-align-last: center;
+  -moz-text-align-last: center;
+  max-width: 100% !important;
+  width: 98%;
+  line-height: 1.35;
+}
+
+.dial-menu .status li:hover:not(.selected),
+.dial-menu .status li:focus:not(.selected),
+.dial-menu .status li:active:not(.selected) {
+  color: orange !important;
+  color: var(--dial-color) !important;
+}
+
+.dial-menu .status li.selected {
+  background: linear-gradient(
+    to right,
+    black 0%,
+    #29261f 8%,
+    var(--dial-color) 50%,
+    #29261f 92%,
+    black 100%
+  );
+  color: #393939;
+  -moz-box-shadow: 5px 0px 15px var(--main-bg-dark);
+  -webkit-box-shadow: 5px 0px 15px var(--main-bg-dark);
+  box-shadow: 5px 0px 15px var(--main-bg-dark);
+}
+
+.dial-menu-title {
+}
+
+.dial-menu-title-text {
+  /*
+  position: absolute;
+  text-align: center;
+  bottom:0;
+  width:100%;
+  font-size: 9%;
+  line-height:400%;
+  color: orange;
+  color: var(--dial-color);  
+  */
+}
+
+.dial-menu-title-background {
+  content: '';
+  position: absolute;
+  line-height: 400%;
+  bottom: 0;
+  left: 0;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #333, #444);
+  clip: rect(6em, 12em, 12em, 0);
+}
+
+.dial-menu-title {
+  position: absolute;
+  width: 100%;
+  height: 27%;
+  bottom: 5%;
+  left: 0;
+
+  /*  background: rgba(0,255,0,0.5);*/
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: orange;
+  color: var(--dial-color);
+}
+
+.dial-menu.hastitle .status {
+  height: 85%;
+  top: 35%;
+}
+.dial .dial-face {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(0deg, #181818, #444, #4b4b4b);
+  -webkit-box-shadow: inset 0px 0px 20px 5px var(--main-bg-dark);
+  -moz-box-shadow: inset 0px 0px 20px 5px var(--main-bg-dark);
+  box-shadow: inset 0px 0px 20px 5px var(--main-bg-dark);
+}
+
+.dial .dial-needle {
+  width: 50%;
+  height: 50%;
+  position: absolute;
+  left: 25%;
+  top: 25%;
+}
+
+.dial .dial-needle::before {
+  content: '';
+  position: absolute;
+  left: 35%;
+  top: -53%;
+  border-left: var(--needle-width) solid transparent;
+  border-right: var(--needle-width) solid transparent;
+  border-bottom: var(--needle-length) solid;
+  border-bottom-color: orange !important;
+  border-bottom-color: var(--dial-color) !important;
+  clip: rect(7px, 1em, 1em, 0em);
+  z-index: 2;
+}
+
+.dial .dial-needle::after {
+  content: '';
+  position: absolute;
+  left: 36%;
+  top: -49%;
+  border-left: var(--needle-width) solid transparent;
+  border-right: var(--needle-width) solid transparent;
+  border-bottom: var(--needle-length) solid rgba(0, 0, 0, 1);
+  transform: rotate(3deg);
+  filter: blur(2px);
+  z-index: 0;
+}
+
+.dial .dial-display,
+.dial .value,
+.dial .info {
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.dial .dial-display {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 90%;
+}
+
+.dial .value-unit {
+  position: absolute;
+  top: 30%;
+  display: flex;
+  align-items: center;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.dial .value-unit {
+  font-size: 130%;
+  line-height: 1em;
+  color: #cccccc;
+  -webkit-transition: all 0.2s ease-out;
+  -moz-transition: all 0.2s ease-out;
+  -o-transition: all 0.2s ease-out;
+  -ms-transition: all 0.2s ease-out;
+  transition: all 0.2s ease-out;
+  z-index: 5;
+}
+
+.dial .unit {
+  font-size: 0.7em;
+  color: grey;
+  margin-left: 0.2em;
+}
+
+.extra .unit {
+  font-size: unset;
+}
+
+.animation {
+  animation: fadeInLoad 2s;
+}
+
+.dial .device {
+  position: absolute;
+  top: 7%;
+  color: #ffa500;
+  font-size: 70%;
+  white-space: normal;
+  line-height: 1em;
+  width: 80%;
+  text-align: center;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.dial.text .value-unit {
+  width: 95%;
+  /*  font-size: 10%;*/
+}
+
+.dial.text .value {
+  white-space: normal;
+}
+
+.dial .info {
+  position: relative;
+  top: 28%;
+  font-size: 60%;
+  color: grey;
+  line-height: 2em;
+}
+
+.dial .info.nosetpoint {
+  margin-bottom: 7px;
+}
+
+.dial .extra {
+  position: absolute;
+  font-size: 60%;
+  color: grey;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  top: 60%;
+  line-height: 1.3em;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.dial .extra.novalue {
+  top: 30%;
+}
+
+.dial .item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.dial .itemlabel {
+  margin-right: 0.3em;
+}
+
+.dial .info {
+  margin-top: auto;
+  top: 0px;
+}
+
+.dial:hover .info {
+  display: block;
+}
+
+.dial .extra i {
+  font-size: 1em;
+}
+
+.dial .extra img {
+  width: 1em;
+  margin-right: 0.25em;
+}
+
+.dial .item.primary {
+  font-size: 150%;
+  width: 100%;
+}
+
+.dataunit {
+  display: flex;
+  align-items: center;
+}
+
+.primary .data {
+  font-size: 1.5em;
+  line-height: 1.5em;
+  color: #cccccc;
+}
+
+.dial .extra.hidden {
+  visibility: hidden;
+}
+
+.dial.active:not(.fixed):hover .value {
+  color: orange;
+  color: var(--dial-color);
+}
+
+.dial-switch .extra {
+  margin-top: 4%;
+}
+
+.dial-switch .info {
+  margin-bottom: 1em;
+}
+
+/*Some dial utility classes*/
+
+.dial .w100 {
+  width: 100%;
+}
+
+.dial.active:not(.fixed):hover .value-unit .unit {
+  font-size: 0.05em;
+}
+
+.dial.active:not(.fixed):hover .info,
+.dial.active:not(.fixed):hover .device,
+.dial.active:not(.fixed):hover .extra {
+  display: none;
+}
+
+.dial-center.on {
+  -webkit-box-shadow: 0 0 0 0.7em var(--dial-rgba);
+  -moz-box-shadow: 0 0 0 0.7em var(--dial-rgba);
+  box-shadow: 0 0 0 0.7em var(--dial-rgba);
+}
+
+.dial-flash {
+  box-shadow: 0px 0px 30px 0px rgb(255, 165, 0) !important;
+  box-shadow: 0px 0px 30px 0px var(--dial-color) !important;
+}
+
+.show-ring {
+  border-width: 0.1em !important;
+  left: 0.01em !important;
+  top: 0.01em !important;
+}
+
+@keyframes fadeInLoad {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dial-numbers {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: gray;
+}
+
+.dial-numbers span {
+  font-size: 0.06em;
+  width: 15%;
+  text-align: center;
+  position: absolute;
+}
+
+/* Dial face 360 degrees with 10 numbers */
+
+.dial-numbers .number.seg_360_10_0 {
+  transform: rotate(0.7rad);
+  left: 12%;
+  top: 78%;
+}
+
+.dial-numbers .number.seg_360_10_1 {
+  transform: rotate(7.7rad);
+  left: -2%;
+  top: 53%;
+}
+
+.dial-numbers .number.seg_360_10_2 {
+  transform: rotate(5.1rad);
+  left: 2%;
+  top: 27%;
+}
+
+.dial-numbers .number.seg_360_10_3 {
+  transform: rotate(5.62rad);
+  left: 18%;
+  top: 8%;
+}
+
+.dial-numbers .number.seg_360_10_4 {
+  transform: rotate(6.27rad);
+  left: 42%;
+  top: 0%;
+}
+
+.dial-numbers .number.seg_360_10_5 {
+  transform: rotate(7rad);
+  left: 67%;
+  top: 8%;
+}
+
+.dial-numbers .number.seg_360_10_6 {
+  transform: rotate(7.4rad);
+  left: 84%;
+  top: 27%;
+}
+
+.dial-numbers .number.seg_360_10_7 {
+  transform: rotate(4.95rad);
+  left: 88%;
+  top: 53%;
+}
+
+.dial-numbers .number.seg_360_10_8 {
+  transform: rotate(5.5rad);
+  left: 74%;
+  top: 78%;
+}
+
+.dial-numbers .number.seg_360_10_9 {
+  transform: rotate(6.28rad);
+  left: 42%;
+  top: 90%;
+}
+
+/* Dial face 360 degrees with 12 numbers */
+
+.dial-numbers .number.seg_360_12_0 {
+  transform: rotate(0.64rad);
+  left: 16.5%;
+  top: 81.5%;
+}
+
+.dial-numbers .number.seg_360_12_1 {
+  transform: rotate(7.4rad);
+  left: 2%;
+  top: 65%;
+}
+
+.dial-numbers .number.seg_360_12_2 {
+  transform: rotate(4.7rad);
+  left: -2.5%;
+  top: 45%;
+}
+
+.dial-numbers .number.seg_360_12_3 {
+  transform: rotate(5.25rad);
+  left: 4%;
+  top: 22%;
+}
+
+.dial-numbers .number.seg_360_12_4 {
+  transform: rotate(5.77rad);
+  left: 20.5%;
+  top: 6.4%;
+}
+
+.dial-numbers .number.seg_360_12_5 {
+  transform: rotate(6.26rad);
+  left: 42%;
+  top: 0.5%;
+}
+
+.dial-numbers .number.seg_360_12_6 {
+  transform: rotate(6.85rad);
+  left: 66%;
+  top: 7%;
+}
+
+.dial-numbers .number.seg_360_12_7 {
+  transform: rotate(7.3rad);
+  left: 80.7%;
+  top: 22%;
+}
+
+.dial-numbers .number.seg_360_12_8 {
+  transform: rotate(7.83rad);
+  left: 87%;
+  top: 44%;
+}
+
+.dial-numbers .number.seg_360_12_9 {
+  transform: rotate(5.17rad);
+  left: 83%;
+  top: 65%;
+}
+
+.dial-numbers .number.seg_360_12_10 {
+  transform: rotate(5.65rad);
+  left: 69%;
+  top: 81.5%;
+}
+
+.dial-numbers .number.seg_360_12_11 {
+  transform: rotate(6.28rad);
+  left: 42%;
+  top: 90%;
+}
+
+/* Dial face 280 degrees with 10 numbers */
+
+.dial-numbers .number.seg_280_11_0 {
+  transform: rotate(0.7rad);
+  left: 12%;
+  top: 78%;
+}
+
+.dial-numbers .number.seg_280_11_1 {
+  transform: rotate(7.5rad);
+  left: 1%;
+  top: 63%;
+}
+
+.dial-numbers .number.seg_280_11_2 {
+  transform: rotate(4.8rad);
+  left: -2.5%;
+  top: 42%;
+}
+
+.dial-numbers .number.seg_280_11_3 {
+  transform: rotate(5.3rad);
+  left: 5%;
+  top: 21%;
+}
+
+.dial-numbers .number.seg_280_11_4 {
+  transform: rotate(5.7rad);
+  left: 20%;
+  top: 6%;
+}
+
+.dial-numbers .number.seg_280_11_5 {
+  transform: rotate(6.27rad);
+  left: 42%;
+  top: 0%;
+}
+
+.dial-numbers .number.seg_280_11_6 {
+  transform: rotate(6.85rad);
+  left: 65%;
+  top: 6%;
+}
+
+.dial-numbers .number.seg_280_11_7 {
+  transform: rotate(7.27rad);
+  left: 80%;
+  top: 21%;
+}
+
+.dial-numbers .number.seg_280_11_8 {
+  transform: rotate(7.75rad);
+  left: 87.5%;
+  top: 42%;
+}
+
+.dial-numbers .number.seg_280_11_9 {
+  transform: rotate(5.15rad);
+  left: 84%;
+  top: 63%;
+}
+
+.dial-numbers .number.seg_280_11_10 {
+  transform: rotate(5.6rad);
+  left: 71.5%;
+  top: 80%;
+}
+
+.dial-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 95%;
+  height: 95%;
+}
+
+.dial-switch input {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  -ms-filter: 'progid:DXImageTransform.Microsoft.Alpha(Opacity=0)';
+  filter: alpha(opacity=0);
+  -moz-opacity: 0;
+  opacity: 0;
+  z-index: 100;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  margin: 0;
+}
+
+.dial-switch .switch-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 50%;
+  background: #b2ac9e;
+  background: -moz-linear-gradient(#333333, #191919);
+  background: -ms-linear-gradient(#333333, #191919);
+  background: -o-linear-gradient(#333333, #191919);
+  background: -webkit-gradient(linear, 0 0, 0 100%, from(#333333), to(#191919));
+  background: -webkit-linear-gradient(#333333, #191919);
+  background: linear-gradient(#333333, #191919);
+  color: #a5a39d;
+  text-align: center;
+  -webkit-transition: all 0.2s ease-out;
+  -moz-transition: all 0.2s ease-out;
+  -ms-transition: all 0.2s ease-out;
+  -o-transition: all 0.2s ease-out;
+  transition: all 0.2s ease-out;
+  text-shadow: 0 2px 1px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.13),
+    0 5px 8px rgba(0, 0, 0, 0.3),
+    0 10px 10px 4px rgba(0, 0, 0, 0.3);
+  z-index: -1;
+  margin: 0;
+}
+
+.background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.dial .background {
+  border-radius: 50%;
+}
+/*needed? Remove for now ...
+.dial-switch .switch-face:after {
+  content: "";
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  top: -20px;
+  bottom: -20px;
+  z-index: -2;
+  border-radius: inherit;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 10px rgba(0, 0, 0, 0.15);
+}
+*/
+
+.dial-switch .switch-face:before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  right: -10px;
+  top: -10px;
+  bottom: -10px;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: inset 0 10px 10px rgba(0, 0, 0, 0.13);
+  -webkit-filter: blur(1px);
+  -moz-filter: blur(1px);
+  -ms-filter: blur(1px);
+  -o-filter: blur(1px);
+  filter: blur(1px);
+}
+
+.dial-switch input:checked {
+  width: 99%;
+  height: 99%;
+}
+
+.dial-switch input:checked ~ .switch-face {
+  box-shadow: 0 0 25px 1px var(--dial-rgba);
+  color: orange;
+  color: var(--dial-color);
+  width: 95%;
+  height: 95%;
+}
+
+.dial-switch .icon-off {
+  font-size: 150%;
+  color: rgba(128, 128, 128, 0.5);
+  -webkit-transition: all 0.1s ease;
+  -moz-transition: all 0.1s ease;
+  -ms-transition: all 0.1s ease;
+  -o-transition: all 0.1s ease;
+  transition: all 0.1s ease;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.dial-switch input:checked ~ .switch-face .device {
+  -webkit-transition: all 0.1s ease;
+  -moz-transition: all 0.1s ease;
+  -ms-transition: all 0.1s ease;
+  -o-transition: all 0.1s ease;
+  transition: all 0.1s ease;
+}
+
+.dial-switch input:checked ~ .switch-face .fas {
+  color: orange;
+  color: var(--dial-color);
+  -webkit-transition: all 0.1s ease;
+  -moz-transition: all 0.1s ease;
+  -ms-transition: all 0.1s ease;
+  -o-transition: all 0.1s ease;
+  transition: all 0.1s ease;
+}
+
+.dial-switch input:checked ~ .switch-face .info {
+  -webkit-transition: all 0.1s ease;
+  -moz-transition: all 0.1s ease;
+  -ms-transition: all 0.1s ease;
+  -o-transition: all 0.1s ease;
+  transition: all 0.1s ease;
+}
+
+.dial-switch .icon-off:after {
+  content: '';
+  display: block;
+  position: absolute;
+  width: 90%;
+  height: 90%;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  margin: -45% 0 0 -45%;
+  border-radius: 50%;
+  background: #d2cbc3;
+  background: -moz-linear-gradient(#161616, #6c6c6c);
+  background: -ms-linear-gradient(#161616, #6c6c6c);
+  background: -o-linear-gradient(#161616, #6c6c6c);
+  background: -webkit-gradient(linear, 0 0, 0 100%, from(#161616), to(#6c6c6c));
+  background: -webkit-linear-gradient(#161616, #6c6c6c);
+  background: linear-gradient(#161616, #6c6c6c);
+  box-shadow:
+    0 -2px 5px rgba(255, 255, 255, 0.05),
+    0 2px 5px rgba(255, 255, 255, 0.1);
+  -webkit-transition: all 0.1s ease;
+  -moz-transition: all 0.1s ease;
+  -ms-transition: all 0.1s ease;
+  -o-transition: all 0.1s ease;
+  transition: all 0.1s ease;
+}
+
+.dial .blinds {
+  /*  font-size: 72%;*/
+}
+
+.dialbtn.up {
+  background-color: rgba(0, 255, 0, 0.3);
+  line-height: 3em;
+  clip: rect(-2em, 12em, 3em, -2em);
+  transform-origin: top;
+}
+
+.dialbtn.up::after {
+  position: absolute;
+  line-height: 3em;
+  transform-origin: top;
+  content: '';
+  width: calc(100% - 0.7em);
+  height: calc(100% - 0.4em);
+  height: 2.8em;
+  border-bottom: 0.2em solid rgba(0, 0, 0, 0.6);
+}
+
+.dialbtn {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  height: calc(100% - 0.4rem);
+  border-radius: 50%;
+  border: 0.2rem;
+  border-color: var(--text-dark);
+  border-style: outset;
+  width: calc(100% - 0.4rem);
+
+  font-size: 100%;
+  background-color: var(--success-green);
+  color: var(--text-light);
+  cursor: pointer;
+  outline: none;
+  transition: 0.2s all;
+  transition-timing-function: cubic-bezier(0.91, 0.8, 0.54, 1.39);
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+/* Adding transformation when the button is active */
+
+.dialbtn:active,
+.dialbtn.selected {
+  transform: scale(0.9);
+  /* Scaling button to 0.98 to its original size */
+  box-shadow: 3px 2px 22px 1px rgba(0, 0, 0, 0.6);
+  /* Lowering the shadow */
+}
+
+.dialbtn.up {
+  background-color: rgba(64, 64, 64, 0.2);
+  line-height: 3em;
+  clip: rect(-2em, 10em, 2.9em, -2em);
+  transform-origin: top;
+}
+.dialbtn.selected {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.5), rgba(0, 0, 0, 0));
+}
+
+.dialbtn.up::after {
+  position: absolute;
+  line-height: 3em;
+  transform-origin: top;
+  content: '';
+  width: calc(100% - 0.5em);
+  height: 2.7em;
+  border-bottom: 0.2em solid rgba(0, 0, 0, 0.6);
+  left: 0.25em;
+  top: 0;
+}
+
+.dialbtn.down {
+  background-color: rgba(64, 64, 64, 0.2);
+  clip: rect(5.7em, 10em, 10em, 0px);
+  align-items: flex-end;
+  line-height: 3em;
+  transform-origin: bottom;
+}
+
+.dialbtn.down::after {
+  position: absolute;
+  line-height: 3em;
+  transform-origin: top;
+  content: '';
+  width: calc(100% - 0.5em);
+  height: calc(100% - 0.4em);
+  height: 2.7em;
+  border-top: 0.2em solid rgba(0, 0, 0, 0.6);
+  top: 0em;
+  left: 0em;
+}
+
+.dialbtn.middle {
+  background: var(--main-bg);
+  align-items: center;
+  clip: rect(2.8em, 10em, 5.7em, 0px);
+  display: flex;
+  flex-direction: column;
+}
+
+.dialbtn.middle::after {
+  position: absolute;
+  line-height: 1em;
+  content: '';
+  width: calc(100% - 0.4em);
+  height: 2.7em;
+  border-top: 0.2em solid rgba(0, 0, 0, 0.6);
+  border-bottom: 0.2em solid rgba(0, 0, 0, 0.6);
+  left: 0;
+}
+
+.dialbtn .title {
+  color: yellow;
+}
+
+.middle .icon {
+  font-size: unset;
+}
+
+.middle .text {
+  font-size: 90%;
+}
+
+/* Vertical 10-segment Blinds Percentage bar (dial subtype: 'bar'). 0% at
+   the bottom, 100% at the top; each segment sets the device to its own 10%
+   level. js/components/dial.js's _dialFitSize() now sets .dt_content's own
+   height explicitly (the grid row's actual measured height, not the
+   circular dial's width-constrained me.height) for every dial subtype, so
+   this bar truly scales with the block instead of only the circular dial
+   being reliably sized - .dt_content otherwise only gets height:100% via
+   the .fixedheight class, which grid items never get. The min-height
+   values below are just a defensive floor for the rare case _dialFitSize
+   can't measure a size at all (falls back to me.height=100). */
+.dial-bar-widget {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.dial-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  padding-bottom: 10px;
+  box-sizing: border-box;
+}
+
+/* Font-size/color/margin come from .dt_title (the same class every other
+   device/widget uses for its title, js/dashticz.js's renderTitle()) so the
+   bar's title matches the theme instead of a bar-specific size/color. */
+.dial-bar-title {
+  flex: 0 0 auto;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.dial-bar {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: var(--dial-bar-width, 45%);
+  min-width: 30px;
+  max-width: 100%;
+  min-height: 80px;
+  padding: 4px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.dial-bar-segment {
+  flex: 1 1 0;
+  min-height: 6px;
+  background-color: #7a7a7a;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.25),
+    rgba(255, 255, 255, 0) 40%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dial-bar-segment.filled {
+  background-color: var(--success-green);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0) 40%
+  );
+}
+
+.dial-bar-value {
+  flex: 0 0 auto;
+  font-size: 90%;
+  text-align: center;
+}
+
+.dialupdown .up .text,
+.dialupdown .down .text {
+  font-size: 250%;
+}
+
+/* END: DIAL */
+
+/* Traffic */
+
+#trafficweb iframe {
+  width: 100%;
+  height: 575px;
+}
+
+/* start colorPicker */
+
+.colorpicker {
+  /*
+  color: var(--text-dark);
+  max-width: 90%;
+  min-width: unset;
+  width: 100%;*/
+}
+
+.colorpicker .modal-header {
+  display: flex;
+}
+
+.colorpicker .modal-title {
+  width: 100%;
+}
+
+.colorpicker .modal-dialog {
+  max-width: 90%;
+  min-width: unset;
+  width: 90%;
+}
+
+.colorpicker .modal-content {
+  position: relative;
+  background-color: var(--text-light);
+}
+
+.colorpicker .cp-iro {
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+
+.colorpicker .cp-buttons {
+  margin-bottom: 10px;
+}
+
+.cp-buttons .btn {
+  width: 4em;
+}
+
+.colorpicker img {
+  width: 100%;
+}
+
+.colorpicker .cp-buttonsOnOff {
+  background: var(--main-bg);
+}
+
+.colorpicker .cp-buttonsOnOff .btn {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  color: darkgrey;
+  background-color: lightgray;
+  /*  margin-top: 10px;
+  margin-bottom: 10px;*/
+  /*width: 48px;*/
+}
+
+.colorpicker .cp-buttonsOnOff .btn.active {
+  /*  background-color: rgba(0,0,0,0.4)*/
+  border-style: solid;
+  border-color: var(--text-dark);
+  border-width: medium;
+  background-color: gray;
+  color: var(--text-light);
+  /*width: 48px;*/
+}
+
+.cp-iro {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cp-iro > div {
+  margin: 0 10px;
+}
+
+/*end colorpicker*/
+
+/*garbage*/
+.trash .state {
+  font-size: calc(var(--font-small) - 2px) !important;
+  margin-top: -10px;
+}
+
+.trashsep {
+  width: 10px;
+  text-align: center;
+}
+
+.trashdate {
+  text-align: right;
+}
+/*end garbage*/
+
+/*battery level*/
+
+.battery-level {
+  position: absolute;
+  right: 0;
+  top: 0;
+  color: rgba(255, 255, 255, 0.5);
+  margin-right: 3px;
+  font-size: 15px;
+}
+
+.battery-level.fa-battery-empty {
+  color: var(--warning-red);
+  z-index: 15;
+}
+
+.battery-percentage {
+  /*  position: absolute;
+  top: 5px;
+  left: 2px;*/
+  width: 100%;
+  text-align: center;
+  font-size: 10px;
+}
+
+/*automation indicator*/
+
+.automation-indicator {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  margin: 4px;
+  border-radius: 50%;
+  background-color: var(--warning-red);
+  z-index: 15;
+}
+
+/*end automation indicator*/
+
+/*end battery level
+
+/*tvguide*/
+
+.tvguide tr {
+  vertical-align: top;
+}
+.tvtime {
+  white-space: nowrap;
+}
+.tvchannel {
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.tvtitle {
+  font-weight: bold;
+}
+
+.tvsep {
+  width: 1em;
+  text-align: center;
+}
+
+/*end tvguide*/
+
+/*xmltvguide*/
+
+.xmltvguide tr {
+  vertical-align: top;
+}
+.xmltv-time {
+  white-space: nowrap;
+}
+.xmltv-channel {
+  font-style: italic;
+  white-space: nowrap;
+}
+.xmltv-title {
+  font-weight: bold;
+}
+.xmltv-subtitle {
+  font-weight: normal;
+  font-style: italic;
+}
+.xmltv-sep {
+  width: 1em;
+  text-align: center;
+}
+.xmltv-loading,
+.xmltv-error {
+  display: block;
+  padding: 4px 8px;
+}
+.xmltv-error {
+  color: #e74c3c;
+}
+
+/* In a grid the XMLTV tile must follow the saved row span instead of its
+   legacy pixel height. Programme rows are fitted by the component, so a
+   scrollbar would only make the editor and dashboard layouts disagree. */
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .xmltvguide {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .xmltvguide .dt_content {
+  min-height: 0;
+  overflow: hidden;
+}
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .xmltvguide .dt_state {
+  flex: 1 1 auto;
+  height: auto !important;
+  min-height: 0;
+  overflow: hidden !important;
+}
+
+/*end xmltvguide*/
+
+/*debug*/
+.debug ::selection {
+  color: var(--text-light);
+  text-shadow: none;
+  background: blue;
+}
+.debug .modal-body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.debug .tab-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.debug #debug-log {
+  height: calc(100% - 2em);
+}
+
+.selectable,
+.selectable > * {
+  -moz-user-select: text;
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+.debug #debug-items {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.debug .debug-status {
+  height: 2em;
+}
+
+.debug #debug-status {
+  height: calc(100% - 2em);
+}
+
+.debug .debug-memory-container {
+  height: calc(100% - 8em);
+}
+
+.debug #debug-save {
+  right: 4em;
+  position: absolute;
+  background: var(--success-green);
+}
+
+.modal-dialog-custom .tab-content {
+}
+
+.modal-dialog-custom .debugitems {
+  overflow-y: auto;
+}
+
+/*owm widget*/
+.dt_block.owmwidget {
+  background-color: unset;
+}
+
+/*public transport*/
+.publictransport table {
+  border-spacing: 5px 0px;
+  border-collapse: separate;
+}
+
+.publictransport td {
+  vertical-align: top;
+}
+
+.publictransport .destination {
+  font-style: bold;
+}
+
+.publictransport .via {
+  font-style: italic;
+  color: lightgray;
+}
+
+.publictransport .platform {
+  white-space: nowrap;
+}
+
+.publictransport .transporttype {
+  font-style: italic;
+  color: lightgray;
+}
+
+.publictransport .delay {
+  background-color: var(--warning-red);
+  color: var(--text-light);
+}
+
+.waqi {
+  background-color: unset;
+  padding: 0px !important;
+  border: 0px;
+}
+
+.waqi .dt_state {
+  margin: 0px;
+  /* waqi.js CSS-scales its iframe with transform: scale() to fit the tile,
+     which visually shrinks it but leaves its pre-scale (often wider) layout
+     box intact for overflow purposes - without this, that box can clip
+     against a different ancestor's boundary and crop the badge's right edge
+     instead of fitting cleanly inside this block. Same fix as .frame .dt_state. */
+  overflow: hidden;
+}
+
+.waqi.xxl {
+  padding-top: 5px !important;
+  padding-left: 10px !important;
+}
+.waqi.xxl iframe {
+  background-color: #f6f9f7;
+  border: 1px solid white;
+  min-width: 100px;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-right: 10px;
+}
+
+.publictransport .remarks {
+  font-style: italic;
+}
+
+/* ==========================================================================\n   Theme settings compatibility\n   Connects the settings-panel variables to Creative's existing selectors.\n   Default values in :root preserve the original Creative appearance.\n   ========================================================================== */
+
+/* Page / panel backgrounds */
+.transbg,
+.dt_block {
+  /* background-color, not the full shorthand: both selectors already get
+     their background-image (a plain color or, per theme, a gradient - see
+     themes/modern-dark's own --main-bg) from an earlier full `background:
+     var(--main-bg);` rule (.dt_block itself above, .transbg further up)
+     that also sets background-clip: padding-box. The full shorthand here
+     would reset that clip back to its own initial (border-box) instead of
+     refining just the color the way this rule intends. */
+  background-color: var(--main-bg);
+}
+
+.standby .swiper-slide:not(.screenstandby),
+.standby .screenstandby {
+  background-color: var(--home-bg);
+}
+
+/* Block borders and titles */
+.transbg {
+  border-color: var(--border-color-block);
+}
+
+.blocktitle,
+.transbg.blocktitle {
+  background-color: var(--blocktitle);
+}
+
+/* Interactive controls */
+.transbg .btn,
+.mh .btn-number {
+  color: var(--text-inactive);
+  border-color: var(--border-color-inactive) !important;
+  background-color: var(--button-bg) !important;
+}
+
+.transbg .btn:hover,
+.transbg .btn:focus,
+.mh .btn-number:hover,
+.mh .btn-number:focus {
+  color: var(--text-normal) !important;
+  background-color: var(--button-hover) !important;
+}
+
+.transbg .btn.active,
+.transbg .btn:active,
+.transbg .btn[aria-pressed='true'],
+.mh .btn-number.active,
+.mh .btn-number:active {
+  color: var(--text-normal) !important;
+  border-color: var(--border-color-active) !important;
+  background-color: var(--button-active) !important;
+}
+
+/* Select controls */
+.transbg select,
+.transbg select option {
+  color: var(--text-normal) !important;
+  border-color: var(--border-color-inactive) !important;
+  background-color: var(--selector-bg) !important;
+}
+
+.transbg select:focus,
+.transbg select:active {
+  border-color: var(--border-color-active) !important;
+}
+
+/* Text and font-size settings */
+.blocktitle .dt_title,
+.miniclock {
+  color: var(--text-light) !important;
+  font-size: var(--font-large) !important;
+}
+
+.title {
+  color: var(--text-title) !important;
+  font-size: var(--font-device-title) !important;
+}
+
+.state,
+.value {
+  color: var(--text-status) !important;
+  font-size: var(--font-small) !important;
+}
+
+/* Lyrion Music Server (LMS) "Now Playing" block: fixed-size cover on the
+   left, metadata on the right - see js/components/lms.js and
+   docs/blocks/specials/lms.rst. Only the cover has a fixed pixel size (100
+   x 100, per spec); everything else uses the block's own width so the
+   block stays usable at any configured width, in both column and grid mode. */
+.lms-block .dt_state {
+  margin: 0;
+  min-height: 100px;
+}
+
+/* getColIcon()'s (js/dashticz.js) generic .col-icon column floats over the
+   same top-left corner .lms-cover's own artwork occupies (#217) - LMS
+   renders its configured icon/image itself, as .lms-cover-icon below,
+   directly over the artwork instead. */
+.lms-block > .col-icon {
+  display: none;
+}
+
+.lms-block-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px;
+  min-width: 0;
+  height: 100%;
+}
+
+.lms-cover {
+  position: relative;
+  flex: 0 0 100px;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius-selector, 4px);
+  overflow: hidden;
+  background: var(--main-bg-dark);
+}
+
+/* Small badge for the block's own configured icon/image (js/components/
+   lms.js's _coverIconHtml()) - pinned to the artwork's top-left corner,
+   above it, never part of the flex layout so it can't push or resize the
+   cover/info columns. */
+.lms-cover-icon {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 1;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-light, #fff);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+
+.lms-cover-icon-img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+.lms-cover-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Keeps LMS/album artwork proportions intact - crops rather than
+     stretching or letterboxing, so it never distorts. */
+  object-fit: cover;
+}
+
+.lms-cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-inactive);
+  font-size: 32px;
+}
+
+.lms-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+}
+
+.lms-info > div {
+  /* Long artist/title/album/station values truncate instead of wrapping or
+     forcing a horizontal scrollbar (#20). */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lms-player-name {
+  font-size: var(--font-small);
+  color: var(--text-inactive);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Per-block overrides (Device Config's Title/Artist/Station text style
+   fields, js/deviceeditor.js's _lmsFieldsHtml()) land as inline
+   --lms-*-font-size/--lms-*-color custom properties on .lms-block-inner
+   (js/components/lms.js) - each falls back to today's shared --font-small/
+   theme color when the block never set an override. */
+.lms-station {
+  font-size: var(--lms-station-font-size, var(--font-small));
+  color: var(--lms-station-color, var(--text-normal));
+}
+
+.lms-artist {
+  font-size: var(--lms-artist-font-size, var(--font-small));
+  color: var(--lms-artist-color, var(--text-normal));
+}
+
+.lms-title {
+  font-size: var(--lms-title-font-size, var(--font-small));
+  color: var(--lms-title-color, var(--text-title));
+  /* Bold by default so the current track stands out from artist/station. */
+  font-weight: bold;
+}
+
+.lms-album {
+  font-size: calc(var(--font-small) - 2px);
+  color: var(--text-muted);
+}
+
+.lms-state-label {
+  font-size: var(--font-small);
+  color: var(--text-inactive);
+  font-style: italic;
+}
+
+.lms-paused {
+  color: var(--button-active);
+}
+
+@media (max-width: 400px) {
+  .lms-cover {
+    flex-basis: 72px;
+    width: 72px;
+    height: 72px;
+  }
+  .lms-block .dt_state {
+    min-height: 72px;
+  }
+}
+
+/* Compact Selector Switch icon picker (Device Config): every icon in the
+   toggle and in the pull-down has the same size and the same single colour. The theme's global .fas.fa-* rules (colour and size !important)
+   would otherwise make each icon look different. */
+.de-config-popup .de-compact-icon-row .de-compact-icon-toggle > i,
+.de-config-popup .de-compact-icon-row .de-compact-icon-choice > i {
+  display: inline-block;
+  width: 1.25em;
+  margin: 0 !important;
+  color: var(--bs-body-color, #212529) !important;
+  font-size: 13px !important;
+  line-height: 1;
+  text-align: center;
+}
+
+/* Cluster row icon picker (Device Config / Cluster popup): same uniform size
+   and single colour for every icon as the compact selector's picker above -
+   the theme's global .fas.fa-* rules (size and colour !important) would
+   otherwise make each icon look different. */
+.cl-icon-wrap .cl-icon-toggle > i,
+.cl-icon-wrap .cl-icon-panel .cl-icon-choice > i {
+  display: inline-block;
+  width: 1.25em;
+  margin: 0 !important;
+  color: var(--bs-body-color, #212529) !important;
+  font-size: 13px !important;
+  line-height: 1;
+  text-align: center;
+}
+
+/* HP iLO row icon picker (Widget Config): same uniform size and single colour
+   for every icon as the other icon pickers - the theme's global .fas.fa-*
+   rules (size and colour !important) would otherwise make each look
+   different. */
+.we-hpilo-icon-wrap .we-hpilo-icon-toggle > i,
+.we-hpilo-icon-wrap .we-hpilo-icon-panel .we-hpilo-icon-choice > i {
+  display: inline-block;
+  width: 1.25em;
+  margin: 0 !important;
+  color: var(--bs-body-color, #212529) !important;
+  font-size: 13px !important;
+  line-height: 1;
+  text-align: center;
+}
+
+/* F1 widgets (js/components/f1.js): next event (centered) and all events, painted
+   into .dt_state. */
+.f1-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  /* The cluster's font size option sets --font-device-title on the tile. */
+  font-size: var(--font-device-title);
+}
+
+.f1-rows {
+  padding: 4px 0;
+  text-align: center;
+}
+
+.f1-list {
+  text-align: left;
+}
+
+.f1-list .f1-heading {
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.f1-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.f1-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.f1-value {
+  flex: none;
+  text-align: right;
+}
+
+.f1-past {
+  opacity: 0.5;
+}
+
+.f1-error {
+  color: var(--dt-error);
+}
+
+.f1-empty {
+  opacity: 0.8;
+}
+
+.f1-next {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.f1-image {
+  flex: none;
+  width: auto;
+  max-width: 40%;
+  height: 3em;
+  object-fit: contain;
+}
+
+/* TVgids widget (js/components/tvgids.js): one column per channel. The
+   columns have a minimum width (set inline from tvgidscolumnwidth) and fill
+   the block, so a wider block shows more of them next to each other. */
+.tvgids-block .dt_state {
+  display: block;
+  height: auto;
+  padding: 4px 0;
+  text-align: left;
+  font-size: var(--tvgids-font-size, 0.85em);
+  line-height: 1.35;
+}
+
+.tvgids-grid {
+  display: grid;
+  gap: 8px;
+  align-items: start;
+}
+
+.tvgids-channel {
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.tvgids-head {
+  display: flex;
+  align-items: center;
+  min-height: 31px;
+  margin-bottom: 4px;
+}
+
+/* Many channel logos are black, so every logo sits in a small frame, white
+   by default (works on light and dark themes alike). The frame colour is
+   tvgidslogobg, set as --tvgids-logo-bg; it may be transparent. */
+.tvgids-logo,
+.de-tvgids-tile img {
+  box-sizing: content-box;
+  width: 51px;
+  height: 27px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: var(--tvgids-logo-bg, #fff);
+  object-fit: contain;
+}
+
+/* 2px larger than the programmes, also with a custom tvgidsfontsize. */
+.tvgids-name {
+  font-size: calc(1em + 2px);
+  font-weight: bold;
+}
+
+/* With a logo the name is only the fallback for a missing image. */
+.tvgids-name-fallback,
+.tvgids-nologo .tvgids-logo {
+  display: none;
+}
+
+.tvgids-nologo .tvgids-name-fallback {
+  display: inline;
+}
+
+.tvgids-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tvgids-item {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 8px;
+  padding: 1px 0;
+}
+
+.tvgids-time {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.tvgids-title {
+  overflow-wrap: anywhere;
+}
+
+.tvgids-now {
+  font-weight: bold;
+}
+
+.tvgids-now .tvgids-time {
+  opacity: 1;
+}
+
+.tvgids-past {
+  opacity: 0.5;
+}
+
+.tvgids-empty,
+.tvgids-error {
+  padding: 2px 0;
+  opacity: 0.8;
+}
+
+.tvgids-error {
+  color: var(--dt-error);
+  opacity: 1;
+}
+
+/* Grid screens: a list widget (containerClass 'dt-widget-rows': F1, TVgids,
+   Traffic info) follows its row height and clips the excess; a longer list
+   scrolls inside the tile. Without this, min-height alone lets the tile grow
+   past its row, and .dt-grid-item's own overflow: auto then shows a scrollbar
+   on the grid item. */
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .dt-widget-rows {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.dt-grid-screen
+  > .dt-grid-layout
+  > .dt-grid-item
+  > .dt-widget-rows
+  .dt_content {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dt-grid-screen > .dt-grid-layout > .dt-grid-item > .dt-widget-rows .dt_state {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* TVgids section of the quick-add and Device Config popups
+   (js/deviceeditor.js _tvgidsFieldsHtml): the channel logos as tiles, per
+   channel group. */
+.de-tvgids-picker {
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 2px 4px 2px 0;
+}
+
+.de-tvgids-group + .de-tvgids-group {
+  margin-top: 10px;
+}
+
+.de-tvgids-group-title {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.de-tvgids-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  gap: 6px;
+}
+
+.de-tvgids-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 4px 4px;
+  border: 2px solid var(--bs-border-color, #dee2e6);
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.08);
+  color: inherit;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.de-tvgids-tile-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.de-tvgids-tile.active {
+  border-color: var(--bs-primary, #0d6efd);
+  background: rgba(13, 110, 253, 0.15);
+}
+
+/* The position of a chosen channel in the block. */
+.de-tvgids-order {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: none;
+  min-width: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--bs-primary, #0d6efd);
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 18px;
+}
+
+.de-tvgids-tile.active .de-tvgids-order {
+  display: block;
+}
+
+.de-tvgids-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+@media (max-width: 575px) {
+  .de-tvgids-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Device Config -> Text: per-device font size and alignment, set by
+   js/blocks.js applyBlockTextStyle(). Specific enough (and !important) to
+   win over the default and theme .title/.state/.value/.mh rules. */
+.mh.dt-fs-title .col-data .title {
+  font-size: var(--dt-fs-title) !important;
+}
+
+.mh.dt-fs-value .col-data .state,
+.mh.dt-fs-value .col-data .value {
+  font-size: var(--dt-fs-value) !important;
+}
+
+.mh.dt-align-left,
+.mh.dt-align-left .col-data,
+.mh.dt-align-left .col-data > * {
+  text-align: left !important;
+}
+
+.mh.dt-align-center,
+.mh.dt-align-center .col-data,
+.mh.dt-align-center .col-data > * {
+  text-align: center !important;
+}
+
+.mh.dt-align-right,
+.mh.dt-align-right .col-data,
+.mh.dt-align-right .col-data > * {
+  text-align: right !important;
+}
+
+/* Block without an icon (Icon toggle off): the empty .col-icon column still
+   takes up space, which pushed aligned text off the block. Drop the empty
+   column and let the data span the full width. */
+.mh[class*='dt-align-'] .col-icon:empty {
+  display: none;
+}
+
+.mh[class*='dt-align-'] .col-icon:empty + .col-data {
+  width: 100%;
+}
+
+/* Vertical alignment of the content in the block (Device Config -> Text ->
+   Vertical, block.textvalign). */
+.mh.dt-valign-top,
+.mh.dt-valign-middle,
+.mh.dt-valign-bottom {
+  display: flex;
+}
+
+.mh.dt-valign-top {
+  align-items: flex-start;
+}
+
+.mh.dt-valign-middle {
+  align-items: center;
+}
+
+.mh.dt-valign-bottom {
+  align-items: flex-end;
+}
+
+/* Shared widget button (.dt-btn): a rounded, themed button for the controls of
+   a widget, used by the LMS control and the Fully Kiosk widget. Add .on for
+   the active state of a power or toggle button. The size is set by the widget
+   itself. */
+.dt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  border-radius: var(--radius-selector, 4px);
+  background: var(--main-bg-dark);
+  color: var(--text-normal);
+  font-size: var(--font-small);
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.dt-btn:hover {
+  background: var(--main-bg-dark-hover, var(--main-bg-dark));
+}
+
+.dt-btn:active {
+  transform: scale(0.94);
+}
+
+.dt-btn:focus-visible {
+  outline: 2px solid var(--button-active);
+  outline-offset: 1px;
+}
+
+.dt-btn.on {
+  background: var(--button-active);
+  color: var(--main-bg, #fff);
+}
+
+/* The themes give every .transbg (so these buttons too) their panel
+   background and edge with !important; the active state has to win from
+   that, with the theme's active border colour as the edge. */
+.transbg.dt-btn.on:not(.dial) {
+  background: var(--button-active) !important;
+  box-shadow: inset 0 0 0 var(--main-border-width, 1px)
+    var(--border-color-active) !important;
+  color: #fff;
+}
+
+/* Fully Kiosk widget (js/components/fullykiosk.js): battery, next switch
+   percentage and the charger switch, painted into .dt_state like the HP iLO
+   widget above. Every row has two columns: the data and the switch (or
+   button) at the right; no margin or padding to the left of the rows. */
+.fullykiosk-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* The rows are laid out in 3 columns: every switch has its label right
+   next to it on the same line. The charger group (charge data and its
+   button), the brightness slider and the error text use the full width. */
+.fullykiosk-rows {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 14px;
+  padding: 4px 0;
+}
+
+.fullykiosk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.fullykiosk-group,
+.fullykiosk-row.fullykiosk-battery,
+.fullykiosk-brightness-row,
+.fullykiosk-error {
+  grid-column: 1 / -1;
+}
+
+.fullykiosk-group,
+.fullykiosk-row.fullykiosk-battery {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 25%;
+  column-gap: 10px;
+}
+
+@media (max-width: 767px) {
+  .fullykiosk-rows {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .fullykiosk-rows {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.fullykiosk-data {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* margin: 0 !important - same reasoning as .hpilo-icon above. */
+.fullykiosk-block .dt_state .fullykiosk-icon {
+  flex: none;
+  width: 1.4em;
+  margin: 0 !important;
+  font-size: 1em;
+  line-height: 1;
+  text-align: center;
+  color: var(--dt-info);
+}
+
+.fullykiosk-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fullykiosk-value {
+  flex: none;
+  margin-left: auto;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fullykiosk-battery .fullykiosk-value {
+  font-weight: bold;
+}
+
+/* The buttons of column 1 are shared .dt-btn buttons (see above). A power button shows its state (filled when on); side by side when a row
+   has two. */
+.fullykiosk-control {
+  display: flex;
+  gap: 6px;
+  /* In a switch row the switch comes first, its label right next to it. */
+  flex: none;
+  order: 0;
+}
+
+.fullykiosk-control:empty {
+  display: none;
+}
+
+.fullykiosk-btn {
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 3.4em;
+  height: 3.4em;
+}
+
+/* The charger button runs over the rows of the charge data, at the right of
+   the data in column 2. */
+.fullykiosk-group {
+  align-items: stretch;
+}
+
+.fullykiosk-group .fullykiosk-control,
+.fullykiosk-row.fullykiosk-battery .fullykiosk-control {
+  order: 2;
+  margin-left: 10px;
+  margin-right: 5px;
+  width: calc(100% - 15px);
+}
+
+.fullykiosk-group .fullykiosk-btn {
+  flex: 1 1 0;
+  width: auto;
+}
+
+.fullykiosk-group .fullykiosk-btn {
+  height: auto;
+}
+
+/* A power button that is off has a grey icon. */
+.fullykiosk-btn[role='switch']:not(.on) {
+  color: var(--text-muted);
+}
+
+.fullykiosk-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.fullykiosk-error {
+  font-size: inherit;
+  color: var(--dt-error);
+}
+
+/* Device Config / quick-add -> Fully Kiosk section
+   (js/deviceeditor.js _fullyFieldsHtml()): three columns, two on a narrow
+   popup, one on a phone. */
+/* A switch setting shows its label right next to the switch (switch first)
+   instead of above it (Device Config sections and Widget Config). */
+.de-setting-switch > .mb-3 {
+  display: flex;
+  flex-flow: row-reverse wrap;
+  justify-content: flex-end;
+  align-items: center;
+  column-gap: 10px;
+}
+
+.we-cfg-switch {
+  display: flex;
+  flex-flow: row-reverse wrap;
+  justify-content: flex-end;
+  align-items: center;
+  column-gap: 10px;
+}
+
+.we-cfg-switch .form-label,
+.we-cfg-switch .form-switch,
+.de-setting-switch .form-label,
+.de-setting-switch .form-switch {
+  margin-bottom: 0;
+}
+
+.we-cfg-switch .form-text,
+.de-setting-switch .form-text {
+  flex: 0 0 100%;
+  order: 3;
+}
+
+.de-fully-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 16px;
+  align-items: start;
+}
+
+.de-fully-grid > .de-fully-field-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 767px) {
+  .de-fully-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 479px) {
+  .de-fully-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The icon in a button: absolute size, legacy per-icon rules further up
+   (.fas.fa-power-off, ...) would otherwise enlarge or shift it. */
+.fullykiosk-block .fullykiosk-btn .fas {
+  margin: 0 !important;
+  font-size: calc(var(--font-small) + 4px) !important;
+  line-height: 1;
+}
+
+/* Fully Kiosk widget: no scrollbars. A tile that is too small for its rows
+   still scrolls (touch or wheel), but without a visible scrollbar. */
+.fullykiosk-block,
+.fullykiosk-block .dt_content,
+.fullykiosk-block .dt_state {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.fullykiosk-block::-webkit-scrollbar,
+.fullykiosk-block .dt_content::-webkit-scrollbar,
+.fullykiosk-block .dt_state::-webkit-scrollbar {
+  display: none;
+}
+
+/* The icon of the charger button is 2px bigger than the other buttons'. */
+.fullykiosk-block .fullykiosk-group .fullykiosk-btn .fas {
+  font-size: calc(var(--font-small) + 6px) !important;
+}
+
+/* Fully Kiosk widget: the brightness dimmer slider and its value. */
+.fullykiosk-brightness-input {
+  width: 8em;
+  max-width: 60%;
+  margin-right: 8px;
+  vertical-align: middle;
+  accent-color: var(--button-active);
+}
+
+.fullykiosk-brightness-value {
+  display: inline-block;
+  min-width: 3em;
+  text-align: right;
+}
+
+/* Device Config / quick-add -> Weather Info section
+   (js/deviceeditor.js _weatherinfoFieldsHtml()): two columns, one on a
+   phone. */
+.de-weatherinfo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  align-items: start;
+}
+
+.de-weatherinfo-grid > .de-weatherinfo-field-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 575px) {
+  .de-weatherinfo-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Weather Info widget (js/components/weatherinfo.js): the rain status, and
+   below it the temperature, description, wind and icon, centered like the
+   F1 'next' tile. */
+/* The text is centered horizontally and vertically in the block. */
+.weatherinfo-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weatherinfo-block .dt_content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+  text-align: center;
+}
+
+.weatherinfo-block .dt_state,
+.dt-grid-screen
+  > .dt-grid-layout
+  > .dt-grid-item
+  > .weatherinfo-block
+  .dt_state {
+  /* No scrollbar: the text is centered in the block. */
+  overflow: hidden !important;
+  scrollbar-width: none;
+}
+
+.weatherinfo-block .dt_state::-webkit-scrollbar {
+  display: none;
+}
+
+.weatherinfo-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+  /* The cluster's font size option sets --font-device-title on the tile. */
+  font-size: var(--font-device-title);
+}
+
+.weatherinfo-rows {
+  padding: 4px 0;
+  text-align: center;
+}
+
+.weatherinfo-row {
+  padding: 2px 0;
+}
+
+.weatherinfo-hl {
+  color: var(--dt-warn);
+  font-weight: bold;
+}
+
+.weatherinfo-dot {
+  color: var(--dt-ok);
+  white-space: pre;
+}
+
+.weatherinfo-icon {
+  vertical-align: middle;
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+.weatherinfo-rainfall {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.weatherinfo-error {
+  color: var(--dt-error);
+}
+
+/* Weather Info settings: the parts of the text, shown or hidden and dragged
+   into order (js/deviceeditor.js, type 'parts'). */
+.de-parts-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  border: 1px solid var(--bs-border-color, #ced4da);
+  border-radius: 6px;
+  background: var(--bs-body-bg, #fff);
+}
+
+.de-parts-handle {
+  cursor: grab;
+  opacity: 0.6;
+  touch-action: none;
+}
+
+.cl-pending-item.ui-sortable-helper {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.cl-pending-handle {
+  align-self: center;
+  margin-right: 0.5rem;
+}
+
+.de-parts-item.ui-sortable-helper {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Weather Info animated icons (js/components/weatherinfo.js, SVG_ICONS). */
+.weatherinfo-svg {
+  width: 2.6em;
+  height: 2.6em;
+  vertical-align: middle;
+  /* The icon must not make the row taller than the text. */
+  margin: -0.6em 0;
+  overflow: visible;
+}
+
+.weatherinfo-svg * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.weatherinfo-svg .wi-spin {
+  animation: wi-spin 24s linear infinite;
+}
+
+.weatherinfo-svg .wi-drift {
+  animation: wi-drift 3s ease-in-out infinite alternate;
+}
+
+.weatherinfo-svg .wi-glow {
+  animation: wi-glow 4s ease-in-out infinite alternate;
+}
+
+.weatherinfo-svg .wi-twinkle {
+  animation: wi-twinkle 2.4s ease-in-out infinite;
+}
+
+.weatherinfo-svg .wi-fall {
+  animation: wi-fall 1s linear infinite;
+}
+
+.weatherinfo-svg .wi-snowfall {
+  animation: wi-snowfall 2.4s linear infinite;
+}
+
+.weatherinfo-svg .wi-flash {
+  animation: wi-flash 2.2s ease-in-out infinite;
+}
+
+.weatherinfo-svg .wi-slide {
+  animation: wi-slide 4s ease-in-out infinite alternate;
+}
+
+.weatherinfo-svg .wi-d2 {
+  animation-delay: -0.4s;
+}
+
+.weatherinfo-svg .wi-d3 {
+  animation-delay: -0.8s;
+}
+
+@keyframes wi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wi-drift {
+  from {
+    transform: translate(-5px, 1px);
+  }
+  to {
+    transform: translate(5px, -2px);
+  }
+}
+
+@keyframes wi-glow {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wi-twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes wi-fall {
+  0% {
+    transform: translateY(-3px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+}
+
+@keyframes wi-snowfall {
+  0% {
+    transform: translate(-1px, -4px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(2px, 6px);
+    opacity: 0;
+  }
+}
+
+@keyframes wi-flash {
+  0%,
+  55%,
+  100% {
+    opacity: 0.25;
+  }
+  60%,
+  70% {
+    opacity: 1;
+  }
+  65% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes wi-slide {
+  from {
+    transform: translateX(-3px);
+  }
+  to {
+    transform: translateX(3px);
+  }
+}
+
+/* Device Config -> Selector Switch compact option: the icon per level in two
+   columns (one on a narrow popup); the heading spans both. */
+.de-compact-icons:not(.d-none) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+}
+
+.de-compact-icons > .form-label {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 479px) {
+  .de-compact-icons:not(.d-none) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
