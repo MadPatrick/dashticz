@@ -1121,15 +1121,14 @@ function postHookLux(block) {
     '%;--lux-level:' +
     fraction.toFixed(2) +
     '">' +
-    '<div class="lux-slider-row">' +
     '<em class="fas fa-sun lux-slider-sun lux-slider-sun-low"></em>' +
     '<div class="lux-slider-track"><div class="lux-slider-fill"></div>' +
     '<div class="lux-slider-knob"></div></div>' +
     '<em class="fas fa-sun lux-slider-sun lux-slider-sun-high"></em>' +
-    '</div>' +
-    '<div class="lux-slider-labels"><span>0</span><span>' +
+    '<span class="lux-slider-label lux-slider-label-low">0</span>' +
+    '<span class="lux-slider-label lux-slider-label-high">' +
     LUX_SLIDER_MAX +
-    '</span></div></div>';
+    '</span></div>';
   block.$mountPoint.find('[data-id="' + block.key + '"]').append(html);
 }
 
