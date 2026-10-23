@@ -3693,9 +3693,9 @@ div.mh.lux-has-slider:not(.multiline) {
   background: linear-gradient(
     90deg,
     #6b7686 0%,
-    #8d96a6 35%,
-    #d9cf8a 65%,
-    #ffd600 85%,
+    #8fa3bf 15%,
+    #e8dc8c 40%,
+    #ffd600 65%,
     #ffb300 100%
   );
   /* gradient colors are tied to the full 0-100% track, not to the fill */
