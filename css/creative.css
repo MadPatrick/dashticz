@@ -3631,6 +3631,81 @@ a.playlist {
   white-space: nowrap;
 }
 
+/* Lux slider (read-only), see postHookLux in js/blocks.js */
+.lux-slider {
+  clear: both;
+  padding: 8px 12px 0;
+}
+
+.lux-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lux-slider-sun {
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+
+.lux-slider-sun-low {
+  color: #7d8aa3;
+  opacity: 0.8;
+}
+
+.lux-slider-sun-high {
+  color: #ffb400;
+  font-size: 24px;
+  filter: drop-shadow(0 0 4px rgba(255, 180, 0, 0.6));
+}
+
+.lux-slider-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 14px;
+  border-radius: 7px;
+  background: rgba(125, 138, 163, 0.35);
+}
+
+.lux-slider-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--lux-pct, 0%);
+  border-radius: 7px;
+  background: linear-gradient(
+    90deg,
+    #1565c0,
+    #29b6f6 40%,
+    #fff176 75%,
+    #ffd600
+  );
+}
+
+.lux-slider-knob {
+  position: absolute;
+  top: 50%;
+  left: var(--lux-pct, 0%);
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 6px 2px rgba(255, 214, 0, calc(0.25 + var(--lux-level, 0) * 0.65)),
+    0 0 14px 4px rgba(255, 214, 0, calc(var(--lux-level, 0) * 0.5));
+}
+
+.lux-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0 0 28px;
+  padding-right: 34px;
+  font-size: 12px;
+  color: #8d99ae;
+}
+
 /*To change the default height of the graph popup adapt the height value in custom.css
   Example:
 .graphheight {

@@ -6,7 +6,7 @@
 /* from dt_function.js: */
 /* global choose*/
 /* from blocks.js */
-/* global getSecurityBlock postHookLogitechMediaServer*/
+/* global getSecurityBlock postHookLogitechMediaServer postHookLux*/
 // Type/SubType/SwitchType
 var blocktypes = {};
 var SubType = {};
@@ -18,6 +18,7 @@ SubType.Electric = {
 };
 SubType.Lux = {
   icon: 'fas fa-sun-o',
+  postHook: postHookLux,
 };
 SubType.Pressure = {
   icon: 'wi wi-barometer',
