@@ -321,6 +321,11 @@ blocktypes.Scale = {
 blocktypes['Air Quality'] = {
   image: 'air.png',
 };
+// Domoticz reports lux sensors as Type 'Lux' as well as General/Lux
+blocktypes.Lux = {
+  icon: 'fas fa-sun',
+  postHook: postHookLux,
+};
 blocktypes.UV = {
   icon: 'fas fa-sun',
 };

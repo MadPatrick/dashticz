@@ -1129,7 +1129,10 @@ function postHookLux(block) {
     '<span class="lux-slider-label lux-slider-label-high">' +
     LUX_SLIDER_MAX +
     '</span></div>';
-  block.$mountPoint.find('[data-id="' + block.key + '"]').append(html);
+  block.$mountPoint
+    .find('[data-id="' + block.key + '"]')
+    .addClass('lux-has-slider')
+    .append(html);
 }
 
 /*exported postHookLogitechMediaServer */

@@ -3632,8 +3632,15 @@ a.playlist {
 }
 
 /* Lux slider (read-only), see postHookLux in js/blocks.js */
+div.mh.lux-has-slider:not(.multiline) {
+  height: auto;
+  min-height: 85px;
+  flex-wrap: wrap;
+}
+
 .lux-slider {
   clear: both;
+  flex: 0 0 100%;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
