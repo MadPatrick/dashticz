@@ -358,7 +358,8 @@ var DT_fullykiosk = (function () {
     if (switchIdx(block)) {
       // The charger switch is one button in column 1, as high as the charge
       // data next to it: the battery and the percentage at which the charger
-      // is switched next.
+      // is switched next. The button shows the battery level as a green
+      // progress fill behind its icon.
       var nextHtml = '';
       if (auto && charger) {
         nextHtml = dataHtml(
@@ -379,7 +380,14 @@ var DT_fullykiosk = (function () {
           'fa-power-off',
           chargeLabel,
           charger === 'On',
-          !charger
+          !charger,
+          level === null
+            ? ''
+            : ' data-progress="' +
+                Math.max(0, Math.min(100, Math.round(level))) +
+                '" style="--fully-level:' +
+                Math.max(0, Math.min(100, Math.round(level))) +
+                '%"'
         ) +
         '</span><span class="fullykiosk-groupdata">' +
         batteryHtml +
