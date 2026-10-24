@@ -1102,7 +1102,10 @@ function handleDevice(block) {
 }
 
 /*exported postHookLux */
-var LUX_SLIDER_MAX = 2200;
+var LUX_SLIDER_MAX = 2500;
+// Lux value that is treated as 1 lux step in the logarithmic curve; a larger
+// value keeps low lux values closer to the start of the arc
+var LUX_SLIDER_KNEE = 10;
 
 /**
  * Appends a read-only sun arc to a lux block. The sun moves along the arc
@@ -1115,7 +1118,11 @@ function postHookLux(block) {
   if (isNaN(lux)) return;
   // Logarithmic scale: 0 lux at the far left, LUX_SLIDER_MAX at the far right
   var fraction = Math.min(
-    Math.max(Math.log(1 + lux) / Math.log(1 + LUX_SLIDER_MAX), 0),
+    Math.max(
+      Math.log(1 + lux / LUX_SLIDER_KNEE) /
+        Math.log(1 + LUX_SLIDER_MAX / LUX_SLIDER_KNEE),
+      0
+    ),
     1
   );
   // Half circle from (10,58) to (110,58) around (60,58), radius 50. The sun
