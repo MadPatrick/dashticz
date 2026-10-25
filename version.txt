@@ -1,4 +1,4 @@
 {
-    "version": "4.20.3",
-    "last_changes": "All iCalendar data (calendar, garbage and F1 blocks) is now read with one library, sabre/vobject, on the server. Recurring events are expanded correctly, including biweekly events, extra dates (RDATE), excluded dates (EXDATE), moved occurrences and 29 February. One broken event no longer hides the rest of a calendar, and the browser no longer loads ical.js. The calendar method option is no longer used."
+    "version": "4.20.4",
+    "last_changes": "Graphs: the time axis follows the Dashticz language and uses the same date formats as the rest of Dashticz (Day.js, moment style); formats in the former date-fns notation keep working. date-fns is removed from the bundle."
 }

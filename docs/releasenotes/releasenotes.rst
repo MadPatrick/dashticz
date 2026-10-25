@@ -1,6 +1,21 @@
 Release Notes
 =============
 
+v4.20.4 (25-10-2026)
+----------------------
+
+* **Fixes**
+
+- Graphs: the time axis uses the Dashticz language for month and day names,
+  and ``displayFormats`` accept the Day.js (moment style) tokens shown in the
+  documentation, such as ``'MMM D'`` or ``'ll'``. Formats in the former
+  date-fns notation (``'EEE d MMM'``, ``'yyyy'``) keep working.
+
+* **Code**
+
+- The Chart.js date adapter is built on Day.js; date-fns and
+  chartjs-adapter-date-fns are removed (about 44 KB less JavaScript).
+
 v4.20.3 (25-10-2026)
 ----------------------
 
