@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.20.15": "Cluster block: the neon switch is slightly narrower and has room for its glow, so it no longer causes a horizontal scrollbar; the glow is neon green and the switch is light grey instead of dark grey.",
     "4.20.14": "Cluster block: the neon switch ring now glows in a bright neon cyan by default (it used the theme's --button-active, which is a dull colour in some themes and hardly visible). --cluster-switch-on still overrides the colour.",
     "4.20.13": "Cluster block: the on/off switch now has a neon look - a metal pill with a round knob that slides to the right and a ring that glows in the theme's active colour (or --cluster-switch-on) when on. It works without @property, conic-gradient masks and color-mix() (the switch then just doesn't animate its ring) and respects prefers-reduced-motion.",
     "4.20.12": "The progress fill of the Fully Kiosk charger button runs from #C0FCE1 at the start to #059956 at the end of the fill, fully opaque, so the color difference is clearly visible.",

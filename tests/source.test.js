@@ -6381,7 +6381,7 @@ test('Cluster switch can be resized via a switchScale field next to the Row type
   // .cluster-row-switch's own comment) so the switch renders at normal
   // size when unset, and the row's own gap to .cluster-row-usage scales
   // the same way so a bigger switch doesn't crowd its neighbour.
-  assert.match(css, /width: calc\(66px \* var\(--cluster-switch-scale, 1\)\);/);
+  assert.match(css, /width: calc\(56px \* var\(--cluster-switch-scale, 1\)\);/);
   assert.match(css, /gap: calc\(8px \* var\(--cluster-switch-scale, 1\)\);/);
 
   // Server-side: must be a number within 0.3-3.

@@ -1,4 +1,4 @@
 {
-    "version": "4.20.14",
-    "last_changes": "Cluster block: the neon switch ring now glows in a bright neon cyan by default (it used the theme's --button-active, which is a dull colour in some themes and hardly visible). --cluster-switch-on still overrides the colour."
+    "version": "4.20.15",
+    "last_changes": "Cluster block: the neon switch is slightly narrower and has room for its glow, so it no longer causes a horizontal scrollbar; the glow is neon green and the switch is light grey instead of dark grey."
 }

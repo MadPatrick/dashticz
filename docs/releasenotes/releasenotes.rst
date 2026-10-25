@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+v4.20.15 (25-10-2026)
+----------------------
+
+* **Fixes**
+
+- Cluster: the neon switch is slightly narrower and has room for its glow, so a
+  cluster no longer gets a horizontal scrollbar. The glow is neon green and the
+  switch is light grey instead of dark grey.
+
 v4.20.14 (25-10-2026)
 ----------------------
 
@@ -17,7 +26,7 @@ v4.20.13 (25-10-2026)
 
 - Cluster: the on/off switch of a switch cluster got a neon look. A metal pill
   with a round knob that slides to the right, surrounded by a ring that glows
-  in neon cyan (or in --cluster-switch-on when set) when the
+  in neon green (or in --cluster-switch-on when set) when the
   row is on. Browsers without @property, conic-gradient masks or
   color-mix() get a plain glow without the ring animation, and
   prefers-reduced-motion disables the animation.
