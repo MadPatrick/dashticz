@@ -1,6 +1,14 @@
 Release Notes
 =============
 
+v4.20.16 (25-10-2026)
+----------------------
+
+* **Enhancements**
+
+- Cluster: 4 px less space between the neon switches and a darker grey switch
+  background. The knob is unchanged.
+
 v4.20.15 (25-10-2026)
 ----------------------
 
