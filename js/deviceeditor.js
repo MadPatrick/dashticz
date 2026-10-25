@@ -103,6 +103,13 @@ var DashticzDeviceEditor = (function () {
     return $.extend(
       {
         editor_title: 'Device Editor',
+        // Newer F1 strings: a language file cached from before them (the
+        // cache key is the version) must not show 'undefined'.
+        f1_block_timezone: 'Time zone',
+        f1_block_timezone_browser: 'Browser',
+        f1_block_timezone_domoticz: 'Domoticz location',
+        f1_block_timezone_help:
+          'Time zone of the session times. Domoticz location uses the latitude and longitude from the Domoticz settings and falls back to the browser time zone. Both follow summer time.',
         configured_items: 'Devices and widgets in Dashticz',
         empty_items: 'No devices or widgets configured in Dashticz.',
         add_item: 'Add device or block',
