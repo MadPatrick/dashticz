@@ -1,4 +1,4 @@
 {
-    "version": "4.20.4",
-    "last_changes": "Graphs: the time axis follows the Dashticz language and uses the same date formats as the rest of Dashticz (Day.js, moment style); formats in the former date-fns notation keep working. date-fns is removed from the bundle."
+    "version": "4.20.5",
+    "last_changes": "RGB dimmers: colorpicker 1 (the old Spectrum colorpicker) now shows the same colorpicker as colorpicker 2; spectrum-colorpicker is removed."
 }

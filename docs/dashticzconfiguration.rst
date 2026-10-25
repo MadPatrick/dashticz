@@ -278,7 +278,7 @@ Config parameters
     - | 0 / 1
       | Hide or show RGB button on switch
   * - colorpicker
-    - | 0: No RGB colorpicker, 1: Old style RGB colorpicker, 2: New style RGB colorpicker
+    - | 0: No RGB colorpicker, 1 or 2: RGB colorpicker (1 used to be the old style picker)
       | Choose the default RGB colorpicker for RGB devices
   * - colorpickerscale
     - | Choose the scaling factor for colorpicker 2 popup window.

@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+v4.20.5 (25-10-2026)
+----------------------
+
+* **Code**
+
+- RGB dimmers: ``colorpicker: 1`` (the old Spectrum colorpicker) now shows
+  the same colorpicker as ``colorpicker: 2``. spectrum-colorpicker and its
+  styles are removed (about 27 KB less JavaScript).
+
 v4.20.4 (25-10-2026)
 ----------------------
 

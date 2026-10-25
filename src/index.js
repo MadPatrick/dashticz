@@ -26,7 +26,6 @@ require('./templateengine.js');
 require('./handlebars-helpers.js');
 var Skycons = require('skycons-color');
 window.Skycons = Skycons;
-require('spectrum-colorpicker');
 require('ion-sound');
 require('hammerjs');
 window.Popper = require('@popperjs/core');

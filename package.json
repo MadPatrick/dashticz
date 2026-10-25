@@ -1,6 +1,6 @@
 {
   "name": "dashticz",
-  "version": "4.20.4",
+  "version": "4.20.5",
   "description": "Alternative dashboard for Domoticz",
   "main": "index.js",
   "directories": {
@@ -26,7 +26,6 @@
     "md5": "^2.3.0",
     "mobile-detect": "^1.4.5",
     "skycons-color": "^1.0.0",
-    "spectrum-colorpicker": "^1.8.1",
     "spotify-web-api-js": "^1.5.2",
     "swiper": "^14.3.0"
   },
