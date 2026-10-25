@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+v4.20.7 (25-10-2026)
+----------------------
+
+* **Code**
+
+- Security panel: the hidden device information (bottom left screw) is
+  determined without the mobile-detect library, which is removed (about
+  38 KB less JavaScript).
+
 v4.20.6 (25-10-2026)
 ----------------------
 

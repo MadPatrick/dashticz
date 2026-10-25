@@ -1,4 +1,4 @@
 {
-    "version": "4.20.6",
-    "last_changes": "playsound uses the browser's own audio element instead of ion.sound; ion-sound is removed."
+    "version": "4.20.7",
+    "last_changes": "The security panel's device information no longer needs mobile-detect; mobile-detect is removed."
 }

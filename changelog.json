@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.20.7": "The security panel's device information no longer needs mobile-detect; mobile-detect is removed.",
     "4.20.6": "playsound uses the browser's own audio element instead of ion.sound; ion-sound is removed.",
     "4.20.5": "RGB dimmers: colorpicker 1 (the old Spectrum colorpicker) now shows the same colorpicker as colorpicker 2; spectrum-colorpicker is removed.",
     "4.20.4": "Graphs: the time axis follows the Dashticz language and uses the same date formats as the rest of Dashticz (Day.js, moment style); formats in the former date-fns notation keep working. date-fns is removed from the bundle.",
