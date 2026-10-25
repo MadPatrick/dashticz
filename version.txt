@@ -1,4 +1,4 @@
 {
-    "version": "4.20.5",
-    "last_changes": "RGB dimmers: colorpicker 1 (the old Spectrum colorpicker) now shows the same colorpicker as colorpicker 2; spectrum-colorpicker is removed."
+    "version": "4.20.6",
+    "last_changes": "playsound uses the browser's own audio element instead of ion.sound; ion-sound is removed."
 }

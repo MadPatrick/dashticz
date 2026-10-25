@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+v4.20.6 (25-10-2026)
+----------------------
+
+* **Code**
+
+- ``playsound``, ``playsoundOn`` and ``playsoundOff`` use the browser's own
+  audio element instead of ion.sound (last release 2016). As before, the
+  configured file is used first and otherwise the same name in another format
+  (mp3, ogg, aac) from the sounds folder (about 12 KB less JavaScript).
+
 v4.20.5 (25-10-2026)
 ----------------------
 
