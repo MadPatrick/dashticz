@@ -1,6 +1,24 @@
 Release Notes
 =============
 
+v4.20.8 (25-10-2026)
+----------------------
+
+* **Fixes**
+
+- Weather: Weather Underground is no longer supported, because its free API
+  stopped. The former ``wunderground``, ``currentweather`` and
+  ``currentweather_big`` blocks are shown with the regular weather block
+  (OpenWeatherMap or KNMI, ``config['owm_api']``); ``currentweather`` and
+  ``currentweather_big`` as a single "now" row.
+
+* **Code**
+
+- The Weather Underground scripts (``js/weather.js``, the unused
+  ``js/weather_owm.js``), its settings (``wu_api``, ``wu_city``, ``wu_name``,
+  ``wu_country``) and the provider choice in the Widget Editor are removed,
+  together with the Skycons icons (about 11 KB less JavaScript).
+
 v4.20.7 (25-10-2026)
 ----------------------
 

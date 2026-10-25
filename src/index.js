@@ -23,8 +23,6 @@ window.Handlebars = Handlebars;
 
 require('./templateengine.js');
 require('./handlebars-helpers.js');
-var Skycons = require('skycons-color');
-window.Skycons = Skycons;
 require('hammerjs');
 window.Popper = require('@popperjs/core');
 window.iro = require('@jaames/iro').default;
