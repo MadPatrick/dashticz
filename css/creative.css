@@ -5060,37 +5060,113 @@ img.icon {
   opacity: 0;
 }
 
-.cluster-row-track {
-  position: relative;
-  /* Wider than tall (66x30, vs. a more typical ~2:1 pill) so ON/OFF has
-     more breathing room next to the thumb and reads more easily. */
-  width: calc(66px * var(--cluster-switch-scale, 1));
-  height: calc(30px * var(--cluster-switch-scale, 1));
-  border-radius: 9999px;
-  background: var(--cluster-switch-off, rgba(255, 255, 255, 0.25));
-  border: calc(1px * var(--cluster-switch-scale, 1)) solid
-    var(--cluster-switch-border, rgba(255, 255, 255, 0.3));
-  box-shadow: inset 0 calc(1px * var(--cluster-switch-scale, 1))
-    calc(2px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.15);
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
+/* Neon on/off switch (inspired by https://codepen.io/jkantner/pen/MWzqMrp):
+   a brushed-metal pill with a round knob, wrapped by a ring that glows in the
+   switch colour when the row is on. The colour is --cluster-switch-on when set
+   (custom.css, a theme or .cluster-block itself), otherwise the active theme's
+   --button-active, so it follows every theme. --cluster-switch-x (the arc
+   length of the ring, an angle) and --cluster-switch-c (the glow colour)
+   change with the state and are animated through the @property rules below;
+   a browser without @property still switches correctly, only without the
+   animation of the arc/glow. */
+@property --cluster-switch-x {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 1deg;
 }
 
+@property --cluster-switch-c {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
+.cluster-row-track {
+  --cluster-switch-color: var(--cluster-switch-on, var(--button-active));
+  --cluster-switch-x: 1deg;
+  --cluster-switch-c: transparent;
+  position: relative;
+  /* Wider than tall (66x30, vs. a more typical ~2:1 pill) so the knob has
+     room to travel and the ring reads clearly. */
+  width: calc(66px * var(--cluster-switch-scale, 1));
+  height: calc(30px * var(--cluster-switch-scale, 1));
+  box-sizing: border-box;
+  border-radius: 9999px;
+  background:
+    linear-gradient(to bottom right, rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0)),
+    #444143;
+  box-shadow:
+    inset 0 0 calc(3px * var(--cluster-switch-scale, 1))
+      calc(-3px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.53),
+    inset calc(1px * var(--cluster-switch-scale, 1))
+      calc(1px * var(--cluster-switch-scale, 1))
+      calc(3px * var(--cluster-switch-scale, 1)) #000811,
+    inset calc(-1px * var(--cluster-switch-scale, 1))
+      calc(-1px * var(--cluster-switch-scale, 1))
+      calc(2px * var(--cluster-switch-scale, 1))
+      calc(1px * var(--cluster-switch-scale, 1)) rgba(204, 204, 204, 0.07),
+    0 0 0 calc(2px * var(--cluster-switch-scale, 1)) #545153;
+  /* Fallback for a browser without @property: the glow is a plain
+     drop-shadow in the switch colour, switched on with the state below. */
+  filter: drop-shadow(
+    0 0 calc(3px * var(--cluster-switch-scale, 1)) var(--cluster-switch-c)
+  );
+  transition:
+    --cluster-switch-x 0.5s,
+    --cluster-switch-c 0.5s,
+    box-shadow 0.5s;
+}
+
+/* The glowing ring around the pill. */
 .cluster-row-track::after {
-  content: 'OFF';
+  content: '';
   position: absolute;
-  top: 0;
-  bottom: 0;
-  right: calc(7px * var(--cluster-switch-scale, 1));
-  display: flex;
-  align-items: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: calc(10px * var(--cluster-switch-scale, 1));
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  color: var(--cluster-switch-label, rgba(255, 255, 255, 0.7));
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  width: calc(100% + 5px * var(--cluster-switch-scale, 1));
+  height: calc(100% + 5px * var(--cluster-switch-scale, 1));
+  border: calc(2px * var(--cluster-switch-scale, 1)) solid
+    var(--cluster-switch-color);
+  border-radius: 9999px;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+
+/* Where conic-gradient masks are available the ring is drawn as an arc that
+   grows from the bottom-left of the pill (off) to the full circle (on). */
+@supports (
+  (-webkit-mask: conic-gradient(#000, #000)) or
+    (mask: conic-gradient(#000, #000))
+) {
+  .cluster-row-track::after {
+    -webkit-mask: conic-gradient(
+      from calc(270deg - var(--cluster-switch-x)),
+      #000 calc(2 * var(--cluster-switch-x)),
+      rgba(0, 0, 0, 0.07) 0
+    );
+    mask: conic-gradient(
+      from calc(270deg - var(--cluster-switch-x)),
+      #000 calc(2 * var(--cluster-switch-x)),
+      rgba(0, 0, 0, 0.07) 0
+    );
+    /* hack for Safari, which otherwise ignores the mask */
+    box-shadow: 0 0 0 2em transparent;
+  }
+}
+
+/* No mask support: a dim full ring that lights up when on. */
+@supports not (
+  (-webkit-mask: conic-gradient(#000, #000)) or
+    (mask: conic-gradient(#000, #000))
+) {
+  .cluster-row-track::after {
+    opacity: 0.25;
+  }
+  .cluster-row-checkbox:checked + .cluster-row-track::after {
+    opacity: 1;
+  }
 }
 
 .cluster-row-thumb {
@@ -5100,35 +5176,66 @@ img.icon {
   width: calc(24px * var(--cluster-switch-scale, 1));
   height: calc(24px * var(--cluster-switch-scale, 1));
   border-radius: 50%;
-  background: var(--cluster-switch-thumb, #fff);
+  /* Grip lines on a metal knob; the centre dot shows the switch colour
+     when on. */
+  background:
+    radial-gradient(transparent 15%, #343133 16%, #545153 20%),
+    repeating-linear-gradient(transparent 0 10%, rgba(0, 0, 0, 0.13) 0 20%) 50%
+      50% / 25% 25% no-repeat,
+    repeating-linear-gradient(
+        90deg,
+        transparent 0 10%,
+        rgba(0, 0, 0, 0.13) 0 20%
+      )
+      50% 50% / 25% 25% no-repeat,
+    radial-gradient(var(--cluster-switch-c) 17%, transparent 0),
+    #545153;
   box-shadow:
-    0 calc(1px * var(--cluster-switch-scale, 1))
-      calc(3px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.35),
-    0 0 0 calc(1px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.04);
-  transition:
-    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.2s ease;
+    inset calc(-1px * var(--cluster-switch-scale, 1))
+      calc(-1px * var(--cluster-switch-scale, 1))
+      calc(2px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.53),
+    inset calc(1px * var(--cluster-switch-scale, 1))
+      calc(1px * var(--cluster-switch-scale, 1))
+      calc(2px * var(--cluster-switch-scale, 1)) rgba(255, 255, 255, 0.13),
+    calc(2px * var(--cluster-switch-scale, 1))
+      calc(2px * var(--cluster-switch-scale, 1))
+      calc(3px * var(--cluster-switch-scale, 1)) rgba(0, 0, 0, 0.8);
+  transition: transform 0.5s;
+}
+
+/* Hover/focus: the arc grows a little (and, where color-mix() exists, a
+   faint glow shows) to invite a click. */
+.cluster-row-switch:hover .cluster-row-track {
+  --cluster-switch-x: 3deg;
+}
+
+@supports (color: color-mix(in srgb, red 25%, transparent)) {
+  .cluster-row-switch:hover .cluster-row-track {
+    --cluster-switch-c: color-mix(
+      in srgb,
+      var(--cluster-switch-color) 25%,
+      transparent
+    );
+  }
 }
 
 .cluster-row-checkbox:checked + .cluster-row-track {
-  /* A richer, slightly darker green than a plain #4cd964 keeps the white
-     ON label above legible (~3.3:1, enough for bold 10px text) instead of
-     washing out against a lighter green. */
-  background: var(--cluster-switch-on, #43a047);
-}
-
-.cluster-row-checkbox:checked + .cluster-row-track::after {
-  content: 'ON';
-  right: auto;
-  left: calc(8px * var(--cluster-switch-scale, 1));
-  color: var(--cluster-switch-label-on, rgba(255, 255, 255, 0.95));
+  --cluster-switch-x: 180deg;
+  --cluster-switch-c: var(--cluster-switch-color);
 }
 
 .cluster-row-checkbox:checked + .cluster-row-track .cluster-row-thumb {
-  /* 66px track, 1px border eaten by border-box, 24px thumb, 3px padding
-     each side: 66 - 2(border) - 24 - 2(3px padding) = 34, scaled the same
-     as every other dimension here. */
-  transform: translateX(calc(34px * var(--cluster-switch-scale, 1)));
+  /* 66px track, 24px knob, 3px margin each side: 66 - 24 - 2*3 = 36, scaled
+     the same as every other dimension here. */
+  transform: translateX(calc(36px * var(--cluster-switch-scale, 1)));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cluster-row-track,
+  .cluster-row-track::after,
+  .cluster-row-thumb {
+    transition: none !important;
+  }
 }
 
 .cluster-row-checkbox:focus-visible + .cluster-row-track {

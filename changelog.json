@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.20.13": "Cluster block: the on/off switch now has a neon look - a metal pill with a round knob that slides to the right and a ring that glows in the theme's active colour (or --cluster-switch-on) when on. It works without @property, conic-gradient masks and color-mix() (the switch then just doesn't animate its ring) and respects prefers-reduced-motion.",
     "4.20.12": "The progress fill of the Fully Kiosk charger button runs from #C0FCE1 at the start to #059956 at the end of the fill, fully opaque, so the color difference is clearly visible.",
     "4.20.11": "The progress fill of the Fully Kiosk charger button now shows its gradient over the filled part: from a light green at the start to a dark green at the end of the fill.",
     "4.20.10": "The Fully Kiosk charger button shows its battery level as a progress fill that runs from a very light green to a green, without orange or other colors.",

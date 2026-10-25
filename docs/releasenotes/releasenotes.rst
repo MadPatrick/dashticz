@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+v4.20.13 (25-10-2026)
+----------------------
+
+* **Enhancements**
+
+- Cluster: the on/off switch of a switch cluster got a neon look. A metal pill
+  with a round knob that slides to the right, surrounded by a ring that glows
+  in the active theme color (or in --cluster-switch-on when set) when the
+  row is on. Browsers without @property, conic-gradient masks or
+  color-mix() get a plain glow without the ring animation, and
+  prefers-reduced-motion disables the animation.
+
 v4.20.12 (25-10-2026)
 ----------------------
 
