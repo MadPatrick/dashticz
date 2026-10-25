@@ -1,6 +1,29 @@
 Release Notes
 =============
 
+v4.20.3 (25-10-2026)
+----------------------
+
+* **Fixes**
+
+- Calendar, Garbage and F1: all iCalendar data is read with one library,
+  `sabre/vobject <https://github.com/sabre-io/vobject>`_. Recurring events
+  are expanded according to RFC 5545: biweekly events (``INTERVAL=2``),
+  extra dates (``RDATE``), excluded dates (``EXDATE``), moved occurrences,
+  the last weekday or day of the month, and yearly events on 29 February.
+- Calendar: one broken or endless recurring event is skipped (with a warning
+  in the browser console) instead of hiding the whole calendar.
+- Garbage: iCal based companies are read by the same calendar bridge on the
+  server, so recurring pickup dates are shown as well.
+
+* **Code**
+
+- The calendar ``method`` option is no longer used; methods 0, 1 and 2
+  (SG_iCal, om/icalparser and johngrogg/ics-parser) are replaced by
+  sabre/vobject 4.6 (PHP 7.4 or newer, ``mbstring``).
+- ical.js is removed from the browser bundle.
+- The last part of the version number goes up with every change.
+
 v4.20.2 (16-10-2026)
 ----------------------
 

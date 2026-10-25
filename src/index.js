@@ -46,20 +46,6 @@ window.loadSpotifyApi = function () {
   return spotifyApiPromise;
 };
 
-var icalPromise;
-window.loadIcal = function () {
-  if (window.ICAL) return Promise.resolve(window.ICAL);
-  if (!icalPromise) {
-    icalPromise = import(/* webpackChunkName: "ical" */ 'ical.js').then(
-      function (module) {
-        window.ICAL = module.default || module;
-        return window.ICAL;
-      }
-    );
-  }
-  return icalPromise;
-};
-
 // Loaded statically (not via a lazy import() chunk) - on at least one real
 // Android tablet, fetching the separate Swiper chunk at runtime silently
 // failed (screen-switcher buttons and mouse drag on desktop still worked,

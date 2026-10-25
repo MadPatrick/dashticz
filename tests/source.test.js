@@ -513,6 +513,12 @@ test('package and runtime versions remain synchronized', () => {
     /<div class="loaderVersion">Version ([^<]+)<\/div>/
   );
   assert.equal(runtimeVersion, packageVersion);
+  // x.xx.y: y is the change counter, raised with every change (AGENTS.md).
+  assert.match(packageVersion, /^\d+\.\d{2}\.(0|[1-9]\d*)$/);
+  const changelog = JSON.parse(
+    fs.readFileSync(path.join(root, 'changelog.json'), 'utf8')
+  ).changelog;
+  assert.equal(Object.keys(changelog)[0], packageVersion);
   assert.ok(descriptionVersion);
   assert.equal(descriptionVersion[1], packageVersion);
   assert.ok(loaderVersion);
