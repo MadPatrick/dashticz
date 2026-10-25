@@ -5063,8 +5063,9 @@ img.icon {
 /* Neon on/off switch (inspired by https://codepen.io/jkantner/pen/MWzqMrp):
    a brushed-metal pill with a round knob, wrapped by a ring that glows in the
    switch colour when the row is on. The colour is --cluster-switch-on when set
-   (custom.css, a theme or .cluster-block itself), otherwise the active theme's
-   --button-active, so it follows every theme. --cluster-switch-x (the arc
+   (custom.css, a theme or .cluster-block itself), otherwise a bright neon cyan:
+   the theme variables (--button-active, ...) are dull surface colours in
+   several themes and gave an almost invisible glow. --cluster-switch-x (the arc
    length of the ring, an angle) and --cluster-switch-c (the glow colour)
    change with the state and are animated through the @property rules below;
    a browser without @property still switches correctly, only without the
@@ -5082,7 +5083,7 @@ img.icon {
 }
 
 .cluster-row-track {
-  --cluster-switch-color: var(--cluster-switch-on, var(--button-active));
+  --cluster-switch-color: var(--cluster-switch-on, #00e5ff);
   --cluster-switch-x: 1deg;
   --cluster-switch-c: transparent;
   position: relative;

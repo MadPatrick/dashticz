@@ -1,4 +1,4 @@
 {
-    "version": "4.20.13",
-    "last_changes": "Cluster block: the on/off switch now has a neon look - a metal pill with a round knob that slides to the right and a ring that glows in the theme's active colour (or --cluster-switch-on) when on. It works without @property, conic-gradient masks and color-mix() (the switch then just doesn't animate its ring) and respects prefers-reduced-motion."
+    "version": "4.20.14",
+    "last_changes": "Cluster block: the neon switch ring now glows in a bright neon cyan by default (it used the theme's --button-active, which is a dull colour in some themes and hardly visible). --cluster-switch-on still overrides the colour."
 }

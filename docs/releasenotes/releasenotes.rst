@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+v4.20.14 (25-10-2026)
+----------------------
+
+* **Fixes**
+
+- Cluster: the ring of the neon switch glows in a bright neon cyan by default
+  instead of the theme's ``--button-active``, which is a dull color in some
+  themes and was hardly visible. ``--cluster-switch-on`` still overrides it.
+
 v4.20.13 (25-10-2026)
 ----------------------
 
@@ -8,7 +17,7 @@ v4.20.13 (25-10-2026)
 
 - Cluster: the on/off switch of a switch cluster got a neon look. A metal pill
   with a round knob that slides to the right, surrounded by a ring that glows
-  in the active theme color (or in --cluster-switch-on when set) when the
+  in neon cyan (or in --cluster-switch-on when set) when the
   row is on. Browsers without @property, conic-gradient masks or
   color-mix() get a plain glow without the ring animation, and
   prefers-reduced-motion disables the animation.
