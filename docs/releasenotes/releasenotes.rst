@@ -1,6 +1,44 @@
 Release Notes
 =============
 
+v4.20.16 (25-10-2026)
+----------------------
+
+* **Enhancements**
+
+- Cluster: 4 px less space between the neon switches and a darker grey switch
+  background. The knob is unchanged.
+
+v4.20.15 (25-10-2026)
+----------------------
+
+* **Fixes**
+
+- Cluster: the neon switch is slightly narrower and has room for its glow, so a
+  cluster no longer gets a horizontal scrollbar. The glow is neon green and the
+  switch is light grey instead of dark grey.
+
+v4.20.14 (25-10-2026)
+----------------------
+
+* **Fixes**
+
+- Cluster: the ring of the neon switch glows in a bright neon cyan by default
+  instead of the theme's ``--button-active``, which is a dull color in some
+  themes and was hardly visible. ``--cluster-switch-on`` still overrides it.
+
+v4.20.13 (25-10-2026)
+----------------------
+
+* **Enhancements**
+
+- Cluster: the on/off switch of a switch cluster got a neon look. A metal pill
+  with a round knob that slides to the right, surrounded by a ring that glows
+  in neon green (or in --cluster-switch-on when set) when the
+  row is on. Browsers without @property, conic-gradient masks or
+  color-mix() get a plain glow without the ring animation, and
+  prefers-reduced-motion disables the animation.
+
 v4.20.12 (25-10-2026)
 ----------------------
 

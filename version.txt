@@ -1,4 +1,4 @@
 {
-    "version": "4.20.12",
-    "last_changes": "The progress fill of the Fully Kiosk charger button runs from #C0FCE1 at the start to #059956 at the end of the fill, fully opaque, so the color difference is clearly visible."
+    "version": "4.20.16",
+    "last_changes": "Cluster block: 4 px less space between the neon switches and a darker grey switch background (the knob is unchanged)."
 }
