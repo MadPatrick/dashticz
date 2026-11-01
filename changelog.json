@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.20.19": "Toon and Mower widgets: two new Widgets cards. Toon shows the temperature, thermostat, boiler and scenes of a Toon, and Mower shows a Husqvarna mower with state, location, battery and Start/Park buttons. Both take their data from Domoticz.",
     "4.20.18": "Car info widget: the range on the bonnet no longer has an icon.",
     "4.20.17": "Car info widget: a new repeatable Widgets card with one tile per car. It shows the tyre pressures, battery level, range, charging, doors, windows and lock on a picture of the car seen from above, and you can choose your own picture.",
     "4.20.16": "Dependencies updated: chart.js 4.6.1, @babel/core 8.0.9, @types/node 26.6.6, sass 1.106.1 and sass-loader 17.1.0. The dist bundle has been rebuilt.",

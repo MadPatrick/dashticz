@@ -2239,6 +2239,8 @@ var DashticzWidgetEditor = (function () {
     html += _fullykioskWidgetCardHtml();
     html += _weatherinfoWidgetCardHtml();
     html += _carWidgetCardHtml();
+    html += _mowerWidgetCardHtml();
+    html += _toonWidgetCardHtml();
 
     html +=
       '</div><div class="we-message" role="status"></div></div>' +
@@ -2837,6 +2839,70 @@ var DashticzWidgetEditor = (function () {
       _t('click_to_add', 'Click to add') +
       '</div></div>'
     );
+  }
+
+  /* Toon (docs/blocks/specials/toon.rst, js/components/toon.js): a card that
+     adds a Toon tile through the Toon quick-add popup
+     (DashticzDeviceEditor.openToon()). */
+  function _toonWidgetCardHtml() {
+    var itemTitle = _t('toon_title', 'Toon');
+    return (
+      '<div class="we-widget-card we-widget-card-toon" data-special-widget="toon" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="fas fa-temperature-half" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _t(
+        'toon_description',
+        'Temperature, thermostat, boiler and scenes of your Toon.'
+      ) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openToonFromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openToon();
+    });
+  }
+
+  /* Mower (docs/blocks/specials/mower.rst, js/components/mower.js): a card that
+     adds a Mower tile through the Mower quick-add popup
+     (DashticzDeviceEditor.openMower()). */
+  function _mowerWidgetCardHtml() {
+    var itemTitle = _t('mower_title', 'Mower');
+    return (
+      '<div class="we-widget-card we-widget-card-mower" data-special-widget="mower" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="fas fa-robot" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _t(
+        'mower_description',
+        'Temperature, thermostat, boiler and scenes of your Mower.'
+      ) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openMowerFromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openMower();
+    });
   }
 
   function _openCarFromWidgets() {
@@ -5927,6 +5993,14 @@ var DashticzWidgetEditor = (function () {
         _openCarFromWidgets();
         return;
       }
+      if ($(this).data('special-widget') === 'mower') {
+        _openMowerFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'toon') {
+        _openToonFromWidgets();
+        return;
+      }
       _toggleWidget(String($(this).data('widget-id')));
     });
 
@@ -5988,6 +6062,14 @@ var DashticzWidgetEditor = (function () {
       }
       if ($(this).data('special-widget') === 'car') {
         _openCarFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'mower') {
+        _openMowerFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'toon') {
+        _openToonFromWidgets();
         return;
       }
       _toggleWidget(String($(this).data('widget-id')));

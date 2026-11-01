@@ -760,6 +760,8 @@ test('blocks writer requires CSRF, POST, and generates named block definitions',
       'fullykiosk',
       'weatherinfo',
       'car',
+      'mower',
+      'toon',
     ].sort(
       (a, b) =>
         Object.keys(manifest.kinds).indexOf(a) -

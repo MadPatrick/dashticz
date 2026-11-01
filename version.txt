@@ -1,4 +1,4 @@
 {
-    "version": "4.20.18",
-    "last_changes": "Car info widget: the range on the bonnet no longer has an icon."
+    "version": "4.20.19",
+    "last_changes": "Toon and Mower widgets: two new Widgets cards. Toon shows the temperature, thermostat, boiler and scenes of a Toon, and Mower shows a Husqvarna mower with state, location, battery and Start/Park buttons. Both take their data from Domoticz."
 }

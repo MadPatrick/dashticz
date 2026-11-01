@@ -458,6 +458,18 @@ foreach ($data['devices'] as $entry) {
                         dashticz_json_error(400, 'Enter a valid latitude and longitude for the Weather Info block.');
                     }
                 }
+            } elseif ($kind === 'toon') {
+                // toonmode is otherwise just another custom field, but
+                // js/components/toon.js dispatches on it, so it is required.
+                if (!isset($customFields['toonmode']) || $customFields['toonmode'] !== 'info') {
+                    dashticz_json_error(400, 'A Toon block requires a mode.');
+                }
+            } elseif ($kind === 'mower') {
+                // mowermode is otherwise just another custom field, but
+                // js/components/mower.js dispatches on it, so it is required.
+                if (!isset($customFields['mowermode']) || $customFields['mowermode'] !== 'info') {
+                    dashticz_json_error(400, 'A Mower block requires a mode.');
+                }
             } elseif ($kind === 'car') {
                 // carmode is otherwise just another custom field, but
                 // js/components/car.js dispatches on it, so it is required

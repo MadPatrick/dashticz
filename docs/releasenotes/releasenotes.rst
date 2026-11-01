@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+v4.20.19 (01-11-2026)
+----------------------
+
+* **Enhancements**
+
+- New Widgets card "Toon": temperature, thermostat setpoint (with - and +),
+  boiler pressure, state and modulation, scenes and summer mode of a Toon. The
+  Toon devices are found in Domoticz automatically.
+- New Widgets card "Mower": a Husqvarna mower with state, location, battery
+  level, a mowing on/off switch and the buttons Start and Park. The Husqvarna
+  devices are found in Domoticz automatically.
+
 v4.20.18 (01-11-2026)
 ----------------------
 

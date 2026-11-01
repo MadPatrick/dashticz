@@ -561,6 +561,24 @@ var DashticzDeviceEditor = (function () {
     _showCarPopup();
   }
 
+  /** Open the dedicated Toon popup used by the Widgets menu. */
+  function openToon() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showToonPopup();
+  }
+
+  /** Open the dedicated Mower popup used by the Widgets menu. */
+  function openMower() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showMowerPopup();
+  }
+
   /** Open the dedicated News popup used by the Screen Editor add menu. */
   function openNews() {
     editorMode = 'devices';
@@ -1212,6 +1230,22 @@ var DashticzDeviceEditor = (function () {
       // js/components/weatherinfo.js's own canHandle(): dispatched on wimode,
       // no `type` of its own, same convention as F1.
       kind = 'weatherinfo';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      definition.toonmode === 'info'
+    ) {
+      // Toon block, added via the Widgets menu's Toon card (_showToonPopup()).
+      // Matches js/components/toon.js's own canHandle(): dispatched on
+      // toonmode, no `type` of its own.
+      kind = 'toon';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      definition.mowermode === 'info'
+    ) {
+      // Mower block, added via the Widgets menu's Mower card (_showMowerPopup()).
+      // Matches js/components/mower.js's own canHandle(): dispatched on
+      // mowermode, no `type` of its own.
+      kind = 'mower';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       definition.carmode === 'info'
@@ -1878,6 +1912,8 @@ var DashticzDeviceEditor = (function () {
         return 'fas fa-tablet-screen-button';
       if (special.specialType === 'weatherinfo') return 'fas fa-cloud-sun-rain';
       if (special.specialType === 'car') return 'fas fa-car';
+      if (special.specialType === 'mower') return 'fas fa-robot';
+      if (special.specialType === 'toon') return 'fas fa-temperature-half';
     }
     return 'fas fa-question';
   }
@@ -9433,6 +9469,234 @@ var DashticzDeviceEditor = (function () {
     );
   }
 
+  function _showToonPopup() {
+    var t = _translations();
+    $('#toonblockpopup').remove();
+
+    var html =
+      '<div class="modal fade" id="toonblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-temperature-half me-2" aria-hidden="true"></i>' +
+      _esc(t.toon_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    html += '<p class="form-text mb-3">' + _esc(t.toon_source) + '</p>';
+    html += _quickOptionsHtml('toon', {
+      icon: true,
+      iconValue: 'fas fa-temperature-half',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="toon-device-title">' +
+      _esc(t.html_block_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="toon-device-title" autocomplete="off" value="' +
+      _esc(t.toon_block) +
+      '"></div>';
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="toon-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#toonblockpopup');
+    _wireQuickOptions('toon', $popup);
+    _wireBackButton('toonblockpopup');
+
+    $('#toon-save-btn').on('click', function () {
+      var title = _cutUtf8(
+        $.trim(String($('#toon-device-title').val() || '')),
+        100
+      );
+      var quickOptions = _readQuickOptions('toon');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      customRows = customRows.concat([
+        { field: 'toonmode', setting: 'info', value: 'info' },
+      ]);
+
+      var reference = _nextSpecialReference('toon');
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'toon',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: null,
+        title: title,
+        width: 4,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
+      _hideModal(document.getElementById('toonblockpopup'));
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('toonblockpopup')
+    ).show();
+  }
+
+  function _showMowerPopup() {
+    var t = _translations();
+    $('#mowerblockpopup').remove();
+
+    var html =
+      '<div class="modal fade" id="mowerblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-robot me-2" aria-hidden="true"></i>' +
+      _esc(t.mower_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    html += '<p class="form-text mb-3">' + _esc(t.mower_source) + '</p>';
+    html += _quickOptionsHtml('mower', {
+      icon: true,
+      iconValue: 'fas fa-robot',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="mower-device-title">' +
+      _esc(t.html_block_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="mower-device-title" autocomplete="off" value="' +
+      _esc(t.mower_block) +
+      '"></div>';
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="mower-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#mowerblockpopup');
+    _wireQuickOptions('mower', $popup);
+    _wireBackButton('mowerblockpopup');
+
+    $('#mower-save-btn').on('click', function () {
+      var title = _cutUtf8(
+        $.trim(String($('#mower-device-title').val() || '')),
+        100
+      );
+      var quickOptions = _readQuickOptions('mower');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      customRows = customRows.concat([
+        { field: 'mowermode', setting: 'info', value: 'info' },
+      ]);
+
+      var reference = _nextSpecialReference('mower');
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'mower',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: null,
+        title: title,
+        width: 4,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
+      _hideModal(document.getElementById('mowerblockpopup'));
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('mowerblockpopup')
+    ).show();
+  }
+
   function _showCarPopup() {
     var t = _translations();
     $('#carblockpopup').remove();
@@ -12238,6 +12502,8 @@ var DashticzDeviceEditor = (function () {
     else if (special.specialType === 'fullykiosk') label = t.fully_block;
     else if (special.specialType === 'weatherinfo') label = t.weatherinfo_block;
     else if (special.specialType === 'car') label = t.car_block;
+    else if (special.specialType === 'mower') label = t.mower_block;
+    else if (special.specialType === 'toon') label = t.toon_block;
     var htmlFileRow =
       isHtmlBlock && special.customFields
         ? special.customFields.find(function (row) {
@@ -12333,6 +12599,9 @@ var DashticzDeviceEditor = (function () {
     else if (special.specialType === 'weatherinfo')
       specialIconClass = 'fa-cloud-sun-rain';
     else if (special.specialType === 'car') specialIconClass = 'fa-car';
+    else if (special.specialType === 'mower') specialIconClass = 'fa-robot';
+    else if (special.specialType === 'toon')
+      specialIconClass = 'fa-temperature-half';
     var html =
       '<div class="de-device-item de-special-item" data-special-key="' +
       _esc(special.reference) +
@@ -12490,6 +12759,8 @@ var DashticzDeviceEditor = (function () {
     fullykiosk: 'fullykiosk_',
     weatherinfo: 'weatherinfo_',
     car: 'car_',
+    mower: 'mower_',
+    toon: 'toon_',
     // Matches the legacy hand-written 'graph_<idx>' convention (see
     // docs/blocks/graphs.rst and js/components/graph.js's own canHandle()
     // key-prefix check), so a repeatable instance's auto-generated key
@@ -14011,6 +14282,8 @@ var DashticzDeviceEditor = (function () {
     openFullykiosk: openFullykiosk,
     openWeatherinfo: openWeatherinfo,
     openCar: openCar,
+    openMower: openMower,
+    openToon: openToon,
     openGraph: openGraph,
     openLms: openLms,
     openSlideButton: openSlideButton,

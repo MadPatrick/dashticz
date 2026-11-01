@@ -9668,6 +9668,228 @@ canvas {
   padding: 8px;
 }
 
+/* Toon widget (js/components/toon.js): temperature and thermostat on top, the
+   boiler values, the scene buttons and the summer mode below. */
+.toon-block .dt_state {
+  position: absolute;
+  inset: 0;
+  padding: 48px 10px 8px;
+  overflow: auto;
+  font-size: calc(1em + 3pt);
+}
+
+.toon-block .dt_content {
+  position: relative;
+  z-index: 2;
+}
+
+.toon-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toon-main {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* The room temperature sits in the header row, next to the icon. */
+.toon-temp {
+  position: absolute;
+  left: 64px;
+  top: 4px;
+  z-index: 2;
+}
+
+.toon-temp .toon-caption,
+.toon-setpoint .toon-caption {
+  display: none;
+}
+
+.toon-temp,
+.toon-setpoint {
+  display: flex;
+  flex-direction: column;
+}
+
+.toon-setpoint {
+  align-items: flex-end;
+}
+
+.toon-temp-value {
+  font-size: 2em;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.toon-caption {
+  opacity: 0.7;
+  font-size: 0.85em;
+}
+
+.toon-sp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toon-sp-value {
+  min-width: 3em;
+  text-align: center;
+  font-size: 2.6em;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.toon-setpoint .toon-btn {
+  padding: 4px 18px;
+  font-size: 1.5em;
+}
+
+.toon-btn {
+  padding: 2px 12px;
+  border: 1px solid var(--main-border, #5b6678);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  cursor: pointer;
+}
+
+.toon-btn.active {
+  background: #059956;
+  border-color: #2ecc71;
+}
+
+.toon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.toon-pair {
+  display: flex;
+  justify-content: space-between;
+}
+
+.toon-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--main-bg-dark, rgba(255, 255, 255, 0.2));
+  overflow: hidden;
+}
+
+.toon-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #c0fce1 0%, #059956 100%);
+}
+
+.toon-scenes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.toon-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.toon-program,
+.toon-empty {
+  opacity: 0.7;
+}
+
+/* Mower widget (js/components/mower.js): the state on top, then location,
+   next schedule, the mowing switch and the Start and Park buttons. */
+.mower-block .dt_state {
+  position: absolute;
+  inset: 0;
+  padding: 40px 10px 6px;
+  overflow: hidden;
+  font-size: calc(1em + 3pt);
+}
+
+.mower-block .dt_content {
+  position: relative;
+  z-index: 2;
+}
+
+.mower-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mower-state {
+  font-size: calc(1.4em - 2pt);
+  text-align: center;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.mower-pair {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mower-location {
+  margin-bottom: -4pt;
+}
+
+.mower-caption {
+  opacity: 0.7;
+  font-size: 0.85em;
+}
+
+.mower-value {
+  text-align: right;
+}
+
+.mower-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mower-btn {
+  flex: 1 1 0;
+  padding: 5px 6px;
+  border: 1px solid var(--main-border, #5b6678);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  cursor: pointer;
+}
+
+.mower-btn.active {
+  background: #059956;
+  border-color: #2ecc71;
+}
+
+.mower-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--main-bg-dark, rgba(255, 255, 255, 0.2));
+  overflow: hidden;
+}
+
+.mower-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #c0fce1 0%, #059956 100%);
+}
+
+.mower-empty {
+  opacity: 0.7;
+}
+
 /* Device Config / quick-add -> Fully Kiosk section
    (js/deviceeditor.js _fullyFieldsHtml()): three columns, two on a narrow
    popup, one on a phone. */
