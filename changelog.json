@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.20.18": "Car info widget: the range on the bonnet no longer has an icon.",
     "4.20.17": "Car info widget: a new repeatable Widgets card with one tile per car. It shows the tyre pressures, battery level, range, charging, doors, windows and lock on a picture of the car seen from above, and you can choose your own picture.",
     "4.20.16": "Dependencies updated: chart.js 4.6.1, @babel/core 8.0.9, @types/node 26.6.6, sass 1.106.1 and sass-loader 17.1.0. The dist bundle has been rebuilt.",
     "4.20.15": "Graph tooltips: decimals of the values (e.g. Custom Sensor values like 2,19) are no longer dropped to whole numbers in browsers with a decimal comma locale. The tooltip now uses the numeric data point value instead of parsing the locale formatted text, and honors the decimals setting (#1366).",

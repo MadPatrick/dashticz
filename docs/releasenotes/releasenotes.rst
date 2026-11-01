@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+v4.20.18 (01-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Car info: the range on the bonnet no longer has an icon.
+
 v4.20.17 (01-11-2026)
 ----------------------
 

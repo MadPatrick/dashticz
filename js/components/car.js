@@ -213,7 +213,7 @@ var DT_car = (function () {
       parts +=
         '<span class="car-range" title="' +
         esc(label('range', 'Range')) +
-        '"><i class="fas fa-road" aria-hidden="true"></i> ' +
+        '">' +
         esc(text(device(car, 'range')) || '-') +
         '</span>';
     }

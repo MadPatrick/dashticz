@@ -1,4 +1,4 @@
 {
-    "version": "4.20.17",
-    "last_changes": "Car info widget: a new repeatable Widgets card with one tile per car. It shows the tyre pressures, battery level, range, charging, doors, windows and lock on a picture of the car seen from above, and you can choose your own picture."
+    "version": "4.20.18",
+    "last_changes": "Car info widget: the range on the bonnet no longer has an icon."
 }
