@@ -286,3 +286,51 @@ test('F1 widget sends the Domoticz location only in domoticz time zone mode', ()
     undefined
   );
 });
+
+test('Car info reads tyre pressures and rates them', () => {
+  const car = loadComponent('js/components/car.js', {
+    DT_function: { escapeHtml: (value) => String(value) },
+  });
+  assert.equal(car.canHandle({ carmode: 'info' }), true);
+  assert.equal(car.canHandle({ type: 'hpilo' }), false);
+  assert.equal(car.parsePressure({ Data: '2.4 bar' }), 2.4);
+  assert.equal(car.parsePressure({ Data: '2,3 bar' }), 2.3);
+  assert.equal(car.parsePressure({ Data: 'n/a' }), null);
+  assert.equal(car.parsePressure(null), null);
+  assert.equal(car.tyreLevel(2.4), 'ok');
+  assert.equal(car.tyreLevel(2.1), 'warn');
+  assert.equal(car.tyreLevel(1.8), 'low');
+  assert.equal(car.tyreLevel(null), 'na');
+  assert.equal(car.parsePercentage({ Data: '140 %' }), 100);
+});
+
+test('Car info draws only the configured devices', () => {
+  const devices = { 7: { Data: '2.4 bar' }, 9: { Data: '80 %' } };
+  const car = loadComponent('js/components/car.js', {
+    DT_function: { escapeHtml: (value) => String(value) },
+    Domoticz: { getAllDevices: (idx) => devices[idx] },
+  });
+  let html = '';
+  const state = {
+    html(value) {
+      html = value;
+      return state;
+    },
+    find: () => ({ on: () => {} }),
+  };
+  const me = {
+    block: { carmode: 'info', carfl: '7', carsoc: '9', carrr: 'x' },
+    $mountPoint: { find: () => state },
+  };
+  car.render(me);
+  assert.match(html, /car-tyre-fl car-tyre-ok/);
+  assert.match(html, /car-soc/);
+  assert.match(html, /width:80%/);
+  assert.doesNotMatch(html, /car-range/);
+  assert.doesNotMatch(html, /car-tyre-rr/);
+  assert.equal(car.isClosed('Closed'), true);
+  assert.equal(car.isClosed('Unlocked'), false);
+  assert.equal(car.isClosed('Open'), false);
+  assert.equal(car.imageUrl('custom/car.webp'), 'img/custom/car.webp');
+  assert.equal(car.imageUrl('../x.png'), '');
+});

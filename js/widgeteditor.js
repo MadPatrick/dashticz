@@ -2238,6 +2238,7 @@ var DashticzWidgetEditor = (function () {
     html += _tvgidsWidgetCardHtml();
     html += _fullykioskWidgetCardHtml();
     html += _weatherinfoWidgetCardHtml();
+    html += _carWidgetCardHtml();
 
     html +=
       '</div><div class="we-message" role="status"></div></div>' +
@@ -2811,6 +2812,38 @@ var DashticzWidgetEditor = (function () {
       _t('click_to_add', 'Click to add') +
       '</div></div>'
     );
+  }
+
+  /* Car info (docs/blocks/specials/car.rst, js/components/car.js) is also only
+     a repeatable card: one tile per car, added through the Car info quick-add
+     popup (DashticzDeviceEditor.openCar()). */
+  function _carWidgetCardHtml() {
+    var itemTitle = _t('car_title', 'Car info');
+    return (
+      '<div class="we-widget-card we-widget-card-car" data-special-widget="car" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="fas fa-car" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _t(
+        'car_description',
+        'Tyre pressures, battery and doors of one car. Add a tile per car.'
+      ) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openCarFromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openCar();
+    });
   }
 
   function _openWeatherinfoFromWidgets() {
@@ -5890,6 +5923,10 @@ var DashticzWidgetEditor = (function () {
         _openWeatherinfoFromWidgets();
         return;
       }
+      if ($(this).data('special-widget') === 'car') {
+        _openCarFromWidgets();
+        return;
+      }
       _toggleWidget(String($(this).data('widget-id')));
     });
 
@@ -5947,6 +5984,10 @@ var DashticzWidgetEditor = (function () {
       }
       if ($(this).data('special-widget') === 'weatherinfo') {
         _openWeatherinfoFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'car') {
+        _openCarFromWidgets();
         return;
       }
       _toggleWidget(String($(this).data('widget-id')));

@@ -458,6 +458,25 @@ foreach ($data['devices'] as $entry) {
                         dashticz_json_error(400, 'Enter a valid latitude and longitude for the Weather Info block.');
                     }
                 }
+            } elseif ($kind === 'car') {
+                // carmode is otherwise just another custom field, but
+                // js/components/car.js dispatches on it, so it is required
+                // here. The car fields are Domoticz idx numbers.
+                if (!isset($customFields['carmode']) || $customFields['carmode'] !== 'info') {
+                    dashticz_json_error(400, 'A Car info block requires a mode.');
+                }
+                if (isset($customFields['carimage'])
+                    && (!is_string($customFields['carimage'])
+                        || !preg_match('/^[A-Za-z0-9 _.\/-]{1,100}$/', $customFields['carimage'])
+                        || strpos($customFields['carimage'], '..') !== false)) {
+                    dashticz_json_error(400, 'Choose a valid car image.');
+                }
+                foreach (['fl', 'fr', 'rl', 'rr', 'soc', 'range', 'charging', 'lock', 'doors', 'windows'] as $carField) {
+                    if (isset($customFields['car' . $carField])
+                        && !preg_match('/^\d{1,9}$/', (string) $customFields['car' . $carField])) {
+                        dashticz_json_error(400, 'Choose a valid Domoticz device for the Car info block.');
+                    }
+                }
             } elseif ($kind === 'tvgids') {
                 // tvgids (the channel list) is otherwise just another custom
                 // field, but js/components/tvgids.js dispatches on it, so it

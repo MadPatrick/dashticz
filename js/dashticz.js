@@ -28,6 +28,7 @@ var Dashticz = (function () {
     'calendar',
     'dial',
     'html',
+    'car',
     'timegraph',
     'haymanclock',
     'flipclock',

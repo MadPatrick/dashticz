@@ -1,6 +1,19 @@
 Release Notes
 =============
 
+v4.20.17 (01-11-2026)
+----------------------
+
+* **Enhancements**
+
+- New Widgets card "Car info": one tile per car, add a tile for every car you
+  have. Choose the Domoticz devices for the four tyre pressures, battery level,
+  range, charging, doors, windows and lock. The values are drawn on a picture of
+  the car seen from above (front to the left): tyre pressures at the wheels,
+  battery and range on the bonnet, doors and windows on the roof, charging and
+  lock at the rear. You can choose your own picture from ``img/custom``; the
+  empty border around the car is cut away automatically.
+
 v4.20.16 (01-11-2026)
 ----------------------
 

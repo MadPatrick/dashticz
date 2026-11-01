@@ -552,6 +552,15 @@ var DashticzDeviceEditor = (function () {
     _showWeatherinfoPopup();
   }
 
+  /** Open the dedicated Car info popup used by the Widgets menu. */
+  function openCar() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showCarPopup();
+  }
+
   /** Open the dedicated News popup used by the Screen Editor add menu. */
   function openNews() {
     editorMode = 'devices';
@@ -1203,6 +1212,15 @@ var DashticzDeviceEditor = (function () {
       // js/components/weatherinfo.js's own canHandle(): dispatched on wimode,
       // no `type` of its own, same convention as F1.
       kind = 'weatherinfo';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      definition.carmode === 'info'
+    ) {
+      // Repeatable Car info block, added via the Widgets menu's Car info card
+      // (_showCarPopup()). Matches js/components/car.js's own canHandle():
+      // dispatched on carmode, no `type` of its own, same convention as
+      // Weather Info.
+      kind = 'car';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       typeof definition.tvgids === 'string' &&
@@ -1859,6 +1877,7 @@ var DashticzDeviceEditor = (function () {
       if (special.specialType === 'fullykiosk')
         return 'fas fa-tablet-screen-button';
       if (special.specialType === 'weatherinfo') return 'fas fa-cloud-sun-rain';
+      if (special.specialType === 'car') return 'fas fa-car';
     }
     return 'fas fa-question';
   }
@@ -8016,7 +8035,9 @@ var DashticzDeviceEditor = (function () {
     if (setting.type === 'device') {
       // A Domoticz on/off switch, picked from the devices of this dashboard;
       // a number field when the device list is not available.
-      var switches = _settingSwitchDevices();
+      var switches = setting.anydevice
+        ? _settingAllDevices()
+        : _settingSwitchDevices();
       if (!switches.length) {
         return (
           '<input type="number" class="form-control" id="' +
@@ -8074,6 +8095,26 @@ var DashticzDeviceEditor = (function () {
       range +
       ' autocomplete="off">'
     );
+  }
+
+  // [[idx, 'Name (idx)'], ...] of every device of Domoticz, by name.
+  function _settingAllDevices() {
+    var devices = {};
+    try {
+      devices = Domoticz.getAllDevices() || {};
+    } catch (e) {
+      devices = {};
+    }
+    return Object.keys(devices)
+      .filter(function (idx) {
+        return /^\d+$/.test(idx) && devices[idx] && devices[idx].Name;
+      })
+      .map(function (idx) {
+        return [idx, devices[idx].Name + ' (' + idx + ')'];
+      })
+      .sort(function (a, b) {
+        return a[1].localeCompare(b[1]);
+      });
   }
 
   // [[idx, 'Name (idx)'], ...] of the on/off switches of Domoticz, by name.
@@ -9314,6 +9355,198 @@ var DashticzDeviceEditor = (function () {
     ).show();
   }
 
+  /* Car info (js/components/car.js, docs/blocks/specials/car.rst): one tile
+     per car. Every setting is a Domoticz device picked from a list; a device
+     that is not chosen is not shown. The block is dispatched on carmode. */
+  var CAR_SECTION = {
+    fieldPrefix: 'car',
+    idPart: 'car',
+    labelPrefix: 'car_block_',
+    fieldClass: 'de-car-field',
+    saveOrder: 'fl fr rl rr soc range charging lock doors windows image',
+    settings: [
+      'fl',
+      'fr',
+      'rl',
+      'rr',
+      'soc',
+      'range',
+      'charging',
+      'lock',
+      'doors',
+      'windows',
+    ]
+      .map(function (key) {
+        return { key: key, type: 'device', anydevice: true, def: '' };
+      })
+      .concat([{ key: 'image', type: 'image', def: '', full: 1 }]),
+  };
+  var CAR_SETTINGS = CAR_SECTION.settings;
+  var CAR_FIELDS = _settingFieldNames(CAR_SECTION, 'carmode');
+
+  // Stored custom-field rows -> the Car info values (every setting key).
+  function _carValuesFromRows(rows) {
+    var values = _settingsFromRows(CAR_SECTION, rows, CAR_FIELDS);
+    delete values._stored;
+    return values;
+  }
+
+  /* The Car info section shared by the quick-add popup and the config popup:
+     the tyres, the battery and the doors, each under its own heading. */
+  function _carFieldsHtml(prefix, values) {
+    var t = _translations();
+    var v = $.extend(_carValuesFromRows([]), values || {});
+    var groups = [
+      ['car_block_tyres', ['fl', 'fr', 'rl', 'rr']],
+      ['car_block_battery', ['soc', 'range', 'charging']],
+      ['car_block_body', ['lock', 'doors', 'windows']],
+      ['car_block_picture', ['image']],
+    ];
+    var html =
+      '<div class="de-car-fields" data-car-prefix="' + _esc(prefix) + '">';
+    groups.forEach(function (group) {
+      html += '<h6 class="de-section-title">' + _esc(t[group[0]]) + '</h6>';
+      html += '<div class="de-car-grid">';
+      group[1].forEach(function (key) {
+        var setting = CAR_SETTINGS.filter(function (item) {
+          return item.key === key;
+        })[0];
+        html += _settingHtml(CAR_SECTION, prefix, setting, v[key], t);
+      });
+      html += '</div>';
+    });
+    return html + '</div>';
+  }
+
+  function _readCarFields(prefix) {
+    var values = {};
+    CAR_SETTINGS.forEach(function (setting) {
+      values[setting.key] = _settingValue(CAR_SECTION, prefix, setting);
+    });
+    return values;
+  }
+
+  // Car info values -> custom_fields rows, without the empty devices.
+  function _carCustomRows(values) {
+    return [{ field: 'carmode', setting: 'info', value: 'info' }].concat(
+      _settingRows(CAR_SECTION, values)
+    );
+  }
+
+  function _showCarPopup() {
+    var t = _translations();
+    $('#carblockpopup').remove();
+
+    var html =
+      '<div class="modal fade" id="carblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-car me-2" aria-hidden="true"></i>' +
+      _esc(t.car_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    html += _quickOptionsHtml('car', {
+      icon: true,
+      iconValue: 'fas fa-car',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="car-device-title">' +
+      _esc(t.html_block_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="car-device-title" autocomplete="off" value="' +
+      _esc(t.car_block) +
+      '"></div>';
+    html += _carFieldsHtml('car', {});
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="car-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#carblockpopup');
+    _wireQuickOptions('car', $popup);
+    _wireF1Fields('car', $popup);
+    _wireBackButton('carblockpopup');
+
+    $('#car-save-btn').on('click', function () {
+      var title = _cutUtf8(
+        $.trim(String($('#car-device-title').val() || '')),
+        100
+      );
+      var car = _readCarFields('car');
+      var quickOptions = _readQuickOptions('car');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      customRows = customRows.concat(_carCustomRows(car));
+
+      var reference = _nextSpecialReference('car');
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'car',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: null,
+        title: title,
+        width: 4,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
+      _hideModal(document.getElementById('carblockpopup'));
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('carblockpopup')
+    ).show();
+  }
+
   function _showSlideButtonPopup() {
     var t = _translations();
     $('#slidebuttonpopup').remove();
@@ -9757,6 +9990,7 @@ var DashticzDeviceEditor = (function () {
     var isTvgidsBlock = special && special.specialType === 'tvgids';
     var isFullyBlock = special && special.specialType === 'fullykiosk';
     var isWeatherinfoBlock = special && special.specialType === 'weatherinfo';
+    var isCarBlock = special && special.specialType === 'car';
     var isCalendarBlock = special && special.specialType === 'calendar';
     // No Dial/Bar/Slider mode, and a restricted display-options set (see
     // hasDial/configOptions below) - every special except dummy/custom.
@@ -9839,6 +10073,16 @@ var DashticzDeviceEditor = (function () {
       weatherinfoValues = _weatherinfoValuesFromRows(customRows);
       customRows = customRows.filter(function (row) {
         return !WEATHERINFO_FIELDS[
+          _normaliseCustomFieldName(row && row.field).toLowerCase()
+        ];
+      });
+    }
+    var carValues = null;
+    if (isCarBlock) {
+      // Same as Weather Info: the Car info section owns these fields.
+      carValues = _carValuesFromRows(customRows);
+      customRows = customRows.filter(function (row) {
+        return !CAR_FIELDS[
           _normaliseCustomFieldName(row && row.field).toLowerCase()
         ];
       });
@@ -10061,7 +10305,11 @@ var DashticzDeviceEditor = (function () {
       '" tabindex="-1" aria-hidden="true">';
     html +=
       '<div class="modal-dialog modal-dialog-centered de-config-dialog' +
-      (isF1Block || isTvgidsBlock || isFullyBlock || isWeatherinfoBlock
+      (isF1Block ||
+      isTvgidsBlock ||
+      isFullyBlock ||
+      isWeatherinfoBlock ||
+      isCarBlock
         ? ' modal-lg'
         : '') +
       '"><div class="modal-content">';
@@ -10539,6 +10787,7 @@ var DashticzDeviceEditor = (function () {
     if (isFullyBlock) html += _fullyFieldsHtml('de-config', fullyValues);
     if (isWeatherinfoBlock)
       html += _weatherinfoFieldsHtml('de-config', weatherinfoValues);
+    if (isCarBlock) html += _carFieldsHtml('de-config', carValues);
     html +=
       '<div class="de-config-message" role="status"></div></div><div class="modal-footer">';
     html +=
@@ -10565,7 +10814,7 @@ var DashticzDeviceEditor = (function () {
     // choice, even one that matches the suggestion by coincidence).
     var iconFieldTouched = false;
     if (isLmsBlock) _wireLmsFields('de-config', $popup);
-    if (isF1Block) _wireF1Fields('de-config', $popup);
+    if (isF1Block || isCarBlock) _wireF1Fields('de-config', $popup);
     if (isTvgidsBlock) _wireTvgidsFields('de-config', $popup);
     if (isWeatherinfoBlock) _wireWeatherinfoFields($popup);
     if (isCalendarBlock)
@@ -11001,6 +11250,11 @@ var DashticzDeviceEditor = (function () {
           customKeys[key] = true;
         });
       }
+      if (isCarBlock) {
+        Object.keys(CAR_FIELDS).forEach(function (key) {
+          customKeys[key] = true;
+        });
+      }
       if (isGraphBlock) {
         customKeys.graph = true;
         customKeys.legend = true;
@@ -11132,6 +11386,7 @@ var DashticzDeviceEditor = (function () {
             .text(weatherinfoError);
         }
       }
+      var pendingCar = isCarBlock ? _readCarFields('de-config') : null;
       var pendingGraph = null;
       if (isGraphBlock) {
         pendingGraph = _readGraphFields('de-config');
@@ -11512,6 +11767,8 @@ var DashticzDeviceEditor = (function () {
         storedRows = storedRows.concat(
           _weatherinfoCustomRows(pendingWeatherinfo)
         );
+      if (pendingCar)
+        storedRows = storedRows.concat(_carCustomRows(pendingCar));
       if (pendingGraph) {
         storedRows.push({
           field: 'devices',
@@ -11980,6 +12237,7 @@ var DashticzDeviceEditor = (function () {
     else if (special.specialType === 'tvgids') label = t.tvgids_block;
     else if (special.specialType === 'fullykiosk') label = t.fully_block;
     else if (special.specialType === 'weatherinfo') label = t.weatherinfo_block;
+    else if (special.specialType === 'car') label = t.car_block;
     var htmlFileRow =
       isHtmlBlock && special.customFields
         ? special.customFields.find(function (row) {
@@ -12074,6 +12332,7 @@ var DashticzDeviceEditor = (function () {
       specialIconClass = 'fa-tablet-screen-button';
     else if (special.specialType === 'weatherinfo')
       specialIconClass = 'fa-cloud-sun-rain';
+    else if (special.specialType === 'car') specialIconClass = 'fa-car';
     var html =
       '<div class="de-device-item de-special-item" data-special-key="' +
       _esc(special.reference) +
@@ -12230,6 +12489,7 @@ var DashticzDeviceEditor = (function () {
     tvgids: 'tvgids_',
     fullykiosk: 'fullykiosk_',
     weatherinfo: 'weatherinfo_',
+    car: 'car_',
     // Matches the legacy hand-written 'graph_<idx>' convention (see
     // docs/blocks/graphs.rst and js/components/graph.js's own canHandle()
     // key-prefix check), so a repeatable instance's auto-generated key
@@ -13750,6 +14010,7 @@ var DashticzDeviceEditor = (function () {
     openTvgids: openTvgids,
     openFullykiosk: openFullykiosk,
     openWeatherinfo: openWeatherinfo,
+    openCar: openCar,
     openGraph: openGraph,
     openLms: openLms,
     openSlideButton: openSlideButton,
