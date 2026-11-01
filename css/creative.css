@@ -9801,6 +9801,13 @@ canvas {
 }
 
 .toon-program,
+.toon-error,
+.mower-error {
+  margin-top: 6px;
+  font-size: 0.8em;
+  color: #e57373;
+}
+
 .toon-empty {
   opacity: 0.7;
 }

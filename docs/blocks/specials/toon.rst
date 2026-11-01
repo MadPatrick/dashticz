@@ -15,6 +15,33 @@ exist is not shown.
 
 Add the widget via the Screen Editor: "Add items" -> Widgets -> Toon.
 
+Data source
+-----------
+
+In the widget settings (cog icon) the setting "Data source" has two choices:
+
+- **Domoticz (automatic)**: the default, as described above.
+- **Dashticz (direct connection)**: Dashticz asks the Toon itself, through the
+  local API of the rooted Toon (the same API the Domoticz Toon plugin uses).
+  Domoticz is not needed. Not every Toon reports every value: a part without
+  data is not shown. The summer mode is not available with this source.
+
+.. list-table::
+  :header-rows: 1
+  :widths: 5 30
+  :class: tight-table
+
+  * - Parameter
+    - Description
+  * - toonsource
+    - ``'domoticz'`` (default) or ``'dashticz'``.
+  * - toonhost
+    - IP address of the Toon (source ``'dashticz'``).
+  * - toonport
+    - Port of the Toon. Default ``80``.
+  * - toonpoll
+    - Refresh interval in seconds (5-600). Default ``30``.
+
 Settings
 --------
 

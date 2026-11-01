@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.20.20": "Toon and Mower widgets: new data source Dashticz. Besides the devices of Domoticz, the widgets can ask the Toon (IP address) or Husqvarna (client ID and secret) themselves, with the settings in the widget.",
     "4.20.19": "Toon and Mower widgets: two new Widgets cards. Toon shows the temperature, thermostat, boiler and scenes of a Toon, and Mower shows a Husqvarna mower with state, location, battery and Start/Park buttons. Both take their data from Domoticz.",
     "4.20.18": "Car info widget: the range on the bonnet no longer has an icon.",
     "4.20.17": "Car info widget: a new repeatable Widgets card with one tile per car. It shows the tyre pressures, battery level, range, charging, doors, windows and lock on a picture of the car seen from above, and you can choose your own picture.",

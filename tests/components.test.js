@@ -382,6 +382,26 @@ test('Toon finds its devices by name and draws only those', () => {
   assert.equal(found.pressure.idx, '3');
   assert.equal(found.scene.idx, '4');
   assert.equal(found.boiler, null);
+  const direct = toon.fromBridge({
+    room: 19.7,
+    setpoint: 20.5,
+    pressure: 1.6,
+    boiler: 'heating',
+    modulation: 45,
+    scene: 30,
+    program: 'Program is off',
+  });
+  assert.equal(direct.room.Temp, 19.7);
+  assert.equal(direct.setpoint.SetPoint, 20.5);
+  assert.equal(direct.pressure.Data, '1.6 Bar');
+  assert.equal(direct.modulation.Data, '45 %');
+  assert.equal(direct.scene.Level, 30);
+  assert.equal(toon.levels(direct.scene).length, 4);
+  assert.equal(toon.fromBridge(null).room, null);
+  assert.equal(
+    toon.findDevices({ toonsource: 'dashticz' }, { room: 18 }).room.Temp,
+    18
+  );
   assert.equal(
     JSON.stringify(toon.levels(found.scene)),
     '[[10,"Weg"],[20,"Slapen"],[30,"Thuis"]]'
@@ -455,6 +475,27 @@ test('Mower finds its devices by name and shows only Start and Park', () => {
   assert.equal(found.run.idx, '3');
   assert.equal(found.actions.idx, '4');
   assert.equal(found.location, null);
+  const direct = mower.fromBridge({
+    status: 'Parked in base',
+    parked: true,
+    nextStart: Date.UTC(2026, 10, 2, 11, 0),
+    battery: 80,
+  });
+  assert.equal(direct.battery.BatteryLevel, 80);
+  assert.equal(direct.run.Status, 'Off');
+  assert.equal(
+    JSON.stringify(mower.actionButtons(direct.actions)),
+    '[{"level":20,"label":"Start"},{"level":60,"label":"Park"}]'
+  );
+  assert.match(direct.state.Data, /^Parked until .*11:00$/);
+  assert.equal(
+    mower.nextStartText(Date.UTC(2026, 10, 1, 9, 5), new Date(2026, 10, 1, 8)),
+    '09:05'
+  );
+  assert.equal(
+    mower.nextStartText(Date.UTC(2026, 10, 5, 9, 5), new Date(2026, 10, 1, 8)),
+    '05-11 09:05'
+  );
   assert.equal(
     JSON.stringify(mower.cleanText(devices[2].Data)),
     '["Tomorrow 11:00","Grass too short"]'

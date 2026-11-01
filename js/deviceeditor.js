@@ -9469,6 +9469,123 @@ var DashticzDeviceEditor = (function () {
     );
   }
 
+  /* Toon and Mower (js/components/toon.js, mower.js): the devices are found in
+     Domoticz automatically (source 'domoticz'), or they are chosen here
+     (source 'dashticz'): one Domoticz device per part of the tile. */
+  var TOON_OWN = [
+    { key: 'host', type: 'text', def: '', max: 100 },
+    { key: 'port', type: 'number', def: 80, range: [1, 65535, 1] },
+    { key: 'poll', type: 'number', def: 30, range: [5, 600, 1] },
+  ];
+  var MOWER_OWN = [
+    { key: 'clientid', type: 'text', def: '', max: 100 },
+    { key: 'clientsecret', type: 'password', def: '', max: 200 },
+    { key: 'name', type: 'text', def: '', max: 100 },
+    { key: 'poll', type: 'number', def: 5, range: [1, 60, 1] },
+    { key: 'start', type: 'number', def: 120, range: [1, 1440, 1] },
+  ];
+
+  function _sourceDef(prefix, own) {
+    var keys = own.map(function (setting) {
+      return setting.key;
+    });
+    var section = {
+      fieldPrefix: prefix,
+      idPart: prefix,
+      labelPrefix: prefix + '_block_',
+      fieldClass: 'de-car-field',
+      saveOrder: ['source'].concat(keys).join(' '),
+      settings: [
+        {
+          key: 'source',
+          type: 'select',
+          def: 'domoticz',
+          full: 1,
+          options: function (t) {
+            return [
+              ['domoticz', t.source_domoticz],
+              ['dashticz', t.source_dashticz],
+            ];
+          },
+        },
+      ].concat(own),
+    };
+    return {
+      prefix: prefix,
+      mode: prefix + 'mode',
+      section: section,
+      keys: keys,
+      fields: _settingFieldNames(section, prefix + 'mode'),
+    };
+  }
+  var TOON_SRC = _sourceDef('toon', TOON_OWN);
+  var MOWER_SRC = _sourceDef('mower', MOWER_OWN);
+
+  // Stored custom-field rows -> the source and device values of a block.
+  function _sourceValuesFromRows(src, rows) {
+    var values = _settingsFromRows(src.section, rows, src.fields);
+    delete values._stored;
+    return values;
+  }
+
+  // The source choice, with the device lists when the devices are chosen here.
+  function _sourceFieldsHtml(src, prefix, values) {
+    var t = _translations();
+    var v = $.extend(_sourceValuesFromRows(src, []), values || {});
+    var html = '<div class="de-source-fields">';
+    html += _settingHtml(
+      src.section,
+      prefix,
+      src.section.settings[0],
+      v.source,
+      t
+    );
+    html +=
+      '<p class="form-text de-source-domoticz">' +
+      _esc(t[src.prefix + '_source']) +
+      '</p>';
+    html +=
+      '<div class="de-source-devices"><p class="form-text">' +
+      _esc(t[src.prefix + '_source_dashticz']) +
+      '</p><div class="de-car-grid">';
+    src.keys.forEach(function (key) {
+      var setting = src.section.settings.filter(function (item) {
+        return item.key === key;
+      })[0];
+      html += _settingHtml(src.section, prefix, setting, v[key], t);
+    });
+    return html + '</div></div></div>';
+  }
+
+  // Shows the device lists only for the source Dashticz.
+  function _wireSourceFields($popup) {
+    function apply() {
+      $popup.find('.de-source-fields').each(function () {
+        var own = $(this).find('select').first().val() === 'dashticz';
+        $(this).find('.de-source-devices').toggle(own);
+        $(this).find('.de-source-domoticz').toggle(!own);
+      });
+    }
+    $popup.on('change', '.de-source-fields select', apply);
+    apply();
+  }
+
+  function _readSourceFields(src, prefix) {
+    var values = {};
+    src.section.settings.forEach(function (setting) {
+      values[setting.key] = _settingValue(src.section, prefix, setting);
+    });
+    return values;
+  }
+
+  // Block values -> custom_fields rows: the devices only for the source
+  // Dashticz.
+  function _sourceCustomRows(src, values) {
+    var rows = [{ field: src.mode, setting: 'info', value: 'info' }];
+    if (values.source !== 'dashticz') return rows;
+    return rows.concat(_settingRows(src.section, values));
+  }
+
   function _showToonPopup() {
     var t = _translations();
     $('#toonblockpopup').remove();
@@ -9476,7 +9593,7 @@ var DashticzDeviceEditor = (function () {
     var html =
       '<div class="modal fade" id="toonblockpopup" tabindex="-1" aria-hidden="true">';
     html +=
-      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+      '<div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">';
     html +=
       '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-temperature-half me-2" aria-hidden="true"></i>' +
       _esc(t.toon_block) +
@@ -9486,7 +9603,7 @@ var DashticzDeviceEditor = (function () {
       _esc(t.close) +
       '"></button></div>';
     html += '<div class="modal-body">';
-    html += '<p class="form-text mb-3">' + _esc(t.toon_source) + '</p>';
+    html += _sourceFieldsHtml(TOON_SRC, 'toon', {});
     html += _quickOptionsHtml('toon', {
       icon: true,
       iconValue: 'fas fa-temperature-half',
@@ -9517,6 +9634,7 @@ var DashticzDeviceEditor = (function () {
     $('body').append(html);
     var $popup = $('#toonblockpopup');
     _wireQuickOptions('toon', $popup);
+    _wireSourceFields($popup);
     _wireBackButton('toonblockpopup');
 
     $('#toon-save-btn').on('click', function () {
@@ -9543,9 +9661,9 @@ var DashticzDeviceEditor = (function () {
           value: quickOptions.iconValue,
         });
       }
-      customRows = customRows.concat([
-        { field: 'toonmode', setting: 'info', value: 'info' },
-      ]);
+      customRows = customRows.concat(
+        _sourceCustomRows(TOON_SRC, _readSourceFields(TOON_SRC, 'toon'))
+      );
 
       var reference = _nextSpecialReference('toon');
       var orderKey = _specialOrderKey(reference);
@@ -9590,7 +9708,7 @@ var DashticzDeviceEditor = (function () {
     var html =
       '<div class="modal fade" id="mowerblockpopup" tabindex="-1" aria-hidden="true">';
     html +=
-      '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">';
+      '<div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">';
     html +=
       '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-robot me-2" aria-hidden="true"></i>' +
       _esc(t.mower_block) +
@@ -9600,7 +9718,7 @@ var DashticzDeviceEditor = (function () {
       _esc(t.close) +
       '"></button></div>';
     html += '<div class="modal-body">';
-    html += '<p class="form-text mb-3">' + _esc(t.mower_source) + '</p>';
+    html += _sourceFieldsHtml(MOWER_SRC, 'mower', {});
     html += _quickOptionsHtml('mower', {
       icon: true,
       iconValue: 'fas fa-robot',
@@ -9631,6 +9749,7 @@ var DashticzDeviceEditor = (function () {
     $('body').append(html);
     var $popup = $('#mowerblockpopup');
     _wireQuickOptions('mower', $popup);
+    _wireSourceFields($popup);
     _wireBackButton('mowerblockpopup');
 
     $('#mower-save-btn').on('click', function () {
@@ -9657,9 +9776,9 @@ var DashticzDeviceEditor = (function () {
           value: quickOptions.iconValue,
         });
       }
-      customRows = customRows.concat([
-        { field: 'mowermode', setting: 'info', value: 'info' },
-      ]);
+      customRows = customRows.concat(
+        _sourceCustomRows(MOWER_SRC, _readSourceFields(MOWER_SRC, 'mower'))
+      );
 
       var reference = _nextSpecialReference('mower');
       var orderKey = _specialOrderKey(reference);
@@ -10255,6 +10374,12 @@ var DashticzDeviceEditor = (function () {
     var isFullyBlock = special && special.specialType === 'fullykiosk';
     var isWeatherinfoBlock = special && special.specialType === 'weatherinfo';
     var isCarBlock = special && special.specialType === 'car';
+    var sourceDef =
+      special && special.specialType === 'toon'
+        ? TOON_SRC
+        : special && special.specialType === 'mower'
+          ? MOWER_SRC
+          : null;
     var isCalendarBlock = special && special.specialType === 'calendar';
     // No Dial/Bar/Slider mode, and a restricted display-options set (see
     // hasDial/configOptions below) - every special except dummy/custom.
@@ -10347,6 +10472,16 @@ var DashticzDeviceEditor = (function () {
       carValues = _carValuesFromRows(customRows);
       customRows = customRows.filter(function (row) {
         return !CAR_FIELDS[
+          _normaliseCustomFieldName(row && row.field).toLowerCase()
+        ];
+      });
+    }
+    var sourceValues = null;
+    if (sourceDef) {
+      // Same as Car info: the source section owns these fields.
+      sourceValues = _sourceValuesFromRows(sourceDef, customRows);
+      customRows = customRows.filter(function (row) {
+        return !sourceDef.fields[
           _normaliseCustomFieldName(row && row.field).toLowerCase()
         ];
       });
@@ -10573,7 +10708,8 @@ var DashticzDeviceEditor = (function () {
       isTvgidsBlock ||
       isFullyBlock ||
       isWeatherinfoBlock ||
-      isCarBlock
+      isCarBlock ||
+      sourceDef
         ? ' modal-lg'
         : '') +
       '"><div class="modal-content">';
@@ -11052,6 +11188,8 @@ var DashticzDeviceEditor = (function () {
     if (isWeatherinfoBlock)
       html += _weatherinfoFieldsHtml('de-config', weatherinfoValues);
     if (isCarBlock) html += _carFieldsHtml('de-config', carValues);
+    if (sourceDef)
+      html += _sourceFieldsHtml(sourceDef, 'de-config', sourceValues);
     html +=
       '<div class="de-config-message" role="status"></div></div><div class="modal-footer">';
     html +=
@@ -11079,6 +11217,7 @@ var DashticzDeviceEditor = (function () {
     var iconFieldTouched = false;
     if (isLmsBlock) _wireLmsFields('de-config', $popup);
     if (isF1Block || isCarBlock) _wireF1Fields('de-config', $popup);
+    if (sourceDef) _wireSourceFields($popup);
     if (isTvgidsBlock) _wireTvgidsFields('de-config', $popup);
     if (isWeatherinfoBlock) _wireWeatherinfoFields($popup);
     if (isCalendarBlock)
@@ -11519,6 +11658,11 @@ var DashticzDeviceEditor = (function () {
           customKeys[key] = true;
         });
       }
+      if (sourceDef) {
+        Object.keys(sourceDef.fields).forEach(function (key) {
+          customKeys[key] = true;
+        });
+      }
       if (isGraphBlock) {
         customKeys.graph = true;
         customKeys.legend = true;
@@ -11651,6 +11795,9 @@ var DashticzDeviceEditor = (function () {
         }
       }
       var pendingCar = isCarBlock ? _readCarFields('de-config') : null;
+      var pendingSource = sourceDef
+        ? _readSourceFields(sourceDef, 'de-config')
+        : null;
       var pendingGraph = null;
       if (isGraphBlock) {
         pendingGraph = _readGraphFields('de-config');
@@ -12033,6 +12180,10 @@ var DashticzDeviceEditor = (function () {
         );
       if (pendingCar)
         storedRows = storedRows.concat(_carCustomRows(pendingCar));
+      if (pendingSource)
+        storedRows = storedRows.concat(
+          _sourceCustomRows(sourceDef, pendingSource)
+        );
       if (pendingGraph) {
         storedRows.push({
           field: 'devices',

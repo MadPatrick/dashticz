@@ -7,6 +7,9 @@
  *   room temperature and thermostat setpoint (with - and + buttons),
  *   boiler pressure, boiler state and modulation,
  *   the scene (buttons), the program info and the summer mode (button).
+ * With toonsource 'dashticz' the widget does not use Domoticz: the Toon is
+ * asked directly, by vendor/dashticz/toon/index.php, with the settings of the
+ * block (toonhost, toonport, toonpoll in seconds).
  * Only the devices that exist are drawn.
  */
 var DT_toon = (function () {
@@ -48,6 +51,12 @@ var DT_toon = (function () {
     'summer',
   ];
   var STEP = 0.5;
+  var SCENES = [
+    [10, 'Weg'],
+    [20, 'Slapen'],
+    [30, 'Thuis'],
+    [40, 'Comfort'],
+  ];
 
   return {
     name: 'toon',
@@ -61,6 +70,19 @@ var DT_toon = (function () {
       template: 1,
     },
     run: function (me) {
+      if (usesBridge(me.block)) {
+        bind(me);
+        render(me);
+        fetchStatus(me);
+        me.timer = setInterval(
+          function () {
+            if (!me.$mountPoint.closest('body').length) clearInterval(me.timer);
+            else fetchStatus(me);
+          },
+          pollSeconds(me.block) * 1000
+        );
+        return;
+      }
       var devices = findDevices();
       ORDER.forEach(function (key) {
         if (devices[key])
@@ -71,10 +93,14 @@ var DT_toon = (function () {
       bind(me);
       render(me);
     },
-    refresh: render,
+    refresh: function (me) {
+      if (usesBridge(me.block)) fetchStatus(me);
+      else render(me);
+    },
     // Exposed for the tests.
     render: render,
     findDevices: findDevices,
+    fromBridge: fromBridge,
     levels: levels,
     parseNumber: parseNumber,
   };
@@ -88,8 +114,92 @@ var DT_toon = (function () {
     return misc['toon_' + key] || fallback;
   }
 
-  // {room: device, setpoint: device, ...} of the Toon hardware.
-  function findDevices() {
+  function usesBridge(block) {
+    return !!block && block.toonsource === 'dashticz';
+  }
+
+  function pollSeconds(block) {
+    var seconds = parseInt(block.toonpoll, 10);
+    return seconds >= 5 && seconds <= 600 ? seconds : 30;
+  }
+
+  function connection(block) {
+    return {
+      host: block.toonhost || '',
+      port: parseInt(block.toonport, 10) || 80,
+    };
+  }
+
+  // The answer of the Toon bridge as the devices the widget draws.
+  function fromBridge(data) {
+    var result = {};
+    ORDER.forEach(function (key) {
+      result[key] = null;
+    });
+    if (!data) return result;
+    if (typeof data.room === 'number') result.room = { Temp: data.room };
+    if (typeof data.setpoint === 'number')
+      result.setpoint = { SetPoint: data.setpoint };
+    if (typeof data.pressure === 'number')
+      result.pressure = { Data: data.pressure + ' Bar' };
+    if (data.boiler)
+      result.boiler = {
+        Data: label('boiler_' + data.boiler, data.boiler),
+      };
+    if (typeof data.modulation === 'number')
+      result.modulation = { Data: data.modulation + ' %' };
+    if (data.scene) result.scene = { Level: data.scene, Levels: SCENES };
+    if (data.program) result.program = { Data: data.program };
+    return result;
+  }
+
+  function fetchStatus(me) {
+    DT_function.bridge(
+      'toon/index.php',
+      $.extend({ action: 'status' }, connection(me.block))
+    ).then(
+      function (data) {
+        me.data = data || null;
+        me.error = '';
+        render(me);
+      },
+      function (jqXHR) {
+        me.error = DT_function.bridgeError(
+          jqXHR,
+          label('error', 'Unable to reach the Toon.')
+        );
+        render(me);
+      }
+    );
+  }
+
+  function send(me, command, value) {
+    DT_function.bridge(
+      'toon/index.php',
+      $.extend(
+        { action: 'command', command: command, value: value },
+        connection(me.block)
+      )
+    ).then(
+      function () {
+        setTimeout(function () {
+          fetchStatus(me);
+        }, 1500);
+      },
+      function (jqXHR) {
+        me.error = DT_function.bridgeError(
+          jqXHR,
+          label('error', 'Unable to reach the Toon.')
+        );
+        render(me);
+      }
+    );
+  }
+
+  // {room: device, setpoint: device, ...} of the Toon hardware, or the Toon
+  // itself (data of the bridge) when the block's source is Dashticz.
+  function findDevices(block, data) {
+    if (usesBridge(block)) return fromBridge(data);
     var all =
       (typeof Domoticz !== 'undefined' && Domoticz.getAllDevices()) || {};
     var toon = Object.keys(all)
@@ -115,6 +225,7 @@ var DT_toon = (function () {
 
   // [[level, name], ...] of a selector switch, without the hidden off level.
   function levels(dev) {
+    if (dev.Levels) return dev.Levels;
     var names = '';
     try {
       names = atob(dev.LevelNames || '');
@@ -240,15 +351,19 @@ var DT_toon = (function () {
   }
 
   function render(me) {
-    var dev = findDevices();
+    var bridge = usesBridge(me.block);
+    var dev = findDevices(me.block, me.data);
     var $state = me.$mountPoint.find('.dt_state');
     var html = mainHtml(dev) + infoHtml(dev) + scenesHtml(dev) + footHtml(dev);
+    if (html && me.error)
+      html += '<div class="toon-error">' + esc(me.error) + '</div>';
+    var empty = bridge
+      ? me.error || label('loading', 'Loading...')
+      : label('not_found', 'No Toon devices found in Domoticz.');
     $state.html(
       html
         ? '<div class="toon-widget">' + html + '</div>'
-        : '<div class="toon-empty">' +
-            esc(label('not_found', 'No Toon devices found in Domoticz.')) +
-            '</div>'
+        : '<div class="toon-empty">' + esc(empty) + '</div>'
     );
   }
 
@@ -256,7 +371,8 @@ var DT_toon = (function () {
   // working when the tile is drawn again.
   function bind(me) {
     me.$mountPoint.on('click', '.toon-btn', function () {
-      var dev = findDevices();
+      var dev = findDevices(me.block, me.data);
+      var bridge = usesBridge(me.block);
       var act = $(this).attr('data-act');
       if (act === 'up' || act === 'down') {
         if (!dev.setpoint) return;
@@ -272,12 +388,18 @@ var DT_toon = (function () {
           .closest('.toon-main')
           .find('.toon-sp-value')
           .text(degrees(value));
-        Domoticz.request(
-          'type=command&param=setsetpoint&idx=' +
-            dev.setpoint.idx +
-            '&setpoint=' +
-            value
-        );
+        if (bridge) {
+          me.data.setpoint = value;
+          send(me, 'setpoint', value);
+        } else
+          Domoticz.request(
+            'type=command&param=setsetpoint&idx=' +
+              dev.setpoint.idx +
+              '&setpoint=' +
+              value
+          );
+      } else if (act === 'scene' && dev.scene && bridge) {
+        send(me, 'scene', parseInt($(this).attr('data-level'), 10));
       } else if (act === 'scene' && dev.scene) {
         Domoticz.request(
           'type=command&param=switchlight&idx=' +

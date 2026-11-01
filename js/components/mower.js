@@ -6,6 +6,10 @@
  * hardware whose name contains "Husqvarna" are found by name:
  *   state and location (texts), the battery level of the mower with a bar,
  *   the run switch (mowing on/off) and the actions (buttons).
+ * With mowersource 'dashticz' the widget does not use Domoticz: Husqvarna is
+ * asked directly, by vendor/dashticz/husqvarna/index.php, with the settings
+ * of the block (mowerclientid, mowerclientsecret, mowername, mowerpoll in
+ * minutes, mowerstart in minutes).
  * Only the devices that exist are drawn.
  */
 var DT_mower = (function () {
@@ -33,6 +37,8 @@ var DT_mower = (function () {
     },
   };
   var ORDER = ['state', 'location', 'schedule', 'run', 'battery', 'actions'];
+  // Start and Park: the levels of the actions device of the widget.
+  var BRIDGE_ACTIONS = { 20: 'Start', 60: 'ParkUntilNextSchedule' };
 
   return {
     name: 'mower',
@@ -46,6 +52,19 @@ var DT_mower = (function () {
       template: 1,
     },
     run: function (me) {
+      if (usesBridge(me.block)) {
+        bind(me);
+        render(me);
+        fetchStatus(me);
+        me.timer = setInterval(
+          function () {
+            if (!me.$mountPoint.closest('body').length) clearInterval(me.timer);
+            else fetchStatus(me);
+          },
+          pollMinutes(me.block) * 60000
+        );
+        return;
+      }
       var devices = findDevices();
       ORDER.forEach(function (key) {
         if (devices[key])
@@ -56,10 +75,15 @@ var DT_mower = (function () {
       bind(me);
       render(me);
     },
-    refresh: render,
+    refresh: function (me) {
+      if (usesBridge(me.block)) fetchStatus(me);
+      else render(me);
+    },
     // Exposed for the tests.
     render: render,
     findDevices: findDevices,
+    fromBridge: fromBridge,
+    nextStartText: nextStartText,
     levels: levels,
     actionButtons: actionButtons,
     cleanText: cleanText,
@@ -74,8 +98,119 @@ var DT_mower = (function () {
     return misc['mower_' + key] || fallback;
   }
 
-  // {state: device, location: device, ...} of the Husqvarna hardware.
-  function findDevices() {
+  function usesBridge(block) {
+    return !!block && block.mowersource === 'dashticz';
+  }
+
+  function pollMinutes(block) {
+    var minutes = parseInt(block.mowerpoll, 10);
+    return minutes >= 1 && minutes <= 60 ? minutes : 5;
+  }
+
+  function connection(block) {
+    return {
+      clientId: block.mowerclientid || '',
+      clientSecret: block.mowerclientsecret || '',
+      mower: block.mowername || '',
+      pollMinutes: pollMinutes(block),
+    };
+  }
+
+  function two(number) {
+    return (number < 10 ? '0' : '') + number;
+  }
+
+  // The next start of the mower (milliseconds, its local time written as UTC)
+  // as 'Today 11:00' / 'Tomorrow 11:00' / '03-11 11:00'.
+  function nextStartText(ms, now) {
+    var at = new Date(ms);
+    var time = two(at.getUTCHours()) + ':' + two(at.getUTCMinutes());
+    var day = Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate());
+    now = now || new Date();
+    var today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    if (day === today) return time;
+    if (day === today + 86400000)
+      return label('tomorrow', 'Tomorrow') + ' ' + time;
+    return two(at.getUTCDate()) + '-' + two(at.getUTCMonth() + 1) + ' ' + time;
+  }
+
+  // The answer of the Husqvarna bridge as the devices the widget draws.
+  function fromBridge(data) {
+    var result = {};
+    ORDER.forEach(function (key) {
+      result[key] = null;
+    });
+    if (!data) return result;
+    var text = data.status || '';
+    if (data.parked && data.nextStart)
+      text =
+        label('parked_until', 'Parked until') +
+        ' ' +
+        nextStartText(data.nextStart);
+    result.state = { Data: text };
+    if (typeof data.battery === 'number')
+      result.battery = { BatteryLevel: data.battery };
+    result.run = { Status: data.parked ? 'Off' : 'On' };
+    result.actions = {
+      Levels: [
+        [20, 'Start'],
+        [60, 'ParkUntilNextSchedule'],
+      ],
+    };
+    return result;
+  }
+
+  function fetchStatus(me) {
+    DT_function.bridge(
+      'husqvarna/index.php',
+      $.extend({ action: 'status' }, connection(me.block))
+    ).then(
+      function (data) {
+        me.data = data || null;
+        me.error = '';
+        render(me);
+      },
+      function (jqXHR) {
+        me.error = DT_function.bridgeError(
+          jqXHR,
+          label('error', 'Unable to reach Husqvarna.')
+        );
+        render(me);
+      }
+    );
+  }
+
+  function send(me, command) {
+    DT_function.bridge(
+      'husqvarna/index.php',
+      $.extend(
+        {
+          action: 'command',
+          command: command,
+          minutes: parseInt(me.block.mowerstart, 10) || 120,
+        },
+        connection(me.block)
+      )
+    ).then(
+      function () {
+        setTimeout(function () {
+          fetchStatus(me);
+        }, 3000);
+      },
+      function (jqXHR) {
+        me.error = DT_function.bridgeError(
+          jqXHR,
+          label('error', 'Unable to reach Husqvarna.')
+        );
+        render(me);
+      }
+    );
+  }
+
+  // {state: device, location: device, ...} of the Husqvarna hardware, or the
+  // mower itself (data of the bridge) when the block's source is Dashticz.
+  function findDevices(block, data) {
+    if (usesBridge(block)) return fromBridge(data);
     var all =
       (typeof Domoticz !== 'undefined' && Domoticz.getAllDevices()) || {};
     var mower = Object.keys(all)
@@ -108,6 +243,7 @@ var DT_mower = (function () {
 
   // [[level, name], ...] of a selector switch, without the hidden off level.
   function levels(dev) {
+    if (dev.Levels) return dev.Levels;
     var names = '';
     try {
       names = atob(dev.LevelNames || '');
@@ -158,7 +294,8 @@ var DT_mower = (function () {
   }
 
   function render(me) {
-    var dev = findDevices();
+    var bridge = usesBridge(me.block);
+    var dev = findDevices(me.block, me.data);
     var $state = me.$mountPoint.find('.dt_state');
     var html = '';
     var buttons = '';
@@ -204,12 +341,15 @@ var DT_mower = (function () {
         .join('');
     if (buttons)
       html += '<div class="mower-actions" role="group">' + buttons + '</div>';
+    if (html && me.error)
+      html += '<div class="mower-error">' + esc(me.error) + '</div>';
+    var empty = bridge
+      ? me.error || label('loading', 'Loading...')
+      : label('not_found', 'No mower devices found in Domoticz.');
     $state.html(
       html
         ? '<div class="mower-widget">' + html + '</div>'
-        : '<div class="mower-empty">' +
-            esc(label('not_found', 'No mower devices found in Domoticz.')) +
-            '</div>'
+        : '<div class="mower-empty">' + esc(empty) + '</div>'
     );
   }
 
@@ -217,8 +357,21 @@ var DT_mower = (function () {
   // working when the tile is drawn again.
   function bind(me) {
     me.$mountPoint.on('click', '.mower-btn', function () {
-      var dev = findDevices();
+      var dev = findDevices(me.block, me.data);
       var act = $(this).attr('data-act');
+      if (usesBridge(me.block)) {
+        var level = parseInt($(this).attr('data-level'), 10);
+        if (act === 'run' && dev.run)
+          send(
+            me,
+            /^on$/i.test(dev.run.Status)
+              ? 'ParkUntilFurtherNotice'
+              : 'ResumeSchedule'
+          );
+        else if (act === 'action' && BRIDGE_ACTIONS[level])
+          send(me, BRIDGE_ACTIONS[level]);
+        return;
+      }
       if (act === 'run' && dev.run) {
         var on = /^on$/i.test(dev.run.Status || dev.run.Data);
         Domoticz.request(

@@ -1,6 +1,19 @@
 Release Notes
 =============
 
+v4.20.20 (01-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Toon and Mower widgets: new setting "Data source". Domoticz (automatic) is
+  the default and works as before. With Dashticz (direct connection) the widget
+  asks the device itself and Domoticz is not needed: the Toon through its local
+  API (settings: IP address, port, refresh interval), and the Husqvarna mower
+  through the Automower Connect API (settings: client ID, client secret, mower
+  name, refresh interval, mowing time of Start). The Husqvarna answer is cached
+  on the server, so several dashboards share the API quota.
+
 v4.20.19 (01-11-2026)
 ----------------------
 

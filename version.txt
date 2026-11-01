@@ -1,4 +1,4 @@
 {
-    "version": "4.20.19",
-    "last_changes": "Toon and Mower widgets: two new Widgets cards. Toon shows the temperature, thermostat, boiler and scenes of a Toon, and Mower shows a Husqvarna mower with state, location, battery and Start/Park buttons. Both take their data from Domoticz."
+    "version": "4.20.20",
+    "last_changes": "Toon and Mower widgets: new data source Dashticz. Besides the devices of Domoticz, the widgets can ask the Toon (IP address) or Husqvarna (client ID and secret) themselves, with the settings in the widget."
 }
