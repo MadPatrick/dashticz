@@ -145,15 +145,15 @@ var DT_carstatus = (function () {
       '<div class="carstatus-battery ' +
       batteryClass(level) +
       (charging ? ' carstatus-charging' : '') +
-      '"><div class="carstatus-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
-      level +
-      '"><span class="carstatus-bar-fill" style="width:' +
-      level +
-      '%"></span></div><div class="carstatus-battery-text"><span class="carstatus-pct">' +
+      '"><div class="carstatus-battery-text"><span class="carstatus-pct">' +
       level +
       '%</span><span class="carstatus-km">' +
       esc(Math.round(mileage)) +
-      ' km</span></div></div>'
+      ' km</span></div><div class="carstatus-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
+      level +
+      '"><span class="carstatus-bar-fill" style="width:' +
+      level +
+      '%"></span></div></div>'
     );
   }
 

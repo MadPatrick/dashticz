@@ -1,4 +1,4 @@
 {
-    "version": "4.20.21",
-    "last_changes": "New Car status widget: shows a BMW, MINI or other car in its own tile from Domoticz devices (battery as a progress bar like the Mower widget, mileage, charging with the time it is charged, driving, at home, open doors and windows)."
+    "version": "4.20.22",
+    "last_changes": "Car status widget: the battery percentage and the mileage are shown above the progress bar."
 }
