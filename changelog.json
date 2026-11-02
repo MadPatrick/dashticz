@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.20.27": "Car status widget: the font size setting also applies to the battery shown next to the icon.",
     "4.20.26": "Car status widget: without a title, the battery progress bar with the percentage at its start and the mileage at its end is shown next to the icon.",
     "4.20.25": "Car status widget: the font size field in the settings is 5 characters wide.",
     "4.20.24": "Car status widget: without a title, the battery percentage and the mileage are shown next to the icon.",

@@ -1,4 +1,4 @@
 {
-    "version": "4.20.26",
-    "last_changes": "Car status widget: without a title, the battery progress bar with the percentage at its start and the mileage at its end is shown next to the icon."
+    "version": "4.20.27",
+    "last_changes": "Car status widget: the font size setting also applies to the battery shown next to the icon."
 }

@@ -255,9 +255,11 @@ var DT_carstatus = (function () {
     var inHeader = !block.title || !!block.hide_title;
     var showsBattery =
       isOn(stateOf(block, 'driving')) || isOn(stateOf(block, 'home'));
+    var size = fontSize >= 8 && fontSize <= 60 ? fontSize + 'px' : '';
     var $header = me.$mountPoint.find('.dt_content');
     $header.find('.carstatus-headtext').remove();
     if (inHeader && showsBattery) {
+      // The font size of the block also applies to the battery in the header.
       $header.append(
         '<div class="carstatus-headtext">' +
           fullBatteryHtml(
@@ -267,10 +269,11 @@ var DT_carstatus = (function () {
           ) +
           '</div>'
       );
+      $header.find('.carstatus-headtext').css('font-size', size);
     }
     me.$mountPoint
       .find('.dt_state')
-      .css('font-size', fontSize >= 8 && fontSize <= 60 ? fontSize + 'px' : '')
+      .css('font-size', size)
       .html(
         '<div class="carstatus-content">' +
           carstatusHtml(block, undefined, inHeader && showsBattery) +

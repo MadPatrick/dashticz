@@ -1,6 +1,14 @@
 Release Notes
 =============
 
+v4.20.27 (02-11-2026)
+----------------------
+
+* **Fixes**
+
+- Car status widget: the font size setting also applies to the battery shown
+  next to the icon.
+
 v4.20.26 (02-11-2026)
 ----------------------
 
