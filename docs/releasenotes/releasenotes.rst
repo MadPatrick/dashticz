@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+v4.20.31 (02-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Car status widget: the test view only shows *Charging until*, not the
+  charging state, and there is less space between the header row (icon and
+  battery bar) and the status below it.
+
 v4.20.30 (02-11-2026)
 ----------------------
 

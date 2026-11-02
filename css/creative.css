@@ -10322,7 +10322,7 @@ canvas {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 0 10px 4px;
 }
 
 .carstatus-status {
@@ -10462,12 +10462,12 @@ input[id$='-carstatus-fontsize'] {
 .carstatus-headtext {
   flex: 1 1 auto;
   min-width: 0;
-  align-self: center;
+  align-self: flex-end;
 }
 
 /* Test view of the Car status widget (csdebug): the state of every device. */
 .carstatus-debug {
-  margin-top: 4px;
+  margin-top: 8px;
   padding-top: 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   font-size: 85%;
@@ -10477,4 +10477,15 @@ input[id$='-carstatus-fontsize'] {
   display: flex;
   justify-content: space-between;
   gap: 10px;
+}
+
+/* Little space between the header row and the status below it. */
+.carstatus-block .dt_content {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.carstatus-block .dt_state {
+  margin-top: 0;
+  padding-top: 0;
 }

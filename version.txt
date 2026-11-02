@@ -1,4 +1,4 @@
 {
-    "version": "4.20.30",
-    "last_changes": "Car status widget: the test view shows home, driving, charging, the time it is charged, doors and windows in words, without device numbers, battery and mileage."
+    "version": "4.20.31",
+    "last_changes": "Car status widget: the test view only shows the time it is charged, not the charging state, and there is less space between the header row and the status below it."
 }

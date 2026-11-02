@@ -8517,6 +8517,7 @@ test('Car status test view lists the state of every device', () => {
   assert.match(html, /Doors:<\/span><b class="carstatus-warning-text">Open/);
   assert.match(html, /Home:<\/span><b>Yes/);
   assert.match(html, /Charging until:<\/span><b>-/);
+  assert.doesNotMatch(html, /Charging:/);
   assert.match(html, /Windows:<\/span><b>not found/);
   assert.match(html, /Driving:<\/span><b>-/);
   assert.doesNotMatch(html, /\(1\)|Battery|Mileage/);

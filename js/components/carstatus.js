@@ -39,7 +39,6 @@ var DT_carstatus = (function () {
   var DEBUG_ROWS = [
     { field: 'home', label: 'Home' },
     { field: 'driving', label: 'Driving' },
-    { field: 'charging', label: 'Charging' },
     { field: 'door', label: 'Doors', open: true },
     { field: 'windows', label: 'Windows', open: true },
   ];
