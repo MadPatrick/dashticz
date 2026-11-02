@@ -10443,3 +10443,9 @@ canvas {
     background-position: 0% 0%;
   }
 }
+
+/* The font size field of the Car status settings is 3 characters wide (the
+   extra width is for the spinner of the number field). */
+input[id$='-carstatus-fontsize'] {
+  width: 7ch;
+}

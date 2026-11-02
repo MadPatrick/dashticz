@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.20.23": "Car status widget: the font size field in the settings is 3 characters wide.",
     "4.20.22": "Car status widget: the battery percentage and the mileage are shown above the progress bar.",
     "4.20.21": "New Car status widget: shows a BMW, MINI or other car in its own tile, read from Domoticz devices (battery level as a progress bar like the Mower widget, mileage, charging with the time it is charged, driving, at home, open doors and windows).",
     "4.20.20": "Toon and Mower widgets: new data source Dashticz. Besides the devices of Domoticz, the widgets can ask the Toon (IP address) or Husqvarna (client ID and secret) themselves, with the settings in the widget.",
