@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+v4.20.30 (02-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Car status widget: the test view no longer shows the device numbers, the
+  battery and the mileage (they are in the progress bar). It shows home,
+  driving, charging, doors and windows in words (Yes/No, Open/Closed).
+
 v4.20.29 (02-11-2026)
 ----------------------
 

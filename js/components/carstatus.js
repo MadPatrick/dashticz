@@ -34,16 +34,14 @@
  * 100% a light green percentage.
  */
 var DT_carstatus = (function () {
-  // The test view: the raw state of every device of the block.
+  // The test view: the state of the on/off devices of the block, in the words
+  // of the status texts. open: an open door or window is shown as a warning.
   var DEBUG_ROWS = [
-    ['home', 'Home'],
-    ['driving', 'Driving'],
-    ['charging', 'Charging'],
-    ['chargetime', 'Charge time'],
-    ['battery', 'Battery'],
-    ['mileage', 'Mileage'],
-    ['door', 'Doors'],
-    ['windows', 'Windows'],
+    { field: 'home', label: 'Home' },
+    { field: 'driving', label: 'Driving' },
+    { field: 'charging', label: 'Charging' },
+    { field: 'door', label: 'Doors', open: true },
+    { field: 'windows', label: 'Windows', open: true },
   ];
 
   var IDX_FIELDS = [
@@ -264,22 +262,41 @@ var DT_carstatus = (function () {
   function debugHtml(block) {
     var html = '<div class="carstatus-debug">';
     DEBUG_ROWS.forEach(function (row) {
-      var idx = deviceIdx(block, row[0]);
-      var dev = device(block, row[0]);
-      var value = !idx
-        ? '-'
-        : !dev
-          ? tr('carstatus_debug_notfound', 'not found')
-          : esc(
-              dev.Status !== undefined && dev.Status !== ''
-                ? dev.Status
-                : dev.Data
-            );
+      var value = '-';
+      var warning = false;
+      if (device(block, row.field)) {
+        var state = stateOf(block, row.field);
+        if (row.open) {
+          warning = isOpen(state);
+          value = warning
+            ? tr('carstatus_open', 'Open')
+            : tr('carstatus_closed', 'Closed');
+        } else {
+          value = isOn(state)
+            ? tr('carstatus_yes', 'Yes')
+            : tr('carstatus_no', 'No');
+        }
+      } else if (deviceIdx(block, row.field)) {
+        value = tr('carstatus_debug_notfound', 'not found');
+      }
+      if (row.field === 'door') {
+        // The charge time (minutes) is shown as the time it is charged.
+        var minutes = numberOf(block, 'chargetime');
+        html +=
+          '<div class="carstatus-debug-row"><span>' +
+          tr('carstatus_charging_until', 'Charging until') +
+          ':</span><b>' +
+          (isOn(stateOf(block, 'charging')) && minutes > 0
+            ? timePlus(minutes)
+            : '-') +
+          '</b></div>';
+      }
       html +=
         '<div class="carstatus-debug-row"><span>' +
-        tr('carstatus_debug_' + row[0], row[1]) +
-        (idx ? ' (' + idx + ')' : '') +
-        '</span><b>' +
+        tr('carstatus_debug_' + row.field, row.label) +
+        ':</span><b' +
+        (warning ? ' class="carstatus-warning-text"' : '') +
+        '>' +
         value +
         '</b></div>';
     });

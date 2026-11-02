@@ -1,4 +1,4 @@
 {
-    "version": "4.20.29",
-    "last_changes": "Car status widget: fixed the tile staying empty when the test view setting was on."
+    "version": "4.20.30",
+    "last_changes": "Car status widget: the test view shows home, driving, charging, the time it is charged, doors and windows in words, without device numbers, battery and mileage."
 }

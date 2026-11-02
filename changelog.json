@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.20.30": "Car status widget: the test view no longer shows the device numbers, the battery and the mileage, and shows the states of home, driving, charging, doors and windows in words.",
     "4.20.29": "Car status widget: fixed the tile staying empty when the test view setting was on.",
     "4.20.28": "Car status widget: a new test view setting shows the state of every device below the status, to check the idx values.",
     "4.20.27": "Car status widget: the font size setting also applies to the battery shown next to the icon.",

@@ -10418,7 +10418,8 @@ canvas {
   animation: carstatus-gradient 4s linear infinite;
 }
 
-.carstatus-warning b {
+.carstatus-warning b,
+.carstatus-warning-text {
   color: yellow;
 }
 
