@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+v4.20.25 (02-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Car status widget: the font size field in the settings is 5 characters wide.
+
 v4.20.24 (02-11-2026)
 ----------------------
 
