@@ -10333,23 +10333,28 @@ canvas {
   color: lightblue;
 }
 
-.carstatus-battery {
+.carstatus-battery,
+.carstatus-battery-text {
   --carstatus-color: #fff;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.carstatus-battery.carstatus-batt-full {
+.carstatus-battery.carstatus-batt-full,
+.carstatus-battery-text.carstatus-batt-full {
   --carstatus-color: lightgreen;
 }
 
-.carstatus-battery.carstatus-batt-mid {
+.carstatus-battery.carstatus-batt-mid,
+.carstatus-battery-text.carstatus-batt-mid {
   --carstatus-color: orange;
 }
 
 .carstatus-battery.carstatus-batt-low,
-.carstatus-battery.carstatus-batt-critical {
+.carstatus-battery.carstatus-batt-critical,
+.carstatus-battery-text.carstatus-batt-low,
+.carstatus-battery-text.carstatus-batt-critical {
   --carstatus-color: red;
 }
 
@@ -10448,4 +10453,17 @@ canvas {
    extra width is for the spinner of the number field). */
 input[id$='-carstatus-fontsize'] {
   width: 7ch;
+}
+
+/* Without a title the battery text sits next to the icon, in the header row
+   (js/components/carstatus.js render()). */
+.carstatus-headtext {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: center;
+}
+
+.carstatus-headtext .carstatus-battery-text {
+  gap: 14px;
+  justify-content: flex-start;
 }

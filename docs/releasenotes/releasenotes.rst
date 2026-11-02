@@ -1,6 +1,14 @@
 Release Notes
 =============
 
+v4.20.24 (02-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Car status widget: without a title, the battery percentage and the mileage
+  are shown next to the icon instead of above the progress bar.
+
 v4.20.23 (02-11-2026)
 ----------------------
 
