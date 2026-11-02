@@ -1,6 +1,20 @@
 Release Notes
 =============
 
+v4.20.21 (02-11-2026)
+----------------------
+
+* **Enhancements**
+
+- New **Car status** widget (Widgets -> Car status): shows a BMW, MINI or other
+  car in its own tile, read from Domoticz devices. The battery level is a
+  progress bar like the one of the Mower widget (below 15% blinking red, below
+  30% red, below 50% orange, from 50% the green bar), next to the mileage. The
+  tile shows *On the road* while driving; at home it shows the charging state
+  with *Charging until* the time it is charged, and a warning for an open door
+  or window; away from home it shows *Not home*, or the warning when a door or
+  window is open. See :ref:`carstatus`.
+
 v4.20.20 (01-11-2026)
 ----------------------
 
