@@ -84,7 +84,7 @@ var DT_carstatus = (function () {
   }
 
   function deviceIdx(block, field) {
-    var idx = parseInt(block['carstatus' + field], 10);
+    var idx = parseInt(block['cs' + field], 10);
     return idx > 0 ? String(idx) : '';
   }
 
