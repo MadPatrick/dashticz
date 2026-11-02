@@ -138,6 +138,19 @@ test('a Fully Kiosk block is written with its mode and settings', () => {
   assert.doesNotMatch(line, /type:/);
 });
 
+// A Car block (js/components/car.js) is dispatched on carmode; the device
+// idx values arrive as custom fields.
+test('a Car block is written with its mode and device idx values', () => {
+  const line = specialLine(
+    "['kind' => 'car', 'name' => 'BMW', 'width' => 4, 'icon' => 'fas fa-car', 'custom_fields' => ['carmode' => 'status', 'carbattery' => 915, 'carmileage' => 912]]"
+  );
+  assert.match(line, /carmode:'status'/);
+  assert.match(line, /carbattery:915/);
+  assert.match(line, /carmileage:912/);
+  assert.match(line, /width:4/);
+  assert.doesNotMatch(line, /type:/);
+});
+
 // A Weather Info block (js/components/weatherinfo.js) is dispatched on wimode;
 // the location and the other settings arrive as custom fields.
 test('a Weather Info block is written with its mode and settings', () => {

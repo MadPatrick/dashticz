@@ -2237,6 +2237,7 @@ var DashticzWidgetEditor = (function () {
     html += _f1WidgetCardHtml();
     html += _tvgidsWidgetCardHtml();
     html += _fullykioskWidgetCardHtml();
+    html += _carWidgetCardHtml();
     html += _weatherinfoWidgetCardHtml();
 
     html +=
@@ -2785,6 +2786,38 @@ var DashticzWidgetEditor = (function () {
     _closeModalWithoutSaving();
     DT_function.loadDTScript('js/deviceeditor.js').then(function () {
       DashticzDeviceEditor.openFullykiosk();
+    });
+  }
+
+  /* Car (docs/blocks/specials/car.rst, js/components/car.js) is also only a
+     repeatable card: it opens the Car quick-add popup
+     (DashticzDeviceEditor.openCar()). */
+  function _carWidgetCardHtml() {
+    var itemTitle = _t('car_title', 'Car');
+    return (
+      '<div class="we-widget-card we-widget-card-car" data-special-widget="car" ' +
+      'role="button" tabindex="0" aria-label="' +
+      itemTitle +
+      '">' +
+      '<div class="we-widget-icon"><i class="fas fa-car" aria-hidden="true"></i></div>' +
+      '<div class="we-widget-content"><div class="we-widget-title">' +
+      itemTitle +
+      '</div><div class="we-widget-description">' +
+      _t(
+        'car_description',
+        'Status of a car (BMW, MINI, ...) from Domoticz devices: battery, mileage, charging, doors and windows.'
+      ) +
+      '</div></div>' +
+      '<div class="we-widget-status">' +
+      _t('click_to_add', 'Click to add') +
+      '</div></div>'
+    );
+  }
+
+  function _openCarFromWidgets() {
+    _closeModalWithoutSaving();
+    DT_function.loadDTScript('js/deviceeditor.js').then(function () {
+      DashticzDeviceEditor.openCar();
     });
   }
 
@@ -5886,6 +5919,10 @@ var DashticzWidgetEditor = (function () {
         _openFullykioskFromWidgets();
         return;
       }
+      if ($(this).data('special-widget') === 'car') {
+        _openCarFromWidgets();
+        return;
+      }
       if ($(this).data('special-widget') === 'weatherinfo') {
         _openWeatherinfoFromWidgets();
         return;
@@ -5943,6 +5980,10 @@ var DashticzWidgetEditor = (function () {
       }
       if ($(this).data('special-widget') === 'fullykiosk') {
         _openFullykioskFromWidgets();
+        return;
+      }
+      if ($(this).data('special-widget') === 'car') {
+        _openCarFromWidgets();
         return;
       }
       if ($(this).data('special-widget') === 'weatherinfo') {

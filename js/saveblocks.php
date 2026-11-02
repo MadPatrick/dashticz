@@ -442,6 +442,19 @@ foreach ($data['devices'] as $entry) {
                     && !preg_match('/^\d{1,9}$/', (string) $customFields['fullyswitch'])) {
                     dashticz_json_error(400, 'Choose a valid Domoticz switch for the Fully Kiosk charger.');
                 }
+            } elseif ($kind === 'car') {
+                // carmode is otherwise just another custom field, but
+                // js/components/car.js dispatches on it, so it is required
+                // here. Every device option is a Domoticz idx.
+                if (!isset($customFields['carmode']) || $customFields['carmode'] !== 'status') {
+                    dashticz_json_error(400, 'A Car block requires a mode.');
+                }
+                foreach (['door', 'windows', 'mileage', 'charging', 'chargetime', 'battery', 'driving', 'home'] as $carField) {
+                    if (isset($customFields['car' . $carField])
+                        && !preg_match('/^\d{1,9}$/', (string) $customFields['car' . $carField])) {
+                        dashticz_json_error(400, 'Choose a valid Domoticz device for the Car block.');
+                    }
+                }
             } elseif ($kind === 'weatherinfo') {
                 // wimode is otherwise just another custom field, but
                 // js/components/weatherinfo.js dispatches on it, so it is

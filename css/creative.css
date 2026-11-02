@@ -9487,6 +9487,7 @@ canvas {
   order: 3;
 }
 
+.de-car-grid,
 .de-fully-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -9494,17 +9495,20 @@ canvas {
   align-items: start;
 }
 
+.de-car-grid > .de-car-field-full,
 .de-fully-grid > .de-fully-field-full {
   grid-column: 1 / -1;
 }
 
 @media (max-width: 767px) {
+  .de-car-grid,
   .de-fully-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 479px) {
+  .de-car-grid,
   .de-fully-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -9843,5 +9847,149 @@ canvas {
 @media (max-width: 479px) {
   .de-compact-icons:not(.d-none) {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Car widget (js/components/car.js): the status of one car. The battery level
+   is a progress bar of 10 segments, styled like the segments of the Bar
+   display mode (.dial-bar-segment). */
+.car-block .dt_state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: auto;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.car-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 10px;
+}
+
+.car-status {
+  font-weight: bold;
+}
+
+.car-status.car-driving {
+  color: lightblue;
+}
+
+.car-battery {
+  --car-color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.car-battery.car-batt-full {
+  --car-color: lightgreen;
+}
+
+.car-battery.car-batt-mid {
+  --car-color: orange;
+}
+
+.car-battery.car-batt-low,
+.car-battery.car-batt-critical {
+  --car-color: red;
+}
+
+.car-bar {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.car-segment {
+  flex: 1 1 0;
+  height: 12px;
+  background-color: #7a7a7a;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.25),
+    rgba(255, 255, 255, 0) 40%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
+}
+
+.car-segment.filled {
+  background-color: var(--car-color);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.35),
+    rgba(255, 255, 255, 0) 40%
+  );
+}
+
+.car-battery-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.car-pct {
+  font-weight: bold;
+  color: var(--car-color);
+}
+
+.car-batt-critical .car-pct,
+.car-batt-critical .car-segment.filled {
+  animation: car-blink 1s infinite alternate;
+}
+
+/* Charging: the filled segments pulse. */
+.car-charging .car-segment.filled {
+  animation: car-charge 1.6s ease-in-out infinite;
+}
+
+.car-chargetime {
+  font-weight: bold;
+  background: linear-gradient(90deg, white, yellow, red, white, green);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  display: inline-block;
+  align-self: flex-start;
+  animation: car-gradient 4s linear infinite;
+}
+
+.car-warning b {
+  color: yellow;
+}
+
+@keyframes car-blink {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.25;
+  }
+}
+
+@keyframes car-charge {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes car-gradient {
+  0% {
+    background-position: 200% 0%;
+  }
+  100% {
+    background-position: 0% 0%;
   }
 }
