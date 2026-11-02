@@ -10463,3 +10463,17 @@ input[id$='-carstatus-fontsize'] {
   min-width: 0;
   align-self: center;
 }
+
+/* Test view of the Car status widget (csdebug): the state of every device. */
+.carstatus-debug {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 85%;
+}
+
+.carstatus-debug-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}

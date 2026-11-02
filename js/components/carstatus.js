@@ -16,6 +16,7 @@
  *   csbattery     battery level (%)
  *   csdriving     On while the car is driving
  *   cshome        On while the car is at home
+ *   csdebug       test view: the state of every device below the status
  *   csfontsize    optional font size in px (8-60); empty = the theme's
  *
  * What the tile shows:
@@ -248,6 +249,43 @@ var DT_carstatus = (function () {
     );
   }
 
+  // The test view: the raw state of every device of the block.
+  var DEBUG_ROWS = [
+    ['home', 'Home'],
+    ['driving', 'Driving'],
+    ['charging', 'Charging'],
+    ['chargetime', 'Charge time'],
+    ['battery', 'Battery'],
+    ['mileage', 'Mileage'],
+    ['door', 'Doors'],
+    ['windows', 'Windows'],
+  ];
+
+  function debugHtml(block) {
+    var html = '<div class="carstatus-debug">';
+    DEBUG_ROWS.forEach(function (row) {
+      var idx = deviceIdx(block, row[0]);
+      var dev = device(block, row[0]);
+      var value = !idx
+        ? '-'
+        : !dev
+          ? tr('carstatus_debug_notfound', 'not found')
+          : esc(
+              dev.Status !== undefined && dev.Status !== ''
+                ? dev.Status
+                : dev.Data
+            );
+      html +=
+        '<div class="carstatus-debug-row"><span>' +
+        tr('carstatus_debug_' + row[0], row[1]) +
+        (idx ? ' (' + idx + ')' : '') +
+        '</span><b>' +
+        value +
+        '</b></div>';
+    });
+    return html + '</div>';
+  }
+
   // Without a visible title the battery (text and bar) goes next to the icon.
   function render(me) {
     var block = me.block;
@@ -277,6 +315,7 @@ var DT_carstatus = (function () {
       .html(
         '<div class="carstatus-content">' +
           carstatusHtml(block, undefined, inHeader && showsBattery) +
+          (isOn(String(block.csdebug).toLowerCase()) ? debugHtml(block) : '') +
           '</div>'
       );
   }

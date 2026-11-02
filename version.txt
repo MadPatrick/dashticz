@@ -1,4 +1,4 @@
 {
-    "version": "4.20.27",
-    "last_changes": "Car status widget: the font size setting also applies to the battery shown next to the icon."
+    "version": "4.20.28",
+    "last_changes": "Car status widget: a new test view setting shows the state of every device below the status, to check the idx values."
 }

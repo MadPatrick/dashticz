@@ -64,6 +64,9 @@ set is treated as off (or 0).
     - Idx of the device that is ``Open`` (or on) while a door is open
   * - cswindows
     - Idx of the device that is ``Open`` (or on) while a window is open
+  * - csdebug
+    - ``true``: a test view that shows the state of every device (with its
+      idx) below the status, to check the idx values. Default: false
   * - csfontsize
     - Optional: font size of the tile in pixels (``8``-``60``). Default: the
       size of the theme

@@ -9147,7 +9147,7 @@ var DashticzDeviceEditor = (function () {
     labelPrefix: 'carstatus_block_',
     fieldClass: 'de-carstatus-field',
     saveOrder:
-      'door windows mileage charging chargetime battery driving home fontsize',
+      'door windows mileage charging chargetime battery driving home debug fontsize',
     settings: [
       { key: 'battery', type: 'device', anydevice: true, def: '' },
       { key: 'mileage', type: 'device', anydevice: true, def: '' },
@@ -9157,6 +9157,8 @@ var DashticzDeviceEditor = (function () {
       { key: 'chargetime', type: 'device', anydevice: true, def: '' },
       { key: 'door', type: 'device', anydevice: true, def: '' },
       { key: 'windows', type: 'device', anydevice: true, def: '' },
+      // A test view: the raw state of every device, below the status.
+      { key: 'debug', type: 'switch', def: false, full: 1 },
       { key: 'fontsize', type: 'number', def: null, range: [8, 60, 1] },
     ],
   };

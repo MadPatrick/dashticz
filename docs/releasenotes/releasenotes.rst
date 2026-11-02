@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+v4.20.28 (02-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Car status widget: new setting *Test view* that shows the state of every
+  device (home, driving, charging, doors, windows, ...) below the status, to
+  check the idx values.
+
 v4.20.27 (02-11-2026)
 ----------------------
 
