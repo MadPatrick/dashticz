@@ -8474,6 +8474,52 @@ test('Car block follows the logic of the Tablet_Autos script', () => {
   assert.doesNotMatch(html, /carstatus-battery/);
 });
 
+test('Car status test view lists the state of every device', () => {
+  const devices = { 1: { Status: 'Open' }, 8: { Status: 'On' } };
+  let html = '';
+  const chain = {
+    find: () => chain,
+    remove: () => chain,
+    append: () => chain,
+    css: () => chain,
+    html: (value) => {
+      html = value;
+      return chain;
+    },
+  };
+  const context = {
+    language: { misc: {} },
+    settings: {},
+    Dashticz: { register: () => {} },
+    Domoticz: { getAllDevices: () => devices },
+  };
+  vm.createContext(context);
+  vm.runInContext(
+    fs.readFileSync(path.join(root, 'js/dt_function.js'), 'utf8'),
+    context
+  );
+  vm.runInContext(
+    fs.readFileSync(path.join(root, 'js/components/carstatus.js'), 'utf8'),
+    context
+  );
+  context.DT_carstatus.render({
+    block: {
+      csmode: 'status',
+      csdoor: 1,
+      cshome: 8,
+      cswindows: 9,
+      csdebug: 'true',
+      title: 'BMW',
+    },
+    $mountPoint: chain,
+  });
+  assert.match(html, /carstatus-debug/);
+  assert.match(html, /Doors \(1\)<\/span><b>Open/);
+  assert.match(html, /Home \(8\)<\/span><b>On/);
+  assert.match(html, /Windows \(9\)<\/span><b>not found/);
+  assert.match(html, /Driving<\/span><b>-/);
+});
+
 test('Car status battery bar: colour thresholds', () => {
   const context = {
     language: { misc: {} },

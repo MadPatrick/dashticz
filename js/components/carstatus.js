@@ -34,6 +34,18 @@
  * 100% a light green percentage.
  */
 var DT_carstatus = (function () {
+  // The test view: the raw state of every device of the block.
+  var DEBUG_ROWS = [
+    ['home', 'Home'],
+    ['driving', 'Driving'],
+    ['charging', 'Charging'],
+    ['chargetime', 'Charge time'],
+    ['battery', 'Battery'],
+    ['mileage', 'Mileage'],
+    ['door', 'Doors'],
+    ['windows', 'Windows'],
+  ];
+
   var IDX_FIELDS = [
     'door',
     'windows',
@@ -248,18 +260,6 @@ var DT_carstatus = (function () {
       '</div>'
     );
   }
-
-  // The test view: the raw state of every device of the block.
-  var DEBUG_ROWS = [
-    ['home', 'Home'],
-    ['driving', 'Driving'],
-    ['charging', 'Charging'],
-    ['chargetime', 'Charge time'],
-    ['battery', 'Battery'],
-    ['mileage', 'Mileage'],
-    ['door', 'Doors'],
-    ['windows', 'Windows'],
-  ];
 
   function debugHtml(block) {
     var html = '<div class="carstatus-debug">';

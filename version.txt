@@ -1,4 +1,4 @@
 {
-    "version": "4.20.28",
-    "last_changes": "Car status widget: a new test view setting shows the state of every device below the status, to check the idx values."
+    "version": "4.20.29",
+    "last_changes": "Car status widget: fixed the tile staying empty when the test view setting was on."
 }

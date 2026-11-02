@@ -1,6 +1,14 @@
 Release Notes
 =============
 
+v4.20.29 (02-11-2026)
+----------------------
+
+* **Fixes**
+
+- Car status widget: fixed the tile staying empty when the test view setting
+  was on.
+
 v4.20.28 (02-11-2026)
 ----------------------
 
