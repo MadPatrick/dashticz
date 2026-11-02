@@ -26,7 +26,8 @@ widget is for the status of a car from the devices of your car integration; the
 :ref:`Car info widget <car>` draws the tyre pressures and doors on a picture of
 the car.
 
-Without a title the percentage and the mileage are shown next to the icon.
+Without a title the battery bar, with the percentage at its start and the
+mileage at its end, is shown next to the icon.
 
 Add it via the Screen Editor: "Add items" -> Widgets -> Car status. Change the
 settings of a placed block with the cog icon.

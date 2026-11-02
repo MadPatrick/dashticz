@@ -10385,6 +10385,7 @@ canvas {
 
 .carstatus-battery-text {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   gap: 10px;
 }
@@ -10455,15 +10456,10 @@ input[id$='-carstatus-fontsize'] {
   width: 9ch;
 }
 
-/* Without a title the battery text sits next to the icon, in the header row
+/* Without a title the battery (text above the bar) sits next to the icon, in the header row
    (js/components/carstatus.js render()). */
 .carstatus-headtext {
   flex: 1 1 auto;
   min-width: 0;
   align-self: center;
-}
-
-.carstatus-headtext .carstatus-battery-text {
-  gap: 14px;
-  justify-content: flex-start;
 }

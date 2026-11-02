@@ -156,15 +156,22 @@ var DT_carstatus = (function () {
     );
   }
 
-  // The text above the progress bar, unless it is shown next to the icon.
-  function batteryHtml(pct, mileage, charging, textInHeader) {
+  // The battery: the percentage at the start and the mileage at the end of
+  // the progress bar, above it. Empty when the battery is shown next to the
+  // icon (see render()).
+  function batteryHtml(pct, mileage, charging, inHeader) {
+    if (inHeader) return '';
+    return fullBatteryHtml(pct, mileage, charging);
+  }
+
+  function fullBatteryHtml(pct, mileage, charging) {
     var level = batteryLevel(pct);
     return (
       '<div class="carstatus-battery ' +
       batteryClass(level) +
       (charging ? ' carstatus-charging' : '') +
       '">' +
-      (textInHeader ? '' : batteryTextHtml(pct, mileage)) +
+      batteryTextHtml(pct, mileage) +
       '<div class="carstatus-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
       level +
       '"><span class="carstatus-bar-fill" style="width:' +
@@ -196,7 +203,7 @@ var DT_carstatus = (function () {
   }
 
   // The content of the tile for the current device states.
-  function carstatusHtml(block, now, textInHeader) {
+  function carstatusHtml(block, now, batteryInHeader) {
     var pct = numberOf(block, 'battery');
     var mileage = numberOf(block, 'mileage');
     var chargeMinutes = numberOf(block, 'chargetime');
@@ -209,12 +216,12 @@ var DT_carstatus = (function () {
         '<div class="carstatus-status carstatus-driving">' +
         tr('carstatus_driving', 'On the road') +
         '</div>' +
-        batteryHtml(pct, mileage, false, textInHeader)
+        batteryHtml(pct, mileage, false, batteryInHeader)
       );
     }
 
     if (isOn(stateOf(block, 'home'))) {
-      var html = batteryHtml(pct, mileage, charging, textInHeader);
+      var html = batteryHtml(pct, mileage, charging, batteryInHeader);
       if (charging && chargeMinutes > 0) {
         html +=
           '<div class="carstatus-chargetime">' +
@@ -241,7 +248,7 @@ var DT_carstatus = (function () {
     );
   }
 
-  // Without a visible title the battery text goes next to the icon.
+  // Without a visible title the battery (text and bar) goes next to the icon.
   function render(me) {
     var block = me.block;
     var fontSize = parseInt(block.csfontsize, 10);
@@ -253,9 +260,10 @@ var DT_carstatus = (function () {
     if (inHeader && showsBattery) {
       $header.append(
         '<div class="carstatus-headtext">' +
-          batteryTextHtml(
+          fullBatteryHtml(
             numberOf(block, 'battery'),
-            numberOf(block, 'mileage')
+            numberOf(block, 'mileage'),
+            isOn(stateOf(block, 'charging')) && !isOn(stateOf(block, 'driving'))
           ) +
           '</div>'
       );

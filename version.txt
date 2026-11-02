@@ -1,4 +1,4 @@
 {
-    "version": "4.20.25",
-    "last_changes": "Car status widget: the font size field in the settings is 5 characters wide."
+    "version": "4.20.26",
+    "last_changes": "Car status widget: without a title, the battery progress bar with the percentage at its start and the mileage at its end is shown next to the icon."
 }
