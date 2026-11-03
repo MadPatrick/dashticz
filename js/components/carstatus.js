@@ -184,9 +184,9 @@ var DT_carstatus = (function () {
   // One line of the part below the line: "Label: value". warning: yellow.
   function rowHtml(label, value, extraClass) {
     return (
-      '<div class="carstatus-row">' +
+      '<div class="carstatus-row"><span class="carstatus-label">' +
       label +
-      ': <b' +
+      ':</span> <b' +
       (extraClass ? ' class="' + extraClass + '"' : '') +
       '>' +
       value +

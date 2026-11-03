@@ -11,8 +11,8 @@ car; the block title is the name of the car.
 What the tile shows:
 
 - **The battery**, always: the progress bar with the percentage at its start
-  and the mileage at its end. While the car charges at home, the filled part of
-  the bar pulses.
+  and the mileage at its end. While the car charges at home, a glow travels
+  through the bar from left to right.
 - **Below a line**, the status: *On the road* while driving, *Not home* when the
   car is not at home, and nothing when it is at home.
 - **Below that**, only when they apply: *Charging until* followed by the time at
