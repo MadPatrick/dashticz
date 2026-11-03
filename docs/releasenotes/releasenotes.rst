@@ -1,14 +1,6 @@
 Release Notes
 =============
 
-v4.20.26 (03-11-2026)
-----------------------
-
-* **Enhancements**
-
-- **Car status** widget: the battery bar is thicker (11 px) and its end, like
-  the filled part, is slanted.
-
 v4.20.25 (03-11-2026)
 ----------------------
 
