@@ -1,89 +1,7 @@
 Release Notes
 =============
 
-v4.20.31 (02-11-2026)
-----------------------
-
-* **Enhancements**
-
-- Car status widget: the test view only shows *Charging until*, not the
-  charging state, and there is less space between the header row (icon and
-  battery bar) and the status below it.
-
-v4.20.30 (02-11-2026)
-----------------------
-
-* **Enhancements**
-
-- Car status widget: the test view no longer shows the device numbers, the
-  battery and the mileage (they are in the progress bar). It shows home,
-  driving, charging, doors and windows in words (Yes/No, Open/Closed).
-
-v4.20.29 (02-11-2026)
-----------------------
-
-* **Fixes**
-
-- Car status widget: fixed the tile staying empty when the test view setting
-  was on.
-
-v4.20.28 (02-11-2026)
-----------------------
-
-* **Enhancements**
-
-- Car status widget: new setting *Test view* that shows the state of every
-  device (home, driving, charging, doors, windows, ...) below the status, to
-  check the idx values.
-
-v4.20.27 (02-11-2026)
-----------------------
-
-* **Fixes**
-
-- Car status widget: the font size setting also applies to the battery shown
-  next to the icon.
-
-v4.20.26 (02-11-2026)
-----------------------
-
-* **Enhancements**
-
-- Car status widget: without a title, the whole battery (the progress bar with
-  the percentage at its start and the mileage at its end) is shown next to the
-  icon, one line higher.
-
-v4.20.25 (02-11-2026)
-----------------------
-
-* **Enhancements**
-
-- Car status widget: the font size field in the settings is 5 characters wide.
-
-v4.20.24 (02-11-2026)
-----------------------
-
-* **Enhancements**
-
-- Car status widget: without a title, the battery percentage and the mileage
-  are shown next to the icon instead of above the progress bar.
-
-v4.20.23 (02-11-2026)
-----------------------
-
-* **Enhancements**
-
-- Car status widget: the font size field in the settings is 3 characters wide.
-
-v4.20.22 (02-11-2026)
-----------------------
-
-* **Enhancements**
-
-- Car status widget: the battery percentage and the mileage are shown above the
-  progress bar.
-
-v4.20.21 (02-11-2026)
+v4.20.22 (03-11-2026)
 ----------------------
 
 * **Enhancements**
@@ -91,11 +9,23 @@ v4.20.21 (02-11-2026)
 - New **Car status** widget (Widgets -> Car status): shows a BMW, MINI or other
   car in its own tile, read from Domoticz devices. The battery level is a
   progress bar like the one of the Mower widget (below 15% blinking red, below
-  30% red, below 50% orange, from 50% the green bar), next to the mileage. The
-  tile shows *On the road* while driving; at home it shows the charging state
-  with *Charging until* the time it is charged, and a warning for an open door
+  30% red, below 50% orange, from 50% the green bar), with the percentage at
+  its start and the mileage at its end; without a title the battery is shown
+  next to the icon. The tile shows *On the road* while driving; at home it
+  shows *Charging until* the time it is charged, and a warning for an open door
   or window; away from home it shows *Not home*, or the warning when a door or
-  window is open. See :ref:`carstatus`.
+  window is open. The optional *Test view* shows the state of home, driving,
+  doors and windows to check the devices. See :ref:`carstatus`.
+
+v4.20.21 (03-11-2026)
+----------------------
+
+* **Fixes**
+
+- Graphs: newer Domoticz versions add a timestamp field ("ts") to the graph
+  data of devices such as Custom Sensors. It was drawn as an extra data series
+  with values around 1.8e12, which made the Y-axis unreadable. This field is
+  now ignored (#1371).
 
 v4.20.20 (01-11-2026)
 ----------------------

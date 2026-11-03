@@ -1,16 +1,7 @@
 {
   "changelog": {
-    "4.20.31": "Car status widget: the test view only shows the time it is charged, not the charging state, and there is less space between the header row and the status below it.",
-    "4.20.30": "Car status widget: the test view no longer shows the device numbers, the battery and the mileage, and shows the states of home, driving, charging, doors and windows in words.",
-    "4.20.29": "Car status widget: fixed the tile staying empty when the test view setting was on.",
-    "4.20.28": "Car status widget: a new test view setting shows the state of every device below the status, to check the idx values.",
-    "4.20.27": "Car status widget: the font size setting also applies to the battery shown next to the icon.",
-    "4.20.26": "Car status widget: without a title, the battery progress bar with the percentage at its start and the mileage at its end is shown next to the icon.",
-    "4.20.25": "Car status widget: the font size field in the settings is 5 characters wide.",
-    "4.20.24": "Car status widget: without a title, the battery percentage and the mileage are shown next to the icon.",
-    "4.20.23": "Car status widget: the font size field in the settings is 3 characters wide.",
-    "4.20.22": "Car status widget: the battery percentage and the mileage are shown above the progress bar.",
-    "4.20.21": "New Car status widget: shows a BMW, MINI or other car in its own tile, read from Domoticz devices (battery level as a progress bar like the Mower widget, mileage, charging with the time it is charged, driving, at home, open doors and windows).",
+    "4.20.22": "New Car status widget: shows a BMW, MINI or other car in its own tile, read from Domoticz devices. The battery is a progress bar like the Mower widget, with the percentage and the mileage above it (next to the icon when there is no title), the time it is charged, warnings for open doors and windows, and an optional test view with the state of the devices.",
+    "4.20.21": "Graphs: the 'ts' timestamp that newer Domoticz versions add to the graph data is no longer drawn as a data series, so the Y-axis is readable again (#1371).",
     "4.20.20": "Toon and Mower widgets: new data source Dashticz. Besides the devices of Domoticz, the widgets can ask the Toon (IP address) or Husqvarna (client ID and secret) themselves, with the settings in the widget.",
     "4.20.19": "Toon and Mower widgets: two new Widgets cards. Toon shows the temperature, thermostat, boiler and scenes of a Toon, and Mower shows a Husqvarna mower with state, location, battery and Start/Park buttons. Both take their data from Domoticz.",
     "4.20.18": "Car info widget: the range on the bonnet no longer has an icon.",
