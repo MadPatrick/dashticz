@@ -8523,6 +8523,18 @@ test('Car status test view shows every row', () => {
   assert.match(html, /Doors:<\/span> <b class="carstatus-warning-text">Open/);
   assert.match(html, /Windows:<\/span> <b>\?/);
   assert.doesNotMatch(html, /\(1\)/);
+  // The test view also shows the charging glow in the battery bar.
+  const withBar = context.DT_carstatus.carstatusHtml({
+    csmode: 'status',
+    csbattery: 5,
+    csdebug: 'true',
+  });
+  assert.match(withBar, /class="carstatus-battery [^"]*carstatus-charging/);
+  const noTest = context.DT_carstatus.carstatusHtml({
+    csmode: 'status',
+    csbattery: 5,
+  });
+  assert.doesNotMatch(noTest, /carstatus-charging/);
 });
 
 test('Car status battery bar: colour thresholds', () => {

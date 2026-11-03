@@ -67,7 +67,8 @@ set is treated as off (or 0).
     - Idx of the device that is ``Open`` (or on) while a window is open
   * - csdebug
     - ``true``: a test view that always shows the rows *Charging until*, *Doors*
-      and *Windows* (also when they do not apply), to check the devices.
+      and *Windows* (also when they do not apply) and the charging glow in the
+      battery bar, to check the devices.
       Default: false
   * - csfontsize
     - Optional: font size of the tile in pixels (``8``-``60``). Default: the

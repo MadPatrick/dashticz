@@ -250,6 +250,14 @@ var DT_carstatus = (function () {
     return html;
   }
 
+  // Charging while driving does not exist; the test view always shows the glow.
+  function isCharging(block) {
+    return (
+      (isOn(stateOf(block, 'charging')) && !isOn(stateOf(block, 'driving'))) ||
+      isOn(String(block.csdebug).toLowerCase())
+    );
+  }
+
   function hasBattery(block) {
     return !!(deviceIdx(block, 'battery') || deviceIdx(block, 'mileage'));
   }
@@ -257,8 +265,7 @@ var DT_carstatus = (function () {
   // The content of the tile for the current device states: the battery (unless
   // it is shown next to the icon), a line, and the part below it.
   function carstatusHtml(block, now, batteryInHeader) {
-    var charging =
-      isOn(stateOf(block, 'charging')) && !isOn(stateOf(block, 'driving'));
+    var charging = isCharging(block);
     return (
       (hasBattery(block)
         ? batteryHtml(
@@ -289,7 +296,7 @@ var DT_carstatus = (function () {
           fullBatteryHtml(
             numberOf(block, 'battery'),
             numberOf(block, 'mileage'),
-            isOn(stateOf(block, 'charging')) && !isOn(stateOf(block, 'driving'))
+            isCharging(block)
           ) +
           '</div>'
       );
