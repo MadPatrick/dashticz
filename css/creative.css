@@ -10312,7 +10312,7 @@ canvas {
 .carstatus-block .dt_state {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   overflow: auto;
   margin-left: 0;
   padding-left: 0;
@@ -10465,18 +10465,22 @@ input[id$='-carstatus-fontsize'] {
   align-self: flex-end;
 }
 
-/* Test view of the Car status widget (csdebug): the state of every device. */
-.carstatus-debug {
+/* The part below the line: status and the rows Charging until, Doors and
+   Windows. The line only shows when there is something below it. */
+.carstatus-below:not(:empty) {
   margin-top: 8px;
-  padding-top: 4px;
+  padding-top: 6px;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
-  font-size: 85%;
 }
 
-.carstatus-debug-row {
+.carstatus-below {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.carstatus-row b.carstatus-warning-text {
+  color: yellow;
 }
 
 /* Little space between the header row and the status below it. */

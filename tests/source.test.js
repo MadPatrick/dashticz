@@ -8440,7 +8440,7 @@ test('Car block follows the logic of the Tablet_Autos script', () => {
   });
   const now = new Date(2026, 10, 2, 18, 0, 0).getTime();
 
-  // Driving: only the status and the battery.
+  // Driving: the battery and "On the road" below it.
   let html = renderCarstatus(
     devices({ driving: 'On', home: 'On' }),
     block,
@@ -8450,31 +8450,34 @@ test('Car block follows the logic of the Tablet_Autos script', () => {
   assert.match(html, /12345 km/);
   assert.doesNotMatch(html, /Charging until/);
 
-  // At home and charging: the time is now plus the charge minutes.
+  // At home and charging: the time is now plus the charge minutes; no status.
   html = renderCarstatus(
     devices({ home: 'On', charging: 'On', door: 'Open', windows: 'Open' }),
     block,
     now
   );
-  assert.match(html, /Charging until 19:30/);
+  assert.match(html, /Charging until: <b class="carstatus-chargetime">19:30/);
   assert.match(html, /carstatus-charging/);
-  assert.match(html, /Doors: <b>Open/);
-  assert.match(html, /Windows: <b>Open/);
+  assert.match(html, /Doors: <b class="carstatus-warning-text">Open/);
+  assert.match(html, /Windows: <b class="carstatus-warning-text">Open/);
+  assert.doesNotMatch(html, /Not home|On the road/);
 
-  // At home, not charging, nothing open.
+  // At home, not charging, nothing open: only the battery, nothing below it.
   html = renderCarstatus(devices({ home: 'On' }), block, now);
-  assert.doesNotMatch(html, /Charging until|carstatus-warning/);
+  assert.match(html, /carstatus-battery/);
+  assert.match(html, /<div class="carstatus-below"><\/div>/);
 
-  // Away from home.
+  // Away from home: the battery stays, "Not home" below it.
   html = renderCarstatus(devices({}), block, now);
-  assert.equal(html, '<div class="carstatus-away">Not home</div>');
+  assert.match(html, /carstatus-battery/);
+  assert.match(html, /Not home/);
   html = renderCarstatus(devices({ door: 'Open' }), block, now);
-  assert.match(html, /Car is not home/);
-  assert.match(html, /Doors: <b>Open/);
-  assert.doesNotMatch(html, /carstatus-battery/);
+  assert.match(html, /Not home/);
+  assert.match(html, /Doors: <b class="carstatus-warning-text">Open/);
+  assert.doesNotMatch(html, /Windows:/);
 });
 
-test('Car status test view lists the state of every device', () => {
+test('Car status test view shows every row', () => {
   const devices = { 1: { Status: 'Open' }, 8: { Status: 'On' } };
   let html = '';
   const chain = {
@@ -8513,14 +8516,10 @@ test('Car status test view lists the state of every device', () => {
     },
     $mountPoint: chain,
   });
-  assert.match(html, /carstatus-debug/);
-  assert.match(html, /Doors:<\/span><b class="carstatus-warning-text">Open/);
-  assert.match(html, /Home:<\/span><b>Yes/);
-  assert.match(html, /Charging until:<\/span><b>-/);
-  assert.doesNotMatch(html, /Charging:/);
-  assert.match(html, /Windows:<\/span><b>not found/);
-  assert.match(html, /Driving:<\/span><b>-/);
-  assert.doesNotMatch(html, /\(1\)|Battery|Mileage/);
+  assert.match(html, /Charging until: <b>-/);
+  assert.match(html, /Doors: <b class="carstatus-warning-text">Open/);
+  assert.match(html, /Windows: <b>\?/);
+  assert.doesNotMatch(html, /\(1\)/);
 });
 
 test('Car status battery bar: colour thresholds', () => {

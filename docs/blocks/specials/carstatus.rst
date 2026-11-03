@@ -10,16 +10,17 @@ car; the block title is the name of the car.
 
 What the tile shows:
 
-- **Driving**: *On the road*, with the battery level and the mileage.
-- **At home**: the battery level and the mileage. While the car charges it
-  also shows *Charging until* followed by the time at which the car is charged
-  (now plus the charge time in minutes), and the filled part of the battery
-  bar pulses. An open door or window is shown as a warning.
-- **Not at home**: *Not home*. When a door or window is open, the tile shows
-  *Car is not home* with the warning instead.
+- **The battery**, always: the progress bar with the percentage at its start
+  and the mileage at its end. While the car charges at home, the filled part of
+  the bar pulses.
+- **Below a line**, the status: *On the road* while driving, *Not home* when the
+  car is not at home, and nothing when it is at home.
+- **Below that**, only when they apply: *Charging until* followed by the time at
+  which the car is charged (now plus the charge time in minutes), and *Doors*
+  and *Windows* when one is open (shown as a warning).
 
 The battery level is a progress bar like the one of the :ref:`Mower widget <mower>`,
-with the percentage and the mileage below it. The color follows the level:
+The color follows the level:
 below 15% blinking red, below 30% red, below 50% orange, from 50% the green bar
 of the mower with a white percentage, and at 100% a light green percentage. This
 widget is for the status of a car from the devices of your car integration; the
@@ -65,8 +66,9 @@ set is treated as off (or 0).
   * - cswindows
     - Idx of the device that is ``Open`` (or on) while a window is open
   * - csdebug
-    - ``true``: a test view that shows the state of home, driving, charging,
-      doors and windows below the status, to check the devices. Default: false
+    - ``true``: a test view that always shows the rows *Charging until*, *Doors*
+      and *Windows* (also when they do not apply), to check the devices.
+      Default: false
   * - csfontsize
     - Optional: font size of the tile in pixels (``8``-``60``). Default: the
       size of the theme

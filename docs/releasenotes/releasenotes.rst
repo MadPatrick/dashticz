@@ -11,11 +11,10 @@ v4.20.22 (03-11-2026)
   progress bar like the one of the Mower widget (below 15% blinking red, below
   30% red, below 50% orange, from 50% the green bar), with the percentage at
   its start and the mileage at its end; without a title the battery is shown
-  next to the icon. The tile shows *On the road* while driving; at home it
-  shows *Charging until* the time it is charged, and a warning for an open door
-  or window; away from home it shows *Not home*, or the warning when a door or
-  window is open. The optional *Test view* shows the state of home, driving,
-  doors and windows to check the devices. See :ref:`carstatus`.
+  next to the icon. Below a line the tile shows *On the road* or *Not home*
+  (nothing at home), then *Charging until* the time it is charged and *Doors*
+  and *Windows* when one is open. The optional *Test view* always shows those
+  rows. See :ref:`carstatus`.
 
 v4.20.21 (03-11-2026)
 ----------------------

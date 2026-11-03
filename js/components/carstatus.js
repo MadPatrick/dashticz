@@ -34,15 +34,6 @@
  * 100% a light green percentage.
  */
 var DT_carstatus = (function () {
-  // The test view: the state of the on/off devices of the block, in the words
-  // of the status texts. open: an open door or window is shown as a warning.
-  var DEBUG_ROWS = [
-    { field: 'home', label: 'Home' },
-    { field: 'driving', label: 'Driving' },
-    { field: 'door', label: 'Doors', open: true },
-    { field: 'windows', label: 'Windows', open: true },
-  ];
-
   var IDX_FIELDS = [
     'door',
     'windows',
@@ -190,129 +181,108 @@ var DT_carstatus = (function () {
     );
   }
 
-  function warningsHtml(doorOpen, windowOpen) {
+  // One line of the part below the line: "Label: value". warning: yellow.
+  function rowHtml(label, value, extraClass) {
+    return (
+      '<div class="carstatus-row">' +
+      label +
+      ': <b' +
+      (extraClass ? ' class="' + extraClass + '"' : '') +
+      '>' +
+      value +
+      '</b></div>'
+    );
+  }
+
+  function stateWord(block, field) {
+    var dev = device(block, field);
+    if (!dev) return deviceIdx(block, field) ? '?' : '-';
+    return isOpen(stateOf(block, field))
+      ? tr('carstatus_open', 'Open')
+      : tr('carstatus_closed', 'Closed');
+  }
+
+  // The part below the line: the status (Not home / On the road; nothing when
+  // the car is at home), then "Charging until", "Doors" and "Windows". Those
+  // show only when they apply, or always in the test view.
+  function belowHtml(block, now) {
+    var all = isOn(String(block.csdebug).toLowerCase());
+    var minutes = numberOf(block, 'chargetime');
+    var charging = isOn(stateOf(block, 'charging'));
+    var doorOpen = isOpen(stateOf(block, 'door'));
+    var windowOpen = isOpen(stateOf(block, 'windows'));
     var html = '';
-    var open = tr('carstatus_open', 'Open');
-    if (doorOpen) {
+    if (isOn(stateOf(block, 'driving'))) {
       html +=
-        '<div class="carstatus-warning"><i class="fas fa-door-open" aria-hidden="true"></i> ' +
-        tr('carstatus_doors', 'Doors') +
-        ': <b>' +
-        open +
-        '</b></div>';
+        '<div class="carstatus-status carstatus-driving">' +
+        tr('carstatus_driving', 'On the road') +
+        '</div>';
+    } else if (!isOn(stateOf(block, 'home'))) {
+      html +=
+        '<div class="carstatus-status carstatus-away">' +
+        tr('carstatus_away', 'Not home') +
+        '</div>';
     }
-    if (windowOpen) {
-      html +=
-        '<div class="carstatus-warning"><i class="fas fa-window-maximize" aria-hidden="true"></i> ' +
-        tr('carstatus_windows', 'Windows') +
-        ': <b>' +
-        open +
-        '</b></div>';
+    var untilLabel = tr('carstatus_charging_until', 'Charging until');
+    if (charging && minutes > 0) {
+      html += rowHtml(
+        untilLabel,
+        timePlus(minutes, now),
+        'carstatus-chargetime'
+      );
+    } else if (all) {
+      html += rowHtml(untilLabel, '-');
+    }
+    if (doorOpen || all) {
+      html += rowHtml(
+        tr('carstatus_doors', 'Doors'),
+        stateWord(block, 'door'),
+        doorOpen ? 'carstatus-warning-text' : ''
+      );
+    }
+    if (windowOpen || all) {
+      html += rowHtml(
+        tr('carstatus_windows', 'Windows'),
+        stateWord(block, 'windows'),
+        windowOpen ? 'carstatus-warning-text' : ''
+      );
     }
     return html;
   }
 
-  // The content of the tile for the current device states.
-  function carstatusHtml(block, now, batteryInHeader) {
-    var pct = numberOf(block, 'battery');
-    var mileage = numberOf(block, 'mileage');
-    var chargeMinutes = numberOf(block, 'chargetime');
-    var charging = isOn(stateOf(block, 'charging'));
-    var doorOpen = isOpen(stateOf(block, 'door'));
-    var windowOpen = isOpen(stateOf(block, 'windows'));
-
-    if (isOn(stateOf(block, 'driving'))) {
-      return (
-        '<div class="carstatus-status carstatus-driving">' +
-        tr('carstatus_driving', 'On the road') +
-        '</div>' +
-        batteryHtml(pct, mileage, false, batteryInHeader)
-      );
-    }
-
-    if (isOn(stateOf(block, 'home'))) {
-      var html = batteryHtml(pct, mileage, charging, batteryInHeader);
-      if (charging && chargeMinutes > 0) {
-        html +=
-          '<div class="carstatus-chargetime">' +
-          tr('carstatus_charging_until', 'Charging until') +
-          ' ' +
-          timePlus(chargeMinutes, now) +
-          '</div>';
-      }
-      return html + warningsHtml(doorOpen, windowOpen);
-    }
-
-    if (doorOpen || windowOpen) {
-      return (
-        '<div class="carstatus-status carstatus-away">' +
-        tr('carstatus_away_warning', 'Car is not home') +
-        '</div>' +
-        warningsHtml(doorOpen, windowOpen)
-      );
-    }
-    return (
-      '<div class="carstatus-away">' +
-      tr('carstatus_away', 'Not home') +
-      '</div>'
-    );
+  function hasBattery(block) {
+    return !!(deviceIdx(block, 'battery') || deviceIdx(block, 'mileage'));
   }
 
-  function debugHtml(block) {
-    var html = '<div class="carstatus-debug">';
-    DEBUG_ROWS.forEach(function (row) {
-      var value = '-';
-      var warning = false;
-      if (device(block, row.field)) {
-        var state = stateOf(block, row.field);
-        if (row.open) {
-          warning = isOpen(state);
-          value = warning
-            ? tr('carstatus_open', 'Open')
-            : tr('carstatus_closed', 'Closed');
-        } else {
-          value = isOn(state)
-            ? tr('carstatus_yes', 'Yes')
-            : tr('carstatus_no', 'No');
-        }
-      } else if (deviceIdx(block, row.field)) {
-        value = tr('carstatus_debug_notfound', 'not found');
-      }
-      if (row.field === 'door') {
-        // The charge time (minutes) is shown as the time it is charged.
-        var minutes = numberOf(block, 'chargetime');
-        html +=
-          '<div class="carstatus-debug-row"><span>' +
-          tr('carstatus_charging_until', 'Charging until') +
-          ':</span><b>' +
-          (isOn(stateOf(block, 'charging')) && minutes > 0
-            ? timePlus(minutes)
-            : '-') +
-          '</b></div>';
-      }
-      html +=
-        '<div class="carstatus-debug-row"><span>' +
-        tr('carstatus_debug_' + row.field, row.label) +
-        ':</span><b' +
-        (warning ? ' class="carstatus-warning-text"' : '') +
-        '>' +
-        value +
-        '</b></div>';
-    });
-    return html + '</div>';
+  // The content of the tile for the current device states: the battery (unless
+  // it is shown next to the icon), a line, and the part below it.
+  function carstatusHtml(block, now, batteryInHeader) {
+    var charging =
+      isOn(stateOf(block, 'charging')) && !isOn(stateOf(block, 'driving'));
+    return (
+      (hasBattery(block)
+        ? batteryHtml(
+            numberOf(block, 'battery'),
+            numberOf(block, 'mileage'),
+            charging,
+            batteryInHeader
+          )
+        : '') +
+      '<div class="carstatus-below">' +
+      belowHtml(block, now) +
+      '</div>'
+    );
   }
 
   // Without a visible title the battery (text and bar) goes next to the icon.
   function render(me) {
     var block = me.block;
     var fontSize = parseInt(block.csfontsize, 10);
-    var inHeader = !block.title || !!block.hide_title;
-    var showsBattery =
-      isOn(stateOf(block, 'driving')) || isOn(stateOf(block, 'home'));
+    var inHeader = (!block.title || !!block.hide_title) && hasBattery(block);
     var size = fontSize >= 8 && fontSize <= 60 ? fontSize + 'px' : '';
     var $header = me.$mountPoint.find('.dt_content');
     $header.find('.carstatus-headtext').remove();
-    if (inHeader && showsBattery) {
+    if (inHeader) {
       // The font size of the block also applies to the battery in the header.
       $header.append(
         '<div class="carstatus-headtext">' +
@@ -330,8 +300,7 @@ var DT_carstatus = (function () {
       .css('font-size', size)
       .html(
         '<div class="carstatus-content">' +
-          carstatusHtml(block, undefined, inHeader && showsBattery) +
-          (isOn(String(block.csdebug).toLowerCase()) ? debugHtml(block) : '') +
+          carstatusHtml(block, undefined, inHeader) +
           '</div>'
       );
   }
