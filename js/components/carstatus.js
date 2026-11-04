@@ -144,14 +144,26 @@ var DT_carstatus = (function () {
     return Math.max(0, Math.min(100, Math.round(pct)));
   }
 
-  // The battery percentage and the mileage.
+  // The battery icon that fits a battery level.
+  function batteryIcon(pct) {
+    if (pct >= 90) return 'fa-battery-full';
+    if (pct >= 65) return 'fa-battery-three-quarters';
+    if (pct >= 35) return 'fa-battery-half';
+    if (pct >= 10) return 'fa-battery-quarter';
+    return 'fa-battery-empty';
+  }
+
+  // The battery percentage with a battery icon and the mileage with a plug
+  // icon.
   function batteryTextHtml(pct, mileage) {
     return (
       '<div class="carstatus-battery-text ' +
       batteryClass(batteryLevel(pct)) +
-      '"><span class="carstatus-pct">' +
+      '"><span class="carstatus-pct"><i class="fas ' +
+      batteryIcon(batteryLevel(pct)) +
+      ' carstatus-icon" aria-hidden="true"></i>' +
       batteryLevel(pct) +
-      '%</span><span class="carstatus-km">' +
+      '%</span><span class="carstatus-km"><i class="fas fa-plug carstatus-icon" aria-hidden="true"></i>' +
       esc(Math.round(mileage)) +
       ' km</span></div>'
     );
