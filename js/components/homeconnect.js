@@ -22,7 +22,9 @@
  *   hcexclude    appliance names to hide, comma separated
  *   hcdevices    per appliance, the idx of a device that is not found by its
  *                name: {'Washer': {power: 12, progress: 13, time: 14,
- *                alert: 15, name: 'Wasmachine', icon: 'fas fa-tshirt'}}
+ *                alert: 15, name: 'Wasmachine', icon: 'washer'}}
+ *                (icon: washer, dryer, coffee, dishwasher, oven, fridge,
+ *                plug, or a Font Awesome class)
  *
  * What the tile shows, per appliance: the icon and the name; while a program
  * runs the progress and "ready at HH:MM" (now + the remaining time); at 100% a
@@ -38,16 +40,42 @@ var DT_homeconnect = (function () {
     time: /^(.*?)\s+(remaining time|resterende tijd|finish time|eindtijd)$/i,
     alert: /^(.*?)\s+(notifications|meldingen|alert|alerts)$/i,
   };
-  // The icon from a word in the name of the appliance.
+  // The icon from a word in the name of the appliance: the key of GLYPHS.
   var ICONS = [
-    [/wasmachine|wasautomaat|washer|washing|waschmaschine/i, 'fas fa-tshirt'],
-    [/droger|dryer|trockner/i, 'fas fa-wind'],
-    [/koffie|coffee|kaffee/i, 'fas fa-mug-hot'],
-    [/vaatwasser|dishwasher|geschirr/i, 'fas fa-utensils'],
-    [/oven|backofen|magnetron|microwave/i, 'fas fa-fire'],
-    [/koelkast|fridge|freezer|vriezer/i, 'fas fa-snowflake'],
+    [/wasmachine|wasautomaat|washer|washing|waschmaschine/i, 'washer'],
+    [/droger|dryer|trockner/i, 'dryer'],
+    [/koffie|coffee|kaffee/i, 'coffee'],
+    [/vaatwasser|dishwasher|geschirr/i, 'dishwasher'],
+    [/oven|backofen|magnetron|microwave/i, 'oven'],
+    [/koelkast|fridge|freezer|vriezer|k[uü]hl/i, 'fridge'],
   ];
-  var DEFAULT_ICON = 'fas fa-plug';
+  var DEFAULT_ICON = 'plug';
+  // The icons: the inside of a 24x24 outline drawing (stroke = text colour).
+  var GLYPHS = {
+    washer:
+      '<rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M4 7h16"/>' +
+      '<circle cx="7.5" cy="4.8" r=".6"/><path d="M11 4.8h5.5"/>' +
+      '<circle cx="12" cy="14.2" r="4.8"/><path d="M8.6 14.6c1.1-1.1 2.2 1.1 3.4 0s2.3 1.1 3.4 0"/>',
+    dryer:
+      '<rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M4 7h16"/>' +
+      '<circle cx="7.5" cy="4.8" r=".6"/><path d="M11 4.8h5.5"/>' +
+      '<circle cx="12" cy="14.2" r="4.8"/><path d="M9.8 12.2c1.1.9 1.1 2.2 0 3.1M12.8 12.2c1.1.9 1.1 2.2 0 3.1"/>',
+    coffee:
+      '<path d="M5 21.5h14M6.5 3h11a1.5 1.5 0 0 1 1.5 1.5v17"/><path d="M6.5 3A1.5 1.5 0 0 0 5 4.5v17"/>' +
+      '<path d="M5 8h14"/><path d="M9 11.5h6v3.2a3 3 0 0 1-6 0z"/><path d="M12 8v1.8"/>',
+    dishwasher:
+      '<rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M4 7h16"/>' +
+      '<circle cx="7.5" cy="4.8" r=".6"/><path d="M11 4.8h5.5"/>' +
+      '<path d="M7 12h10M7 16.5h10M9 12v-1.5M15 12v-1.5M9 16.5V15M15 16.5V15"/>',
+    oven:
+      '<rect x="3.5" y="3" width="17" height="18" rx="2.5"/><path d="M3.5 8h17"/>' +
+      '<circle cx="7.5" cy="5.5" r=".6"/><circle cx="11" cy="5.5" r=".6"/><circle cx="14.5" cy="5.5" r=".6"/>' +
+      '<rect x="6.5" y="10.5" width="11" height="7" rx="1"/>',
+    fridge:
+      '<rect x="5.5" y="2.5" width="13" height="19" rx="2.5"/><path d="M5.5 9.5h13"/>' +
+      '<path d="M8.5 5.5v1.5M8.5 12.5v3"/>',
+    plug: '<path d="M9 3v5M15 3v5M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0zM12 17v4"/>',
+  };
   // Alert texts that mean: nothing to report.
   var NO_ALERT = /^(no active alerts?|no notifications?|geen meldingen?|-)$/i;
 
@@ -147,7 +175,9 @@ var DT_homeconnect = (function () {
   // The name of an appliance and the value a device shows, from the device
   // name: 'Washer Progress' -> {appliance: 'Washer', field: 'progress'}.
   function classify(name) {
-    name = String(name || '').replace(/^\$/, '');
+    name = String(name || '')
+      .replace(/^\$/, '')
+      .replace(/^home\s*connect\s*[-:]*\s*/i, '');
     for (var i = 0; i < FIELDS.length; i++) {
       var match = name.match(SUFFIXES[FIELDS[i]]);
       if (match && match[1]) return { appliance: match[1], field: FIELDS[i] };
@@ -224,11 +254,24 @@ var DT_homeconnect = (function () {
       });
   }
 
+  // An icon key of GLYPHS becomes an svg, anything else is a Font Awesome class.
+  function iconHtml(icon) {
+    if (GLYPHS[icon])
+      return (
+        '<svg class="homeconnect-icon" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" ' +
+        'stroke-linejoin="round" aria-hidden="true">' +
+        GLYPHS[icon] +
+        '</svg>'
+      );
+    return '<i class="' + esc(icon) + '" aria-hidden="true"></i>';
+  }
+
   function nameHtml(app) {
     return (
-      '<span class="homeconnect-name"><i class="' +
-      esc(app.icon) +
-      '" aria-hidden="true"></i> ' +
+      '<span class="homeconnect-name">' +
+      iconHtml(app.icon) +
+      ' ' +
       esc(app.name) +
       '</span>'
     );

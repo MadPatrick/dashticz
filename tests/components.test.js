@@ -538,6 +538,7 @@ test('Home Connect widget groups the plugin devices per appliance', () => {
     7: dev(7, 'Koffieautomaat Notifications', 'No active alerts.'),
     8: dev(8, 'Vaatwasser Power', 'On', 'On'),
     9: dev(9, 'Vaatwasser Progress', '100 %'),
+    11: dev(11, 'Home Connect - Oven Power', 'Off', 'Off'),
     10: { idx: 10, Name: 'Other Progress', Data: '5 %', HardwareName: 'X' },
   };
   const hc = loadComponent('js/components/homeconnect.js', {
@@ -551,7 +552,13 @@ test('Home Connect widget groups the plugin devices per appliance', () => {
   assert.equal(hc.canHandle({ mowermode: 'info' }), false);
   assert.equal(
     JSON.stringify(hc.appliances({}).map((a) => a.name)),
-    JSON.stringify(['Wasmachine', 'Droger', 'Koffieautomaat', 'Vaatwasser'])
+    JSON.stringify([
+      'Wasmachine',
+      'Droger',
+      'Koffieautomaat',
+      'Vaatwasser',
+      'Oven',
+    ])
   );
   assert.equal(hc.remainingMinutes('1h 20min'), 80);
   assert.equal(hc.remainingMinutes('45 min'), 45);
@@ -562,6 +569,8 @@ test('Home Connect widget groups the plugin devices per appliance', () => {
   assert.equal(hc.alertText(devices[7]), '');
   const html = hc.homeconnectHtml({}, now);
   assert.match(html, /Wasmachine/);
+  assert.match(html, /<svg class="homeconnect-icon"/);
+  assert.doesNotMatch(html, /Home Connect/);
   assert.match(html, /<b>40%<\/b> ready at 11:20/);
   assert.match(html, /Vaatwasser<\/span><span[^>]*homeconnect-done/);
   assert.doesNotMatch(html, /Droger|Koffieautomaat|Other/);
@@ -570,7 +579,7 @@ test('Home Connect widget groups the plugin devices per appliance', () => {
     JSON.stringify(
       hc.appliances({ hcexclude: 'droger, vaatwasser' }).map((a) => a.name)
     ),
-    JSON.stringify(['Wasmachine', 'Koffieautomaat'])
+    JSON.stringify(['Wasmachine', 'Koffieautomaat', 'Oven'])
   );
   const manual = hc.appliances({
     hcdevices: { Oven: { power: 1, progress: 2, name: 'Bakoven' } },

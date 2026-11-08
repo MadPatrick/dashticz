@@ -10540,6 +10540,13 @@ input[id$='-carstatus-fontsize'] {
   text-align: center;
 }
 
+.homeconnect-icon {
+  width: 1.5em;
+  height: 1.5em;
+  vertical-align: -0.35em;
+  margin-right: 0.15em;
+}
+
 .homeconnect-value {
   text-align: right;
 }
