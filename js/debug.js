@@ -242,6 +242,10 @@ var Debug = (function () {
     $el.find('.debug-status').html(requestCount + ': ' + lastRequest.msg);
   }
 
+  function tst() {
+    console.log('test');
+  }
+
   function log() {
     var msg;
     var start = 0;
