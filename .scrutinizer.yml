@@ -2,6 +2,9 @@
 # analysis of the PHP and JavaScript code. Scrutinizer reports its result as a
 # check on every push and pull request once the repository is added there.
 build:
+  # Node 22 needs a newer glibc than the older default build images have,
+  # so the Ubuntu 22.04 image is used.
+  image: default-jammy
   environment:
     php: 8.3
     node: v22
