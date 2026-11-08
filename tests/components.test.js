@@ -639,6 +639,13 @@ test('Home Connect widget reads the devices of the Dutch plugin', () => {
   let html = hc.homeconnectHtml({}, now);
   assert.match(html, /Wasmachine<\/span><span[^>]*><b>57%<\/b> ready at 16:03/);
   assert.doesNotMatch(html, /Droger|Koffieautomaat|Katoen|afstand/);
+  // A finished program without a progress device: the check mark.
+  devices[2].Data = 'Klaar, Katoen';
+  assert.match(
+    hc.homeconnectHtml({}, now),
+    /Wasmachine<\/span><span[^>]*homeconnect-done/
+  );
+  devices[2].Data = 'Bezig, Katoen, Vergrendeld';
   // The coffee machine gets a message: a warning, no status.
   devices[15].Data = 'Lekbakje vol';
   html = hc.homeconnectHtml({}, now);

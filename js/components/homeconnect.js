@@ -14,6 +14,8 @@
  *   progress  Progress / Voortgang
  *   time      Remaining time / Resterende tijd (minutes, or text like
  *             "1h 20min"); Finish time / Eindtijd is read the same way
+ *   state     Status / State: the whole run in one line; "Klaar ..." or
+ *             "Finished ..." shows the check mark when there is no progress
  *   alert     Notifications / Meldingen, and every other alert device of
  *             the appliance that is not a status (a message device such as
  *             "Drip tray full" / "Leeg lekbakjes"). The alert devices
@@ -42,12 +44,13 @@
  * An appliance that is off, or has nothing to show, is left out.
  */
 var DT_homeconnect = (function () {
-  var FIELDS = ['power', 'progress', 'time'];
+  var FIELDS = ['power', 'progress', 'time', 'state'];
   // The value of a device, from the end of its name (English and Dutch).
   var SUFFIXES = {
     power: /^(.*?)\s+(power|aan\/uit)$/i,
     progress: /^(.*?)\s+(progress|voortgang)$/i,
     time: /^(.*?)\s+(remaining time|resterende tijd|finish time|eindtijd)$/i,
+    state: /^(.*?)\s+(status|state)$/i,
   };
   // Alert devices that are no message: the status of the appliance, whether
   // it may be remote controlled, and "finished" events (the progress shows it).
@@ -364,34 +367,44 @@ var DT_homeconnect = (function () {
     return app.alerts.map(alertText).filter(Boolean).join(', ');
   }
 
+  // Whether the status of the appliance says that the program has finished
+  // ('Klaar, Katoen', 'Finished').
+  function isFinished(app) {
+    return /^(klaar|finished)\b/i.test(dataOf(app.state));
+  }
+
   // The rows of one appliance: the progress while a program runs, and its
   // warnings. Nothing for an appliance that is switched off or idle.
   function rowsHtml(app, now) {
-    if (app.power ? isOff(app.power) : !app.progress && !app.alerts.length)
+    if (
+      app.power
+        ? isOff(app.power)
+        : !app.progress && !app.state && !app.alerts.length
+    )
       return '';
     var html = '';
-    if (app.progress) {
-      var progress = parseFloat(dataOf(app.progress).replace(',', '.')) || 0;
-      var minutes = remainingMinutes(dataOf(app.time));
-      if (progress >= 100)
-        html += row(
-          app,
-          '&#10004;',
-          'homeconnect-done',
-          tr('homeconnect_done', 'Finished')
-        );
-      else if (progress > 0 || minutes > 0) {
-        var ready = finishTime(dataOf(app.time), now);
-        html += row(
-          app,
-          '<b>' +
-            Math.round(progress) +
-            '%</b> ' +
-            (ready
-              ? tr('homeconnect_ready_at', 'ready at') + ' ' + ready
-              : tr('homeconnect_unknown_time', 'time unknown'))
-        );
-      }
+    var progress = app.progress
+      ? parseFloat(dataOf(app.progress).replace(',', '.')) || 0
+      : 0;
+    var minutes = app.progress ? remainingMinutes(dataOf(app.time)) : null;
+    if (progress >= 100 || isFinished(app))
+      html += row(
+        app,
+        '&#10004;',
+        'homeconnect-done',
+        tr('homeconnect_done', 'Finished')
+      );
+    else if (app.progress && (progress > 0 || minutes > 0)) {
+      var ready = finishTime(dataOf(app.time), now);
+      html += row(
+        app,
+        '<b>' +
+          Math.round(progress) +
+          '%</b> ' +
+          (ready
+            ? tr('homeconnect_ready_at', 'ready at') + ' ' + ready
+            : tr('homeconnect_unknown_time', 'time unknown'))
+      );
     }
     var warning = warningText(app);
     if (warning) html += row(app, esc(warning), 'homeconnect-warning');
