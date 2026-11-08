@@ -26,4 +26,10 @@
     {{#if showinfo}}
     <span class="lastupdate">{{lastupdate}}</span>
     {{/if}}
+    {{#if meter}}
+    <div class="setpoint-meter" style="background:{{meterGradient}}">
+        <span class="setpoint-meter-marker" style="left:{{meterPos}}%"></span>
+    </div>
+    {{/if}}
+    <div class="setpoint-graph"></div>
 </div>

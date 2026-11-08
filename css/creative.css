@@ -10633,3 +10633,37 @@ input[id$='-carstatus-fontsize'] {
   text-align: right;
   margin-right: 0.2em;
 }
+
+/* Setpoint tile (js/tempcontrol.js): slim colour meter with a marker at the
+   current setpoint, and an optional sparkline of the last 24 hours. */
+.setpoint-meter {
+  position: relative;
+  height: 6px;
+  margin: 6px 0 2px auto;
+  max-width: 120px;
+  border-radius: 3px;
+}
+
+.setpoint-meter-marker {
+  position: absolute;
+  top: -3px;
+  width: 4px;
+  height: 12px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+  transition: left 0.3s;
+}
+
+.setpoint-graph {
+  max-width: 120px;
+  margin-left: auto;
+  opacity: 0.8;
+}
+
+.setpoint-graph svg {
+  display: block;
+  width: 100%;
+  height: 20px;
+}

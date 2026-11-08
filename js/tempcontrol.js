@@ -33,6 +33,7 @@ function addThermostatFunctions(block) {
           : currentVal + setpointStep;
       if (newValue >= block.min && newValue <= block.max) {
         input.text(number_format(newValue, 1) + block.unit).trigger('change');
+        updateSetpointMeter(block, newValue);
         switchThermostat(block, newValue);
       }
       if (newValue <= block.min) {
@@ -97,12 +98,102 @@ function getThermostatBlock(block) {
       lastupdate: moment(device.LastUpdate).format(settings['timeformat']),
       mIcon: isDefined(block.icon) ? block.icon : '',
       mImage: isDefined(block.image) ? block.image : 'heating.png',
+      meter: choose(block.setpointbar, true) !== false,
+      meterGradient: setpointMeterGradient(block),
+      meterPos: setpointMeterPos(block, parseFloat(device.Data)),
     };
     html = template(dataObject);
     block.$mountPoint.find('.block_' + block.key).html(html);
     addThermostatFunctions(block);
+    if (choose(block.setpointgraph, false) === true) addSetpointGraph(block);
   });
   return true;
+}
+
+/* Setpoint meter: a slim bar on the setpoint tile with the same colour zones
+   as the temperature block (<12 blue, 12-17 light blue, 17-23 green, 23-26
+   yellow, above red) and a marker at the current setpoint. The zones only
+   apply to a temperature in degrees; other units get a neutral bar. */
+var SETPOINT_ZONES = [
+  [12, '#3b82f6'],
+  [17, '#7dd3fc'],
+  [23, '#4ade80'],
+  [26, '#facc15'],
+  [Infinity, '#ef4444'],
+];
+
+function setpointMeterPos(block, value) {
+  var range = block.max - block.min;
+  if (isNaN(value) || !(range > 0)) return 0;
+  return Math.max(0, Math.min(100, ((value - block.min) / range) * 100));
+}
+
+function setpointMeterGradient(block) {
+  if (block.unit.indexOf('°') < 0) return 'rgba(255,255,255,0.35)';
+  var stops = [];
+  var from = block.min;
+  SETPOINT_ZONES.forEach(function (zone) {
+    if (from >= block.max) return;
+    var to = Math.min(zone[0], block.max);
+    if (to <= from) return;
+    var a = setpointMeterPos(block, from).toFixed(1) + '%';
+    var b = setpointMeterPos(block, to).toFixed(1) + '%';
+    stops.push(zone[1] + ' ' + a, zone[1] + ' ' + b);
+    from = to;
+  });
+  return stops.length
+    ? 'linear-gradient(to right, ' + stops.join(', ') + ')'
+    : 'rgba(255,255,255,0.35)';
+}
+
+function updateSetpointMeter(block, value) {
+  block.$mountPoint
+    .find('.setpoint-meter-marker')
+    .css('left', setpointMeterPos(block, value) + '%');
+}
+
+/* Optional sparkline of the last 24 hours (block option setpointgraph: true).
+   One request per tile; it uses the setpoint when Domoticz reports it and
+   otherwise the measured value. */
+function addSetpointGraph(block) {
+  var cmd = Domoticz.info.api15330 ? 'type=command&param=graph' : 'type=graph';
+  Domoticz.request(
+    cmd + '&sensor=temp&idx=' + block.device.idx + '&range=day'
+  ).then(function (data) {
+    var points = ((data && data.result) || [])
+      .map(function (sample) {
+        return parseFloat(
+          isDefined(sample.sp)
+            ? sample.sp
+            : isDefined(sample.te)
+              ? sample.te
+              : sample.v
+        );
+      })
+      .filter(function (v) {
+        return !isNaN(v);
+      });
+    if (points.length < 2) return;
+    var lo = Math.min.apply(null, points);
+    var hi = Math.max.apply(null, points);
+    var span = hi - lo || 1;
+    var path = points
+      .map(function (v, i) {
+        var x = (i / (points.length - 1)) * 100;
+        var y = 18 - ((v - lo) / span) * 16;
+        return x.toFixed(1) + ',' + y.toFixed(1);
+      })
+      .join(' ');
+    block.$mountPoint
+      .find('.setpoint-graph')
+      .html(
+        '<svg viewBox="0 0 100 20" preserveAspectRatio="none">' +
+          '<polyline fill="none" stroke="currentColor" stroke-width="1.5" ' +
+          'vector-effect="non-scaling-stroke" points="' +
+          path +
+          '"/></svg>'
+      );
+  });
 }
 
 function switchThermostat(block, setpoint) {
