@@ -188,15 +188,6 @@
         'Show the colour meter with the setpoint marker on a setpoint tile.',
     },
     {
-      field: 'setpointgraph',
-      category: 'visual',
-      type: 'boolean',
-      defaultValue: 'true',
-      example: 'true',
-      description:
-        'Show the 24 hour heating line (sparkline) on a setpoint tile.',
-    },
-    {
       field: 'confirmation',
       category: 'behaviour',
       type: 'number',

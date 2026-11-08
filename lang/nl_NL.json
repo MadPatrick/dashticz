@@ -1575,9 +1575,6 @@
         },
         "setpointbar": {
           "description": "Toon de kleurenmeter met de setpoint-marker op een setpoint-tegel."
-        },
-        "setpointgraph": {
-          "description": "Toon de stooklijn van 24 uur (sparkline) op een setpoint-tegel."
         }
       }
     },
@@ -1946,16 +1943,6 @@
           {
             "value": "false",
             "description": "Setpoint-meter verbergen"
-          }
-        ],
-        "setpointgraph": [
-          {
-            "value": "true",
-            "description": "Stooklijn van 24 uur tonen"
-          },
-          {
-            "value": "false",
-            "description": "Stooklijn van 24 uur verbergen"
           }
         ]
       }

@@ -1486,9 +1486,6 @@
         "setpointbar": {
           "description": "Show the colour meter with the setpoint marker on a setpoint tile."
         },
-        "setpointgraph": {
-          "description": "Show the 24 hour heating line (sparkline) on a setpoint tile."
-        },
         "confirmation": {
           "description": "Ask for confirmation before changing a switch device."
         },
@@ -1631,16 +1628,6 @@
           {
             "value": "false",
             "description": "Hide setpoint meter"
-          }
-        ],
-        "setpointgraph": [
-          {
-            "value": "true",
-            "description": "Show 24 hour heating line"
-          },
-          {
-            "value": "false",
-            "description": "Hide 24 hour heating line"
           }
         ],
         "graph": [

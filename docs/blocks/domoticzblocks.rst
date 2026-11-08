@@ -454,10 +454,10 @@ To hide the '+/-'-buttons add ``protected: true`` to the block definition.
         protected: true
     } 
 
-A setpoint tile also shows a colour meter with a marker at the current setpoint
-(below 12 blue, 12-17 light blue, 17-23 green, 23-26 yellow, above red) and a
-sparkline of the last 24 hours. Both are on by default. Disable them with
-``setpointbar: false`` and ``setpointgraph: false``.
+A setpoint tile shows a half circle meter with the temperature in the middle,
+a marker at the current setpoint and the '-' and '+' buttons next to it. The
+colours run from blue (cold) via green and yellow to red. Use
+``setpointbar: false`` to get the classic tile back.
 
 
 Usage of popup graph window

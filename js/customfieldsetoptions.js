@@ -48,13 +48,6 @@
         ['false', 'Hide setpoint meter'],
       ],
     },
-    setpointgraph: {
-      strict: true,
-      values: [
-        ['true', 'Show 24 hour heating line'],
-        ['false', 'Hide 24 hour heating line'],
-      ],
-    },
     graph: {
       strict: true,
       values: [

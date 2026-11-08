@@ -107,7 +107,6 @@ function getThermostatBlock(block) {
       .toggleClass('setpoint-arc-block', dataObject.meter)
       .html(html);
     addThermostatFunctions(block);
-    if (choose(block.setpointgraph, true) !== false) addSetpointGraph(block);
   });
   return true;
 }
@@ -197,7 +196,7 @@ function setpointArcSvg(block, value) {
   }
   var m = setpointArcPoint(setpointMeterPos(block, value));
   return (
-    '<svg class="setpoint-arc-svg" viewBox="0 0 100 54">' +
+    '<svg class="setpoint-arc-svg" viewBox="0 0 100 50">' +
     '<g fill="none" stroke-width="10" stroke-linecap="butt">' +
     paths +
     '</g><circle class="setpoint-arc-marker" r="7" cx="' +
@@ -213,50 +212,6 @@ function updateSetpointMeter(block, value) {
   block.$mountPoint
     .find('.setpoint-arc-marker')
     .attr({ cx: m[0].toFixed(2), cy: m[1].toFixed(2) });
-}
-
-/* Sparkline of the last 24 hours (on by default, block option setpointgraph: false disables it).
-   One request per tile; it uses the setpoint when Domoticz reports it and
-   otherwise the measured value. */
-function addSetpointGraph(block) {
-  var cmd = Domoticz.info.api15330 ? 'type=command&param=graph' : 'type=graph';
-  Domoticz.request(
-    cmd + '&sensor=temp&idx=' + block.device.idx + '&range=day'
-  ).then(function (data) {
-    var points = ((data && data.result) || [])
-      .map(function (sample) {
-        return parseFloat(
-          isDefined(sample.sp)
-            ? sample.sp
-            : isDefined(sample.te)
-              ? sample.te
-              : sample.v
-        );
-      })
-      .filter(function (v) {
-        return !isNaN(v);
-      });
-    if (points.length < 2) return;
-    var lo = Math.min.apply(null, points);
-    var hi = Math.max.apply(null, points);
-    var span = hi - lo || 1;
-    var path = points
-      .map(function (v, i) {
-        var x = (i / (points.length - 1)) * 100;
-        var y = 18 - ((v - lo) / span) * 16;
-        return x.toFixed(1) + ',' + y.toFixed(1);
-      })
-      .join(' ');
-    block.$mountPoint
-      .find('.setpoint-graph')
-      .html(
-        '<svg viewBox="0 0 100 20" preserveAspectRatio="none">' +
-          '<polyline fill="none" stroke="currentColor" stroke-width="1.5" ' +
-          'vector-effect="non-scaling-stroke" points="' +
-          path +
-          '"/></svg>'
-      );
-  });
 }
 
 function switchThermostat(block, setpoint) {

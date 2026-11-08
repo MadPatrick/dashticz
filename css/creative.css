@@ -10635,14 +10635,17 @@ input[id$='-carstatus-fontsize'] {
 }
 
 /* Setpoint tile (js/tempcontrol.js): half circle colour meter with a marker
-   at the current setpoint, the - and + buttons below its two ends, and a
-   sparkline of the last 24 hours between the buttons. */
+   at the current setpoint and the - and + buttons next to it, aligned with
+   its bottom. */
 .setpoint-arc-tile {
   position: relative;
   width: 100%;
-  max-width: 220px;
+  max-width: 280px;
   margin: 0 auto;
-  padding: 14px 0 4px;
+  padding: 22px 0 4px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
 }
 
 /* The icon stays at the top left of the whole tile, not of the centred arc. */
@@ -10676,6 +10679,9 @@ input[id$='-carstatus-fontsize'] {
 
 .setpoint-arc {
   position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  container-type: inline-size;
 }
 
 .setpoint-arc-svg {
@@ -10697,7 +10703,7 @@ input[id$='-carstatus-fontsize'] {
   position: absolute;
   left: 20%;
   right: 20%;
-  bottom: 4%;
+  bottom: 0;
   text-align: center;
   line-height: 1.25;
 }
@@ -10707,25 +10713,18 @@ div.mh.setpoint-arc-block:not(.multiline) {
   height: auto;
 }
 
-/* The buttons are centred under the arc ends (at 10% and 90% of the width). */
-.setpoint-arc-bottom {
-  position: relative;
+.setpoint-arc-btn {
+  flex: 0 0 auto;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 34px;
-  margin-top: -16px;
 }
 
-.setpoint-arc-btn {
-  width: 20%;
-  display: flex;
-  justify-content: center;
+.setpoint-arc-text .lastupdate {
+  font-size: max(8px, 6cqw) !important;
 }
 
 .setpoint-arc-btn .btn-number {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border-radius: 50%;
   border: 1px solid currentColor;
@@ -10734,21 +10733,8 @@ div.mh.setpoint-arc-block:not(.multiline) {
 
 .mh .setpoint-arc-text .setpoint-arc-value {
   display: inline-block;
-  font-size: 2.3em !important;
+  font-size: min(2.3em, 17cqw) !important;
   font-weight: 300;
   line-height: 1.1;
   white-space: nowrap;
-}
-
-.setpoint-graph {
-  flex: 1;
-  max-width: 60%;
-  margin: 0 auto;
-  opacity: 0.8;
-}
-
-.setpoint-graph svg {
-  display: block;
-  width: 100%;
-  height: 20px;
 }
