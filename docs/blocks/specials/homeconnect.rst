@@ -18,7 +18,9 @@ What the tile shows, per appliance:
   status of the appliance (*klaar om ongeveer ...*), or else the current time plus the remaining
   time;
 - at 100% a check mark;
-- a warning when the appliance has an alert, for example *Drip tray full*. Texts like
+- a warning when the status of the appliance needs attention (*Actie vereist*, *Fout*, *Wordt
+  afgebroken*, *Gepauzeerd*; in English *Action required*, *Error*, *Aborting*, *Paused*), or
+  when the appliance has an alert, for example *Drip tray full*. Texts like
   *No active alerts* or *No notification* are not shown.
 
 An appliance that is switched off, or has nothing to report, is left out. The title of the

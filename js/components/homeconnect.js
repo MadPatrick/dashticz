@@ -93,6 +93,11 @@ var DT_homeconnect = (function () {
       '<path d="M8.5 5.5v1.5M8.5 12.5v3"/>',
     plug: '<path d="M9 3v5M15 3v5M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0zM12 17v4"/>',
   };
+  // A status that needs attention: an error, an action that is required, a
+  // program that is aborting or paused ('Actie vereist: lekbak vol (+2)').
+  var STATE_WARNING =
+    /^(action required|actie vereist|error|fout|aborting|wordt afgebroken|paused|gepauzeerd)\b/i;
+
   // Alert texts that mean: nothing to report.
   var NO_ALERT = /^(no active alerts?|no notifications?|geen melding(en)?|-)$/i;
 
@@ -382,9 +387,13 @@ var DT_homeconnect = (function () {
     );
   }
 
-  // The messages of an appliance, without the ones that mean nothing.
+  // The messages of an appliance, without the ones that mean nothing, with a
+  // status that needs attention first.
   function warningText(app) {
-    return app.alerts.map(alertText).filter(Boolean).join(', ');
+    var status = dataOf(app.state);
+    return (STATE_WARNING.test(status) ? [status] : [])
+      .concat(app.alerts.map(alertText).filter(Boolean))
+      .join(', ');
   }
 
   // Whether the status of the appliance says that the program has finished

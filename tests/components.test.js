@@ -666,6 +666,13 @@ test('Home Connect widget reads the devices of the Dutch plugin', () => {
   );
   devices[5] = remaining;
   devices[2].Data = 'Bezig, Katoen, Vergrendeld';
+  // A status that needs attention is a warning.
+  devices[2].Data = 'Actie vereist: lekbak vol (+2)';
+  assert.match(
+    hc.homeconnectHtml({}, now),
+    /Wasmachine<\/span><span[^>]*homeconnect-warning">Actie vereist: lekbak vol \(\+2\)/
+  );
+  devices[2].Data = 'Bezig, Katoen, Vergrendeld';
   // The coffee machine gets a message: a warning, no status.
   devices[15].Data = 'Lekbakje vol';
   html = hc.homeconnectHtml({}, now);
