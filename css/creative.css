@@ -10670,7 +10670,7 @@ input[id$='-carstatus-fontsize'] {
   position: absolute;
   top: 8px;
   right: 10px;
-  max-width: 60%;
+  max-width: calc(100% - 56px);
   text-align: right;
   white-space: nowrap;
   overflow: hidden;
