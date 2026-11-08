@@ -117,13 +117,39 @@ function getThermostatBlock(block) {
    17-23 green, 23-26 yellow, above red) and a marker at the current setpoint.
    The zones only apply to a temperature in degrees; other units get a neutral
    arc. The - and + buttons sit below the two ends of the arc. */
-var SETPOINT_ZONES = [
-  [12, '#3b82f6'],
-  [17, '#7dd3fc'],
-  [23, '#4ade80'],
-  [26, '#facc15'],
-  [Infinity, '#ef4444'],
+/* Colour stops of the gradient: the middle of each zone (the first and the
+   last zone keep their colour out to the ends of the scale). */
+var SETPOINT_STOPS = [
+  [12, [59, 130, 246]],
+  [14.5, [125, 211, 252]],
+  [20, [74, 222, 128]],
+  [24.5, [250, 204, 21]],
+  [28, [239, 68, 68]],
 ];
+var SETPOINT_ARC_STEPS = 60;
+
+/* Colour of the gradient at a temperature, interpolated between the stops. */
+function setpointColor(temp) {
+  var stops = SETPOINT_STOPS;
+  if (temp <= stops[0][0]) return 'rgb(' + stops[0][1].join(',') + ')';
+  for (var i = 1; i < stops.length; i++) {
+    if (temp <= stops[i][0]) {
+      var f = (temp - stops[i - 1][0]) / (stops[i][0] - stops[i - 1][0]);
+      return (
+        'rgb(' +
+        stops[i][1]
+          .map(function (c, k) {
+            return Math.round(
+              stops[i - 1][1][k] + (c - stops[i - 1][1][k]) * f
+            );
+          })
+          .join(',') +
+        ')'
+      );
+    }
+  }
+  return 'rgb(' + stops[stops.length - 1][1].join(',') + ')';
+}
 
 function setpointMeterPos(block, value) {
   var range = block.max - block.min;
@@ -154,26 +180,21 @@ function setpointArcPath(from, to) {
 }
 
 function setpointArcSvg(block, value) {
-  var zones =
-    block.unit.indexOf('°') < 0
-      ? [[Infinity, 'rgba(255,255,255,0.35)']]
-      : SETPOINT_ZONES;
+  var degrees = block.unit.indexOf('°') >= 0;
   var paths = '';
-  var from = block.min;
-  zones.forEach(function (zone) {
-    var to = Math.min(zone[0], block.max);
-    if (from >= block.max || to <= from) return;
+  /* An arc stroke cannot hold a gradient, so it is drawn as many short
+     pieces; each one overlaps the next a little to avoid hairlines. */
+  for (var i = 0; i < SETPOINT_ARC_STEPS; i++) {
+    var from = (i / SETPOINT_ARC_STEPS) * 100;
+    var to = Math.min(100, ((i + 1) / SETPOINT_ARC_STEPS) * 100 + 0.4);
+    var mid = block.min + ((from + to) / 200) * (block.max - block.min);
     paths +=
       '<path d="' +
-      setpointArcPath(
-        setpointMeterPos(block, from),
-        setpointMeterPos(block, to)
-      ) +
+      setpointArcPath(from, to) +
       '" stroke="' +
-      zone[1] +
+      (degrees ? setpointColor(mid) : 'rgba(255,255,255,0.35)') +
       '" />';
-    from = to;
-  });
+  }
   var m = setpointArcPoint(setpointMeterPos(block, value));
   return (
     '<svg class="setpoint-arc-svg" viewBox="0 0 100 54">' +

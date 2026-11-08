@@ -10642,7 +10642,7 @@ input[id$='-carstatus-fontsize'] {
   width: 100%;
   max-width: 220px;
   margin: 0 auto;
-  padding: 4px 0;
+  padding: 14px 0 4px;
 }
 
 /* The icon stays at the top left of the whole tile, not of the centred arc. */
@@ -10660,6 +10660,18 @@ input[id$='-carstatus-fontsize'] {
 
 .setpoint-arc-icon .icon {
   max-height: 28px;
+}
+
+/* The title sits at the top right, like on the other tiles and widgets. */
+.mh.setpoint-arc-block .setpoint-arc-title {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  max-width: 60%;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .setpoint-arc {
@@ -10683,9 +10695,9 @@ input[id$='-carstatus-fontsize'] {
 
 .setpoint-arc-text {
   position: absolute;
-  left: 18%;
-  right: 18%;
-  bottom: 0;
+  left: 20%;
+  right: 20%;
+  bottom: 4%;
   text-align: center;
   line-height: 1.25;
 }
@@ -10701,8 +10713,8 @@ div.mh.setpoint-arc-block:not(.multiline) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 38px;
-  margin-top: 2px;
+  height: 34px;
+  margin-top: -16px;
 }
 
 .setpoint-arc-btn {
@@ -10726,14 +10738,6 @@ div.mh.setpoint-arc-block:not(.multiline) {
   font-weight: 300;
   line-height: 1.1;
   white-space: nowrap;
-}
-
-.mh .setpoint-arc-text .title {
-  display: block;
-  font-size: 85% !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .setpoint-graph {
