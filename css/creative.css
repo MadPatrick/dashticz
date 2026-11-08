@@ -10588,3 +10588,9 @@ input[id$='-carstatus-fontsize'] {
 .homeconnect-empty {
   opacity: 0.6;
 }
+
+/* The font size field of the Home Connect block: room for 5 characters. */
+.de-section-fontsize input[id$='-homeconnect-fontsize'] {
+  width: calc(5ch + 2.75rem);
+  max-width: 100%;
+}
