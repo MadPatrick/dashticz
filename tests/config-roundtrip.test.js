@@ -213,9 +213,10 @@ test('a key with a trailing newline is quoted, not written as it is', () => {
 // A Home Connect block (js/components/homeconnect.js) is dispatched on hcmode.
 test('a Home Connect block is written with its mode', () => {
   const line = specialLine(
-    "['kind' => 'homeconnect', 'name' => 'Appliances', 'width' => 4, 'icon' => 'fas fa-home', 'custom_fields' => ['hcmode' => 'appliances']]"
+    "['kind' => 'homeconnect', 'name' => 'Appliances', 'width' => 4, 'icon' => 'fas fa-home', 'custom_fields' => ['hcmode' => 'appliances', 'hcfontsize' => 18]]"
   );
   assert.match(line, /hcmode:'appliances'/);
+  assert.match(line, /hcfontsize:18/);
   assert.match(line, /width:4/);
   assert.doesNotMatch(line, /type:/);
 });

@@ -519,6 +519,13 @@ foreach ($data['devices'] as $entry) {
                 if (!isset($customFields['hcmode']) || $customFields['hcmode'] !== 'appliances') {
                     dashticz_json_error(400, 'A Home Connect block requires a mode.');
                 }
+                if (isset($customFields['hcfontsize'])
+                    && $customFields['hcfontsize'] !== ''
+                    && (!is_numeric($customFields['hcfontsize'])
+                        || (float) $customFields['hcfontsize'] < 8
+                        || (float) $customFields['hcfontsize'] > 60)) {
+                    dashticz_json_error(400, 'Enter a font size between 8 and 60 for the Home Connect block.');
+                }
             } elseif ($kind === 'mower') {
                 // mowermode is otherwise just another custom field, but
                 // js/components/mower.js dispatches on it, so it is required.

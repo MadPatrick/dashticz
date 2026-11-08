@@ -58,6 +58,8 @@ Settings
     - Description
   * - hcmode
     - ``'appliances'``. Required: this property makes the block a Home Connect widget
+  * - hcfontsize
+    - Optional: font size of the tile in pixels (``8``-``60``). Default: the size of the theme
   * - hchardware
     - Optional: part of the hardware name of the plugin. Default: ``Home Connect``
   * - hcexclude

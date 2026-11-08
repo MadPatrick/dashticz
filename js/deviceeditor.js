@@ -9240,6 +9240,45 @@ var DashticzDeviceEditor = (function () {
     );
   }
 
+  /* Home Connect (js/components/homeconnect.js): the only setting is the font
+     size; the appliances are found by their device names. Dispatched on
+     hcmode ('appliances'). */
+  var HOMECONNECT_SECTION = {
+    fieldPrefix: 'hc',
+    idPart: 'homeconnect',
+    labelPrefix: 'homeconnect_block_',
+    fieldClass: 'de-homeconnect-field',
+    saveOrder: 'fontsize',
+    settings: [
+      { key: 'fontsize', type: 'number', def: null, range: [8, 60, 1] },
+    ],
+  };
+  var HOMECONNECT_FIELDS = _settingFieldNames(HOMECONNECT_SECTION, 'hcmode');
+
+  function _homeconnectValuesFromRows(rows) {
+    return _settingsFromRows(HOMECONNECT_SECTION, rows, HOMECONNECT_FIELDS);
+  }
+
+  function _homeconnectFontsizeHtml(prefix, values) {
+    var v = $.extend(_homeconnectValuesFromRows([]), values || {});
+    return _sectionFontsizeHtml(HOMECONNECT_SECTION, prefix, v.fontsize);
+  }
+
+  function _readHomeconnectFields(prefix) {
+    var values = {};
+    HOMECONNECT_SECTION.settings.forEach(function (setting) {
+      values[setting.key] = _settingValue(HOMECONNECT_SECTION, prefix, setting);
+    });
+    return values;
+  }
+
+  // Home Connect values -> custom_fields rows, without the default values.
+  function _homeconnectCustomRows(values) {
+    return [
+      { field: 'hcmode', setting: 'appliances', value: 'appliances' },
+    ].concat(_settingRows(HOMECONNECT_SECTION, values));
+  }
+
   function _showCarstatusPopup() {
     var t = _translations();
     $('#carstatusblockpopup').remove();
@@ -10087,6 +10126,7 @@ var DashticzDeviceEditor = (function () {
       lastUpdate: false,
       showTitle: true,
     });
+    html += _homeconnectFontsizeHtml('homeconnect', {});
     html +=
       '<div class="mb-3"><label class="form-label" for="homeconnect-device-title">' +
       _esc(t.html_block_title) +
@@ -10137,11 +10177,9 @@ var DashticzDeviceEditor = (function () {
           value: quickOptions.iconValue,
         });
       }
-      customRows.push({
-        field: 'hcmode',
-        setting: 'appliances',
-        value: 'appliances',
-      });
+      customRows = customRows.concat(
+        _homeconnectCustomRows(_readHomeconnectFields('homeconnect'))
+      );
 
       var reference = _nextSpecialReference('homeconnect');
       var orderKey = _specialOrderKey(reference);
@@ -10736,6 +10774,7 @@ var DashticzDeviceEditor = (function () {
     var isTvgidsBlock = special && special.specialType === 'tvgids';
     var isFullyBlock = special && special.specialType === 'fullykiosk';
     var isCarstatusBlock = special && special.specialType === 'carstatus';
+    var isHomeconnectBlock = special && special.specialType === 'homeconnect';
     var isWeatherinfoBlock = special && special.specialType === 'weatherinfo';
     var isCarBlock = special && special.specialType === 'car';
     var sourceDef =
@@ -10836,6 +10875,16 @@ var DashticzDeviceEditor = (function () {
       carstatusValues = _carstatusValuesFromRows(customRows);
       customRows = customRows.filter(function (row) {
         return !CARSTATUS_FIELDS[
+          _normaliseCustomFieldName(row && row.field).toLowerCase()
+        ];
+      });
+    }
+    var homeconnectValues = null;
+    if (isHomeconnectBlock) {
+      // The Home Connect section owns these fields.
+      homeconnectValues = _homeconnectValuesFromRows(customRows);
+      customRows = customRows.filter(function (row) {
+        return !HOMECONNECT_FIELDS[
           _normaliseCustomFieldName(row && row.field).toLowerCase()
         ];
       });
@@ -11340,6 +11389,8 @@ var DashticzDeviceEditor = (function () {
     if (isFullyBlock) html += _fullyFontsizeHtml('de-config', fullyValues);
     if (isCarstatusBlock)
       html += _carstatusFontsizeHtml('de-config', carstatusValues);
+    if (isHomeconnectBlock)
+      html += _homeconnectFontsizeHtml('de-config', homeconnectValues);
     if (isF1Block) html += _f1FontsizeHtml('de-config', f1Values);
     if (isTvgidsBlock) html += _tvgidsFontsizeHtml('de-config', tvgidsValues);
     if (isWeatherinfoBlock)
@@ -12032,6 +12083,11 @@ var DashticzDeviceEditor = (function () {
           customKeys[key] = true;
         });
       }
+      if (isHomeconnectBlock) {
+        Object.keys(HOMECONNECT_FIELDS).forEach(function (key) {
+          customKeys[key] = true;
+        });
+      }
       if (isWeatherinfoBlock) {
         Object.keys(WEATHERINFO_FIELDS).forEach(function (key) {
           customKeys[key] = true;
@@ -12178,6 +12234,9 @@ var DashticzDeviceEditor = (function () {
           $('#de-config-carstatus-battery').trigger('focus');
         }
       }
+      var pendingHomeconnect = isHomeconnectBlock
+        ? _readHomeconnectFields('de-config')
+        : null;
       var pendingWeatherinfo = null;
       if (isWeatherinfoBlock) {
         pendingWeatherinfo = _readWeatherinfoFields('de-config');
@@ -12572,6 +12631,10 @@ var DashticzDeviceEditor = (function () {
         storedRows = storedRows.concat(_fullyCustomRows(pendingFully));
       if (pendingCarstatus)
         storedRows = storedRows.concat(_carstatusCustomRows(pendingCarstatus));
+      if (pendingHomeconnect)
+        storedRows = storedRows.concat(
+          _homeconnectCustomRows(pendingHomeconnect)
+        );
       if (pendingWeatherinfo)
         storedRows = storedRows.concat(
           _weatherinfoCustomRows(pendingWeatherinfo)

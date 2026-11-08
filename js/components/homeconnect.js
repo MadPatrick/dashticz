@@ -18,6 +18,7 @@
  *
  * Options (all optional):
  *
+ *   hcfontsize   font size of the tile in pixels (8-60); empty = the theme's
  *   hchardware   part of the hardware name of the plugin; default 'Home Connect'
  *   hcexclude    appliance names to hide, comma separated
  *   hcdevices    per appliance, the idx of a device that is not found by its
@@ -332,8 +333,10 @@ var DT_homeconnect = (function () {
   }
 
   function render(me) {
+    var fontSize = parseInt(me.block.hcfontsize, 10);
     me.$mountPoint
       .find('.dt_state')
+      .css('font-size', fontSize >= 8 && fontSize <= 60 ? fontSize + 'px' : '')
       .html(
         '<div class="homeconnect-content">' +
           homeconnectHtml(me.block) +

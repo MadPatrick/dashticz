@@ -649,6 +649,8 @@
       "carstatus_block_debug": "Test view",
       "carstatus_block_debug_help": "Shows the state of every device below the status, to check the idx values.",
       "carstatus_block_fontsize_help": "Font size in pixels (8-60). Leave empty for the default size.",
+      "homeconnect_block_fontsize": "Font size (px)",
+      "homeconnect_block_fontsize_help": "Font size in pixels (8-60). Leave empty for the default size.",
       "invalid_carstatus_block_devices": "Choose at least one Domoticz device.",
       "weatherinfo_block": "Weather info",
       "car_block": "Car info",
