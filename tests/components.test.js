@@ -589,3 +589,58 @@ test('Home Connect widget groups the plugin devices per appliance', () => {
   devices[7].Data = 'Drip tray full';
   assert.match(hc.homeconnectHtml({}, now), /homeconnect-warning">Drip tray/);
 });
+
+test('Home Connect widget reads the devices of the Dutch plugin', () => {
+  const dev = (idx, Name, Data, Status, SubType) => ({
+    idx,
+    Name,
+    Data,
+    Status,
+    SubType,
+    HardwareName: 'Home-Connect',
+  });
+  const devices = {};
+  [
+    ['Home Connect', 'Aangemeld'],
+    ['Wasmachine Status', 'Bezig, Katoen, Vergrendeld', '', 'Alert'],
+    ['Wasmachine Aan/uit', 'On', 'On'],
+    ['Wasmachine Voortgang', '57%'],
+    ['Wasmachine Resterende tijd', '38 min'],
+    ['Wasmachine Programma', 'Katoen, klaar om ongeveer 16:03'],
+    [
+      'Wasmachine Bediening op afstand',
+      'Op afstand starten toegestaan',
+      '',
+      'Alert',
+    ],
+    ['Wasmachine Programma klaar', 'Geen melding', '', 'Alert'],
+    ['Droger Aan/uit', 'Off', 'Off'],
+    ['Droger Voortgang', '0%'],
+    ['Droger Resterende tijd', '0 min'],
+    ['Koffieautomaat Aan/uit', 'On', 'On'],
+    ['Koffieautomaat Voortgang', '0%'],
+    ['Koffieautomaat Status', 'Niet actief', '', 'Alert'],
+    ['Koffieautomaat Leeg lekbakjes', 'Geen melding', '', 'Alert'],
+  ].forEach((item, i) => {
+    devices[i + 1] = dev(i + 1, item[0], item[1], item[2], item[3]);
+  });
+  const hc = loadComponent('js/components/homeconnect.js', {
+    Domoticz: { getAllDevices: () => devices },
+    DT_function: {
+      escapeHtml: (v) => String(v),
+      t: (key, fallback) => fallback,
+    },
+  });
+  const now = new Date(2026, 10, 8, 15, 25).getTime();
+  let html = hc.homeconnectHtml({}, now);
+  assert.match(html, /Wasmachine<\/span><span[^>]*><b>57%<\/b> ready at 16:03/);
+  assert.doesNotMatch(html, /Droger|Koffieautomaat|Katoen|afstand/);
+  // The coffee machine gets a message: a warning, no status.
+  devices[15].Data = 'Lekbakje vol';
+  html = hc.homeconnectHtml({}, now);
+  assert.match(
+    html,
+    /Koffieautomaat<\/span><span[^>]*homeconnect-warning">Lekbakje vol/
+  );
+  assert.equal(hc.appliances({})[2].alerts.length, 1);
+});

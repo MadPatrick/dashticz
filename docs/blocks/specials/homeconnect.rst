@@ -43,8 +43,15 @@ Progress`` or, in Dutch, ``Wasautomaat Voortgang``. A leading ``$`` is ignored.
   * - Remaining time
     - ``Remaining time``, ``Resterende tijd``, ``Finish time`` or ``Eindtijd``. A number of
       minutes or a text like ``1h 20min``
-  * - Alert
-    - ``Notifications``, ``Meldingen``, ``Alert`` or ``Alerts``
+  * - Alerts
+    - ``Notifications`` or ``Meldingen``, and every other alert device of the appliance that
+      is not a status, for example ``Drip tray full`` or ``Leeg lekbakjes``. The alert devices
+      ``Status``, ``Remote control`` / ``Bediening op afstand`` and the *finished* events
+      (``Program finished``, ``Programma klaar``, ...) are not shown as a warning
+
+An appliance is shown while its progress is above 0% (or there is remaining time). The
+hardware name is matched on ``Home Connect`` (also ``Home-Connect`` or ``HomeConnect``); when
+no device matches, all devices are looked at.
 
 Settings
 --------

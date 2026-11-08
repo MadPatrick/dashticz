@@ -14,7 +14,10 @@
  *   progress  Progress / Voortgang
  *   time      Remaining time / Resterende tijd (minutes, or text like
  *             "1h 20min"); Finish time / Eindtijd is read the same way
- *   alert     Notifications / Meldingen (or an alert device named Alert)
+ *   alert     Notifications / Meldingen, and every other alert device of
+ *             the appliance that is not a status (a message device such as
+ *             "Drip tray full" / "Leeg lekbakjes"). The alert devices
+ *             Status, Remote control and "Program finished" do not count
  *
  * Options (all optional):
  *
@@ -33,14 +36,18 @@
  * An appliance that is off, or has nothing to show, is left out.
  */
 var DT_homeconnect = (function () {
-  var FIELDS = ['power', 'progress', 'time', 'alert'];
+  var FIELDS = ['power', 'progress', 'time'];
   // The value of a device, from the end of its name (English and Dutch).
   var SUFFIXES = {
     power: /^(.*?)\s+(power|aan\/uit)$/i,
     progress: /^(.*?)\s+(progress|voortgang)$/i,
     time: /^(.*?)\s+(remaining time|resterende tijd|finish time|eindtijd)$/i,
-    alert: /^(.*?)\s+(notifications|meldingen|alert|alerts)$/i,
   };
+  // Alert devices that are no message: the status of the appliance, whether
+  // it may be remote controlled, and "finished" events (the progress shows it).
+  var NOT_A_MESSAGE =
+    /\s(status|state|status code|statuscode|remote control|bediening op afstand|program finished|programma klaar|drying finished|drogen klaar|preheat finished|alarm clock elapsed)$/i;
+  var ALERT_NAME = /\s(notifications|meldingen|alert|alerts)$/i;
   // The icon from a word in the name of the appliance: the key of GLYPHS.
   var ICONS = [
     [/wasmachine|wasautomaat|washer|washing|waschmaschine/i, 'washer'],
@@ -78,7 +85,7 @@ var DT_homeconnect = (function () {
     plug: '<path d="M9 3v5M15 3v5M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0zM12 17v4"/>',
   };
   // Alert texts that mean: nothing to report.
-  var NO_ALERT = /^(no active alerts?|no notifications?|geen meldingen?|-)$/i;
+  var NO_ALERT = /^(no active alerts?|no notifications?|geen melding(en)?|-)$/i;
 
   return {
     name: 'homeconnect',
@@ -96,14 +103,15 @@ var DT_homeconnect = (function () {
     run: function (me) {
       var subscribed = {};
       appliances(me.block).forEach(function (app) {
-        FIELDS.forEach(function (field) {
-          var dev = app[field];
-          if (dev && !subscribed[dev.idx]) {
-            subscribed[dev.idx] = true;
-            Dashticz.subscribeDevice(me, dev.idx, false, function () {
-              render(me);
-            });
-          }
+        FIELDS.concat('alerts').forEach(function (field) {
+          [].concat(app[field] || []).forEach(function (dev) {
+            if (dev && !subscribed[dev.idx]) {
+              subscribed[dev.idx] = true;
+              Dashticz.subscribeDevice(me, dev.idx, false, function () {
+                render(me);
+              });
+            }
+          });
         });
       });
       render(me);
@@ -173,17 +181,28 @@ var DT_homeconnect = (function () {
     return state === 'off' || state === 'closed';
   }
 
+  function cleanName(name) {
+    return String(name || '')
+      .replace(/^\$/, '')
+      .replace(/^home\s*connect\s*[-:]*\s*/i, '');
+  }
+
   // The name of an appliance and the value a device shows, from the device
   // name: 'Washer Progress' -> {appliance: 'Washer', field: 'progress'}.
   function classify(name) {
-    name = String(name || '')
-      .replace(/^\$/, '')
-      .replace(/^home\s*connect\s*[-:]*\s*/i, '');
+    name = cleanName(name);
     for (var i = 0; i < FIELDS.length; i++) {
       var match = name.match(SUFFIXES[FIELDS[i]]);
       if (match && match[1]) return { appliance: match[1], field: FIELDS[i] };
     }
     return null;
+  }
+
+  // Whether a device is a message of an appliance (an alert that is no status).
+  function isMessage(dev) {
+    var name = cleanName(dev.Name);
+    if (NOT_A_MESSAGE.test(name)) return false;
+    return ALERT_NAME.test(name) || dev.SubType === 'Alert';
   }
 
   function iconOf(name) {
@@ -192,51 +211,80 @@ var DT_homeconnect = (function () {
     return DEFAULT_ICON;
   }
 
+  // The devices of the plugin: the hardware name contains hchardware (default
+  // 'Home Connect', also written 'Home-Connect' or 'HomeConnect').
   function hardwareFilter(block) {
-    var part = String((block && block.hchardware) || 'Home Connect');
+    var part = String((block && block.hchardware) || '')
+      .toLowerCase()
+      .trim();
     return function (dev) {
-      return (
-        dev &&
-        dev.idx !== undefined &&
-        String(dev.HardwareName || '')
-          .toLowerCase()
-          .indexOf(part.toLowerCase()) >= 0
-      );
+      var hardware = String(dev.HardwareName || '').toLowerCase();
+      return part
+        ? hardware.indexOf(part) >= 0
+        : /home[\s_-]*connect/.test(hardware);
     };
   }
 
-  // [{name, icon, power, progress, time, alert}, ...]: the appliances found by
-  // the names of the devices, plus the ones (or fields) set with hcdevices.
-  function appliances(block) {
-    var all =
-      (typeof Domoticz !== 'undefined' && Domoticz.getAllDevices()) || {};
+  // The appliances of a list of devices, by the names of the devices.
+  function fromDevices(devices) {
     var found = {};
     var order = [];
     function entry(name) {
       if (!found[name]) {
-        found[name] = { name: name, icon: iconOf(name) };
+        found[name] = { name: name, icon: iconOf(name), alerts: [] };
         order.push(name);
       }
       return found[name];
     }
-    Object.keys(all)
+    devices.forEach(function (dev) {
+      var info = classify(dev.Name);
+      if (info && !entry(info.appliance)[info.field])
+        found[info.appliance][info.field] = dev;
+    });
+    // A message belongs to the appliance whose name starts its own name.
+    devices.forEach(function (dev) {
+      if (!isMessage(dev)) return;
+      var name = cleanName(dev.Name);
+      var owner = order
+        .filter(function (app) {
+          return name.indexOf(app + ' ') === 0;
+        })
+        .sort(function (x, y) {
+          return y.length - x.length;
+        })[0];
+      if (owner) found[owner].alerts.push(dev);
+    });
+    return { found: found, order: order, entry: entry };
+  }
+
+  // [{name, icon, power, progress, time, alerts}, ...]: the appliances found by
+  // the names of the devices, plus the ones (or fields) set with hcdevices.
+  function appliances(block) {
+    var all =
+      (typeof Domoticz !== 'undefined' && Domoticz.getAllDevices()) || {};
+    var list = Object.keys(all)
       .map(function (idx) {
         return all[idx];
       })
-      .filter(hardwareFilter(block))
-      .forEach(function (dev) {
-        var info = classify(dev.Name);
-        if (info && !entry(info.appliance)[info.field])
-          found[info.appliance][info.field] = dev;
+      .filter(function (dev) {
+        return dev && dev.idx !== undefined;
       });
+    var result = fromDevices(list.filter(hardwareFilter(block)));
+    // Without a match on the hardware name: look at all the devices.
+    if (!result.order.length && !(block && block.hcdevices))
+      result = fromDevices(list);
+    var found = result.found;
+    var order = result.order;
     var configured = (block && block.hcdevices) || {};
     Object.keys(configured).forEach(function (name) {
       var item = configured[name] || {};
-      var app = entry(name);
+      var app = result.entry(name);
       FIELDS.forEach(function (field) {
         var dev = all[parseInt(item[field], 10)];
         if (dev) app[field] = dev;
       });
+      var alert = all[parseInt(item.alert, 10)];
+      if (alert) app.alerts = [alert];
       if (item.name) app.name = String(item.name);
       if (item.icon) app.icon = String(item.icon);
     });
@@ -280,48 +328,64 @@ var DT_homeconnect = (function () {
     );
   }
 
-  // The row of one appliance, or '' when it has nothing to show.
-  function rowHtml(app, now) {
-    // An appliance that is switched off shows nothing.
-    if (app.power ? isOff(app.power) : !app.progress && !app.alert) return '';
-    var warning = app.alert ? alertText(app.alert) : '';
-    if (warning)
-      return (
-        '<div class="homeconnect-row">' +
-        nameHtml(app) +
-        '<span class="homeconnect-value homeconnect-warning">' +
-        esc(warning) +
-        '</span></div>'
-      );
-    if (!app.progress) return '';
-    var progress = parseFloat(dataOf(app.progress).replace(',', '.')) || 0;
-    if (progress >= 100)
-      return (
-        '<div class="homeconnect-row">' +
-        nameHtml(app) +
-        '<span class="homeconnect-value homeconnect-done" title="' +
-        tr('homeconnect_done', 'Finished') +
-        '">&#10004;</span></div>'
-      );
-    var ready = finishTime(dataOf(app.time), now);
+  function row(app, value, extraClass, title) {
     return (
       '<div class="homeconnect-row">' +
       nameHtml(app) +
-      '<span class="homeconnect-value"><b>' +
-      Math.round(progress) +
-      '%</b> ' +
-      (ready
-        ? tr('homeconnect_ready_at', 'ready at') + ' ' + ready
-        : tr('homeconnect_unknown_time', 'time unknown')) +
+      '<span class="homeconnect-value' +
+      (extraClass ? ' ' + extraClass : '') +
+      '"' +
+      (title ? ' title="' + title + '"' : '') +
+      '>' +
+      value +
       '</span></div>'
     );
+  }
+
+  // The messages of an appliance, without the ones that mean nothing.
+  function warningText(app) {
+    return app.alerts.map(alertText).filter(Boolean).join(', ');
+  }
+
+  // The rows of one appliance: the progress while a program runs, and its
+  // warnings. Nothing for an appliance that is switched off or idle.
+  function rowsHtml(app, now) {
+    if (app.power ? isOff(app.power) : !app.progress && !app.alerts.length)
+      return '';
+    var html = '';
+    if (app.progress) {
+      var progress = parseFloat(dataOf(app.progress).replace(',', '.')) || 0;
+      var minutes = remainingMinutes(dataOf(app.time));
+      if (progress >= 100)
+        html += row(
+          app,
+          '&#10004;',
+          'homeconnect-done',
+          tr('homeconnect_done', 'Finished')
+        );
+      else if (progress > 0 || minutes > 0) {
+        var ready = finishTime(dataOf(app.time), now);
+        html += row(
+          app,
+          '<b>' +
+            Math.round(progress) +
+            '%</b> ' +
+            (ready
+              ? tr('homeconnect_ready_at', 'ready at') + ' ' + ready
+              : tr('homeconnect_unknown_time', 'time unknown'))
+        );
+      }
+    }
+    var warning = warningText(app);
+    if (warning) html += row(app, esc(warning), 'homeconnect-warning');
+    return html;
   }
 
   // The content of the tile: one row per appliance that has something to show.
   function homeconnectHtml(block, now) {
     var html = appliances(block)
       .map(function (app) {
-        return rowHtml(app, now);
+        return rowsHtml(app, now);
       })
       .join('');
     return (
