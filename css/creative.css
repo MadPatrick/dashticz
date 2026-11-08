@@ -9316,9 +9316,10 @@ canvas {
 
 .fullykiosk-group,
 .fullykiosk-row.fullykiosk-battery {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 25%;
-  column-gap: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
 }
 
 @media (max-width: 767px) {
@@ -9388,54 +9389,34 @@ canvas {
   height: 3.4em;
 }
 
-/* The charger button runs over the rows of the charge data, at the right of
-   the data in column 2. */
-.fullykiosk-group {
-  align-items: stretch;
-}
-
-.fullykiosk-group .fullykiosk-control,
-.fullykiosk-row.fullykiosk-battery .fullykiosk-control {
-  order: 2;
-  margin-left: 10px;
-  margin-right: 5px;
-  width: calc(100% - 15px);
-}
-
-.fullykiosk-group .fullykiosk-btn {
-  flex: 1 1 0;
-  width: auto;
-}
-
-.fullykiosk-group .fullykiosk-btn {
-  height: auto;
-}
-
-/* The charger button shows the battery level as a progress fill
-   (--fully-level, set by fullykiosk.js), where 100% of the bar is the target
-   level of the charger. The fill is as wide as the level and its gradient runs
-   over the filled part only: from #c0fce1 at the start to #059956 at the end
-   of the fill. It sits behind the icon so the icon stays visible. */
-.fullykiosk-btn[data-progress] {
+/* The battery bar (as .mower-bar): 100% wide, green up to the battery level
+   and grey from there to 100%. The dot marks the percentage at which the
+   charger is switched next. */
+.fullykiosk-bar {
   position: relative;
-  overflow: hidden;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--main-bg-dark, rgba(255, 255, 255, 0.2));
 }
 
-.fullykiosk-btn[data-progress]::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: var(--fully-level, 0%);
+.fullykiosk-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
   background: linear-gradient(90deg, #c0fce1 0%, #059956 100%);
-  pointer-events: none;
   transition: width 0.6s ease;
 }
 
-.fullykiosk-btn[data-progress] > .fas {
-  position: relative;
-  z-index: 1;
+.fullykiosk-bar-dot {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--dt-info, #17a2b8);
+  box-sizing: border-box;
 }
 
 /* A power button that is off has a grey icon. */
