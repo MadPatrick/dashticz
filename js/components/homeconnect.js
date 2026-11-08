@@ -26,6 +26,9 @@
  *                (Setup -> Hardware); default 'Home Connect' (spaces, _ and
  *                - are ignored, so it also finds 'HomeConnect_API')
  *   hcdebug      true: a test view with the devices found per appliance
+ *   hcip         IP address (or host) of another Domoticz to read the devices
+ *                from, for testing; empty = the Domoticz of the dashboard
+ *   hcport       port of that Domoticz (default 8080)
  *   hcexclude    appliance names to hide, comma separated
  *   hcdevices    per appliance, the idx of a device that is not found by its
  *                name: {'Washer': {power: 12, progress: 13, time: 14,
@@ -104,6 +107,11 @@ var DT_homeconnect = (function () {
       template: 1,
     },
     run: function (me) {
+      if (remoteBase(me.block)) {
+        // Another Domoticz: no subscriptions, read it again at every refresh.
+        refreshRemote(me);
+        return;
+      }
       var subscribed = {};
       appliances(me.block).forEach(function (app) {
         FIELDS.concat('alerts').forEach(function (field) {
@@ -119,10 +127,14 @@ var DT_homeconnect = (function () {
       });
       render(me);
     },
-    refresh: render,
+    refresh: function (me) {
+      if (remoteBase(me.block)) refreshRemote(me);
+      else render(me);
+    },
     // Exposed for the tests.
     render: render,
     appliances: appliances,
+    remoteBase: remoteBase,
     homeconnectHtml: homeconnectHtml,
     remainingMinutes: remainingMinutes,
     finishTime: finishTime,
@@ -265,9 +277,11 @@ var DT_homeconnect = (function () {
 
   // [{name, icon, power, progress, time, alerts}, ...]: the appliances found by
   // the names of the devices, plus the ones (or fields) set with hcdevices.
-  function appliances(block) {
+  function appliances(block, devices) {
     var all =
-      (typeof Domoticz !== 'undefined' && Domoticz.getAllDevices()) || {};
+      devices ||
+      (typeof Domoticz !== 'undefined' && Domoticz.getAllDevices()) ||
+      {};
     var list = Object.keys(all)
       .map(function (idx) {
         return all[idx];
@@ -386,9 +400,11 @@ var DT_homeconnect = (function () {
 
   // The test view: the hardware names in Domoticz and, per appliance, the
   // devices that were found (idx, name and data).
-  function debugHtml(block) {
+  function debugHtml(block, devices) {
     var all =
-      (typeof Domoticz !== 'undefined' && Domoticz.getAllDevices()) || {};
+      devices ||
+      (typeof Domoticz !== 'undefined' && Domoticz.getAllDevices()) ||
+      {};
     var hardware = {};
     Object.keys(all).forEach(function (idx) {
       var name = all[idx] && all[idx].HardwareName;
@@ -407,7 +423,7 @@ var DT_homeconnect = (function () {
       '<div class="homeconnect-debug"><div>Hardware: ' +
       esc(Object.keys(hardware).join(' | ')) +
       '</div>';
-    appliances(block).forEach(function (app) {
+    appliances(block, devices).forEach(function (app) {
       html += '<div><b>' + esc(app.name) + '</b></div>';
       FIELDS.forEach(function (field) {
         html += line(field, app[field]);
@@ -420,8 +436,8 @@ var DT_homeconnect = (function () {
   }
 
   // The content of the tile: one row per appliance that has something to show.
-  function homeconnectHtml(block, now) {
-    var html = appliances(block)
+  function homeconnectHtml(block, now, devices) {
+    var html = appliances(block, devices)
       .map(function (app) {
         return rowsHtml(app, now);
       })
@@ -432,8 +448,42 @@ var DT_homeconnect = (function () {
           tr('homeconnect_none', 'No active appliances') +
           '</div>') +
       (String(block && block.hcdebug).toLowerCase() === 'true'
-        ? debugHtml(block)
+        ? debugHtml(block, devices)
         : '')
+    );
+  }
+
+  // The address of another Domoticz, 'http://ip:port', or '' for the Domoticz
+  // of the dashboard. hcip may be an IP address, a host or a complete address.
+  function remoteBase(block) {
+    var host = String((block && block.hcip) || '')
+      .trim()
+      .replace(/\/+$/, '');
+    if (!host) return '';
+    var port = parseInt(block.hcport, 10);
+    if (/^https?:\/\//i.test(host)) return host;
+    return 'http://' + host + ':' + (port > 0 && port < 65536 ? port : 8080);
+  }
+
+  // Read the devices of the other Domoticz and draw the tile.
+  function refreshRemote(me) {
+    var base = remoteBase(me.block);
+    $.getJSON(
+      base + '/json.htm?type=command&param=getdevices&filter=all&used=true'
+    ).then(
+      function (res) {
+        var devices = {};
+        ((res && res.result) || []).forEach(function (dev) {
+          devices[dev.idx] = dev;
+        });
+        me.remoteDevices = devices;
+        me.remoteError = '';
+        render(me);
+      },
+      function () {
+        me.remoteError = base;
+        render(me);
+      }
     );
   }
 
@@ -444,7 +494,17 @@ var DT_homeconnect = (function () {
       .css('font-size', fontSize >= 8 && fontSize <= 60 ? fontSize + 'px' : '')
       .html(
         '<div class="homeconnect-content">' +
-          homeconnectHtml(me.block) +
+          (me.remoteError
+            ? '<div class="homeconnect-warning">' +
+              tr('homeconnect_unreachable', 'Unable to reach Domoticz at') +
+              ' ' +
+              esc(me.remoteError) +
+              '</div>'
+            : homeconnectHtml(
+                me.block,
+                undefined,
+                me.remoteDevices || (remoteBase(me.block) ? {} : undefined)
+              )) +
           '</div>'
       );
   }

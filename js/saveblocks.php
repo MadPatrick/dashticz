@@ -523,6 +523,20 @@ foreach ($data['devices'] as $entry) {
                     && (!is_string($customFields['hchardware']) || strlen($customFields['hchardware']) > 100)) {
                     dashticz_json_error(400, 'Enter a valid hardware name for the Home Connect block.');
                 }
+                if (isset($customFields['hcip'])
+                    && $customFields['hcip'] !== ''
+                    && (!is_string($customFields['hcip'])
+                        || strlen($customFields['hcip']) > 100
+                        || !preg_match('/^(https?:\/\/)?[A-Za-z0-9.\-_]+(:\d{1,5})?\/?$/', $customFields['hcip']))) {
+                    dashticz_json_error(400, 'Enter a valid IP address or host for the Home Connect block.');
+                }
+                if (isset($customFields['hcport'])
+                    && $customFields['hcport'] !== ''
+                    && (!is_numeric($customFields['hcport'])
+                        || (float) $customFields['hcport'] < 1
+                        || (float) $customFields['hcport'] > 65535)) {
+                    dashticz_json_error(400, 'Enter a valid port for the Home Connect block.');
+                }
                 if (isset($customFields['hcfontsize'])
                     && $customFields['hcfontsize'] !== ''
                     && (!is_numeric($customFields['hcfontsize'])

@@ -648,3 +648,39 @@ test('Home Connect widget reads the devices of the Dutch plugin', () => {
   );
   assert.equal(hc.appliances({})[2].alerts.length, 1);
 });
+
+test('Home Connect widget can read another Domoticz', () => {
+  const hc = loadComponent('js/components/homeconnect.js', {
+    DT_function: { escapeHtml: String, t: (key, fallback) => fallback },
+  });
+  assert.equal(hc.remoteBase({}), '');
+  assert.equal(
+    hc.remoteBase({ hcip: '192.168.1.190' }),
+    'http://192.168.1.190:8080'
+  );
+  assert.equal(
+    hc.remoteBase({ hcip: ' 192.168.1.190 ', hcport: '8081' }),
+    'http://192.168.1.190:8081'
+  );
+  assert.equal(
+    hc.remoteBase({ hcip: 'https://dz.local:443/' }),
+    'https://dz.local:443'
+  );
+  // The devices of that Domoticz are passed in.
+  const devices = {
+    1: {
+      idx: '1',
+      Name: 'Droger Aan/uit',
+      Status: 'On',
+      HardwareName: 'HomeConnect_API',
+    },
+    2: {
+      idx: '2',
+      Name: 'Droger Voortgang',
+      Data: '30%',
+      HardwareName: 'HomeConnect_API',
+    },
+  };
+  assert.match(hc.homeconnectHtml({}, undefined, devices), /Droger/);
+  assert.match(hc.homeconnectHtml({}, undefined, {}), /No active appliances/);
+});

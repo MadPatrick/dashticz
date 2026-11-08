@@ -9260,10 +9260,13 @@ var DashticzDeviceEditor = (function () {
     idPart: 'homeconnect',
     labelPrefix: 'homeconnect_block_',
     fieldClass: 'de-homeconnect-field',
-    saveOrder: 'hardware fontsize',
+    saveOrder: 'hardware ip port fontsize',
     settings: [
       // Part of the name of the Domoticz hardware of the plugin.
       { key: 'hardware', type: 'text', def: 'Home Connect', max: 100 },
+      // Another Domoticz to read the devices from (for testing).
+      { key: 'ip', type: 'text', def: '', max: 100 },
+      { key: 'port', type: 'number', def: null, range: [1, 65535, 1] },
       { key: 'fontsize', type: 'number', def: null, range: [8, 60, 1] },
     ],
   };
@@ -9273,16 +9276,23 @@ var DashticzDeviceEditor = (function () {
     return _settingsFromRows(HOMECONNECT_SECTION, rows, HOMECONNECT_FIELDS);
   }
 
-  // The hardware name and the font size field of the Home Connect block.
+  // The hardware name, the IP address and port of another Domoticz, and the
+  // font size field of the Home Connect block.
   function _homeconnectFontsizeHtml(prefix, values) {
     var t = _translations();
     var v = $.extend(_homeconnectValuesFromRows([]), values || {});
-    var hardware = HOMECONNECT_SECTION.settings.filter(function (item) {
-      return item.key === 'hardware';
-    })[0];
+    function field(key) {
+      var setting = HOMECONNECT_SECTION.settings.filter(function (item) {
+        return item.key === key;
+      })[0];
+      return _settingHtml(HOMECONNECT_SECTION, prefix, setting, v[key], t);
+    }
     return (
       '<div class="mb-3 de-homeconnect-hardware">' +
-      _settingHtml(HOMECONNECT_SECTION, prefix, hardware, v.hardware, t) +
+      field('hardware') +
+      '</div><div class="mb-3 de-homeconnect-server">' +
+      field('ip') +
+      field('port') +
       '</div>' +
       _sectionFontsizeHtml(HOMECONNECT_SECTION, prefix, v.fontsize)
     );

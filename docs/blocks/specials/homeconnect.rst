@@ -72,6 +72,13 @@ Settings
   * - hcdebug
     - ``true``: a test view below the rows with the hardware names that Domoticz has and the
       devices that were found per appliance. Default: false
+  * - hcip
+    - Optional: IP address (or host, or a complete ``http://...`` address) of another Domoticz
+      to read the devices from, for testing. The browser reads that Domoticz directly, so it
+      must be reachable from the browser (and allow it, no login). Default: the Domoticz of
+      the dashboard
+  * - hcport
+    - Optional: port of that Domoticz. Default: ``8080``
   * - hcexclude
     - Optional: names of appliances to hide, separated by commas
   * - hcdevices
