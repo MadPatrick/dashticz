@@ -150,9 +150,10 @@ var DT_cluster = (function () {
     );
   }
 
-  // Temperature rows show a thin blue-green-orange scale with a marker at
-  // the current reading. The scale is 0-30 degrees Celsius (32-86 for
-  // Fahrenheit); colours step with the temperature in Celsius.
+  // Temperature rows show name, a thin meter and the value on one line. The
+  // meter fills from the left up to the current reading on a fixed
+  // blue-green-orange scale of 0-30 degrees Celsius (32-86 for Fahrenheit);
+  // colours step with the temperature in Celsius.
   function tempCelsius(value) {
     return _TEMP_SYMBOL === '\u00b0F' ? ((value - 32) * 5) / 9 : value;
   }
@@ -171,26 +172,27 @@ var DT_cluster = (function () {
     var celsius = hasTemp ? tempCelsius(device.Temp) : 0;
     var pct = Math.max(0, Math.min(1, celsius / 30)) * 100;
     return (
-      '<div class="cluster-row cluster-row-tempcell" data-idx="' +
+      '<div class="cluster-row" data-idx="' +
       idx +
-      '"><div class="cluster-row-head">' +
+      '">' +
       icon +
       '<span class="cluster-row-title">' +
       title +
       '</span>' +
-      (reading
-        ? '<span class="cluster-row-temp" style="color:' +
-          tempColor(celsius) +
-          '">' +
-          reading +
-          '</span>'
-        : '') +
-      '</div>' +
+      '<span class="cluster-temp-bar">' +
       (hasTemp
-        ? '<div class="cluster-temp-bar"><span class="cluster-temp-marker" style="left:' +
+        ? '<span class="cluster-temp-fill" style="width:' +
           pct.toFixed(1) +
-          '%"></span></div>'
+          '%;background-size:' +
+          (pct > 0 ? (10000 / pct).toFixed(1) : 100) +
+          '% 100%"></span>'
         : '') +
+      '</span>' +
+      '<span class="cluster-row-temp" style="color:' +
+      tempColor(celsius) +
+      '">' +
+      reading +
+      '</span>' +
       '</div>'
     );
   }
@@ -250,10 +252,7 @@ var DT_cluster = (function () {
     var anyIcon = me.devices.some(function (idx) {
       return !!me.iconsMap[idx];
     });
-    var html =
-      '<div class="cluster-rows' +
-      (me.mode === 'temperature' ? ' cluster-rows-temp' : '') +
-      '">';
+    var html = '<div class="cluster-rows">';
     me.devices.forEach(function (idx) {
       var device = allDevices[idx];
       if (!device) return;

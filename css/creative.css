@@ -5047,35 +5047,31 @@ img.icon {
   color: var(--text-status);
 }
 
-/* Temperature mode: two columns, each cell a name/value head above a thin
-   scale with a marker at the current temperature. */
-.cluster-rows-temp {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 16px;
-}
-
-.cluster-row-tempcell {
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 4px;
-  min-width: 0;
-}
-
-.cluster-row-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  min-width: 0;
+/* Temperature mode: name, a thin meter and the value on one line. The
+   fill is a blue-green-orange gradient stretched over the full track
+   (background-size is set per row), so a colour always means the same
+   temperature. */
+.cluster-row .cluster-row-title:has(+ .cluster-temp-bar) {
+  flex: 0 0 34%;
 }
 
 .cluster-temp-bar {
   position: relative;
-  height: 5px;
+  flex: 1 1 auto;
+  min-width: 30px;
+  height: 6px;
   border-radius: 3px;
-  background: linear-gradient(
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.cluster-temp-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px;
+  background-image: linear-gradient(
     90deg,
     #3a86d8 0%,
     #4cc38a 40%,
@@ -5084,15 +5080,9 @@ img.icon {
   );
 }
 
-.cluster-temp-marker {
-  position: absolute;
-  top: -3px;
-  width: 3px;
-  height: 11px;
-  margin-left: -1px;
-  border-radius: 2px;
-  background: #fff;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+.cluster-temp-bar + .cluster-row-temp {
+  flex: 0 0 4.2em;
+  text-align: right;
 }
 
 .cluster-row-switch {
