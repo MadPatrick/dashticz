@@ -519,3 +519,64 @@ test('Mower finds its devices by name and shows only Start and Park', () => {
   assert.match(html, /data-level="60">Park/);
   assert.doesNotMatch(html, /Pause|Resume/);
 });
+
+test('Home Connect widget groups the plugin devices per appliance', () => {
+  const dev = (idx, Name, Data, Status) => ({
+    idx,
+    Name,
+    Data,
+    Status,
+    HardwareName: 'Home Connect',
+  });
+  const devices = {
+    1: dev(1, '$Wasmachine Power', 'On', 'On'),
+    2: dev(2, '$Wasmachine Progress', '40 %'),
+    3: dev(3, '$Wasmachine Remaining time', '1h 20min'),
+    4: dev(4, 'Droger Aan/uit', 'Off', 'Off'),
+    5: dev(5, 'Droger Voortgang', '100 %'),
+    6: dev(6, 'Koffieautomaat Power', 'On', 'On'),
+    7: dev(7, 'Koffieautomaat Notifications', 'No active alerts.'),
+    8: dev(8, 'Vaatwasser Power', 'On', 'On'),
+    9: dev(9, 'Vaatwasser Progress', '100 %'),
+    10: { idx: 10, Name: 'Other Progress', Data: '5 %', HardwareName: 'X' },
+  };
+  const hc = loadComponent('js/components/homeconnect.js', {
+    Domoticz: { getAllDevices: () => devices },
+    DT_function: {
+      escapeHtml: (v) => String(v),
+      t: (key, fallback) => fallback,
+    },
+  });
+  assert.equal(hc.canHandle({ hcmode: 'appliances' }), true);
+  assert.equal(hc.canHandle({ mowermode: 'info' }), false);
+  assert.equal(
+    JSON.stringify(hc.appliances({}).map((a) => a.name)),
+    JSON.stringify(['Wasmachine', 'Droger', 'Koffieautomaat', 'Vaatwasser'])
+  );
+  assert.equal(hc.remainingMinutes('1h 20min'), 80);
+  assert.equal(hc.remainingMinutes('45 min'), 45);
+  assert.equal(hc.remainingMinutes('45'), 45);
+  assert.equal(hc.remainingMinutes('soon'), null);
+  const now = new Date(2026, 10, 8, 10, 0).getTime();
+  assert.equal(hc.finishTime('1h 20min', now), '11:20');
+  assert.equal(hc.alertText(devices[7]), '');
+  const html = hc.homeconnectHtml({}, now);
+  assert.match(html, /Wasmachine/);
+  assert.match(html, /<b>40%<\/b> ready at 11:20/);
+  assert.match(html, /Vaatwasser<\/span><span[^>]*homeconnect-done/);
+  assert.doesNotMatch(html, /Droger|Koffieautomaat|Other/);
+  // Hide an appliance, and set a device by idx.
+  assert.equal(
+    JSON.stringify(
+      hc.appliances({ hcexclude: 'droger, vaatwasser' }).map((a) => a.name)
+    ),
+    JSON.stringify(['Wasmachine', 'Koffieautomaat'])
+  );
+  const manual = hc.appliances({
+    hcdevices: { Oven: { power: 1, progress: 2, name: 'Bakoven' } },
+  });
+  assert.equal(manual[manual.length - 1].name, 'Bakoven');
+  // An alert shows as a warning.
+  devices[7].Data = 'Drip tray full';
+  assert.match(hc.homeconnectHtml({}, now), /homeconnect-warning">Drip tray/);
+});

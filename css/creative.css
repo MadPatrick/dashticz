@@ -10514,3 +10514,41 @@ input[id$='-carstatus-fontsize'] {
   margin-top: 0;
   padding-top: 0;
 }
+
+/* Home Connect widget (js/components/homeconnect.js): one row per appliance
+   with its icon and name, and the progress, the ready time or a warning. */
+.homeconnect-block .dt_state {
+  overflow: auto;
+}
+
+.homeconnect-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 10px 4px;
+}
+
+.homeconnect-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.homeconnect-name i {
+  width: 1.2em;
+  text-align: center;
+}
+
+.homeconnect-value {
+  text-align: right;
+}
+
+.homeconnect-warning {
+  color: yellow;
+  font-weight: bold;
+}
+
+.homeconnect-empty {
+  opacity: 0.6;
+}

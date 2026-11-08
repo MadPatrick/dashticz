@@ -1,0 +1,82 @@
+.. _homeconnect :
+
+Home Connect
+============
+
+The Home Connect widget shows the appliances of the `Home Connect plugin for
+Domoticz <https://github.com/Rouzax/home-connect-domoticz-plugin>`_ (washing machine,
+dryer, coffee machine, ...) in one tile. The appliances are found automatically: you do
+not have to enter device idx numbers.
+
+What the tile shows, per appliance:
+
+- the icon and the name of the appliance;
+- while a program runs: the progress in percent and *ready at HH:MM*. That time is the
+  current time plus the remaining time of the appliance;
+- at 100% a check mark;
+- a warning when the appliance has an alert, for example *Drip tray full*. Texts like
+  *No active alerts* or *No notification* are not shown.
+
+An appliance that is switched off, or has nothing to report, is left out. The title of the
+block is the standard title of a widget.
+
+How the devices are found
+-------------------------
+
+The widget takes the devices of the hardware whose name contains ``Home Connect`` and groups
+them by name. The plugin names a device ``<appliance> <value>``, for example ``Washer
+Progress`` or, in Dutch, ``Wasautomaat Voortgang``. A leading ``$`` is ignored.
+
+.. list-table::
+  :header-rows: 1
+  :widths: 10 30
+
+  * - Value
+    - Device name ends with
+  * - Power
+    - ``Power`` or ``Aan/uit``
+  * - Progress
+    - ``Progress`` or ``Voortgang``
+  * - Remaining time
+    - ``Remaining time``, ``Resterende tijd``, ``Finish time`` or ``Eindtijd``. A number of
+      minutes or a text like ``1h 20min``
+  * - Alert
+    - ``Notifications``, ``Meldingen``, ``Alert`` or ``Alerts``
+
+Settings
+--------
+
+.. list-table::
+  :header-rows: 1
+  :widths: 5 30
+  :class: tight-table
+
+  * - Setting
+    - Description
+  * - hcmode
+    - ``'appliances'``. Required: this property makes the block a Home Connect widget
+  * - hchardware
+    - Optional: part of the hardware name of the plugin. Default: ``Home Connect``
+  * - hcexclude
+    - Optional: names of appliances to hide, separated by commas
+  * - hcdevices
+    - Optional: per appliance the idx of a device that is not found by its name. The
+      fields are ``power``, ``progress``, ``time`` and ``alert``; ``name`` and ``icon`` (a
+      Font Awesome class) overrule the name and icon
+
+Example:
+
+.. code-block:: javascript
+
+    blocks['homeconnect'] = {
+        title: 'Appliances',
+        hcmode: 'appliances',
+        hcexclude: 'Fridge',
+        hcdevices: {
+            'Coffee machine': { alert: 1512, name: 'Koffieautomaat' }
+        },
+        width: 4
+    }
+
+The texts follow the language of Dashticz. Until the screen editor supports this widget,
+add the block to ``CONFIG.js`` (or ``custom/``) as in the example.
