@@ -8331,6 +8331,7 @@ test('Fully Kiosk block renders its rows: switches in column 1, data in column 2
     },
     find: () => chain,
     on: () => chain,
+    off: () => chain,
     toggleClass: (name, state) => {
       classes[name] = state;
       return chain;
@@ -8375,14 +8376,15 @@ test('Fully Kiosk block renders its rows: switches in column 1, data in column 2
   assert.match(html, /Charge from.*27 %/);
   // Every row has the control column and the data column.
   const rows = html.match(/class="fullykiosk-row /g) || [];
-  // The charger button spans the battery and next switch rows (one group).
+  // The battery and next switch rows are one group; no charger button.
   assert.equal(rows.length, 5);
   assert.match(html, /fullykiosk-group/);
-  assert.equal((html.match(/class="fullykiosk-control"/g) || []).length, 5);
+  assert.equal((html.match(/class="fullykiosk-control"/g) || []).length, 4);
   assert.equal((html.match(/class="fullykiosk-data[ "]/g) || []).length, 6);
-  // The charger is a power button in column 1, with no Charging line; the
-  // next switch percentage is the data of that row. No sliders.
-  assert.match(html, /data-action="charger"/);
+  // The battery bar is green up to the level; a dot marks the next switch.
+  assert.match(html, /fullykiosk-bar-fill" style="width:49%/);
+  assert.match(html, /fullykiosk-bar-dot" style="left:27%/);
+  assert.doesNotMatch(html, /data-action="charger"/);
   assert.doesNotMatch(html, />Charging</);
   assert.match(html, /Charge from/);
   // The brightness is a dimmer slider, without minus and plus buttons.
@@ -8530,6 +8532,10 @@ test('Car status test view shows every row', () => {
     csdebug: 'true',
   });
   assert.match(withBar, /class="carstatus-battery [^"]*carstatus-charging/);
+  // The icons are SVG: a battery filled to the level, and a road.
+  assert.match(withBar, /<svg class="carstatus-icon"[^>]*>\s*<rect/);
+  assert.equal((withBar.match(/<svg class="carstatus-icon"/g) || []).length, 2);
+  assert.doesNotMatch(withBar, /fa-battery|fa-plug/);
   const noTest = context.DT_carstatus.carstatusHtml({
     csmode: 'status',
     csbattery: 5,
@@ -8564,6 +8570,17 @@ test('Car status battery bar: colour thresholds', () => {
   assert.equal(car.batteryClass(50), 'carstatus-batt-ok');
   assert.equal(car.batteryClass(99), 'carstatus-batt-ok');
   assert.equal(car.batteryClass(100), 'carstatus-batt-full');
+  // The levels are options of the block.
+  const limits = car.limitsOf({ cscritical: 20, cslow: '40', csmid: 70 });
+  assert.equal(car.batteryClass(19, limits), 'carstatus-batt-critical');
+  assert.equal(car.batteryClass(39, limits), 'carstatus-batt-low');
+  assert.equal(car.batteryClass(69, limits), 'carstatus-batt-mid');
+  assert.equal(car.batteryClass(70, limits), 'carstatus-batt-ok');
+  assert.deepEqual(JSON.parse(JSON.stringify(car.limitsOf({}))), {
+    critical: 15,
+    low: 30,
+    mid: 50,
+  });
 });
 
 test('Car is a repeatable Widgets card with its own settings table', () => {
