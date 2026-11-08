@@ -569,7 +569,7 @@ test('Home Connect widget groups the plugin devices per appliance', () => {
   assert.equal(hc.alertText(devices[7]), '');
   const html = hc.homeconnectHtml({}, now);
   assert.match(html, /Wasmachine/);
-  assert.match(html, /<svg class="homeconnect-icon"/);
+  assert.match(html, /<svg class="homeconnect-icon homeconnect-icon-washer"/);
   assert.doesNotMatch(html, /Home Connect/);
   assert.match(html, /<b>40%<\/b> ready at 11:20/);
   assert.match(html, /Vaatwasser<\/span><span[^>]*homeconnect-done/);

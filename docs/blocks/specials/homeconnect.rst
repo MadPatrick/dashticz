@@ -11,7 +11,8 @@ not have to enter device idx numbers.
 What the tile shows, per appliance:
 
 - an icon (washing machine, dryer, coffee machine, dishwasher, oven, fridge, or a plug for
-  anything else) and the name of the appliance. A leading ``Home Connect`` in the device
+  anything else), each in its own colour (``.homeconnect-icon-washer`` and so on in
+  ``custom.css``), and the name of the appliance. A leading ``Home Connect`` in the device
   name is left out;
 - while a program runs: the progress in percent and *ready at HH:MM*. That time is the
   current time plus the remaining time of the appliance;

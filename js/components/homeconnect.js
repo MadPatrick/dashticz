@@ -50,7 +50,7 @@ var DT_homeconnect = (function () {
     [/koelkast|fridge|freezer|vriezer|k[uü]hl/i, 'fridge'],
   ];
   var DEFAULT_ICON = 'plug';
-  // The icons: the inside of a 24x24 outline drawing (stroke = text colour).
+  // The icons: the inside of a 24x24 outline drawing (stroke = the colour of the icon, see the css).
   var GLYPHS = {
     washer:
       '<rect x="4" y="2.5" width="16" height="19" rx="2.5"/><path d="M4 7h16"/>' +
@@ -258,7 +258,9 @@ var DT_homeconnect = (function () {
   function iconHtml(icon) {
     if (GLYPHS[icon])
       return (
-        '<svg class="homeconnect-icon" viewBox="0 0 24 24" fill="none" ' +
+        '<svg class="homeconnect-icon homeconnect-icon-' +
+        icon +
+        '" viewBox="0 0 24 24" fill="none" ' +
         'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" ' +
         'stroke-linejoin="round" aria-hidden="true">' +
         GLYPHS[icon] +
