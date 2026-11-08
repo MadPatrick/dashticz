@@ -411,10 +411,11 @@ var DT_homeconnect = (function () {
         tr('homeconnect_done', 'Finished')
       );
     else if (app.progress && (progress > 0 || minutes > 0)) {
-      // The remaining time device, else the time in the status text.
+      // The time in the status text (the plugin knows about a delayed start),
+      // else now + the remaining time.
       var ready =
-        finishTime(dataOf(app.time), now) ||
-        (app.state ? stateInfo(app).ready : '');
+        (app.state ? stateInfo(app).ready : '') ||
+        finishTime(dataOf(app.time), now);
       html += row(
         app,
         '<b>' +

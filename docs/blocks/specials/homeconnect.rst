@@ -14,8 +14,9 @@ What the tile shows, per appliance:
   anything else), each in its own colour (``.homeconnect-icon-washer`` and so on in
   ``custom.css``), and the name of the appliance. A leading ``Home Connect`` in the device
   name is left out;
-- while a program runs: the progress in percent and *ready at HH:MM*. That time is the
-  current time plus the remaining time of the appliance;
+- while a program runs: the progress in percent and *ready at HH:MM*. That time is the one in the
+  status of the appliance (*klaar om ongeveer ...*), or else the current time plus the remaining
+  time;
 - at 100% a check mark;
 - a warning when the appliance has an alert, for example *Drip tray full*. Texts like
   *No active alerts* or *No notification* are not shown.
