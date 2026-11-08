@@ -9295,7 +9295,7 @@ canvas {
    button), the brightness slider and the error text use the full width. */
 .fullykiosk-rows {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(11em, 1fr));
   gap: 10px 14px;
   padding: 4px 0;
 }
@@ -9322,18 +9322,6 @@ canvas {
   gap: 6px;
 }
 
-@media (max-width: 767px) {
-  .fullykiosk-rows {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 479px) {
-  .fullykiosk-rows {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 .fullykiosk-data {
   display: flex;
   align-items: center;
@@ -9355,6 +9343,8 @@ canvas {
 .fullykiosk-label {
   flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fullykiosk-value {
@@ -9378,7 +9368,14 @@ canvas {
   order: 0;
 }
 
+/* An empty control keeps the width of a button, so the rows without a
+   button (Plugged in, brightness) line up with the other rows. */
 .fullykiosk-control:empty {
+  width: 3.4em;
+}
+
+.fullykiosk-group > .fullykiosk-control:empty,
+.fullykiosk-row.fullykiosk-battery .fullykiosk-control:empty {
   display: none;
 }
 
