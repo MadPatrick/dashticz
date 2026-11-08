@@ -565,6 +565,8 @@
       "carstatus_block_fontsize_help": "Lettergrootte in pixels (8-60). Laat leeg voor de standaardgrootte.",
       "homeconnect_block_fontsize": "Lettergrootte (px)",
       "homeconnect_block_fontsize_help": "Lettergrootte in pixels (8-60). Laat leeg voor de standaardgrootte.",
+      "homeconnect_block_hardware": "Hardwarenaam",
+      "homeconnect_block_hardware_help": "Deel van de naam van de Domoticz-hardware van de Home Connect plugin (Setup > Hardware).",
       "invalid_carstatus_block_devices": "Kies minstens een Domoticz-device.",
       "weatherinfo_block": "Weerinfo",
       "car_block": "Auto-info",

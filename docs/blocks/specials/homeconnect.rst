@@ -69,6 +69,9 @@ Settings
     - Optional: font size of the tile in pixels (``8``-``60``). Default: the size of the theme
   * - hchardware
     - Optional: part of the hardware name of the plugin. Default: ``Home Connect``
+  * - hcdebug
+    - ``true``: a test view below the rows with the hardware names that Domoticz has and the
+      devices that were found per appliance. Default: false
   * - hcexclude
     - Optional: names of appliances to hide, separated by commas
   * - hcdevices

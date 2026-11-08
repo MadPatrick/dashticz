@@ -22,7 +22,9 @@
  * Options (all optional):
  *
  *   hcfontsize   font size of the tile in pixels (8-60); empty = the theme's
- *   hchardware   part of the hardware name of the plugin; default 'Home Connect'
+ *   hchardware   part of the name of the Domoticz hardware of the plugin
+ *                (Setup -> Hardware); default 'Home Connect'
+ *   hcdebug      true: a test view with the devices found per appliance
  *   hcexclude    appliance names to hide, comma separated
  *   hcdevices    per appliance, the idx of a device that is not found by its
  *                name: {'Washer': {power: 12, progress: 13, time: 14,
@@ -212,16 +214,17 @@ var DT_homeconnect = (function () {
   }
 
   // The devices of the plugin: the hardware name contains hchardware (default
-  // 'Home Connect', also written 'Home-Connect' or 'HomeConnect').
+  // 'Home Connect', ignoring case).
   function hardwareFilter(block) {
-    var part = String((block && block.hchardware) || '')
+    var part = String((block && block.hchardware) || 'Home Connect')
       .toLowerCase()
       .trim();
     return function (dev) {
-      var hardware = String(dev.HardwareName || '').toLowerCase();
-      return part
-        ? hardware.indexOf(part) >= 0
-        : /home[\s_-]*connect/.test(hardware);
+      return (
+        String(dev.HardwareName || '')
+          .toLowerCase()
+          .indexOf(part) >= 0
+      );
     };
   }
 
@@ -270,9 +273,6 @@ var DT_homeconnect = (function () {
         return dev && dev.idx !== undefined;
       });
     var result = fromDevices(list.filter(hardwareFilter(block)));
-    // Without a match on the hardware name: look at all the devices.
-    if (!result.order.length && !(block && block.hcdevices))
-      result = fromDevices(list);
     var found = result.found;
     var order = result.order;
     var configured = (block && block.hcdevices) || {};
@@ -381,6 +381,41 @@ var DT_homeconnect = (function () {
     return html;
   }
 
+  // The test view: the hardware names in Domoticz and, per appliance, the
+  // devices that were found (idx, name and data).
+  function debugHtml(block) {
+    var all =
+      (typeof Domoticz !== 'undefined' && Domoticz.getAllDevices()) || {};
+    var hardware = {};
+    Object.keys(all).forEach(function (idx) {
+      var name = all[idx] && all[idx].HardwareName;
+      if (name) hardware[name] = true;
+    });
+    function line(label, dev) {
+      return dev
+        ? '<div>' +
+            esc(
+              label + ': ' + dev.Name + ' [' + dev.idx + '] = ' + dataOf(dev)
+            ) +
+            '</div>'
+        : '';
+    }
+    var html =
+      '<div class="homeconnect-debug"><div>Hardware: ' +
+      esc(Object.keys(hardware).join(' | ')) +
+      '</div>';
+    appliances(block).forEach(function (app) {
+      html += '<div><b>' + esc(app.name) + '</b></div>';
+      FIELDS.forEach(function (field) {
+        html += line(field, app[field]);
+      });
+      app.alerts.forEach(function (dev) {
+        html += line('alert', dev);
+      });
+    });
+    return html + '</div>';
+  }
+
   // The content of the tile: one row per appliance that has something to show.
   function homeconnectHtml(block, now) {
     var html = appliances(block)
@@ -389,10 +424,13 @@ var DT_homeconnect = (function () {
       })
       .join('');
     return (
-      html ||
-      '<div class="homeconnect-empty">' +
-        tr('homeconnect_none', 'No active appliances') +
-        '</div>'
+      (html ||
+        '<div class="homeconnect-empty">' +
+          tr('homeconnect_none', 'No active appliances') +
+          '</div>') +
+      (String(block && block.hcdebug).toLowerCase() === 'true'
+        ? debugHtml(block)
+        : '')
     );
   }
 

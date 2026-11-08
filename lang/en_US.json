@@ -651,6 +651,8 @@
       "carstatus_block_fontsize_help": "Font size in pixels (8-60). Leave empty for the default size.",
       "homeconnect_block_fontsize": "Font size (px)",
       "homeconnect_block_fontsize_help": "Font size in pixels (8-60). Leave empty for the default size.",
+      "homeconnect_block_hardware": "Hardware name",
+      "homeconnect_block_hardware_help": "Part of the name of the Domoticz hardware of the Home Connect plugin (Setup > Hardware).",
       "invalid_carstatus_block_devices": "Choose at least one Domoticz device.",
       "weatherinfo_block": "Weather info",
       "car_block": "Car info",

@@ -9248,8 +9248,10 @@ var DashticzDeviceEditor = (function () {
     idPart: 'homeconnect',
     labelPrefix: 'homeconnect_block_',
     fieldClass: 'de-homeconnect-field',
-    saveOrder: 'fontsize',
+    saveOrder: 'hardware fontsize',
     settings: [
+      // Part of the name of the Domoticz hardware of the plugin.
+      { key: 'hardware', type: 'text', def: 'Home Connect', max: 100 },
       { key: 'fontsize', type: 'number', def: null, range: [8, 60, 1] },
     ],
   };
@@ -9259,9 +9261,19 @@ var DashticzDeviceEditor = (function () {
     return _settingsFromRows(HOMECONNECT_SECTION, rows, HOMECONNECT_FIELDS);
   }
 
+  // The hardware name and the font size field of the Home Connect block.
   function _homeconnectFontsizeHtml(prefix, values) {
+    var t = _translations();
     var v = $.extend(_homeconnectValuesFromRows([]), values || {});
-    return _sectionFontsizeHtml(HOMECONNECT_SECTION, prefix, v.fontsize);
+    var hardware = HOMECONNECT_SECTION.settings.filter(function (item) {
+      return item.key === 'hardware';
+    })[0];
+    return (
+      '<div class="mb-3 de-homeconnect-hardware">' +
+      _settingHtml(HOMECONNECT_SECTION, prefix, hardware, v.hardware, t) +
+      '</div>' +
+      _sectionFontsizeHtml(HOMECONNECT_SECTION, prefix, v.fontsize)
+    );
   }
 
   function _readHomeconnectFields(prefix) {
