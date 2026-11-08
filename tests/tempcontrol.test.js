@@ -70,6 +70,7 @@ function loadThermostat(overrides) {
 
 const element = {
   html: () => {},
+  toggleClass: () => element,
   find: () => element,
   on: () => element,
 };

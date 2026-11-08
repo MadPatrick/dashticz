@@ -1,3 +1,40 @@
+{{#if meter}}
+<div class="setpoint-arc-tile">
+    <div class="setpoint-arc-icon">
+        {{#if mImage}}<img src="img/{{mImage}}" class="on icon">{{/if}}
+        {{#if mIcon}}<em class="{{mIcon}} on icon" style="max-height:35px;"></em>{{/if}}
+    </div>
+    <div class="setpoint-arc">
+        {{{arcSvg}}}
+        <div class="setpoint-arc-text col-data">
+            <strong class="title">{{title}}</strong>
+            <div class="setpoint-graph"></div>
+            {{#if showinfo}}
+            <span class="lastupdate">{{lastupdate}}</span>
+            {{/if}}
+        </div>
+    </div>
+    <div class="setpoint-arc-bottom">
+        {{#if buttons}}
+        <div class="setpoint-arc-btn">
+        <a href="javascript:void(0)" class="btn btn-number min" data-type="minus"
+            data-field="quant[{{idx}}]" onclick="this.blur();">
+            <em class="fas fa-minus fa-small fa-thermostat"></em>
+        </a>
+        </div>
+        {{/if}}
+        <span class="value setpoint-arc-value">{{value}}</span>
+        {{#if buttons}}
+        <div class="setpoint-arc-btn">
+        <a href="javascript:void(0)" class="btn btn-number plus" data-type="plus"
+            data-field="quant[{{idx}}]" onclick="this.blur();">
+            <em class="fas fa-plus fa-small fa-thermostat"></em>
+        </a>
+        </div>
+        {{/if}}
+    </div>
+</div>
+{{else}}
 {{#if buttons}}
 <div class="col-button1">
     <div class="up">
@@ -26,10 +63,6 @@
     {{#if showinfo}}
     <span class="lastupdate">{{lastupdate}}</span>
     {{/if}}
-    {{#if meter}}
-    <div class="setpoint-meter" style="background:{{meterGradient}}">
-        <span class="setpoint-meter-marker" style="left:{{meterPos}}%"></span>
-    </div>
-    {{/if}}
     <div class="setpoint-graph"></div>
 </div>
+{{/if}}

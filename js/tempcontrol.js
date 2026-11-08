@@ -99,21 +99,24 @@ function getThermostatBlock(block) {
       mIcon: isDefined(block.icon) ? block.icon : '',
       mImage: isDefined(block.image) ? block.image : 'heating.png',
       meter: choose(block.setpointbar, true) !== false,
-      meterGradient: setpointMeterGradient(block),
-      meterPos: setpointMeterPos(block, parseFloat(device.Data)),
+      arcSvg: setpointArcSvg(block, parseFloat(device.Data)),
     };
     html = template(dataObject);
-    block.$mountPoint.find('.block_' + block.key).html(html);
+    block.$mountPoint
+      .find('.block_' + block.key)
+      .toggleClass('setpoint-arc-block', dataObject.meter)
+      .html(html);
     addThermostatFunctions(block);
     if (choose(block.setpointgraph, true) !== false) addSetpointGraph(block);
   });
   return true;
 }
 
-/* Setpoint meter: a slim bar on the setpoint tile with the same colour zones
-   as the temperature block (<12 blue, 12-17 light blue, 17-23 green, 23-26
-   yellow, above red) and a marker at the current setpoint. The zones only
-   apply to a temperature in degrees; other units get a neutral bar. */
+/* Setpoint meter: a half circle (180 degrees) on the setpoint tile with the
+   same colour zones as the temperature block (<12 blue, 12-17 light blue,
+   17-23 green, 23-26 yellow, above red) and a marker at the current setpoint.
+   The zones only apply to a temperature in degrees; other units get a neutral
+   arc. The - and + buttons sit below the two ends of the arc. */
 var SETPOINT_ZONES = [
   [12, '#3b82f6'],
   [17, '#7dd3fc'],
@@ -128,28 +131,67 @@ function setpointMeterPos(block, value) {
   return Math.max(0, Math.min(100, ((value - block.min) / range) * 100));
 }
 
-function setpointMeterGradient(block) {
-  if (block.unit.indexOf('°') < 0) return 'rgba(255,255,255,0.35)';
-  var stops = [];
+/* Point on the arc (centre 50,50, radius 40) for a position of 0-100%:
+   0% is the left end, 100% the right end. */
+function setpointArcPoint(pos) {
+  var angle = Math.PI * (1 - pos / 100);
+  return [50 + 40 * Math.cos(angle), 50 - 40 * Math.sin(angle)];
+}
+
+function setpointArcPath(from, to) {
+  var p1 = setpointArcPoint(from);
+  var p2 = setpointArcPoint(to);
+  return (
+    'M' +
+    p1[0].toFixed(2) +
+    ' ' +
+    p1[1].toFixed(2) +
+    ' A40 40 0 0 1 ' +
+    p2[0].toFixed(2) +
+    ' ' +
+    p2[1].toFixed(2)
+  );
+}
+
+function setpointArcSvg(block, value) {
+  var zones =
+    block.unit.indexOf('°') < 0
+      ? [[Infinity, 'rgba(255,255,255,0.35)']]
+      : SETPOINT_ZONES;
+  var paths = '';
   var from = block.min;
-  SETPOINT_ZONES.forEach(function (zone) {
-    if (from >= block.max) return;
+  zones.forEach(function (zone) {
     var to = Math.min(zone[0], block.max);
-    if (to <= from) return;
-    var a = setpointMeterPos(block, from).toFixed(1) + '%';
-    var b = setpointMeterPos(block, to).toFixed(1) + '%';
-    stops.push(zone[1] + ' ' + a, zone[1] + ' ' + b);
+    if (from >= block.max || to <= from) return;
+    paths +=
+      '<path d="' +
+      setpointArcPath(
+        setpointMeterPos(block, from),
+        setpointMeterPos(block, to)
+      ) +
+      '" stroke="' +
+      zone[1] +
+      '" />';
     from = to;
   });
-  return stops.length
-    ? 'linear-gradient(to right, ' + stops.join(', ') + ')'
-    : 'rgba(255,255,255,0.35)';
+  var m = setpointArcPoint(setpointMeterPos(block, value));
+  return (
+    '<svg class="setpoint-arc-svg" viewBox="0 0 100 54">' +
+    '<g fill="none" stroke-width="8" stroke-linecap="butt">' +
+    paths +
+    '</g><circle class="setpoint-arc-marker" r="6.5" cx="' +
+    m[0].toFixed(2) +
+    '" cy="' +
+    m[1].toFixed(2) +
+    '" /></svg>'
+  );
 }
 
 function updateSetpointMeter(block, value) {
+  var m = setpointArcPoint(setpointMeterPos(block, value));
   block.$mountPoint
-    .find('.setpoint-meter-marker')
-    .css('left', setpointMeterPos(block, value) + '%');
+    .find('.setpoint-arc-marker')
+    .attr({ cx: m[0].toFixed(2), cy: m[1].toFixed(2) });
 }
 
 /* Sparkline of the last 24 hours (on by default, block option setpointgraph: false disables it).

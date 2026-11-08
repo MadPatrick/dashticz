@@ -10634,31 +10634,96 @@ input[id$='-carstatus-fontsize'] {
   margin-right: 0.2em;
 }
 
-/* Setpoint tile (js/tempcontrol.js): slim colour meter with a marker at the
-   current setpoint, and an optional sparkline of the last 24 hours. */
-.setpoint-meter {
+/* Setpoint tile (js/tempcontrol.js): half circle colour meter with a marker
+   at the current setpoint, the - and + buttons below its two ends, and a
+   sparkline of the last 24 hours between the buttons. */
+.setpoint-arc-tile {
   position: relative;
-  height: 6px;
-  margin: 6px 0 2px auto;
-  max-width: 120px;
-  border-radius: 3px;
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto;
+  padding: 4px 0;
 }
 
-.setpoint-meter-marker {
+.setpoint-arc-icon {
   position: absolute;
-  top: -3px;
-  width: 4px;
-  height: 12px;
-  margin-left: -2px;
-  border-radius: 2px;
-  background: #fff;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
-  transition: left 0.3s;
+  top: 2px;
+  left: 0;
+}
+
+.setpoint-arc-icon .icon {
+  max-height: 24px;
+}
+
+.setpoint-arc {
+  position: relative;
+}
+
+.setpoint-arc-svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.setpoint-arc-marker {
+  fill: #fff;
+  stroke: rgba(0, 0, 0, 0.6);
+  stroke-width: 1.5;
+  transition:
+    cx 0.3s,
+    cy 0.3s;
+}
+
+.setpoint-arc-text {
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: 4%;
+  text-align: center;
+  line-height: 1.25;
+}
+
+/* The half circle needs more room than the classic 85px block height. */
+div.mh.setpoint-arc-block:not(.multiline) {
+  height: auto;
+}
+
+/* The buttons are centred under the arc ends (at 10% and 90% of the width). */
+.setpoint-arc-bottom {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  margin-top: 2px;
+}
+
+.setpoint-arc-btn {
+  width: 20%;
+  display: flex;
+  justify-content: center;
+}
+
+.setpoint-arc-btn .btn-number {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  margin: 0;
+}
+
+.setpoint-arc-value {
+  flex: 1;
+  text-align: center;
+  font-size: 150%;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
 .setpoint-graph {
-  max-width: 120px;
-  margin-left: auto;
+  width: 70%;
+  margin: 2px auto;
   opacity: 0.8;
 }
 
