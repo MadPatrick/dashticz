@@ -645,6 +645,23 @@ test('Home Connect widget reads the devices of the Dutch plugin', () => {
     hc.homeconnectHtml({}, now),
     /Wasmachine<\/span><span[^>]*homeconnect-done/
   );
+  devices[2].Data = 'Bezig, Katoen, 0%, klaar om ongeveer 16:03';
+  // Without Progress and Remaining time devices: from the status text.
+  const progress = devices[4];
+  const remaining = devices[5];
+  delete devices[4];
+  delete devices[5];
+  assert.match(
+    hc.homeconnectHtml({}, now),
+    /Wasmachine<\/span><span[^>]*><b>0%<\/b> ready at 16:03/
+  );
+  // With a Progress device but no Remaining time: the time of the status.
+  devices[4] = progress;
+  assert.match(
+    hc.homeconnectHtml({}, now),
+    /Wasmachine<\/span><span[^>]*><b>57%<\/b> ready at 16:03/
+  );
+  devices[5] = remaining;
   devices[2].Data = 'Bezig, Katoen, Vergrendeld';
   // The coffee machine gets a message: a warning, no status.
   devices[15].Data = 'Lekbakje vol';

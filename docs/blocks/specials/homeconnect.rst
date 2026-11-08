@@ -45,7 +45,9 @@ Progress`` or, in Dutch, ``Wasautomaat Voortgang``. A leading ``$`` is ignored.
       minutes or a text like ``1h 20min``
   * - State
     - ``Status`` or ``State``. A text that starts with ``Klaar`` or ``Finished`` shows the check
-      mark, also when there is no progress device
+      mark, also when there is no progress device. Without a Progress or Remaining time device the
+      progress and the ready time are read from this text, for example
+      ``Bezig, Katoen, 40%, klaar om ongeveer 16:03``
   * - Alerts
     - ``Notifications`` or ``Meldingen``, and every other alert device of the appliance that
       is not a status, for example ``Drip tray full`` or ``Leeg lekbakjes``. The alert devices

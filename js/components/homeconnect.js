@@ -373,6 +373,22 @@ var DT_homeconnect = (function () {
     return /^(klaar|finished)\b/i.test(dataOf(app.state));
   }
 
+  // The progress and the time the program is ready, from the text of the
+  // status: 'Bezig, Katoen, 40%, klaar om ongeveer 16:03'. Used when the
+  // appliance has no Progress or Remaining time device (the plugin creates
+  // those only while a program runs).
+  function stateInfo(app) {
+    var text = dataOf(app.state);
+    var pct = text.match(/(\d+)\s*%/);
+    var ready = text.match(
+      /(?:klaar om|ready at)\s+(?:ongeveer\s+|about\s+)?(\d{1,2}):(\d{2})/i
+    );
+    return {
+      pct: pct ? parseInt(pct[1], 10) : null,
+      ready: ready ? two(parseInt(ready[1], 10)) + ':' + ready[2] : '',
+    };
+  }
+
   // The rows of one appliance: the progress while a program runs, and its
   // warnings. Nothing for an appliance that is switched off or idle.
   function rowsHtml(app, now) {
@@ -395,7 +411,10 @@ var DT_homeconnect = (function () {
         tr('homeconnect_done', 'Finished')
       );
     else if (app.progress && (progress > 0 || minutes > 0)) {
-      var ready = finishTime(dataOf(app.time), now);
+      // The remaining time device, else the time in the status text.
+      var ready =
+        finishTime(dataOf(app.time), now) ||
+        (app.state ? stateInfo(app).ready : '');
       html += row(
         app,
         '<b>' +
@@ -405,6 +424,16 @@ var DT_homeconnect = (function () {
             ? tr('homeconnect_ready_at', 'ready at') + ' ' + ready
             : tr('homeconnect_unknown_time', 'time unknown'))
       );
+    } else if (!app.progress && app.state) {
+      var info = stateInfo(app);
+      if (info.pct !== null || info.ready)
+        html += row(
+          app,
+          (info.pct !== null ? '<b>' + info.pct + '%</b> ' : '') +
+            (info.ready
+              ? tr('homeconnect_ready_at', 'ready at') + ' ' + info.ready
+              : '')
+        );
     }
     var warning = warningText(app);
     if (warning) html += row(app, esc(warning), 'homeconnect-warning');
