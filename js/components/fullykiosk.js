@@ -488,20 +488,21 @@ var DT_fullykiosk = (function () {
       );
     }
     if (row.readonly) {
+      // Shows the state like the other power buttons, but cannot be clicked.
       var plugged = !!(info && info.plugged);
       return rowHtml(
         'fullykiosk-extra fullykiosk-plugged',
-        '',
+        buttonHtml(
+          'readonly',
+          'fa-power-off',
+          label,
+          plugged,
+          false,
+          ' tabindex="-1" aria-disabled="true"'
+        ),
         row.icon,
         label,
-        info
-          ? esc(
-              DT_function.t(
-                plugged ? 'fullykiosk_on' : 'fullykiosk_off',
-                plugged ? 'On' : 'Off'
-              )
-            )
-          : '-'
+        ''
       );
     }
     return rowHtml(

@@ -9443,6 +9443,10 @@ canvas {
   color: var(--text-muted);
 }
 
+.fullykiosk-btn[data-action='readonly'] {
+  cursor: default;
+}
+
 .fullykiosk-btn:disabled {
   cursor: default;
   opacity: 0.5;
