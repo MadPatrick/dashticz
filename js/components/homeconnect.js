@@ -348,6 +348,25 @@ var DT_homeconnect = (function () {
     );
   }
 
+  // A progress circle with the percentage in it, in the colour of the icon.
+  // The circle has a circumference of 100, so the dash is the percentage.
+  function ringHtml(app, pct) {
+    var level = Math.max(0, Math.min(100, Math.round(pct)));
+    return (
+      '<svg class="homeconnect-ring homeconnect-icon-' +
+      (GLYPHS[app.icon] ? app.icon : 'plug') +
+      '" viewBox="0 0 36 36" role="img" aria-label="' +
+      level +
+      '%"><circle class="homeconnect-ring-track" cx="18" cy="18" r="15.9155"/>' +
+      '<circle class="homeconnect-ring-fill" cx="18" cy="18" r="15.9155" ' +
+      'stroke-dasharray="' +
+      level +
+      ' 100"/><text x="18" y="18" class="homeconnect-ring-text">' +
+      level +
+      '%</text></svg> '
+    );
+  }
+
   function row(app, value, extraClass, title) {
     return (
       '<div class="homeconnect-row">' +
@@ -418,9 +437,7 @@ var DT_homeconnect = (function () {
         finishTime(dataOf(app.time), now);
       html += row(
         app,
-        '<b>' +
-          Math.round(progress) +
-          '%</b> ' +
+        ringHtml(app, progress) +
           (ready
             ? tr('homeconnect_ready_at', 'ready at') + ' ' + ready
             : tr('homeconnect_unknown_time', 'time unknown'))
@@ -430,7 +447,7 @@ var DT_homeconnect = (function () {
       if (info.pct !== null || info.ready)
         html += row(
           app,
-          (info.pct !== null ? '<b>' + info.pct + '%</b> ' : '') +
+          (info.pct !== null ? ringHtml(app, info.pct) : '') +
             (info.ready
               ? tr('homeconnect_ready_at', 'ready at') + ' ' + info.ready
               : '')

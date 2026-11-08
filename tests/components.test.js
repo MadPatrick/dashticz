@@ -571,7 +571,7 @@ test('Home Connect widget groups the plugin devices per appliance', () => {
   assert.match(html, /Wasmachine/);
   assert.match(html, /<svg class="homeconnect-icon homeconnect-icon-washer"/);
   assert.doesNotMatch(html, /Home Connect/);
-  assert.match(html, /<b>40%<\/b> ready at 11:20/);
+  assert.match(html, /40%<\/text><\/svg> ready at 11:20/);
   assert.match(html, /Vaatwasser<\/span><span[^>]*homeconnect-done/);
   assert.doesNotMatch(html, /Droger|Koffieautomaat|Other/);
   // Hide an appliance, and set a device by idx.
@@ -637,7 +637,10 @@ test('Home Connect widget reads the devices of the Dutch plugin', () => {
   assert.equal(hc.appliances({}).length, 3);
   assert.equal(hc.appliances({ hchardware: 'homeconnect api' }).length, 3);
   let html = hc.homeconnectHtml({}, now);
-  assert.match(html, /Wasmachine<\/span><span[^>]*><b>57%<\/b> ready at 16:03/);
+  assert.match(
+    html,
+    /Wasmachine<\/span><span.*57%<\/text><\/svg> ready at 16:03/
+  );
   assert.doesNotMatch(html, /Droger|Koffieautomaat|Katoen|afstand/);
   // A finished program without a progress device: the check mark.
   devices[2].Data = 'Klaar, Katoen';
@@ -653,13 +656,13 @@ test('Home Connect widget reads the devices of the Dutch plugin', () => {
   delete devices[5];
   assert.match(
     hc.homeconnectHtml({}, now),
-    /Wasmachine<\/span><span[^>]*><b>0%<\/b> ready at 16:03/
+    /Wasmachine<\/span><span.*0%<\/text><\/svg> ready at 16:03/
   );
   // With a Progress device but no Remaining time: the time of the status.
   devices[4] = progress;
   assert.match(
     hc.homeconnectHtml({}, now),
-    /Wasmachine<\/span><span[^>]*><b>57%<\/b> ready at 16:03/
+    /Wasmachine<\/span><span.*57%<\/text><\/svg> ready at 16:03/
   );
   devices[5] = remaining;
   devices[2].Data = 'Bezig, Katoen, Vergrendeld';

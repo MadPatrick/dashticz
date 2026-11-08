@@ -10595,3 +10595,38 @@ input[id$='-carstatus-fontsize'] {
   opacity: 0.8;
   word-break: break-word;
 }
+
+/* The progress circle of an appliance: the percentage inside a ring that is
+   filled in the colour of the appliance icon (.homeconnect-icon-<type>). */
+.homeconnect-ring {
+  width: 2.2em;
+  height: 2.2em;
+  vertical-align: middle;
+  margin-right: 0.3em;
+}
+
+.homeconnect-ring-track,
+.homeconnect-ring-fill {
+  fill: none;
+  stroke-width: 3.5;
+}
+
+.homeconnect-ring-track {
+  stroke: currentColor;
+  opacity: 0.25;
+}
+
+.homeconnect-ring-fill {
+  stroke: currentColor;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 18px 18px;
+}
+
+.homeconnect-ring-text {
+  fill: var(--bs-body-color, #fff);
+  font-size: 10px;
+  font-weight: bold;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
