@@ -78,5 +78,7 @@ Example:
         width: 4
     }
 
-The texts follow the language of Dashticz. Until the screen editor supports this widget,
-add the block to ``CONFIG.js`` (or ``custom/``) as in the example.
+The texts follow the language of Dashticz.
+
+Add it via the Screen Editor: "Add items" -> Widgets -> Home Connect. It can also be added by
+hand to the config, as in the example.

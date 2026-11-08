@@ -579,6 +579,15 @@ var DashticzDeviceEditor = (function () {
     _showToonPopup();
   }
 
+  /** Open the dedicated Home Connect popup used by the Widgets menu. */
+  function openHomeconnect() {
+    editorMode = 'devices';
+    gridMode = _activeScreenDom().hasClass('dt-grid-screen');
+    _init();
+    _prepareManagedDeviceState();
+    _showHomeconnectPopup();
+  }
+
   /** Open the dedicated Mower popup used by the Widgets menu. */
   function openMower() {
     editorMode = 'devices';
@@ -1257,6 +1266,14 @@ var DashticzDeviceEditor = (function () {
       kind = 'toon';
     } else if (
       /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
+      definition.hcmode === 'appliances'
+    ) {
+      // Home Connect block, added via the Widgets menu's Home Connect card
+      // (_showHomeconnectPopup()). Matches js/components/homeconnect.js's own
+      // canHandle(): dispatched on hcmode, no `type` of its own.
+      kind = 'homeconnect';
+    } else if (
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(reference) &&
       definition.mowermode === 'info'
     ) {
       // Mower block, added via the Widgets menu's Mower card (_showMowerPopup()).
@@ -1930,6 +1947,7 @@ var DashticzDeviceEditor = (function () {
       if (special.specialType === 'carstatus') return 'fas fa-car';
       if (special.specialType === 'weatherinfo') return 'fas fa-cloud-sun-rain';
       if (special.specialType === 'car') return 'fas fa-car';
+      if (special.specialType === 'homeconnect') return 'fas fa-home';
       if (special.specialType === 'mower') return 'fas fa-robot';
       if (special.specialType === 'toon') return 'fas fa-temperature-half';
     }
@@ -10046,6 +10064,121 @@ var DashticzDeviceEditor = (function () {
     ).show();
   }
 
+  function _showHomeconnectPopup() {
+    var t = _translations();
+    $('#homeconnectblockpopup').remove();
+
+    var html =
+      '<div class="modal fade" id="homeconnectblockpopup" tabindex="-1" aria-hidden="true">';
+    html +=
+      '<div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">';
+    html +=
+      '<div class="modal-header"><h5 class="modal-title"><i class="fas fa-home me-2" aria-hidden="true"></i>' +
+      _esc(t.homeconnect_block) +
+      '</h5>';
+    html +=
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' +
+      _esc(t.close) +
+      '"></button></div>';
+    html += '<div class="modal-body">';
+    html += _quickOptionsHtml('homeconnect', {
+      icon: true,
+      iconValue: 'fas fa-home',
+      lastUpdate: false,
+      showTitle: true,
+    });
+    html +=
+      '<div class="mb-3"><label class="form-label" for="homeconnect-device-title">' +
+      _esc(t.html_block_title) +
+      '</label>';
+    html +=
+      '<input type="text" class="form-control" id="homeconnect-device-title" autocomplete="off" value="' +
+      _esc(t.homeconnect_block) +
+      '"></div>';
+    html += '<div class="cd-custom-message mt-2" role="status"></div></div>';
+    html +=
+      '<div class="modal-footer">' +
+      _backButtonHtml() +
+      '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">' +
+      '<i class="fas fa-xmark me-1" aria-hidden="true"></i>' +
+      _esc(t.cancel) +
+      '</button>';
+    html +=
+      '<button type="button" class="btn btn-primary btn-save" id="homeconnect-save-btn"><i class="fas fa-floppy-disk me-1" aria-hidden="true"></i>' +
+      _esc(t.save) +
+      '</button>';
+    html += '</div></div></div></div>';
+    $('body').append(html);
+    var $popup = $('#homeconnectblockpopup');
+    _wireQuickOptions('homeconnect', $popup);
+    _wireBackButton('homeconnectblockpopup');
+
+    $('#homeconnect-save-btn').on('click', function () {
+      var title = _cutUtf8(
+        $.trim(String($('#homeconnect-device-title').val() || '')),
+        100
+      );
+      var quickOptions = _readQuickOptions('homeconnect');
+      var iconIsImage =
+        quickOptions.icon && quickOptions.iconSource === 'image';
+
+      var customRows = [];
+      if (title)
+        customRows.push({
+          field: 'title',
+          setting: title,
+          value: title,
+          system: true,
+        });
+      if (iconIsImage && quickOptions.iconValue) {
+        customRows.push({
+          field: 'image',
+          setting: quickOptions.iconValue,
+          value: quickOptions.iconValue,
+        });
+      }
+      customRows.push({
+        field: 'hcmode',
+        setting: 'appliances',
+        value: 'appliances',
+      });
+
+      var reference = _nextSpecialReference('homeconnect');
+      var orderKey = _specialOrderKey(reference);
+      managedSpecials[orderKey] = {
+        kind: 'special',
+        specialType: 'homeconnect',
+        orderKey: orderKey,
+        reference: reference,
+        definition: {},
+        idx: null,
+        title: title,
+        width: 4,
+        height: null,
+        showTitle: quickOptions.showTitle,
+        options: {
+          icon: quickOptions.icon,
+          iconValue: iconIsImage ? null : quickOptions.iconValue,
+          last_update: quickOptions.lastUpdate,
+        },
+        customFields: customRows,
+        preservedFields: {},
+      };
+      managedOrder.push(orderKey);
+      // The modal fades out; a second click must not add a second block.
+      $(this).prop('disabled', true);
+      _hideModal(document.getElementById('homeconnectblockpopup'));
+      _save();
+    });
+
+    $popup.one('hidden.bs.modal', function () {
+      $(this).remove();
+    });
+    window.bootstrap.Modal.getOrCreateInstance(
+      document.getElementById('homeconnectblockpopup')
+    ).show();
+  }
+
   function _showCarPopup() {
     var t = _translations();
     $('#carblockpopup').remove();
@@ -12919,6 +13052,7 @@ var DashticzDeviceEditor = (function () {
     else if (special.specialType === 'carstatus') label = t.carstatus_block;
     else if (special.specialType === 'weatherinfo') label = t.weatherinfo_block;
     else if (special.specialType === 'car') label = t.car_block;
+    else if (special.specialType === 'homeconnect') label = t.homeconnect_block;
     else if (special.specialType === 'mower') label = t.mower_block;
     else if (special.specialType === 'toon') label = t.toon_block;
     var htmlFileRow =
@@ -13017,6 +13151,8 @@ var DashticzDeviceEditor = (function () {
     else if (special.specialType === 'weatherinfo')
       specialIconClass = 'fa-cloud-sun-rain';
     else if (special.specialType === 'car') specialIconClass = 'fa-car';
+    else if (special.specialType === 'homeconnect')
+      specialIconClass = 'fa-home';
     else if (special.specialType === 'mower') specialIconClass = 'fa-robot';
     else if (special.specialType === 'toon')
       specialIconClass = 'fa-temperature-half';
@@ -13179,6 +13315,7 @@ var DashticzDeviceEditor = (function () {
     weatherinfo: 'weatherinfo_',
     car: 'car_',
     mower: 'mower_',
+    homeconnect: 'homeconnect_',
     toon: 'toon_',
     // Matches the legacy hand-written 'graph_<idx>' convention (see
     // docs/blocks/graphs.rst and js/components/graph.js's own canHandle()
@@ -14703,6 +14840,7 @@ var DashticzDeviceEditor = (function () {
     openWeatherinfo: openWeatherinfo,
     openCar: openCar,
     openMower: openMower,
+    openHomeconnect: openHomeconnect,
     openToon: openToon,
     openGraph: openGraph,
     openLms: openLms,

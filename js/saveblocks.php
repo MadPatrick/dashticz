@@ -513,6 +513,12 @@ foreach ($data['devices'] as $entry) {
                     dashticz_json_error(400, 'A Toon block requires a mode.');
                 }
                 dashticz_validate_source_fields($customFields, 'toon');
+            } elseif ($kind === 'homeconnect') {
+                // hcmode is otherwise just another custom field, but
+                // js/components/homeconnect.js dispatches on it, so it is required.
+                if (!isset($customFields['hcmode']) || $customFields['hcmode'] !== 'appliances') {
+                    dashticz_json_error(400, 'A Home Connect block requires a mode.');
+                }
             } elseif ($kind === 'mower') {
                 // mowermode is otherwise just another custom field, but
                 // js/components/mower.js dispatches on it, so it is required.
