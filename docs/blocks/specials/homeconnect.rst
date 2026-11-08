@@ -14,7 +14,7 @@ What the tile shows, per appliance:
   anything else), each in its own colour (``.homeconnect-icon-washer`` and so on in
   ``custom.css``), and the name of the appliance. A leading ``Home Connect`` in the device
   name is left out;
-- while a program runs: the progress in percent, in a circle in the colour of the appliance icon, and *ready at HH:MM*. That time is the one in the
+- while a program runs: the progress as a small bar in the colour of the appliance icon and a percentage, and *ready at HH:MM*. That time is the one in the
   status of the appliance (*klaar om ongeveer ...*), or else the current time plus the remaining
   time;
 - at 100% a check mark;

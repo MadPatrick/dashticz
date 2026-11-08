@@ -353,23 +353,20 @@ var DT_homeconnect = (function () {
     );
   }
 
-  // A progress circle with the percentage in it. The ring is drawn in the
-  // colour of the appliance icon (.homeconnect-icon-<type>), the percentage is
-  // text over it, in the text colour of the tile. The circle has a
-  // circumference of 100, so the dash is the percentage.
-  function ringHtml(app, pct) {
+  // A small progress bar, then the percentage. The bar is drawn in the colour
+  // of the appliance icon (.homeconnect-icon-<type>), on one line with the text.
+  function barHtml(app, pct) {
     var level = Math.max(0, Math.min(100, Math.round(pct)));
     return (
-      '<span class="homeconnect-ring-wrap"><svg class="homeconnect-ring homeconnect-icon-' +
+      '<span class="homeconnect-bar homeconnect-icon-' +
       (GLYPHS[app.icon] ? app.icon : 'plug') +
-      '" viewBox="0 0 36 36" aria-hidden="true">' +
-      '<circle class="homeconnect-ring-track" cx="18" cy="18" r="15.9155"/>' +
-      '<circle class="homeconnect-ring-fill" cx="18" cy="18" r="15.9155" ' +
-      'stroke-dasharray="' +
+      '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
       level +
-      ' 100"/></svg><span class="homeconnect-ring-text">' +
+      '"><span class="homeconnect-bar-fill" style="width:' +
       level +
-      '%</span></span> '
+      '%"></span></span><b class="homeconnect-pct">' +
+      level +
+      '%</b> '
     );
   }
 
@@ -447,7 +444,7 @@ var DT_homeconnect = (function () {
         finishTime(dataOf(app.time), now);
       html += row(
         app,
-        ringHtml(app, progress) +
+        barHtml(app, progress) +
           (ready
             ? tr('homeconnect_ready_at', 'ready at') + ' ' + ready
             : tr('homeconnect_unknown_time', 'time unknown'))
@@ -457,7 +454,7 @@ var DT_homeconnect = (function () {
       if (info.pct !== null || info.ready)
         html += row(
           app,
-          (info.pct !== null ? ringHtml(app, info.pct) : '') +
+          (info.pct !== null ? barHtml(app, info.pct) : '') +
             (info.ready
               ? tr('homeconnect_ready_at', 'ready at') + ' ' + info.ready
               : '')
