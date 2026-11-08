@@ -9394,14 +9394,9 @@ canvas {
   order: 0;
 }
 
-/* An empty control keeps the width of a button, so the rows without a
-   button (Plugged in, brightness) line up with the other rows. */
+/* Rows without a button (Plugged in, brightness) start at the left edge, in
+   line with the battery rows. */
 .fullykiosk-control:empty {
-  width: 3.4em;
-}
-
-.fullykiosk-group > .fullykiosk-control:empty,
-.fullykiosk-row.fullykiosk-battery .fullykiosk-control:empty {
   display: none;
 }
 
