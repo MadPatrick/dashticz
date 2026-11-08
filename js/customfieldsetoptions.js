@@ -41,6 +41,20 @@
         ['false', 'Allow manual switching'],
       ],
     },
+    setpointbar: {
+      strict: true,
+      values: [
+        ['true', 'Show setpoint meter'],
+        ['false', 'Hide setpoint meter'],
+      ],
+    },
+    setpointgraph: {
+      strict: true,
+      values: [
+        ['true', 'Show 24 hour heating line'],
+        ['false', 'Hide 24 hour heating line'],
+      ],
+    },
     graph: {
       strict: true,
       values: [

@@ -105,7 +105,7 @@ function getThermostatBlock(block) {
     html = template(dataObject);
     block.$mountPoint.find('.block_' + block.key).html(html);
     addThermostatFunctions(block);
-    if (choose(block.setpointgraph, false) === true) addSetpointGraph(block);
+    if (choose(block.setpointgraph, true) !== false) addSetpointGraph(block);
   });
   return true;
 }
@@ -152,7 +152,7 @@ function updateSetpointMeter(block, value) {
     .css('left', setpointMeterPos(block, value) + '%');
 }
 
-/* Optional sparkline of the last 24 hours (block option setpointgraph: true).
+/* Sparkline of the last 24 hours (on by default, block option setpointgraph: false disables it).
    One request per tile; it uses the setpoint when Domoticz reports it and
    otherwise the measured value. */
 function addSetpointGraph(block) {

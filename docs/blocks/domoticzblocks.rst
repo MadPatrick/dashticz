@@ -454,6 +454,11 @@ To hide the '+/-'-buttons add ``protected: true`` to the block definition.
         protected: true
     } 
 
+A setpoint tile also shows a colour meter with a marker at the current setpoint
+(below 12 blue, 12-17 light blue, 17-23 green, 23-26 yellow, above red) and a
+sparkline of the last 24 hours. Both are on by default. Disable them with
+``setpointbar: false`` and ``setpointgraph: false``.
+
 
 Usage of popup graph window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

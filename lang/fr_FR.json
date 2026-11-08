@@ -1528,6 +1528,12 @@
         },
         "switchMode": {
           "description": "Pour les appareils RVB pris en charge, ouvre le sélecteur de couleur au lieu de basculer On/Off."
+        },
+        "setpointbar": {
+          "description": "Affiche le compteur de couleur avec le repère de consigne sur une tuile de consigne."
+        },
+        "setpointgraph": {
+          "description": "Affiche la courbe de chauffe sur 24 heures (sparkline) sur une tuile de consigne."
         }
       }
     },
@@ -1886,6 +1892,26 @@
           {
             "value": "A",
             "description": "Ampère"
+          }
+        ],
+        "setpointbar": [
+          {
+            "value": "true",
+            "description": "Afficher le compteur de consigne"
+          },
+          {
+            "value": "false",
+            "description": "Masquer le compteur de consigne"
+          }
+        ],
+        "setpointgraph": [
+          {
+            "value": "true",
+            "description": "Afficher la courbe de chauffe 24 h"
+          },
+          {
+            "value": "false",
+            "description": "Masquer la courbe de chauffe 24 h"
           }
         ]
       }

@@ -43,6 +43,8 @@ function loadThermostat(overrides) {
     },
     DT_function: { promptPassword: () => true },
     Domoticz: {
+      info: {},
+      request: () => ({ then: () => {} }),
       syncRequest: (idx, query) => requests.push([idx, query]),
     },
     ...overrides,
@@ -154,6 +156,8 @@ test('Evohome override falls back to a 60 minute zone and 30 minute hot water bo
       ),
     }),
     Domoticz: {
+      info: {},
+      request: () => ({ then: () => {} }),
       syncRequest: (idx, query) => (
         added.push(query),
         { then: (callback) => callback() }
