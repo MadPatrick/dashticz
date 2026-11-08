@@ -177,9 +177,9 @@ function setpointArcSvg(block, value) {
   var m = setpointArcPoint(setpointMeterPos(block, value));
   return (
     '<svg class="setpoint-arc-svg" viewBox="0 0 100 54">' +
-    '<g fill="none" stroke-width="8" stroke-linecap="butt">' +
+    '<g fill="none" stroke-width="10" stroke-linecap="butt">' +
     paths +
-    '</g><circle class="setpoint-arc-marker" r="6.5" cx="' +
+    '</g><circle class="setpoint-arc-marker" r="7" cx="' +
     m[0].toFixed(2) +
     '" cy="' +
     m[1].toFixed(2) +

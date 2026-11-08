@@ -10645,14 +10645,21 @@ input[id$='-carstatus-fontsize'] {
   padding: 4px 0;
 }
 
-.setpoint-arc-icon {
+/* The icon stays at the top left of the whole tile, not of the centred arc. */
+.mh.setpoint-arc-block {
+  position: relative;
+}
+
+.mh.setpoint-arc-block .setpoint-arc-icon {
   position: absolute;
-  top: 2px;
-  left: 0;
+  top: 10px;
+  left: 10px;
+  width: auto;
+  margin: 0;
 }
 
 .setpoint-arc-icon .icon {
-  max-height: 24px;
+  max-height: 28px;
 }
 
 .setpoint-arc {
@@ -10676,9 +10683,9 @@ input[id$='-carstatus-fontsize'] {
 
 .setpoint-arc-text {
   position: absolute;
-  left: 20%;
-  right: 20%;
-  bottom: 4%;
+  left: 18%;
+  right: 18%;
+  bottom: 0;
   text-align: center;
   line-height: 1.25;
 }
@@ -10713,17 +10720,26 @@ div.mh.setpoint-arc-block:not(.multiline) {
   margin: 0;
 }
 
-.setpoint-arc-value {
-  flex: 1;
-  text-align: center;
-  font-size: 150%;
-  font-weight: bold;
+.mh .setpoint-arc-text .setpoint-arc-value {
+  display: inline-block;
+  font-size: 2.3em !important;
+  font-weight: 300;
+  line-height: 1.1;
   white-space: nowrap;
 }
 
+.mh .setpoint-arc-text .title {
+  display: block;
+  font-size: 85% !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .setpoint-graph {
-  width: 70%;
-  margin: 2px auto;
+  flex: 1;
+  max-width: 60%;
+  margin: 0 auto;
   opacity: 0.8;
 }
 
