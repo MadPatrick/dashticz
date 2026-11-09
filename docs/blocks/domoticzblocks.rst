@@ -454,6 +454,11 @@ To hide the '+/-'-buttons add ``protected: true`` to the block definition.
         protected: true
     } 
 
+A setpoint tile shows a half circle meter with the temperature in the middle,
+a marker at the current setpoint and the '-' and '+' buttons next to it. The
+colours run from blue (cold) via green and yellow to red. Use
+``setpointbar: false`` to get the classic tile back.
+
 
 Usage of popup graph window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -10671,3 +10671,108 @@ input[id$='-carstatus-fontsize'] {
   text-align: right;
   margin-right: 0.2em;
 }
+
+/* Setpoint tile (js/tempcontrol.js): half circle colour meter with a marker
+   at the current setpoint and the - and + buttons next to it, aligned with
+   its bottom. */
+.setpoint-arc-tile {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  padding: 22px 0 4px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* The icon stays at the top left of the whole tile, not of the centred arc. */
+.mh.setpoint-arc-block {
+  position: relative;
+}
+
+.mh.setpoint-arc-block .setpoint-arc-icon {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: auto;
+  margin: 0;
+}
+
+.setpoint-arc-icon .icon {
+  max-height: 28px;
+}
+
+/* The title sits at the top right, like on the other tiles and widgets. */
+.mh.setpoint-arc-block .setpoint-arc-title {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  max-width: calc(100% - 56px);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.setpoint-arc {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.setpoint-arc-svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.setpoint-arc-marker {
+  fill: #fff;
+  stroke: rgba(0, 0, 0, 0.6);
+  stroke-width: 1.5;
+  transition:
+    cx 0.3s,
+    cy 0.3s;
+}
+
+.setpoint-arc-text {
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  bottom: 0;
+  text-align: center;
+  line-height: 1.25;
+}
+
+/* The half circle needs more room than the classic 85px block height. */
+div.mh.setpoint-arc-block:not(.multiline) {
+  height: auto;
+}
+
+.setpoint-arc-btn {
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.setpoint-arc-text .lastupdate {
+  font-size: max(8px, 6cqw) !important;
+}
+
+.setpoint-arc-btn .btn-number {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  margin: 0;
+}
+
+.mh .setpoint-arc-text .setpoint-arc-value {
+  display: inline-block;
+  font-size: min(2.3em, 17cqw) !important;
+  font-weight: 300;
+  line-height: 1.1;
+  white-space: nowrap;
+}

@@ -1533,6 +1533,9 @@
         },
         "switchMode": {
           "description": "Pour les appareils RVB pris en charge, ouvre le sélecteur de couleur au lieu de basculer On/Off."
+        },
+        "setpointbar": {
+          "description": "Affiche le compteur de couleur avec le repère de consigne sur une tuile de consigne."
         }
       }
     },
@@ -1891,6 +1894,16 @@
           {
             "value": "A",
             "description": "Ampère"
+          }
+        ],
+        "setpointbar": [
+          {
+            "value": "true",
+            "description": "Afficher le compteur de consigne"
+          },
+          {
+            "value": "false",
+            "description": "Masquer le compteur de consigne"
           }
         ]
       }

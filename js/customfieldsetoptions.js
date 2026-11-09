@@ -41,6 +41,13 @@
         ['false', 'Allow manual switching'],
       ],
     },
+    setpointbar: {
+      strict: true,
+      values: [
+        ['true', 'Show setpoint meter'],
+        ['false', 'Hide setpoint meter'],
+      ],
+    },
     graph: {
       strict: true,
       values: [

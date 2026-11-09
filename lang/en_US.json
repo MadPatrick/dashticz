@@ -1488,6 +1488,9 @@
         "protected": {
           "description": "Prevent manual switching from Dashticz."
         },
+        "setpointbar": {
+          "description": "Show the colour meter with the setpoint marker on a setpoint tile."
+        },
         "confirmation": {
           "description": "Ask for confirmation before changing a switch device."
         },
@@ -1620,6 +1623,16 @@
           {
             "value": "false",
             "description": "Allow manual switching"
+          }
+        ],
+        "setpointbar": [
+          {
+            "value": "true",
+            "description": "Show setpoint meter"
+          },
+          {
+            "value": "false",
+            "description": "Hide setpoint meter"
           }
         ],
         "graph": [

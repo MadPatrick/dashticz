@@ -33,6 +33,7 @@ function addThermostatFunctions(block) {
           : currentVal + setpointStep;
       if (newValue >= block.min && newValue <= block.max) {
         input.text(number_format(newValue, 1) + block.unit).trigger('change');
+        updateSetpointMeter(block, newValue);
         switchThermostat(block, newValue);
       }
       if (newValue <= block.min) {
@@ -97,12 +98,120 @@ function getThermostatBlock(block) {
       lastupdate: moment(device.LastUpdate).format(settings['timeformat']),
       mIcon: isDefined(block.icon) ? block.icon : '',
       mImage: isDefined(block.image) ? block.image : 'heating.png',
+      meter: choose(block.setpointbar, true) !== false,
+      arcSvg: setpointArcSvg(block, parseFloat(device.Data)),
     };
     html = template(dataObject);
-    block.$mountPoint.find('.block_' + block.key).html(html);
+    block.$mountPoint
+      .find('.block_' + block.key)
+      .toggleClass('setpoint-arc-block', dataObject.meter)
+      .html(html);
     addThermostatFunctions(block);
   });
   return true;
+}
+
+/* Setpoint meter: a half circle (180 degrees) on the setpoint tile with the
+   same colour zones as the temperature block (<12 blue, 12-17 light blue,
+   17-23 green, 23-26 yellow, above red) and a marker at the current setpoint.
+   The zones only apply to a temperature in degrees; other units get a neutral
+   arc. The - and + buttons sit below the two ends of the arc. */
+/* Colour stops of the gradient: the middle of each zone (the first and the
+   last zone keep their colour out to the ends of the scale). */
+var SETPOINT_STOPS = [
+  [12, [59, 130, 246]],
+  [14.5, [125, 211, 252]],
+  [20, [74, 222, 128]],
+  [24.5, [250, 204, 21]],
+  [28, [239, 68, 68]],
+];
+var SETPOINT_ARC_STEPS = 60;
+
+/* Colour of the gradient at a temperature, interpolated between the stops. */
+function setpointColor(temp) {
+  var stops = SETPOINT_STOPS;
+  if (temp <= stops[0][0]) return 'rgb(' + stops[0][1].join(',') + ')';
+  for (var i = 1; i < stops.length; i++) {
+    if (temp <= stops[i][0]) {
+      var f = (temp - stops[i - 1][0]) / (stops[i][0] - stops[i - 1][0]);
+      return (
+        'rgb(' +
+        stops[i][1]
+          .map(function (c, k) {
+            return Math.round(
+              stops[i - 1][1][k] + (c - stops[i - 1][1][k]) * f
+            );
+          })
+          .join(',') +
+        ')'
+      );
+    }
+  }
+  return 'rgb(' + stops[stops.length - 1][1].join(',') + ')';
+}
+
+function setpointMeterPos(block, value) {
+  var range = block.max - block.min;
+  if (isNaN(value) || !(range > 0)) return 0;
+  return Math.max(0, Math.min(100, ((value - block.min) / range) * 100));
+}
+
+/* Point on the arc (centre 50,50, radius 40) for a position of 0-100%:
+   0% is the left end, 100% the right end. */
+function setpointArcPoint(pos) {
+  var angle = Math.PI * (1 - pos / 100);
+  return [50 + 40 * Math.cos(angle), 50 - 40 * Math.sin(angle)];
+}
+
+function setpointArcPath(from, to) {
+  var p1 = setpointArcPoint(from);
+  var p2 = setpointArcPoint(to);
+  return (
+    'M' +
+    p1[0].toFixed(2) +
+    ' ' +
+    p1[1].toFixed(2) +
+    ' A40 40 0 0 1 ' +
+    p2[0].toFixed(2) +
+    ' ' +
+    p2[1].toFixed(2)
+  );
+}
+
+function setpointArcSvg(block, value) {
+  var degrees = block.unit.indexOf('°') >= 0;
+  var paths = '';
+  /* An arc stroke cannot hold a gradient, so it is drawn as many short
+     pieces; each one overlaps the next a little to avoid hairlines. */
+  for (var i = 0; i < SETPOINT_ARC_STEPS; i++) {
+    var from = (i / SETPOINT_ARC_STEPS) * 100;
+    var to = Math.min(100, ((i + 1) / SETPOINT_ARC_STEPS) * 100 + 0.4);
+    var mid = block.min + ((from + to) / 200) * (block.max - block.min);
+    paths +=
+      '<path d="' +
+      setpointArcPath(from, to) +
+      '" stroke="' +
+      (degrees ? setpointColor(mid) : 'rgba(255,255,255,0.35)') +
+      '" />';
+  }
+  var m = setpointArcPoint(setpointMeterPos(block, value));
+  return (
+    '<svg class="setpoint-arc-svg" viewBox="0 0 100 50">' +
+    '<g fill="none" stroke-width="10" stroke-linecap="butt">' +
+    paths +
+    '</g><circle class="setpoint-arc-marker" r="7" cx="' +
+    m[0].toFixed(2) +
+    '" cy="' +
+    m[1].toFixed(2) +
+    '" /></svg>'
+  );
+}
+
+function updateSetpointMeter(block, value) {
+  var m = setpointArcPoint(setpointMeterPos(block, value));
+  block.$mountPoint
+    .find('.setpoint-arc-marker')
+    .attr({ cx: m[0].toFixed(2), cy: m[1].toFixed(2) });
 }
 
 function switchThermostat(block, setpoint) {
