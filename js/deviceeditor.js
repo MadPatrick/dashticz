@@ -9461,23 +9461,34 @@ var DashticzDeviceEditor = (function () {
     ].concat(_settingRows(HOMECONNECT_SECTION, values));
   }
 
-  /* The logo width and height of the Car widget only apply to an image, so
-     they show only while the icon source is Image (the field rows and the Icon
-     option can change at any time, so the state is re-read on every click or
-     change in the popup). */
+  /* The logo width and height of the Car widget only apply to an image: they
+     show directly below the icon row while its source is Image, and are
+     hidden otherwise (the rows and the Icon option can change at any time, so
+     the state is re-read on every click or change in the popup). */
   function _wireCarstatusIconSize($popup, iconOptionId) {
+    var $fields = $popup
+      .find(
+        'input[id$="-carstatus-iconwidth"], input[id$="-carstatus-iconheight"]'
+      )
+      .closest('.de-carstatus-field')
+      .removeClass('de-carstatus-field-rowstart');
+    if (!$fields.length) return;
+    $fields.first().before('<div class="de-carstatus-iconsize d-none"></div>');
+    var $box = $popup.find('.de-carstatus-iconsize');
+    $box.append($fields);
     function refresh() {
-      var isImage =
-        $popup.find('.de-icon-source').filter(function () {
-          return $(this).val() === 'image';
-        }).length > 0 &&
+      var $row = $popup
+        .find('.de-icon-field-row')
+        .filter(function () {
+          return $(this).find('.de-icon-source').val() === 'image';
+        })
+        .first();
+      var show =
+        $row.length > 0 &&
+        $row.css('display') !== 'none' &&
         (!iconOptionId || $('#' + iconOptionId).hasClass('active'));
-      $popup
-        .find(
-          'input[id$="-carstatus-iconwidth"], input[id$="-carstatus-iconheight"]'
-        )
-        .closest('.de-carstatus-field')
-        .toggleClass('d-none', !isImage);
+      if (show && !$row.next().is($box)) $box.insertAfter($row);
+      $box.toggleClass('d-none', !show);
     }
     $popup.on('click change input', function () {
       setTimeout(refresh, 0);
