@@ -431,15 +431,20 @@ var DT_carstatus = (function () {
       var below = root.querySelector('.carstatus-below');
       if (!below) return;
       below.style.setProperty('--carstatus-indent', '0px');
-      // The line ends where the battery line (the mileage) ends.
-      below.style.marginRight = '0px';
+      // The line ends where the battery line (the mileage) ends: whichever of
+      // the two is wider is made as narrow as the other, so nothing sticks
+      // out of the tile (no scrollbar).
+      below.style.marginRight = '';
+      var headtext = root.querySelector('.carstatus-headtext');
+      if (headtext) headtext.style.paddingRight = '';
       var battery = root.querySelector('.carstatus-battery');
       if (battery) {
         var gap = Math.round(
           below.getBoundingClientRect().right -
             battery.getBoundingClientRect().right
         );
-        if (gap) below.style.marginRight = gap + 'px';
+        if (gap > 0) below.style.marginRight = gap + 'px';
+        else if (gap < 0 && headtext) headtext.style.paddingRight = -gap + 'px';
       }
       // The bar itself: the box around it starts at the icon.
       var head = root.querySelector('.carstatus-headtext .carstatus-battery');

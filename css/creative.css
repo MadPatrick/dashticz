@@ -9317,6 +9317,7 @@ canvas {
   display: flex;
   flex-direction: column;
   overflow: auto;
+  overflow-x: hidden;
   margin-left: 0;
   padding-left: 0;
 }
