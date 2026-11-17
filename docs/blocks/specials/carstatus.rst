@@ -84,7 +84,7 @@ set is treated as off (or 0).
   * - cslinegap
     - Optional: the distance in pixels between the battery line and the grey
       line below it (``0``-``200``).
-      Default: ``50``
+      Default: ``25``
   * - csdebug
     - ``true``: a test view that always shows the rows *Charging until*, *Doors*
       and *Windows* (also when they do not apply) and the charging glow in the

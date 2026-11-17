@@ -672,7 +672,7 @@
       "carstatus_block_iconheight": "Hauteur du logo (px)",
       "carstatus_block_iconheight_help": "Hauteur du logo / de l'image de la voiture en pixels. Vide = la taille du thème ; avec seulement une hauteur, la largeur suit les proportions.",
       "carstatus_block_linegap": "Distance jusqu'à la ligne (px)",
-      "carstatus_block_linegap_help": "Distance en pixels entre la ligne de la batterie et la ligne grise en dessous. Par défaut 50.",
+      "carstatus_block_linegap_help": "Distance en pixels entre la ligne de la batterie et la ligne grise en dessous. Par défaut 25.",
       "invalid_carstatus_block_devices": "Choisissez au moins un périphérique Domoticz.",
       "weatherinfo_block": "Météo",
       "car_block": "Infos voiture",
