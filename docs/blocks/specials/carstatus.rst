@@ -81,6 +81,10 @@ set is treated as off (or 0).
     - Optional: height of the logo / image in pixels (``8``-``400``). With only
       a height the width follows the proportions of the image.
       Default: the size of the theme
+  * - cslinegap
+    - Optional: the distance in pixels between the battery line and the grey
+      line below it (``0``-``200``).
+      Default: ``50``
   * - csdebug
     - ``true``: a test view that always shows the rows *Charging until*, *Doors*
       and *Windows* (also when they do not apply) and the charging glow in the

@@ -10533,7 +10533,7 @@ input[id$='-carstatus-fontsize'] {
 /* The part below the line: status and the rows Charging until, Doors and
    Windows. The line always shows, also when there is nothing below it. */
 .carstatus-below {
-  margin-top: 8px;
+  margin-top: 50px;
   padding-top: 6px;
   border-top: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;

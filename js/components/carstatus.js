@@ -21,6 +21,8 @@
  *   csmid         below this level (%) the battery is orange; default 50
  *   csiconwidth   optional width (px) of the logo/image; empty = the theme's
  *   csiconheight  optional height (px) of the logo/image; empty = the theme's
+ *   cslinegap     distance (px) between the battery line and the grey line
+ *                 below it; default 50
  *   csdebug       test view: the state of every device below the status
  *   csfontsize    optional font size in px (8-60); empty = the theme's
  *
@@ -434,6 +436,9 @@ var DT_carstatus = (function () {
       // The line ends where the battery line (the mileage) ends: whichever of
       // the two is wider is made as narrow as the other, so nothing sticks
       // out of the tile (no scrollbar).
+      var lineGap = parseInt(me.block.cslinegap, 10);
+      below.style.marginTop =
+        (lineGap >= 0 && lineGap <= 200 ? lineGap : 50) + 'px';
       below.style.marginRight = '';
       var headtext = root.querySelector('.carstatus-headtext');
       if (headtext) headtext.style.paddingRight = '';

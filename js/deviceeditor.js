@@ -9275,7 +9275,7 @@ var DashticzDeviceEditor = (function () {
     labelPrefix: 'carstatus_block_',
     fieldClass: 'de-carstatus-field',
     saveOrder:
-      'door windows mileage charging chargetime battery driving home critical low mid iconwidth iconheight debug fontsize',
+      'door windows mileage charging chargetime battery driving home critical low mid iconwidth iconheight linegap debug fontsize',
     settings: [
       { key: 'battery', type: 'device', anydevice: true, def: '' },
       { key: 'mileage', type: 'device', anydevice: true, def: '' },
@@ -9305,6 +9305,8 @@ var DashticzDeviceEditor = (function () {
         rowstart: 1,
       },
       { key: 'iconheight', type: 'number', def: null, range: [8, 400, 1] },
+      // The distance (px) between the battery line and the line below it.
+      { key: 'linegap', type: 'number', def: 50, range: [0, 200, 1] },
       // A test view: the raw state of every device, below the status.
       { key: 'debug', type: 'switch', def: false, full: 1 },
       { key: 'fontsize', type: 'number', def: null, range: [8, 60, 1] },
