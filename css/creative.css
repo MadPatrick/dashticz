@@ -1639,6 +1639,13 @@ next css sets the default height of the frame popup
   margin-left: 0;
 }
 
+/* Flex shrink is distributed in proportion to flex-basis, so the wide clock
+   text and the logo shrank together and the app title was cut to "Da...".
+   Make the clock give way far faster than the logo. */
+.colbar .miniclock {
+  flex-shrink: 100;
+}
+
 .colbar .text-right {
   display: flex;
   align-items: center;
