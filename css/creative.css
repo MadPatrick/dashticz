@@ -10383,12 +10383,12 @@ canvas {
   --carstatus-color: red;
 }
 
-/* The bar has the look of the Home Connect bar (.homeconnect-bar): 6em wide,
-   in the colour of the battery level. */
+/* The bar has the look of the Home Connect bar (.homeconnect-bar), at least 6em
+   wide and filling the space up to the mileage, in the colour of the level. */
 .carstatus-bar {
   display: inline-block;
-  flex: 0 0 auto;
-  width: 6em;
+  flex: 1 1 6em;
+  min-width: 6em;
   height: 0.4em;
   border-radius: 0.2em;
   margin: 0 0.5em;
