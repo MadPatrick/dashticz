@@ -10383,12 +10383,12 @@ canvas {
   --carstatus-color: red;
 }
 
-/* The bar has the look of the Home Connect bar (.homeconnect-bar), at least 6em
-   wide and filling the space up to the mileage, in the colour of the level. */
+/* The bar has the look of the Home Connect bar (.homeconnect-bar), scaling
+   to the space between the percentage and the mileage, in the colour of the level. */
 .carstatus-bar {
   display: inline-block;
-  flex: 1 1 6em;
-  min-width: 6em;
+  flex: 1 1 0;
+  min-width: 1em;
   height: 0.4em;
   border-radius: 0.2em;
   margin: 0 0.5em;
@@ -10411,6 +10411,12 @@ canvas {
   flex-direction: row;
   align-items: center;
   gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.carstatus-battery {
+  min-width: 0;
 }
 
 .carstatus-pct,
@@ -10419,11 +10425,12 @@ canvas {
   font-family: inherit;
   font-size: inherit;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .carstatus-pct {
   color: var(--carstatus-color);
-  min-width: 4.2em;
+  min-width: 3.6em;
 }
 
 .carstatus-km {
