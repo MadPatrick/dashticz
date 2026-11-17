@@ -10561,6 +10561,18 @@ input[id$='-carstatus-fontsize'] {
   padding-bottom: 0;
 }
 
+/* The header row is as high as the battery line; a higher logo or image sticks
+   out of it, so (unlike other list widgets of a grid screen) it is not
+   clipped there. */
+.carstatus-block .dt_content,
+.dt-grid-screen
+  > .dt-grid-layout
+  > .dt-grid-item
+  > .dt-widget-rows.carstatus-block
+  .dt_content {
+  overflow: visible;
+}
+
 .carstatus-block .dt_state {
   margin-top: 0;
   padding-top: 0;
