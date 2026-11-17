@@ -9461,6 +9461,30 @@ var DashticzDeviceEditor = (function () {
     ].concat(_settingRows(HOMECONNECT_SECTION, values));
   }
 
+  /* The logo width and height of the Car widget only apply to an image, so
+     they show only while the icon source is Image (the field rows and the Icon
+     option can change at any time, so the state is re-read on every click or
+     change in the popup). */
+  function _wireCarstatusIconSize($popup, iconOptionId) {
+    function refresh() {
+      var isImage =
+        $popup.find('.de-icon-source').filter(function () {
+          return $(this).val() === 'image';
+        }).length > 0 &&
+        (!iconOptionId || $('#' + iconOptionId).hasClass('active'));
+      $popup
+        .find(
+          'input[id$="-carstatus-iconwidth"], input[id$="-carstatus-iconheight"]'
+        )
+        .closest('.de-carstatus-field')
+        .toggleClass('d-none', !isImage);
+    }
+    $popup.on('click change input', function () {
+      setTimeout(refresh, 0);
+    });
+    refresh();
+  }
+
   function _showCarstatusPopup() {
     var t = _translations();
     $('#carstatusblockpopup').remove();
@@ -9511,6 +9535,7 @@ var DashticzDeviceEditor = (function () {
     var $popup = $('#carstatusblockpopup');
     _wireQuickOptions('carstatus', $popup);
     _wireBackButton('carstatusblockpopup');
+    _wireCarstatusIconSize($popup, 'carstatus-opt-icon');
 
     $('#carstatus-save-btn').on('click', function () {
       var $message = $popup
@@ -11850,6 +11875,7 @@ var DashticzDeviceEditor = (function () {
     $('body').append(html);
 
     var $popup = $('#de-config-popup');
+    if (isCarstatusBlock) _wireCarstatusIconSize($popup);
     // Whether the user actually interacted with the icon controls this time
     // the popup is open - see the generatedIcon skip-check in the save
     // handler below, which relies on this to tell "the pre-filled Icon
