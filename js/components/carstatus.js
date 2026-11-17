@@ -423,6 +423,26 @@ var DT_carstatus = (function () {
     else img.addEventListener('load', apply);
   }
 
+  // The height of the header row is the height of the battery line: the logo
+  // or image next to it (centred on that line) does not make the row, and so
+  // the distance to the grey line, any higher.
+  function fitHeader(root) {
+    var header = root.querySelector('.dt_content');
+    var text = root.querySelector('.carstatus-headtext');
+    var column = header && header.querySelector('.col-icon');
+    if (!header || !text) return;
+    header.style.height = '';
+    if (column) column.style.transform = '';
+    var textHeight = text.offsetHeight;
+    if (!textHeight) return;
+    header.style.height = textHeight + 'px';
+    if (column)
+      column.style.transform =
+        'translateY(' +
+        Math.round((textHeight - column.offsetHeight) / 2) +
+        'px)';
+  }
+
   // The text below the line starts at the left of the battery: with the
   // battery next to the icon (no title) it is indented by the width of the
   // icon column, measured from the page because the theme sets that width.
@@ -432,6 +452,7 @@ var DT_carstatus = (function () {
     var apply = function () {
       var below = root.querySelector('.carstatus-below');
       if (!below) return;
+      fitHeader(root);
       below.style.setProperty('--carstatus-indent', '0px');
       // The line ends where the battery line (the mileage) ends: whichever of
       // the two is wider is made as narrow as the other, so nothing sticks
