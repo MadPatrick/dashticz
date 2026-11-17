@@ -19,6 +19,8 @@
  *   cscritical    below this level (%) the battery blinks red; default 15
  *   cslow         below this level (%) the battery is red; default 30
  *   csmid         below this level (%) the battery is orange; default 50
+ *   csiconwidth   optional width (px) of the logo/image; empty = the theme's
+ *   csiconheight  optional height (px) of the logo/image; empty = the theme's
  *   csdebug       test view: the state of every device below the status
  *   csfontsize    optional font size in px (8-60); empty = the theme's
  *
@@ -378,18 +380,29 @@ var DT_carstatus = (function () {
       var other = Math.round(
         wide ? (size * width) / height : (size * height) / width
       );
+      var imageWidth = wide ? other : size;
+      var imageHeight = wide ? size : other;
+      // A width and/or height from the settings wins; with only one of them
+      // the other follows the proportions of the image.
+      var setWidth = parseInt(me.block.csiconwidth, 10);
+      var setHeight = parseInt(me.block.csiconheight, 10);
+      if (setWidth > 0 && setHeight > 0) {
+        imageWidth = setWidth;
+        imageHeight = setHeight;
+      } else if (setWidth > 0) {
+        imageWidth = setWidth;
+        imageHeight = Math.round((setWidth * height) / width);
+      } else if (setHeight > 0) {
+        imageHeight = setHeight;
+        imageWidth = Math.round((setHeight * width) / height);
+      }
       img.style.setProperty('max-width', 'none', 'important');
       img.style.setProperty('max-height', 'none', 'important');
-      img.style.setProperty('width', (wide ? other : size) + 'px', 'important');
-      img.style.setProperty(
-        'height',
-        (wide ? size : other) + 'px',
-        'important'
-      );
+      img.style.setProperty('width', imageWidth + 'px', 'important');
+      img.style.setProperty('height', imageHeight + 'px', 'important');
       // The icon column grows with the image, so the battery next to it
       // does not run under it.
       var column = img.parentNode;
-      var imageWidth = wide ? other : size;
       column.style.setProperty('width', imageWidth + 'px', 'important');
       // The theme may offset the image inside the column: the column then
       // ends where the image ends.
