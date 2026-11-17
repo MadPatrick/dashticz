@@ -183,43 +183,43 @@ var DT_carstatus = (function () {
     );
   }
 
-  // The battery percentage with a battery icon and the mileage with a road
-  // icon.
-  function batteryTextHtml(pct, mileage, limits) {
+  // One line: the battery percentage with a battery icon, the progress bar
+  // (same look as the bar of the Home Connect widget) and the mileage with a
+  // road icon at the end.
+  function batteryTextHtml(pct, mileage, limits, charging) {
+    var level = batteryLevel(pct);
     return (
       '<div class="carstatus-battery-text ' +
-      batteryClass(batteryLevel(pct), limits) +
+      batteryClass(level, limits) +
+      (charging ? ' carstatus-charging' : '') +
       '"><span class="carstatus-pct">' +
-      batterySvg(batteryLevel(pct)) +
-      batteryLevel(pct) +
-      '%</span><span class="carstatus-km">' +
+      batterySvg(level) +
+      level +
+      '%</span><span class="carstatus-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
+      level +
+      '"><span class="carstatus-bar-fill" style="width:' +
+      level +
+      '%"></span></span><span class="carstatus-km">' +
       roadSvg() +
       esc(Math.round(mileage)) +
       ' km</span></div>'
     );
   }
 
-  // The battery: the percentage at the start and the mileage at the end of
-  // the progress bar, above it. Empty when the battery is shown next to the
-  // icon (see render()).
+  // The battery line. Empty when the battery is shown next to the icon (see
+  // render()).
   function batteryHtml(pct, mileage, charging, inHeader, limits) {
     if (inHeader) return '';
     return fullBatteryHtml(pct, mileage, charging, limits);
   }
 
   function fullBatteryHtml(pct, mileage, charging, limits) {
-    var level = batteryLevel(pct);
     return (
       '<div class="carstatus-battery ' +
-      batteryClass(level, limits) +
-      (charging ? ' carstatus-charging' : '') +
+      batteryClass(batteryLevel(pct), limits) +
       '">' +
-      batteryTextHtml(pct, mileage, limits) +
-      '<div class="carstatus-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
-      level +
-      '"><span class="carstatus-bar-fill" style="width:' +
-      level +
-      '%"></span></div></div>'
+      batteryTextHtml(pct, mileage, limits, charging) +
+      '</div>'
     );
   }
 
@@ -419,7 +419,7 @@ var DT_carstatus = (function () {
       if (!below) return;
       below.style.setProperty('--carstatus-indent', '0px');
       // The bar itself: the box around it starts at the icon.
-      var head = root.querySelector('.carstatus-headtext .carstatus-bar');
+      var head = root.querySelector('.carstatus-headtext .carstatus-battery');
       if (!head) return;
       var delta = Math.round(
         head.getBoundingClientRect().left - below.getBoundingClientRect().left

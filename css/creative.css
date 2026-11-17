@@ -10383,40 +10383,34 @@ canvas {
   --carstatus-color: red;
 }
 
-/* The bar of the Mower widget (.mower-bar): a thin track with a green
-   gradient fill; below 50% the fill has the color of the level. */
+/* The bar has the look of the Home Connect bar (.homeconnect-bar): 6em wide,
+   in the colour of the battery level. */
 .carstatus-bar {
-  height: 11px;
-  border-radius: 1px;
-  background: var(--main-bg-dark, rgba(255, 255, 255, 0.2));
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 6em;
+  height: 0.4em;
+  border-radius: 0.2em;
+  margin: 0 0.5em;
+  color: var(--carstatus-color);
+  background: color-mix(in srgb, currentColor 25%, transparent);
   overflow: hidden;
-  /* The end of the bar is slanted, like the battery bar of the BMW. */
-  clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
 }
 
 .carstatus-bar-fill {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #c0fce1 0%, #059956 100%);
+  border-radius: 0.2em;
+  background: currentColor;
   transition: width 0.6s ease;
-  /* The end of the filled part is slanted too. */
-  clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
 }
 
-.carstatus-batt-mid .carstatus-bar-fill {
-  background: orange;
-}
-
-.carstatus-batt-low .carstatus-bar-fill,
-.carstatus-batt-critical .carstatus-bar-fill {
-  background: red;
-}
-
+/* One line: percentage, bar, mileage at the end. */
 .carstatus-battery-text {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
-  gap: 10px;
+  align-items: center;
+  gap: 0;
 }
 
 .carstatus-pct,
@@ -10424,10 +10418,17 @@ canvas {
   font-weight: bold;
   font-family: inherit;
   font-size: inherit;
+  white-space: nowrap;
 }
 
 .carstatus-pct {
   color: var(--carstatus-color);
+  min-width: 4.2em;
+}
+
+.carstatus-km {
+  margin-left: auto;
+  padding-left: 0.5em;
 }
 
 .carstatus-battery-text .carstatus-icon {
