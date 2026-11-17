@@ -21,6 +21,8 @@
  *   csmid         below this level (%) the battery is orange; default 50
  *   csiconwidth   optional width (px) of the logo/image; empty = the theme's
  *   csiconheight  optional height (px) of the logo/image; empty = the theme's
+ *   csiconoffset  optional vertical shift (px) of the logo: negative up,
+ *                 positive down; default 0
  *   cslinegap     distance (px) between the battery line and the grey line
  *                 below it; default 25
  *   csdebug       test view: the state of every device below the status
@@ -426,7 +428,7 @@ var DT_carstatus = (function () {
   // The height of the header row is the height of the battery line: the logo
   // or image next to it (centred on that line) does not make the row, and so
   // the distance to the grey line, any higher.
-  function fitHeader(root) {
+  function fitHeader(root, block) {
     var header = root.querySelector('.dt_content');
     var text = root.querySelector('.carstatus-headtext');
     var column = header && header.querySelector('.col-icon');
@@ -436,11 +438,16 @@ var DT_carstatus = (function () {
     var textHeight = text.offsetHeight;
     if (!textHeight) return;
     header.style.height = textHeight + 'px';
-    if (column)
-      column.style.transform =
-        'translateY(' +
-        Math.round((textHeight - column.offsetHeight) / 2) +
-        'px)';
+    if (!column) return;
+    // The logo itself (not the column around it) is centred on the battery
+    // line, plus the vertical shift from the settings.
+    var logo = column.querySelector('img, em, i') || column;
+    var box = logo.getBoundingClientRect();
+    var top = text.getBoundingClientRect().top;
+    var shift = parseInt(block && block.csiconoffset, 10) || 0;
+    var move =
+      Math.round(top + (textHeight - box.height) / 2 - box.top) + shift;
+    column.style.transform = 'translateY(' + move + 'px)';
   }
 
   // The text below the line starts at the left of the battery: with the
@@ -452,7 +459,7 @@ var DT_carstatus = (function () {
     var apply = function () {
       var below = root.querySelector('.carstatus-below');
       if (!below) return;
-      fitHeader(root);
+      fitHeader(root, me.block);
       below.style.setProperty('--carstatus-indent', '0px');
       // The line ends where the battery line (the mileage) ends: whichever of
       // the two is wider is made as narrow as the other, so nothing sticks

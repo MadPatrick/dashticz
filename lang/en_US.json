@@ -673,6 +673,8 @@
       "carstatus_block_iconheight_help": "Height of the car logo / image in pixels. Empty = the size of the theme; with only a height the width follows the proportions.",
       "carstatus_block_linegap": "Distance to the line (px)",
       "carstatus_block_linegap_help": "Distance in pixels between the battery line and the grey line below it. Default 25.",
+      "carstatus_block_iconoffset": "Logo up / down (px)",
+      "carstatus_block_iconoffset_help": "Moves the car logo / image up (negative) or down (positive), in pixels. Default 0.",
       "invalid_carstatus_block_devices": "Choose at least one Domoticz device.",
       "weatherinfo_block": "Weather info",
       "car_block": "Car info",

@@ -81,6 +81,10 @@ set is treated as off (or 0).
     - Optional: height of the logo / image in pixels (``8``-``400``). With only
       a height the width follows the proportions of the image.
       Default: the size of the theme
+  * - csiconoffset
+    - Optional: moves the logo / image up (negative) or down (positive), in
+      pixels (``-100``-``100``).
+      Default: ``0``
   * - cslinegap
     - Optional: the distance in pixels between the battery line and the grey
       line below it (``0``-``200``).

@@ -9275,7 +9275,7 @@ var DashticzDeviceEditor = (function () {
     labelPrefix: 'carstatus_block_',
     fieldClass: 'de-carstatus-field',
     saveOrder:
-      'door windows mileage charging chargetime battery driving home critical low mid iconwidth iconheight linegap debug fontsize',
+      'door windows mileage charging chargetime battery driving home critical low mid iconwidth iconheight iconoffset linegap debug fontsize',
     settings: [
       { key: 'battery', type: 'device', anydevice: true, def: '' },
       { key: 'mileage', type: 'device', anydevice: true, def: '' },
@@ -9305,6 +9305,8 @@ var DashticzDeviceEditor = (function () {
         rowstart: 1,
       },
       { key: 'iconheight', type: 'number', def: null, range: [8, 400, 1] },
+      // Moves the logo up (negative) or down (positive), in px.
+      { key: 'iconoffset', type: 'number', def: 0, range: [-100, 100, 1] },
       // The distance (px) between the battery line and the line below it.
       { key: 'linegap', type: 'number', def: 25, range: [0, 200, 1] },
       // A test view: the raw state of every device, below the status.
@@ -9470,7 +9472,7 @@ var DashticzDeviceEditor = (function () {
   function _wireCarstatusIconSize($popup, iconOptionId) {
     var $fields = $popup
       .find(
-        'input[id$="-carstatus-iconwidth"], input[id$="-carstatus-iconheight"]'
+        'input[id$="-carstatus-iconwidth"], input[id$="-carstatus-iconheight"], input[id$="-carstatus-iconoffset"]'
       )
       .closest('.de-carstatus-field')
       .removeClass('de-carstatus-field-rowstart');
