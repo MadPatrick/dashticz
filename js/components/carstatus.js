@@ -431,6 +431,16 @@ var DT_carstatus = (function () {
       var below = root.querySelector('.carstatus-below');
       if (!below) return;
       below.style.setProperty('--carstatus-indent', '0px');
+      // The line ends where the battery line (the mileage) ends.
+      below.style.marginRight = '0px';
+      var battery = root.querySelector('.carstatus-battery');
+      if (battery) {
+        var gap = Math.round(
+          below.getBoundingClientRect().right -
+            battery.getBoundingClientRect().right
+        );
+        if (gap) below.style.marginRight = gap + 'px';
+      }
       // The bar itself: the box around it starts at the icon.
       var head = root.querySelector('.carstatus-headtext .carstatus-battery');
       if (!head) return;
