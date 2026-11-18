@@ -9982,6 +9982,28 @@ canvas {
   grid-column: 1 / -1;
 }
 
+/* Fully Kiosk: a number field (the percentages) is compact: the input, 5
+   characters wide, stands behind its label on the same line. */
+.de-fully-grid > .de-fully-field:has(input[type='number']) > .mb-3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+}
+
+.de-fully-grid > .de-fully-field:has(input[type='number']) .form-label {
+  margin-bottom: 0;
+}
+
+.de-fully-grid > .de-fully-field:has(input[type='number']) input {
+  flex: none;
+  width: calc(5ch + 1.5rem);
+}
+
+.de-fully-grid > .de-fully-field:has(input[type='number']) .form-text {
+  flex: 0 0 100%;
+}
+
 /* The logo width and height: two fields below the icon row (Image source). */
 .de-carstatus-iconsize {
   display: grid;
