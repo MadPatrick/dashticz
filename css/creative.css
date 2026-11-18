@@ -9983,7 +9983,9 @@ canvas {
 }
 
 /* Fully Kiosk: a number field (the percentages) is compact: the input, 5
-   characters wide, stands behind its label on the same line. */
+   characters wide, stands behind its label on the same line. The label
+   takes the free space, so the inputs line up vertically at the right edge
+   of their column. */
 .de-fully-grid > .de-fully-field:has(input[type='number']) > .mb-3 {
   display: flex;
   flex-wrap: wrap;
@@ -9992,6 +9994,8 @@ canvas {
 }
 
 .de-fully-grid > .de-fully-field:has(input[type='number']) .form-label {
+  flex: 1 1 auto;
+  min-width: 0;
   margin-bottom: 0;
 }
 
