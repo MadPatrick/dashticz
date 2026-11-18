@@ -9455,8 +9455,8 @@ canvas {
   transition: width 0.6s ease;
 }
 
-/* The marker is a vertical line, 3px wide, in the blue of the active power
-   button; it extends 4px above and below the bar. */
+/* The marker is a vertical line, 3px wide, in the colour of the border of
+   the active power button; it extends 4px above and below the bar. */
 .fullykiosk-bar-dot {
   position: absolute;
   top: -4px;
@@ -9464,7 +9464,7 @@ canvas {
   width: 3px;
   margin-left: -1.5px;
   border-radius: 1px;
-  background: var(--button-active, #3b6ea8);
+  background: var(--border-color-active, var(--button-active));
 }
 
 /* A power button that is off has a grey icon. */
