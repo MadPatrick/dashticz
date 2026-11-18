@@ -10016,6 +10016,13 @@ canvas {
   flex: 0 0 100%;
 }
 
+/* The port: label above, as the host next to it, so label and input are on
+   the same lines as those of the host; the input is 5 characters wide. */
+.de-fully-grid > .de-fully-field input[id$='-fully-port'] {
+  width: calc(5ch + 2.75rem);
+  max-width: 100%;
+}
+
 /* The charger switch and the font size: one row, 50% width each. */
 .de-fully-grid > .de-fully-pair {
   display: grid;
