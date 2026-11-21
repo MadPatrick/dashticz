@@ -2029,7 +2029,9 @@
       "create": "Aanmaken",
       "created": "{file} aangemaakt. Gebruik Openen om ernaar te wisselen.",
       "create_failed": "De configuratie kon niet worden aangemaakt.",
-      "load_failed": "De lijst met configuraties kon niet worden geladen."
+      "load_failed": "De lijst met configuraties kon niet worden geladen.",
+      "name_placeholder": "bijv. 2",
+      "name_required": "Vul eerst een naam in."
     }
   },
   "switches": {

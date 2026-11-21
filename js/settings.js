@@ -2469,7 +2469,9 @@ function renderConfigsPanel() {
     '<div class="col-sm-4"><label class="form-label" for="settings-configs-name">' +
     escapeSettingsHtml(configsLabel('name', 'Name')) +
     '</label>' +
-    '<input type="text" class="form-control" id="settings-configs-name" maxlength="40" placeholder="2" autocomplete="off"></div>' +
+    '<input type="text" class="form-control" id="settings-configs-name" maxlength="40" placeholder="' +
+    escapeSettingsHtml(configsLabel('name_placeholder', 'e.g. 2')) +
+    '" autocomplete="off"></div>' +
     '<div class="col-sm-4"><label class="form-label" for="settings-configs-source">' +
     escapeSettingsHtml(configsLabel('source', 'Start from')) +
     '</label>' +
@@ -2603,6 +2605,10 @@ function bindConfigsPanel() {
     var name = String(
       $('#settingspopup #settings-configs-name').val() || ''
     ).trim();
+    if (!name) {
+      $error.text(configsLabel('name_required', 'Enter a name first.'));
+      return;
+    }
     if (!/^[A-Za-z0-9_-]{1,40}$/.test(name)) {
       $error.text(
         configsLabel(

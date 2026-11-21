@@ -2018,7 +2018,9 @@
       "create": "Créer",
       "created": "{file} créé. Utilisez Ouvrir pour y passer.",
       "create_failed": "Impossible de créer la configuration.",
-      "load_failed": "Impossible de charger la liste des configurations."
+      "load_failed": "Impossible de charger la liste des configurations.",
+      "name_placeholder": "p. ex. 2",
+      "name_required": "Saisissez d'abord un nom."
     }
   },
   "switches": {
