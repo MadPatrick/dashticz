@@ -108,6 +108,9 @@ test('settings has a Configurations category that uses the endpoint', () => {
   assert.match(settings, /settingList\['configs'\]/);
   assert.match(settings, /js\/configs\.php/);
   assert.match(settings, /bindConfigsPanel\(\);/);
+  // js/configs.php lives in js/, not under dashticz_php_path (vendor/dashticz/).
+  assert.match(settings, /'js\/configs\.php'/);
+  assert.doesNotMatch(settings, /php_path'\]\s*\+\s*'js\//);
   assert.match(read('js/components/simpleblock.js'), /logo-config/);
 });
 

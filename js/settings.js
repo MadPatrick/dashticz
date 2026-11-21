@@ -2529,10 +2529,11 @@ function bindConfigsPanel() {
   var $list = $('#settingspopup #settings-configs-list');
   if (!$list.length) return;
   var active = getActiveConfigFile();
-  var phpPath = settings['dashticz_php_path'] || '';
 
   function renderList(configs) {
-    // The active config stays listed even when its file is missing.
+    // Only files in custom/ can be a copy source; the active config stays
+    // listed even when it is loaded from elsewhere (?folder=).
+    var sources = configs;
     if (configs.indexOf(active) === -1) configs = [active].concat(configs);
     $list.empty();
     var $source = $('#settingspopup #settings-configs-source').empty();
@@ -2572,22 +2573,24 @@ function bindConfigsPanel() {
           })
       );
       $list.append($row);
-      $source.append(
-        $('<option></option>')
-          .attr('value', file)
-          .text(
-            configsLabel('source_copy', 'Copy of {file}').replace(
-              '{file}',
-              file
+      if (sources.indexOf(file) !== -1) {
+        $source.append(
+          $('<option></option>')
+            .attr('value', file)
+            .text(
+              configsLabel('source_copy', 'Copy of {file}').replace(
+                '{file}',
+                file
+              )
             )
-          )
-      );
+        );
+      }
     });
-    $source.val(active);
+    $source.val(sources.indexOf(active) !== -1 ? active : '');
   }
 
   renderList([]);
-  $.getJSON(phpPath + 'js/configs.php')
+  $.getJSON('js/configs.php')
     .done(function (data) {
       renderList((data && data.configs) || []);
     })
@@ -2622,7 +2625,7 @@ function bindConfigsPanel() {
     $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
       .then(function (csrf) {
         return $.ajax({
-          url: phpPath + 'js/configs.php',
+          url: 'js/configs.php',
           method: 'POST',
           contentType: 'application/json',
           data: JSON.stringify({
@@ -2638,7 +2641,7 @@ function bindConfigsPanel() {
       })
       .done(function (data) {
         $('#settingspopup #settings-configs-name').val('');
-        $.getJSON(phpPath + 'js/configs.php').done(function (list) {
+        $.getJSON('js/configs.php').done(function (list) {
           renderList((list && list.configs) || []);
         });
         $error
