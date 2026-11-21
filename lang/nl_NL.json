@@ -2009,6 +2009,27 @@
       "hours": "uur",
       "minutes": "minuten",
       "seconds": "seconden"
+    },
+    "configs": {
+      "title": "Configuraties",
+      "intro": "Elke configuratie heeft eigen apparaten, indeling en instellingen. Open er een om die te bewerken.",
+      "active": "Actieve configuratie:",
+      "active_badge": "Actief",
+      "open": "Openen",
+      "copy_link": "Link kopiëren",
+      "copied": "Gekopieerd",
+      "new_title": "Nieuwe configuratie",
+      "name": "Naam",
+      "source": "Beginnen met",
+      "source_empty": "Lege configuratie",
+      "source_copy": "Kopie van {file}",
+      "copy_css": "Ook de eigen stylesheet kopiëren",
+      "name_help": "Letters, cijfers, - en _. De naam 2 maakt CONFIG2.js, te openen met ?cfg=CONFIG2.js.",
+      "name_invalid": "Gebruik alleen letters, cijfers, - en _ in de naam.",
+      "create": "Aanmaken",
+      "created": "{file} aangemaakt. Gebruik Openen om ernaar te wisselen.",
+      "create_failed": "De configuratie kon niet worden aangemaakt.",
+      "load_failed": "De lijst met configuraties kon niet worden geladen."
     }
   },
   "switches": {

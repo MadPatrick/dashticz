@@ -1687,6 +1687,23 @@ next css sets the default height of the frame popup
   flex: 0 0 auto;
 }
 
+/* Name of the active extra configuration (?cfg=CONFIG2.js). */
+.colbar.transbg .logo .logo-config {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 20vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6em;
+  font-weight: normal;
+  line-height: 1.4;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+  opacity: 0.85;
+}
+
 .colbar.transbg .fab,
 .colbar.transbg .fas,
 .colbar.transbg .far {
