@@ -238,3 +238,46 @@ test(
     });
   }
 );
+
+test(
+  'configs endpoint can copy only the base settings of CONFIG.js',
+  { skip: !hasPhp },
+  async () => {
+    await withServer(async ({ tmp, post }) => {
+      fs.writeFileSync(
+        path.join(tmp, 'custom/CONFIG.js'),
+        [
+          'var config = {};',
+          "config['domoticz_ip'] = 'http://d:8080';",
+          "config['user_name'] = 'admin'; // login",
+          "//config['pass_word'] = 'commented';",
+          "config['theme'] = 'default';",
+          "config['screens'] = [1];",
+          "config['multi'] = {",
+          '  a: 1',
+          '};',
+          'var blocks = {};',
+          "blocks['x'] = { idx: 1 };",
+          'screens[1] = { columns: [1] };',
+          '',
+        ].join('\n')
+      );
+      const res = await post({
+        name: 'base',
+        source: 'CONFIG.js',
+        base_only: true,
+      });
+      assert.equal(res.status, 200);
+      assert.equal(
+        fs.readFileSync(path.join(tmp, 'custom/CONFIGbase.js'), 'utf8'),
+        [
+          'var config = {};',
+          "config['domoticz_ip'] = 'http://d:8080';",
+          "config['user_name'] = 'admin'; // login",
+          "config['theme'] = 'default';",
+          '',
+        ].join('\n')
+      );
+    });
+  }
+);

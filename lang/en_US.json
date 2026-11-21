@@ -2020,7 +2020,8 @@
       "delete": "Delete",
       "delete_confirm": "Sure?",
       "deleted": "Deleted {file}.",
-      "delete_failed": "Could not delete the configuration."
+      "delete_failed": "Could not delete the configuration.",
+      "source_base": "Base of CONFIG.js (settings and logins only, no tiles)"
     }
   },
   "switches": {

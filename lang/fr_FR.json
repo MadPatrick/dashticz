@@ -2024,7 +2024,8 @@
       "delete": "Supprimer",
       "delete_confirm": "Sûr ?",
       "deleted": "{file} supprimé.",
-      "delete_failed": "Impossible de supprimer la configuration."
+      "delete_failed": "Impossible de supprimer la configuration.",
+      "source_base": "Base de CONFIG.js (réglages et identifiants uniquement, sans tuiles)"
     }
   },
   "switches": {

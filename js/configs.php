@@ -3,7 +3,8 @@
  * Extra dashboard configurations (custom/CONFIG<name>.js).
  *
  * GET  lists the configuration files that can be opened with ?cfg=<file>.
- * POST creates a new one (an empty config or a copy of an existing one), or
+ * POST creates a new one (an empty config, a copy of an existing one, or only
+ *      the base settings of one), or
  *      deletes an extra one (action "delete").
  *
  * Only bare file names that match CONFIG[A-Za-z0-9_-]*.js are handled, the
@@ -115,11 +116,33 @@ if (file_exists($newPath) || is_link($newPath)) {
     dashticz_json_error(409, 'This configuration already exists.');
 }
 
+/* A "base" copy keeps only the plain settings of the source (Domoticz address
+   and login, language, theme, ...): the single-line config['key'] = value;
+   statements. Tiles, screens, columns and other blocks are left out. */
+function dashticz_config_base($contents)
+{
+    $skip = '/^(screens?|columns?|blocks?|buttons?|layout|grid)/i';
+    $lines = ["var config = {};"];
+    foreach (preg_split('/\r\n|\n|\r/', $contents) as $line) {
+        if (!preg_match('/^\s*config\[([\'"])([A-Za-z0-9_]+)\1\]\s*=\s*.+;\s*(\/\/.*)?$/', $line, $m)) {
+            continue;
+        }
+        if (preg_match($skip, $m[2])) {
+            continue;
+        }
+        $lines[] = trim($line);
+    }
+    return implode("\n", $lines) . "\n";
+}
+
 $contents = "var config = {};\n";
 if ($source !== '') {
     $contents = @file_get_contents($customDir . '/' . $source);
     if ($contents === false) {
         dashticz_json_error(500, 'Unable to read the source configuration.');
+    }
+    if (!empty($data['base_only'])) {
+        $contents = dashticz_config_base($contents);
     }
 }
 

@@ -2035,7 +2035,8 @@
       "delete": "Verwijderen",
       "delete_confirm": "Zeker?",
       "deleted": "{file} verwijderd.",
-      "delete_failed": "De configuratie kon niet worden verwijderd."
+      "delete_failed": "De configuratie kon niet worden verwijderd.",
+      "source_base": "Basis van CONFIG.js (alleen instellingen en logins, geen tegels)"
     }
   },
   "switches": {

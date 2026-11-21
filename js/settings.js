@@ -2530,29 +2530,37 @@ function bindConfigsPanel() {
   if (!$list.length) return;
   var active = getActiveConfigFile();
 
-  // Two-step delete without a browser dialog: the first click asks to
-  // confirm, the second click (within 4 seconds) deletes the file.
+  // Two-step delete without a browser dialog: the first click turns the
+  // cross into a check mark to confirm, the second click (within 4 seconds)
+  // deletes the file.
   function buildConfigDeleteButton(file) {
     var label = configsLabel('delete', 'Delete');
     var timer = null;
-    return $(
-      '<button type="button" class="btn btn-sm btn-outline-danger ms-2"></button>'
+    var $icon = $('<i class="fas fa-xmark" aria-hidden="true"></i>');
+    var $btn = $(
+      '<button type="button" class="settings-config-delete ms-2"></button>'
     )
-      .text(label)
-      .on('click', function () {
-        var $btn = $(this);
-        if (!timer) {
-          $btn.text(configsLabel('delete_confirm', 'Sure?'));
-          timer = setTimeout(function () {
-            timer = null;
-            $btn.text(label);
-          }, 4000);
-          return;
-        }
-        clearTimeout(timer);
-        timer = null;
-        deleteConfig(file, $btn);
-      });
+      .attr({ title: label, 'aria-label': label })
+      .append($icon);
+    function reset() {
+      timer = null;
+      $btn.removeClass('confirm').attr({ title: label, 'aria-label': label });
+      $icon.attr('class', 'fas fa-xmark');
+    }
+    return $btn.on('click', function () {
+      if (!timer) {
+        var confirmLabel = configsLabel('delete_confirm', 'Sure?');
+        $btn
+          .addClass('confirm')
+          .attr({ title: confirmLabel, 'aria-label': confirmLabel });
+        $icon.attr('class', 'fas fa-check');
+        timer = setTimeout(reset, 4000);
+        return;
+      }
+      clearTimeout(timer);
+      timer = null;
+      deleteConfig(file, $btn);
+    });
   }
 
   function deleteConfig(file, $btn) {
@@ -2608,6 +2616,18 @@ function bindConfigsPanel() {
         .attr('value', '')
         .text(configsLabel('source_empty', 'Empty configuration'))
     );
+    if (sources.indexOf('CONFIG.js') !== -1) {
+      $source.append(
+        $('<option></option>')
+          .attr('value', '__base__')
+          .text(
+            configsLabel(
+              'source_base',
+              'Base of CONFIG.js (settings and logins only, no tiles)'
+            )
+          )
+      );
+    }
     configs.forEach(function (file) {
       var isActive = file === active;
       var $row = $(
@@ -2703,6 +2723,7 @@ function bindConfigsPanel() {
       );
       return;
     }
+    var chosenSource = $('#settingspopup #settings-configs-source').val() || '';
     var $button = $(this).prop('disabled', true);
     $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
       .then(function (csrf) {
@@ -2712,7 +2733,8 @@ function bindConfigsPanel() {
           contentType: 'application/json',
           data: JSON.stringify({
             name: name,
-            source: $('#settingspopup #settings-configs-source').val() || '',
+            source: chosenSource === '__base__' ? 'CONFIG.js' : chosenSource,
+            base_only: chosenSource === '__base__',
             copy_css: $('#settingspopup #settings-configs-copycss').is(
               ':checked'
             ),
