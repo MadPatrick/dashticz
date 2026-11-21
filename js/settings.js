@@ -2587,6 +2587,15 @@ function bindConfigsPanel() {
       }
     });
     $source.val(sources.indexOf(active) !== -1 ? active : '');
+
+    // Suggest the next free number as name (CONFIG2.js, CONFIG3.js, ...),
+    // unless the user already typed something.
+    var $name = $('#settingspopup #settings-configs-name');
+    if (!$name.val() || $name.data('auto')) {
+      var next = 2;
+      while (configs.indexOf('CONFIG' + next + '.js') !== -1) next++;
+      $name.val(String(next)).data('auto', true);
+    }
   }
 
   renderList([]);
@@ -2602,6 +2611,10 @@ function bindConfigsPanel() {
         )
       );
     });
+
+  $('#settingspopup #settings-configs-name').on('input', function () {
+    $(this).data('auto', false);
+  });
 
   $('#settingspopup #settings-configs-create').on('click', function () {
     var $error = $('#settingspopup #settings-configs-error').text('');
