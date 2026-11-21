@@ -199,3 +199,42 @@ test(
     });
   }
 );
+
+test(
+  'configs endpoint deletes extra configs but never CONFIG.js',
+  { skip: !hasPhp },
+  async () => {
+    await withServer(async ({ tmp, request, post }) => {
+      fs.writeFileSync(
+        path.join(tmp, 'custom/CONFIG2.js'),
+        'var config = {};\n'
+      );
+      fs.writeFileSync(path.join(tmp, 'custom/custom2.css'), 'x{}\n');
+
+      let res = await post({ action: 'delete', file: 'CONFIG.js' });
+      assert.equal(res.status, 400);
+      assert.ok(fs.existsSync(path.join(tmp, 'custom/CONFIG.js')));
+
+      for (const file of [
+        'CONFIG_DEFAULT.js',
+        '../custom/CONFIG.js',
+        'nope.js',
+        '',
+      ]) {
+        res = await post({ action: 'delete', file });
+        assert.ok([400, 404].includes(res.status), file);
+      }
+      assert.ok(fs.existsSync(path.join(tmp, 'custom/CONFIG_DEFAULT.js')));
+
+      res = await post({ action: 'delete', file: 'CONFIG2.js' }, false);
+      assert.equal(res.status, 403);
+      assert.ok(fs.existsSync(path.join(tmp, 'custom/CONFIG2.js')));
+
+      res = await post({ action: 'delete', file: 'CONFIG2.js' });
+      assert.equal(res.status, 200);
+      assert.ok(!fs.existsSync(path.join(tmp, 'custom/CONFIG2.js')));
+      // The stylesheet is left alone.
+      assert.ok(fs.existsSync(path.join(tmp, 'custom/custom2.css')));
+    });
+  }
+);

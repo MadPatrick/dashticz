@@ -3,12 +3,14 @@
  * Extra dashboard configurations (custom/CONFIG<name>.js).
  *
  * GET  lists the configuration files that can be opened with ?cfg=<file>.
- * POST creates a new one (an empty config or a copy of an existing one).
+ * POST creates a new one (an empty config or a copy of an existing one), or
+ *      deletes an extra one (action "delete").
  *
  * Only bare file names that match CONFIG[A-Za-z0-9_-]*.js are handled, the
  * same pattern configwriter_resolve_config_path() accepts for ?cfg=, so every
  * editor can write to the files created here. An existing file is never
- * overwritten and the default CONFIG.js can only be used as a copy source.
+ * overwritten and the default CONFIG.js can only be used as a copy source:
+ * it is never deleted. A stylesheet that belongs to a deleted config is kept.
  */
 require_once(__DIR__ . '/../vendor/dashticz/security.php');
 
@@ -70,6 +72,22 @@ dashticz_require_csrf();
 $data = json_decode((string) file_get_contents('php://input'), true);
 if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
     dashticz_json_error(400, 'Invalid JSON body.');
+}
+
+if (isset($data['action']) && $data['action'] === 'delete') {
+    $file = isset($data['file']) && is_string($data['file']) ? $data['file'] : '';
+    if ($file === 'CONFIG.js') {
+        dashticz_json_error(400, 'The default configuration cannot be deleted.');
+    }
+    if (!in_array($file, dashticz_list_configs($customDir, $namePattern), true)) {
+        dashticz_json_error(404, 'Unknown configuration.');
+    }
+    if (!@unlink($customDir . '/' . $file)) {
+        dashticz_json_error(500, 'Unable to delete the configuration file.');
+    }
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'file' => $file]);
+    exit;
 }
 
 $name = isset($data['name']) && is_string($data['name']) ? trim($data['name']) : '';

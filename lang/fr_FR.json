@@ -2020,7 +2020,11 @@
       "create_failed": "Impossible de créer la configuration.",
       "load_failed": "Impossible de charger la liste des configurations.",
       "name_placeholder": "p. ex. 2",
-      "name_required": "Saisissez d'abord un nom."
+      "name_required": "Saisissez d'abord un nom.",
+      "delete": "Supprimer",
+      "delete_confirm": "Sûr ?",
+      "deleted": "{file} supprimé.",
+      "delete_failed": "Impossible de supprimer la configuration."
     }
   },
   "switches": {

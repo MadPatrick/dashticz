@@ -2530,6 +2530,72 @@ function bindConfigsPanel() {
   if (!$list.length) return;
   var active = getActiveConfigFile();
 
+  // Two-step delete without a browser dialog: the first click asks to
+  // confirm, the second click (within 4 seconds) deletes the file.
+  function buildConfigDeleteButton(file) {
+    var label = configsLabel('delete', 'Delete');
+    var timer = null;
+    return $(
+      '<button type="button" class="btn btn-sm btn-outline-danger ms-2"></button>'
+    )
+      .text(label)
+      .on('click', function () {
+        var $btn = $(this);
+        if (!timer) {
+          $btn.text(configsLabel('delete_confirm', 'Sure?'));
+          timer = setTimeout(function () {
+            timer = null;
+            $btn.text(label);
+          }, 4000);
+          return;
+        }
+        clearTimeout(timer);
+        timer = null;
+        deleteConfig(file, $btn);
+      });
+  }
+
+  function deleteConfig(file, $btn) {
+    var $error = $('#settingspopup #settings-configs-error').text('');
+    $btn.prop('disabled', true);
+    $.getJSON(settings['dashticz_php_path'] + 'info.php?get=csrf')
+      .then(function (csrf) {
+        return $.ajax({
+          url: 'js/configs.php',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ action: 'delete', file: file }),
+          dataType: 'json',
+          headers: { 'X-Dashticz-CSRF': csrf.token },
+        });
+      })
+      .done(function () {
+        $.getJSON('js/configs.php').done(function (list) {
+          renderList((list && list.configs) || []);
+        });
+        $error
+          .removeClass('text-danger')
+          .addClass('text-success')
+          .text(
+            configsLabel('deleted', 'Deleted {file}.').replace('{file}', file)
+          );
+      })
+      .fail(function (xhr) {
+        $btn.prop('disabled', false);
+        $error
+          .removeClass('text-success')
+          .addClass('text-danger')
+          .text(
+            xhr.responseJSON && xhr.responseJSON.error
+              ? xhr.responseJSON.error
+              : configsLabel(
+                  'delete_failed',
+                  'Could not delete the configuration.'
+                )
+          );
+      });
+  }
+
   function renderList(configs) {
     // Only files in custom/ can be a copy source; the active config stays
     // listed even when it is loaded from elsewhere (?folder=).
@@ -2572,6 +2638,9 @@ function bindConfigsPanel() {
             copyConfigLink(getConfigUrl(file), $(this));
           })
       );
+      if (!isActive && file !== 'CONFIG.js') {
+        $row.append(buildConfigDeleteButton(file));
+      }
       $list.append($row);
       if (sources.indexOf(file) !== -1) {
         $source.append(

@@ -2016,7 +2016,11 @@
       "create_failed": "Could not create the configuration.",
       "load_failed": "Could not load the list of configurations.",
       "name_placeholder": "e.g. 2",
-      "name_required": "Enter a name first."
+      "name_required": "Enter a name first.",
+      "delete": "Delete",
+      "delete_confirm": "Sure?",
+      "deleted": "Deleted {file}.",
+      "delete_failed": "Could not delete the configuration."
     }
   },
   "switches": {
