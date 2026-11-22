@@ -10846,6 +10846,15 @@ input[id$='-carstatus-fontsize'] {
   line-height: 1;
 }
 
+.settings-config-delete .fas {
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1;
+}
+
 .settings-config-delete:hover,
 .settings-config-delete:focus-visible,
 .settings-config-delete.confirm {
