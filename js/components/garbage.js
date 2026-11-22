@@ -469,7 +469,7 @@ SENSOR_LOCATIONS_TO_URL = {
       data = data
         .replace(/<img .*?>/g, '')
         .replace(/<head>(?:.|\n|\r)+?<\/head>/g, '')
-        .replace(/<script (?:.|\n|\r)+?<\/script>/g, '')
+        .replace(/<script\b(?:.|\n|\r)+?<\/script\s*>/gi, '')
         .replace(/<table class="contentTable" (?:.|\n|\r)+?<\/table>/g, '')
         .replace(/<input (?:.|\n|\r)+?\/>/g, '')
         .replace(/<div id="Afvalkalender1_pnlSearch"(?:.|\n|\r)+?<\/div>/g, '')
