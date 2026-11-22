@@ -1,4 +1,4 @@
 {
     "version": "4.2041",
-    "last_changes": "Configurations: the trash can icon of the delete button is shown at the right size (the global icon size made it overflow the red circle)."
+    "last_changes": "Configurations: the trash can icon of the delete button is shown at the right size, and the texts of the buttons in the list are centred vertically."
 }

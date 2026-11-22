@@ -6,7 +6,7 @@ v4.2041 (22-11-2026)
 
 * **Bug fixes**
 
-- Configurations: the trash can icon of the delete button is shown at the right size.
+- Configurations: the trash can icon of the delete button is shown at the right size, and the texts of the buttons in the list are centred vertically.
 
 v4.2040 (22-11-2026)
 ----------------------
