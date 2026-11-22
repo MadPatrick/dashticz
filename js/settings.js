@@ -2501,8 +2501,8 @@ function renderConfigsPanel() {
 
 function copyConfigLink(url, $button) {
   var done = function () {
-    var original = $button.data("label");
-    $button.text(configsLabel("copied", "Copied"));
+    var original = $button.data('label');
+    $button.text(configsLabel('copied', 'Copied'));
     setTimeout(function () {
       $button.text(original);
     }, 1500);
@@ -2510,25 +2510,25 @@ function copyConfigLink(url, $button) {
   /* Last resort: show the link in a field that is already selected, so the
      user can copy it with Ctrl+C. */
   var showManual = function () {
-    var $row = $button.closest("li");
-    $row.find(".settings-config-link").remove();
+    var $row = $button.closest('li');
+    $row.find('.settings-config-link').remove();
     var $field = $(
-      '<input type="text" readonly class="form-control form-control-sm mt-2 settings-config-link">',
+      '<input type="text" readonly class="form-control form-control-sm mt-2 settings-config-link">'
     )
       .val(url)
-      .on("focus click", function () {
+      .on('focus click', function () {
         this.select();
       });
     $row.append($field);
-    $field.trigger("focus");
+    $field.trigger('focus');
   };
   /* execCommand needs a selected, focused element inside the open modal;
      a textarea on the body loses focus to the modal's focus trap. */
   var legacyCopy = function () {
-    var $host = $button.closest("#settingspopup");
-    if (!$host.length) $host = $("body");
-    var $tmp = $("<textarea readonly></textarea>")
-      .css({ position: "fixed", top: 0, left: 0, opacity: 0 })
+    var $host = $button.closest('#settingspopup');
+    if (!$host.length) $host = $('body');
+    var $tmp = $('<textarea readonly></textarea>')
+      .css({ position: 'fixed', top: 0, left: 0, opacity: 0 })
       .val(url)
       .appendTo($host);
     var ok = false;
@@ -2536,7 +2536,7 @@ function copyConfigLink(url, $button) {
       $tmp[0].focus();
       $tmp[0].select();
       $tmp[0].setSelectionRange(0, url.length);
-      ok = document.execCommand("copy");
+      ok = document.execCommand('copy');
     } catch (e) {
       ok = false;
     }
