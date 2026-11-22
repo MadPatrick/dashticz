@@ -1,4 +1,4 @@
 {
-    "version": "4.2053",
-    "last_changes": "Dimmer and blinds sliders: the slider is now built in Dashticz itself (pointer events and keyboard, same markup and styling as before) instead of jQuery UI, for mouse and touch."
+    "version": "4.2054",
+    "last_changes": "Fixes: external stylesheets (the Google Fonts Montserrat font of the Hayman clock) no longer get '?v=' appended to their URL, which broke it and made Chrome report 'Response was blocked by CORB'. Local stylesheets that already have a query string now get '&v=' instead."
 }
