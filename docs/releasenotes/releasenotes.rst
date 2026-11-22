@@ -1,12 +1,26 @@
 Release Notes
 =============
 
-v4.2055 (22-11-2026)
+v4.2057 (22-11-2026)
 ----------------------
 
 * **Fixes**
 
 - External stylesheets, such as the Google Fonts Montserrat font of the Hayman clock, no longer get a ``?v=`` version parameter appended to their URL. That produced an invalid URL (``css2?family=Montserrat?v=211``) and Chrome reported 'Response was blocked by CORB'. Local stylesheets that already have a query string now get ``&v=`` instead.
+
+v4.2056 (22-11-2026)
+----------------------
+
+* **Fixes**
+
+- The news block works again. jQuery 4 no longer has the sort function on jQuery objects, which caused the error "$(...).find(...).sort is not a function" (upstream issue 1404).
+
+v4.2055 (22-11-2026)
+----------------------
+
+* **Code**
+
+- Unused code is removed: a few unused PHP helper functions (legacy column chunking in the config writer and widget saver, and unused helpers in the garbage script) and one unused JavaScript variable. No change in behaviour.
 
 v4.2054 (22-11-2026)
 ----------------------
