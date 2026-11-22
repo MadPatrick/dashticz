@@ -1,4 +1,4 @@
 {
-    "version": "4.2050",
-    "last_changes": "Cleanup: the garbage bridge uses the shared curl helper (dashticz_http_request in vendor/dashticz/security.php) for its curl requests. Behaviour is unchanged."
+    "version": "4.2051",
+    "last_changes": "Device Editor: the lists that can be reordered by dragging (devices of a cluster, parts of the Weather Info text) use native pointer events instead of jQuery UI, with the same behaviour, for mouse and touch."
 }
