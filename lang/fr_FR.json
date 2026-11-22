@@ -1421,10 +1421,12 @@
           "description": "Ajoute une classe CSS personnalisée au bloc."
         },
         "textOn": {
-          "description": "Texte affiché lorsque l'appareil est allumé."
+          "description": "Texte affiché lorsque l'appareil est allumé.",
+          "example": "Activé"
         },
         "textOff": {
-          "description": "Texte affiché lorsque l'appareil est éteint."
+          "description": "Texte affiché lorsque l'appareil est éteint.",
+          "example": "Désactivé"
         },
         "unit": {
           "description": "Texte placé après la valeur affichée de l'appareil."
@@ -1481,13 +1483,16 @@
           "description": "Joue un son lorsque l'appareil passe à Off."
         },
         "speak": {
-          "description": "Prononce un texte lorsque l'appareil change."
+          "description": "Prononce un texte lorsque l'appareil change.",
+          "example": "Le statut de l'appareil a changé"
         },
         "speakOn": {
-          "description": "Prononce un texte lorsque l'appareil passe à On."
+          "description": "Prononce un texte lorsque l'appareil passe à On.",
+          "example": "L'appareil est allumé"
         },
         "speakOff": {
-          "description": "Prononce un texte lorsque l'appareil passe à Off."
+          "description": "Prononce un texte lorsque l'appareil passe à Off.",
+          "example": "L'appareil est éteint"
         },
         "gotoslide": {
           "description": "Passe à cet écran lorsque l'appareil change."

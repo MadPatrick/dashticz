@@ -1333,7 +1333,9 @@
       "security_panel_lock_home_away": "Beveiligd (Thuis en Afwezig)",
       "security_panel_lock_help": "Kies wanneer Dashticz automatisch het beveiligingspaneel op volledig scherm opent: nooit, bij Beveiligd (Afwezig), of bij Beveiligd (Thuis en Afwezig).",
       "swiper_touch_move": "Schuif scherm met vegen.",
-      "swiper_touch_move_help": "0: Uitgeschakeld; 1: Ingeschakeld"
+      "swiper_touch_move_help": "0: Uitgeschakeld; 1: Ingeschakeld",
+      "topbar_timeout": "Bovenbalk automatisch verbergen na (seconden, 0 = uit)",
+      "topbar_timeout_help": "Verberg de bovenbalk na zoveel seconden. Beweeg de muisaanwijzer naar de bovenkant van het scherm om de balk weer te tonen."
     },
     "weather": {
       "idx_moonpicture": "IDX van maanfoto",
