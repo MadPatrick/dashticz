@@ -1,12 +1,20 @@
 Release Notes
 =============
 
-v4.2054 (22-11-2026)
+v4.2055 (22-11-2026)
 ----------------------
 
 * **Fixes**
 
 - External stylesheets, such as the Google Fonts Montserrat font of the Hayman clock, no longer get a ``?v=`` version parameter appended to their URL. That produced an invalid URL (``css2?family=Montserrat?v=211``) and Chrome reported 'Response was blocked by CORB'. Local stylesheets that already have a query string now get ``&v=`` instead.
+
+v4.2054 (22-11-2026)
+----------------------
+
+* **Code**
+
+- jQuery UI and jquery-ui-touch-punch are removed: the sliders and the sortable lists no longer use them. The bundle is about 255 KB smaller and the unused jQuery UI icons and styles are gone (the slider keeps the few styles it needs in src/slider.css).
+- If your own custom.js uses jQuery UI widgets (for example $.fn.slider or $.fn.sortable), it has to load its own copy of jQuery UI from now on.
 
 v4.2053 (22-11-2026)
 ----------------------
