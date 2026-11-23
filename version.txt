@@ -1,4 +1,4 @@
 {
-    "version": "4.2058",
-    "last_changes": "Fix: the color picker button of RGB lamps shows the lamp color again instead of a checkerboard."
+    "version": "4.2059",
+    "last_changes": "PostNL widget: DHL packages too. Fill in your My DHL account (my.dhlecommerce.nl) in Settings -> Widgets -> PostNL and its incoming, returned and sent parcels show in the same list, with the carrier after the name when both accounts are set. New statuses 'Ready for pickup' and 'Delayed'. One failing carrier no longer hides the packages of the other."
 }
