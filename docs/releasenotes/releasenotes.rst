@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+v4.2060 (23-11-2026)
+----------------------
+
+* **Fixes**
+
+- PostNL widget: the icons stand in one straight vertical line, also when the lines have a different length, and are centred vertically next to their text. The list stays centred in the tile. The styling is in the widget's own ``js/components/postnl.css``, so ``css/creative.css`` is unchanged.
+
 v4.2059 (23-11-2026)
 ----------------------
 

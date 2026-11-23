@@ -28,6 +28,9 @@
 var DT_postnl = (function () {
   return {
     name: 'postnl',
+    init: function () {
+      return DT_function.loadCSS('./js/components/postnl.css');
+    },
     canHandle: function (block) {
       return !!(block && block.type === 'postnl');
     },

@@ -1,4 +1,4 @@
 {
-    "version": "4.2059",
-    "last_changes": "PostNL widget: DHL packages too. Fill in your My DHL account (my.dhlecommerce.nl) in Settings -> Widgets -> PostNL and its incoming, returned and sent parcels show in the same list, with the carrier after the name when both accounts are set. New statuses 'Ready for pickup' and 'Delayed'. One failing carrier no longer hides the packages of the other."
+    "version": "4.2060",
+    "last_changes": "PostNL widget: the icons stand in one straight vertical line, also when the lines have a different length, and are centred vertically next to their text."
 }
