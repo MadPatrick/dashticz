@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+v4.2063 (24-11-2026)
+----------------------
+
+* **Fixes**
+
+- PostNL widget: a DHL parcel is shown only once, also when My DHL returns it more than once (twice in the parcels list, or a return label that is both a returned parcel and a sent shipment).
+
 v4.2062 (23-11-2026)
 ----------------------
 

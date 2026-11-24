@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.2063": "Fix: the PostNL widget shows a DHL parcel only once, also when My DHL returns it twice (for example a return label that is both a returned parcel and a sent shipment).",
     "4.2062": "Fix: the DHL list in the PostNL widget keeps a fixed order for parcels with the same expected time, also on PHP 7.4.",
     "4.2061": "PostNL widget: 3px less space between the lines (7px instead of 10px).",
     "4.2060": "PostNL widget: the icons stand in one straight vertical line, also when the lines have a different length, and are centred vertically next to their text.",

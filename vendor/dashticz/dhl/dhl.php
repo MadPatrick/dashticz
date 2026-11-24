@@ -327,12 +327,41 @@ function dashticz_dhl_recent_delivered($entries, $days)
 // Splits the raw DHL lists into the widget's incoming/sent lists. A return
 // the user ships back (a webshop return label) is listed among the incoming
 // parcels with isReturn=true; for the widget it is something sent.
+// Identity of a DHL parcel: its barcode (Track & Trace code), else its id.
+function dashticz_dhl_parcel_key($item)
+{
+    foreach (array('barcode', 'parcelId', 'id') as $field) {
+        if (isset($item[$field]) && is_scalar($item[$field]) && trim((string) $item[$field]) !== '') {
+            return strtoupper(trim((string) $item[$field]));
+        }
+    }
+    return '';
+}
+
+// True when this parcel was already seen. The same parcel can come back more
+// than once: twice in the parcels list, or a return label both as an
+// isReturn parcel and as a sent shipment. The first one wins (the parcels
+// list has the richer status).
+function dashticz_dhl_is_duplicate($item, &$seen)
+{
+    $key = dashticz_dhl_parcel_key($item);
+    if ($key === '') {
+        return false;
+    }
+    if (isset($seen[$key])) {
+        return true;
+    }
+    $seen[$key] = true;
+    return false;
+}
+
 function dashticz_dhl_split($parcels, $sentShipments, $days)
 {
     $receiverEntries = array();
     $senderEntries = array();
+    $seen = array();
     foreach ($parcels as $item) {
-        if (!is_array($item)) {
+        if (!is_array($item) || dashticz_dhl_is_duplicate($item, $seen)) {
             continue;
         }
         if (!empty($item['isReturn'])) {
@@ -342,7 +371,8 @@ function dashticz_dhl_split($parcels, $sentShipments, $days)
         }
     }
     foreach ($sentShipments as $item) {
-        if (!is_array($item) || (isset($item['type']) && $item['type'] !== 'outgoing')) {
+        if (!is_array($item) || (isset($item['type']) && $item['type'] !== 'outgoing')
+            || dashticz_dhl_is_duplicate($item, $seen)) {
             continue;
         }
         $senderEntries[] = dashticz_dhl_build_entry($item, 'sender');

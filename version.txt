@@ -1,4 +1,4 @@
 {
-    "version": "4.2062",
-    "last_changes": "PostNL widget: 3px less space between the lines (7px instead of 10px)."
+    "version": "4.2063",
+    "last_changes": "Fix: the PostNL widget shows a DHL parcel only once, also when My DHL returns it twice (for example a return label that is both a returned parcel and a sent shipment)."
 }

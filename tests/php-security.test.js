@@ -1394,6 +1394,58 @@ test('DHL bridge maps My DHL parcels to the PostNL widget entries', () => {
   ]);
 });
 
+/* A parcel that My DHL returns more than once (twice in the parcels list, or a
+   return label both as an isReturn parcel and as a sent shipment) is listed
+   once. */
+test('DHL bridge lists a parcel only once', () => {
+  const input = {
+    parcels: [
+      { barcode: '3SDUP1', category: 'UNDERWAY', sender: { name: 'Shop' } },
+      { barcode: '3sdup1 ', category: 'UNDERWAY', sender: { name: 'Shop' } },
+      { barcode: '3SOTHER', category: 'UNDERWAY', sender: { name: 'Other' } },
+      {
+        barcode: '3SRET1',
+        category: 'UNDERWAY',
+        isReturn: true,
+        receiver: { name: 'Return' },
+      },
+    ],
+    sent: [
+      {
+        barcode: '3SRET1',
+        category: 'UNDERWAY',
+        type: 'outgoing',
+        receiver: { name: 'Return' },
+      },
+      {
+        barcode: '3SOUT1',
+        category: 'UNDERWAY',
+        type: 'outgoing',
+        receiver: { name: 'Jan' },
+      },
+    ],
+  };
+  const dir = path.join(root, 'vendor/dashticz').replace(/\\/g, '/');
+  const script =
+    `require '${dir}/security.php'; require '${dir}/dhl/dhl.php';` +
+    ` $in = json_decode(stream_get_contents(STDIN), true);` +
+    ` echo json_encode(dashticz_dhl_split($in['parcels'], $in['sent'], 2));`;
+  const result = spawnSync('php', ['-r', script], {
+    encoding: 'utf8',
+    input: JSON.stringify(input),
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const { incoming, sent } = JSON.parse(result.stdout);
+  assert.deepEqual(
+    incoming.map((e) => e.who),
+    ['Shop', 'Other']
+  );
+  assert.deepEqual(
+    sent.map((e) => e.who),
+    ['Return', 'Jan']
+  );
+});
+
 /* Runs the TVgids bridge's parser (vendor/dashticz/tvgids/tvgids.php)
    through PHP on a piece of a tvgids24.nl channel page. */
 test('TVgids bridge reads the BroadcastEvent items of a tvgids24.nl page', () => {
