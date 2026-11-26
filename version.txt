@@ -1,4 +1,4 @@
 {
-    "version": "4.2066",
-    "last_changes": "Widgets: the OpenWeatherMap widget no longer adds a copy of itself at every refresh and shows an error when the city is not found, the Mower and Toon widgets do not poll twice, weather errors are escaped, and a second camera block keeps working when another one is removed."
+    "version": "4.2067",
+    "last_changes": "New: the owner of the server can switch the editors, the Settings page and the update button off with DASHTICZ_READ_ONLY (or the file custom/.readonly), and only the updater with DASHTICZ_DISABLE_UPDATE (custom/.noupdate)."
 }

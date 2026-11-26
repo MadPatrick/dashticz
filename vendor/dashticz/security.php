@@ -123,8 +123,46 @@ function dashticz_csrf_token()
     return $_SESSION['dashticz_csrf'];
 }
 
+/* Switches that the owner of the server sets, never a client:
+   - DASHTICZ_READ_ONLY (environment variable of the web server or PHP-FPM) or
+     an empty file custom/.readonly: the editors, the Settings page, the
+     configuration list and the updater cannot change anything.
+   - DASHTICZ_DISABLE_UPDATE or an empty file custom/.noupdate: only the
+     updater (js/update.php) is switched off.
+   An environment variable is "on" when it is set to anything but empty, 0,
+   false, off or no. */
+function dashticz_server_flag($variable, $file)
+{
+    $value = getenv($variable);
+    if (($value === false || $value === '') && isset($_SERVER[$variable])) {
+        $value = $_SERVER[$variable];
+    }
+    if (is_string($value) && $value !== ''
+        && !in_array(strtolower($value), array('0', 'false', 'off', 'no'), true)) {
+        return true;
+    }
+    return is_file(dirname(__DIR__, 2) . '/custom/' . $file);
+}
+
+function dashticz_require_writable()
+{
+    if (dashticz_server_flag('DASHTICZ_READ_ONLY', '.readonly')) {
+        dashticz_json_error(403, 'Editing is disabled on this server (read-only mode).');
+    }
+}
+
+function dashticz_require_update_allowed()
+{
+    if (dashticz_server_flag('DASHTICZ_DISABLE_UPDATE', '.noupdate')
+        || dashticz_server_flag('DASHTICZ_READ_ONLY', '.readonly')) {
+        dashticz_json_error(403, 'Updating from the dashboard is disabled on this server.');
+    }
+}
+
+// Every request that changes something on the server comes through here.
 function dashticz_require_csrf()
 {
+    dashticz_require_writable();
     dashticz_start_session();
     $provided = isset($_SERVER['HTTP_X_DASHTICZ_CSRF'])
         ? $_SERVER['HTTP_X_DASHTICZ_CSRF']

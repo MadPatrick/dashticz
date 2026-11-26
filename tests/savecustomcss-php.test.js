@@ -22,14 +22,18 @@ function freePort() {
 
 /* Serves a temporary copy of the editor save endpoints with the PHP built-in
    server, so the real request handling is exercised. */
-async function withServer(fn) {
+async function withServer(fn, env = {}) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'dashticz-css-'));
   let server;
   try {
     fs.mkdirSync(path.join(tmp, 'js'));
     fs.mkdirSync(path.join(tmp, 'custom'));
     fs.mkdirSync(path.join(tmp, 'vendor/dashticz'), { recursive: true });
-    for (const file of ['savecustomcss.php', 'configwriter.php']) {
+    for (const file of [
+      'savecustomcss.php',
+      'configwriter.php',
+      'update.php',
+    ]) {
       fs.copyFileSync(path.join(root, 'js', file), path.join(tmp, 'js', file));
     }
     for (const file of ['security.php', 'info.php']) {
@@ -43,6 +47,7 @@ async function withServer(fn) {
     const port = await freePort();
     server = spawn('php', ['-S', `127.0.0.1:${port}`, '-t', tmp], {
       stdio: 'ignore',
+      env: { ...process.env, ...env },
     });
     const base = `http://127.0.0.1:${port}`;
     for (let i = 0; i < 50; i++) {
@@ -54,21 +59,23 @@ async function withServer(fn) {
       }
     }
     let cookie = '';
-    async function save(query, vars) {
+    async function save(query, vars, endpoint = 'savecustomcss.php') {
       const csrf = await fetch(base + '/vendor/dashticz/info.php?get=csrf', {
         headers: { Cookie: cookie },
       });
       const setCookie = csrf.headers.get('set-cookie');
       if (setCookie) cookie = setCookie.split(';')[0];
       const token = (await csrf.json()).token;
-      const res = await fetch(base + '/js/savecustomcss.php' + query, {
+      const res = await fetch(base + '/js/' + endpoint + query, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Dashticz-CSRF': token,
           Cookie: cookie,
         },
-        body: JSON.stringify({ vars }),
+        body: JSON.stringify(
+          endpoint === 'update.php' ? { branch: 'beta' } : { vars }
+        ),
       });
       return { status: res.status, body: await res.json() };
     }
@@ -126,5 +133,46 @@ test(
       const url = await save('', { '--main-bg': 'url(//evil.example/x.png)' });
       assert.equal(url.status, 400);
     });
+  }
+);
+
+test(
+  'the owner can switch the editors and the updater off',
+  { skip: !hasPhp },
+  async () => {
+    await withServer(
+      async ({ tmp, save }) => {
+        const css = await save('', { '--main-bg': '#111111' });
+        assert.equal(css.status, 403);
+        assert.match(css.body.error, /read-only/);
+        assert.doesNotMatch(
+          fs.readFileSync(path.join(tmp, 'custom/custom.css'), 'utf8'),
+          /#111111/
+        );
+        const update = await save('', {}, 'update.php');
+        assert.equal(update.status, 403);
+        assert.match(update.body.error, /Updating/);
+      },
+      { DASHTICZ_READ_ONLY: '1' }
+    );
+    await withServer(
+      async ({ save }) => {
+        const css = await save('', { '--main-bg': '#111111' });
+        assert.equal(css.status, 200);
+        const update = await save('', {}, 'update.php');
+        assert.equal(update.status, 403);
+        assert.match(update.body.error, /Updating/);
+      },
+      { DASHTICZ_DISABLE_UPDATE: 'yes' }
+    );
+    // "0" or "off" is not a switch; a marker file in custom/ is.
+    await withServer(
+      async ({ tmp, save }) => {
+        assert.equal((await save('', { '--main-bg': '#111111' })).status, 200);
+        fs.writeFileSync(path.join(tmp, 'custom/.readonly'), '');
+        assert.equal((await save('', { '--main-bg': '#222222' })).status, 403);
+      },
+      { DASHTICZ_READ_ONLY: 'off' }
+    );
   }
 );

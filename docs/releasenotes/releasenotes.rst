@@ -1,6 +1,17 @@
 Release Notes
 =============
 
+v4.2067 (26-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Read-only mode for a server that is reachable by others: with the environment variable ``DASHTICZ_READ_ONLY`` (or an empty file ``custom/.readonly``) every request that writes configuration, layout, settings, stylesheets, rules or configurations, and the updater, is refused with a 403. ``DASHTICZ_DISABLE_UPDATE`` (or ``custom/.noupdate``) switches off only the update button. The switch is set on the server, so it cannot be changed from the dashboard. Nothing changes when neither is set. See Tips and Tricks.
+
+* **Code**
+
+- ``dashticz_require_csrf()`` calls the new ``dashticz_require_writable()``; ``js/update.php`` calls ``dashticz_require_update_allowed()``. Tests in ``tests/savecustomcss-php.test.js``.
+
 v4.2066 (26-11-2026)
 ----------------------
 
