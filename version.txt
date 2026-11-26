@@ -1,4 +1,4 @@
 {
-    "version": "4.2065",
-    "last_changes": "Bridges: PostNL, DHL, DPD, HP iLO and Husqvarna no longer log in again at every refresh after an error and show old data for a limited time only. Husqvarna and iLO cache files are private, an iLO cache needs the password, xmltv and LMS limit the size of what they download."
+    "version": "4.2066",
+    "last_changes": "Widgets: the OpenWeatherMap widget no longer adds a copy of itself at every refresh and shows an error when the city is not found, the Mower and Toon widgets do not poll twice, weather errors are escaped, and a second camera block keeps working when another one is removed."
 }

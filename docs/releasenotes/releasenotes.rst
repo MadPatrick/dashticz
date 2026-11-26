@@ -1,6 +1,21 @@
 Release Notes
 =============
 
+v4.2066 (26-11-2026)
+----------------------
+
+* **Fixes**
+
+- OpenWeatherMap widget: every refresh replaces the entry of the widget instead of adding one, so the widgets are not drawn again and again. City, country, key and language are URL encoded, and a city that cannot be found gives a message in the tile.
+- Mower and Toon widgets (Dashticz as source): with a refresh setting on the block they no longer start a second timer and a second request at the start.
+- Weather widget: error texts of the weather service are escaped before they are shown.
+- Camera widget: removing one camera block no longer stops the refresh and the carousel of the other camera blocks.
+- News widget reads the publication date as text. Car status widget: no extra load handlers on the logo when the tile is drawn again before the image has loaded.
+
+* **Code**
+
+- Test for these widget changes in ``tests/source.test.js``.
+
 v4.2065 (26-11-2026)
 ----------------------
 

@@ -477,6 +477,32 @@ test('location parameters only accept plain folder and file names for loaded fil
   assert.deepEqual(parseLocation('?folder=..%2Fcustom&cfg=CONFIG.php'), {});
 });
 
+test('widgets do not poll twice, keep one OWM entry and escape error texts', () => {
+  const owm = fs.readFileSync(
+    path.join(root, 'js/components/owmwidget.js'),
+    'utf8'
+  );
+  assert.match(owm, /param\.containerid !== me\.containerid/);
+  assert.match(owm, /encodeURIComponent\(city\)/);
+  for (const file of ['mower', 'toon']) {
+    const widget = fs.readFileSync(
+      path.join(root, 'js/components/' + file + '.js'),
+      'utf8'
+    );
+    assert.match(widget, /if \(me\.block\.refresh\) return;/, file);
+  }
+  const weather = fs.readFileSync(
+    path.join(root, 'js/components/weather.js'),
+    'utf8'
+  );
+  assert.match(weather, /DT_function\.escapeHtml\(errorTxt\)/);
+  const camera = fs.readFileSync(
+    path.join(root, 'js/components/camera.js'),
+    'utf8'
+  );
+  assert.match(camera, /if \(DT_camera\.devices\.length\) return;/);
+});
+
 test('update check only treats a newer remote version as an update', () => {
   assert.equal(compareVersions('3.19', '3.20.0'), -1);
   assert.equal(compareVersions('3.20', '3.20.0'), 0);
