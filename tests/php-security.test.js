@@ -615,7 +615,8 @@ test('every configuration editor writes to the active safe cfg file', () => {
   const writer = read('js/configwriter.php');
   assert.match(writer, /function configwriter_resolve_config_path/);
   assert.match(writer, /basename\(\$cfgFile\) !== \$cfgFile/);
-  assert.match(writer, /\^\[A-Za-z0-9_-\]\+\\\.js\$/);
+  assert.match(writer, /\^CONFIG\[A-Za-z0-9_-\]\*\\\.js\$/);
+  assert.match(writer, /CONFIG_DEFAULT\.js/);
 
   [
     'saveblocks.php',
@@ -625,6 +626,7 @@ test('every configuration editor writes to the active safe cfg file', () => {
     'saveconfigmode.php',
     'savescreens.php',
     'savesettings.php',
+    'savecustomcss.php',
   ].forEach((file) => {
     assert.match(
       read('js/' + file),

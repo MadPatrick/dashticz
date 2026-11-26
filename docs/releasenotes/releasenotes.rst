@@ -1,6 +1,19 @@
 Release Notes
 =============
 
+v4.2064 (26-11-2026)
+----------------------
+
+* **Fixes**
+
+- The URL parameters ``folder``, ``cfg``, ``cfg2`` and ``css`` decide which script or stylesheet is loaded and evaluated. They only accept a plain folder or file name now, so a link such as ``?folder=//other-site`` can no longer run code from another host.
+- The editors (``js/configwriter.php``) only write ``CONFIG<name>.js`` files, the same pattern as ``js/configs.php``. ``custom.js`` and the ``CONFIG_DEFAULT.js`` template can no longer be overwritten by a save request.
+- Theme colours and fonts of the Settings page are saved in the stylesheet of the active configuration (``custom2.css`` for ``CONFIG2.js``) instead of always in ``custom.css``. A new stylesheet starts as a copy of ``custom.css``. Values with ``url(...)`` are refused.
+
+* **Code**
+
+- New test ``tests/savecustomcss-php.test.js``; the URL parameter test in ``tests/source.test.js`` covers the new rules.
+
 v4.2063 (24-11-2026)
 ----------------------
 

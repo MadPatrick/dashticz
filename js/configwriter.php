@@ -50,20 +50,32 @@ function configwriter_write_result($configPath, $error)
 
 /**
  * Resolve the configuration file selected by main.js (?cfg=CONFIG2.js).
- * Only a bare JavaScript filename is accepted so editor writes stay inside
- * custom/ and every editor targets the same file that the dashboard loaded.
+ * Only a bare CONFIG<name>.js filename is accepted (the same pattern as
+ * js/configs.php) so editor writes stay inside custom/, never touch
+ * custom.js or the CONFIG_DEFAULT.js template, and every editor targets the
+ * same file that the dashboard loaded.
  */
 function configwriter_resolve_config_path($customDir)
 {
     $cfgFile = isset($_GET['cfg']) ? $_GET['cfg'] : 'CONFIG.js';
     if (!is_string($cfgFile)
         || basename($cfgFile) !== $cfgFile
-        || !preg_match('/^[A-Za-z0-9_-]+\.js$/', $cfgFile)
+        || !preg_match('/^CONFIG[A-Za-z0-9_-]*\.js$/', $cfgFile)
+        || $cfgFile === 'CONFIG_DEFAULT.js'
     ) {
         dashticz_json_error(400, 'Invalid cfg filename.');
     }
 
     return [$customDir . '/' . $cfgFile, $cfgFile];
+}
+
+/**
+ * The stylesheet that belongs to a configuration file, matching js/main.js and
+ * js/configs.php: CONFIG.js -> custom.css, CONFIG2.js -> custom2.css.
+ */
+function configwriter_css_name($cfgFile)
+{
+    return 'custom' . preg_replace('/\.js$/i', '', preg_replace('/^CONFIG/i', '', $cfgFile)) . '.css';
 }
 
 function configwriter_write_config($configPath, $customDir, $config)

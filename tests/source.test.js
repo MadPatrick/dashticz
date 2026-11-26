@@ -459,6 +459,24 @@ test('location parameters ignore malformed and prototype keys', () => {
   );
 });
 
+test('location parameters only accept plain folder and file names for loaded files', () => {
+  assert.deepEqual(
+    parseLocation('?folder=custom2&cfg=CONFIG2.js&cfg2=CONFIG3.js&css=my.css'),
+    { folder: 'custom2', cfg: 'CONFIG2.js', cfg2: 'CONFIG3.js', css: 'my.css' }
+  );
+  assert.deepEqual(parseLocation('?folder=data/custom&x=1'), {
+    folder: 'data/custom',
+    x: '1',
+  });
+  assert.deepEqual(
+    parseLocation(
+      '?folder=%2F%2Fevil.example&cfg=..%2Fx.js&cfg2=http%3A%2F%2Fevil.example%2Fx.js&css=%2F%2Fevil.example%2Fx.css&other=ok'
+    ),
+    { other: 'ok' }
+  );
+  assert.deepEqual(parseLocation('?folder=..%2Fcustom&cfg=CONFIG.php'), {});
+});
+
 test('update check only treats a newer remote version as an update', () => {
   assert.equal(compareVersions('3.19', '3.20.0'), -1);
   assert.equal(compareVersions('3.20', '3.20.0'), 0);
