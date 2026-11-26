@@ -1,6 +1,23 @@
 Release Notes
 =============
 
+v4.2065 (26-11-2026)
+----------------------
+
+* **Fixes**
+
+- PostNL, DHL, DPD and HP iLO bridges: after a failed refresh (for example a rejected password) the same login is not tried again for 5 minutes, so several dashboards cannot get an account blocked. The last good list is shown meanwhile.
+- Husqvarna: a mower status older than an hour is no longer shown as if it were current, a token that the API rejects is removed and requested again once, and the token file is private (mode 0600). F1 feed: a failed download is not repeated for 5 minutes.
+- HP iLO: the cache is keyed with the password too, and a path in an answer of the iLO that does not start with a slash is refused.
+- PostNL: parcels with the same expected time keep a fixed order on PHP 7.4.
+- xmltv: a GZip or ZIP file may be 100 MB when unpacked, no more; the answer gets the same protective headers as cors.php.
+- Lyrion Music Server: cover art larger than 8 MB is refused. Garbage bridge: providers get 15 and 60 seconds instead of no time limit, and a missing parameter no longer gives a PHP warning.
+- A very large widget settings section can no longer make a save drop the settings that are already in it.
+
+* **Code**
+
+- ``dashticz_cached_json()`` remembers a failure also when there is old data, with an optional maximum age and file mode; new helpers ``dashticz_stable_sort()``, ``dashticz_cache_failure_recent()`` and ``dashticz_cache_note_failure()``; ``dashticz_http_request()`` has a ``maxBytes`` option. New tests in ``tests/php-security.test.js``.
+
 v4.2064 (26-11-2026)
 ----------------------
 

@@ -558,13 +558,19 @@ function configwriter_extract_section_config_settings($config, $startMarker, $en
     }
 
     $section = substr($config, $startPos, $endPos - $startPos);
-    if (!preg_match_all(
+    $found = preg_match_all(
         // The value may hold quoted strings, which can contain a ';'.
         "/config\\[(['\\\"])([A-Za-z0-9_]+)\\1\\]\\s*=\\s*((?:\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'|[^;\"'])+);/",
         $section,
         $matches,
         PREG_SET_ORDER
-    )) {
+    );
+    if ($found === false) {
+        // The expression failed (PCRE limit on a very large section). Going on
+        // would save the section without the settings that are already in it.
+        dashticz_json_error(500, 'Unable to read the saved widget settings of the configuration file.');
+    }
+    if (!$found) {
         return $settings;
     }
 

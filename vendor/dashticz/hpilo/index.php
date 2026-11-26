@@ -143,7 +143,10 @@ function dashticz_hpilo_cache_file($input)
         return null;
     }
     $key = strtolower($input['host'] . ':' . $input['port'] . '|' . $input['username'] . '|' . implode(',', $input['sections']));
-    return $baseDir . '/' . sha1($key) . '.json';
+    // Keyed with the password too, like the PostNL cache: without it anyone who
+    // knows the host and user name could read the cached iLO data (serial
+    // number, IP and MAC address) without the password.
+    return $baseDir . '/' . hash_hmac('sha256', $key, $input['password']) . '.json';
 }
 
 function dashticz_hpilo_read_cache($file)
@@ -152,7 +155,7 @@ function dashticz_hpilo_read_cache($file)
         return null;
     }
     $data = json_decode((string) @file_get_contents($file), true);
-    return is_array($data) && isset($data['fetchedAt'], $data['data']) ? $data : null;
+    return is_array($data) ? $data : null;
 }
 
 function dashticz_hpilo_write_cache($file, $data)
@@ -160,13 +163,18 @@ function dashticz_hpilo_write_cache($file, $data)
     if (!$file) {
         return;
     }
-    dashticz_atomic_write_file($file, json_encode(array('fetchedAt' => time(), 'data' => $data)));
+    dashticz_atomic_write_file($file, json_encode(array('fetchedAt' => time(), 'data' => $data)), 0600);
 }
 
 // ------------------------------------------------------------ Redfish/curl
 
 function dashticz_hpilo_get($input, $path)
 {
+    // Paths come from the answers of the iLO itself (@odata.id): a value that
+    // does not start with a slash would change the host of the request.
+    if (!is_string($path) || $path === '' || $path[0] !== '/' || strpos($path, '//') === 0) {
+        throw new DashticzHpiloHttpError('Unexpected path', 400);
+    }
     $response = dashticz_http_request('https://' . $input['host'] . ':' . $input['port'] . $path, array(
         'verifyTls' => false,
         'userpwd' => $input['username'] . ':' . $input['password'],
@@ -545,15 +553,28 @@ function dashticz_hpilo_get_data($input)
 {
     $cacheFile = dashticz_hpilo_cache_file($input);
     $cache = dashticz_hpilo_read_cache($cacheFile);
-    if ($cache && (time() - (int) $cache['fetchedAt']) < $input['pollSeconds']) {
+    $hasData = $cache && isset($cache['fetchedAt'], $cache['data']);
+    if ($hasData && (time() - (int) $cache['fetchedAt']) < $input['pollSeconds']) {
         return $cache['data'];
+    }
+
+    // A failed poll is not repeated for a few minutes: the iLO blocks a user
+    // after a few rejected logins, and every dashboard polls on its own.
+    if (dashticz_cache_failure_recent($cache, 300)) {
+        if ($hasData) {
+            return $cache['data'];
+        }
+        throw new RuntimeException($cache['error']);
     }
 
     try {
         $data = dashticz_hpilo_fetch($input);
     } catch (RuntimeException $error) {
+        if ($cacheFile) {
+            dashticz_cache_note_failure($cacheFile, $cache, $error->getMessage());
+        }
         // A transient hiccup falls back to the last known good result.
-        if ($cache) {
+        if ($hasData) {
             return $cache['data'];
         }
         throw $error;

@@ -1,5 +1,6 @@
 {
   "changelog": {
+    "4.2065": "Bridges: PostNL, DHL, DPD, HP iLO and Husqvarna no longer log in again at every refresh after an error and show old data for a limited time only. Husqvarna and iLO cache files are private, an iLO cache needs the password, xmltv and LMS limit the size of what they download.",
     "4.2064": "Security: the URL parameters folder, cfg, cfg2 and css only accept plain file and folder names. The editors only write CONFIG<name>.js files, and the theme colours of a second configuration are saved in its own stylesheet (custom2.css for CONFIG2.js).",
     "4.2063": "PostNL widget: DPD packages too. Fill in your myDPD account in Settings -> Widgets -> PostNL and its incoming and sent parcels show in the same list, with the carrier after the name when more than one account is set.",
     "4.2062": "Fix: the DHL list in the PostNL widget keeps a fixed order for parcels with the same expected time, also on PHP 7.4.",

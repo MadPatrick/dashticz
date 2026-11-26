@@ -277,7 +277,8 @@ function dashticz_lms_curl($url, $request, $extraOptions)
         throw new RuntimeException('The PHP curl extension is required for the Lyrion Music Server block.');
     }
 
-    $options = $extraOptions + array('connectTimeout' => 4, 'timeout' => 8);
+    // Cover art is turned into a data URI in memory: 8 MB at most.
+    $options = $extraOptions + array('connectTimeout' => 4, 'timeout' => 8, 'maxBytes' => 8388608);
     // Basic auth only when a username is actually configured - matches the
     // reference domoticz_lyrion plugin (auth = (user, pwd) if user else None):
     // LMS authentication is optional and off by default.

@@ -396,11 +396,14 @@ function dashticz_cache_dir($name)
 /* JSON cache shared by the PHP proxies: $producer() returns the data to
    cache (and throws a RuntimeException when it can't).
    - A cache file younger than $ttl seconds, with the same $tag, is returned.
-   - When $producer() fails, stale data is returned instead of an error.
-   - Without stale data the error is remembered for $failTtl seconds, so a
-     site that is down isn't asked again by every dashboard refresh.
+   - When $producer() fails, stale data is returned instead of an error, for
+     at most $maxStale seconds after it was fetched (0: no limit).
+   - A failure is remembered for $failTtl seconds, with or without stale data,
+     so a site that is down (or a rejected password) isn't asked again by every
+     dashboard refresh: the stale data, or the error, is returned meanwhile.
+   $mode is the file mode of the cache file (0600 for a file with a token).
    $file may be null (no writable cache folder): then nothing is cached. */
-function dashticz_cached_json($file, $ttl, $producer, $tag = '', $failTtl = 0)
+function dashticz_cached_json($file, $ttl, $producer, $tag = '', $failTtl = 0, $maxStale = 0, $mode = 0664)
 {
     $cached = null;
     if ($file && is_file($file)) {
@@ -410,28 +413,71 @@ function dashticz_cached_json($file, $ttl, $producer, $tag = '', $failTtl = 0)
         }
     }
     $hasData = $cached !== null && array_key_exists('data', $cached) && isset($cached['fetchedAt']);
+    $stale = $hasData && ($maxStale <= 0 || time() - $cached['fetchedAt'] < $maxStale);
     if ($hasData && ($cached['tag'] ?? '') === $tag && time() - $cached['fetchedAt'] < $ttl) {
         return $cached['data'];
     }
-    if ($failTtl > 0 && $cached !== null && !$hasData && isset($cached['failedAt'], $cached['error'])
+    if ($failTtl > 0 && $cached !== null && isset($cached['failedAt'], $cached['error'])
         && time() - $cached['failedAt'] < $failTtl) {
+        if ($stale) {
+            return $cached['data'];
+        }
         throw new RuntimeException($cached['error']);
     }
     try {
         $data = $producer();
     } catch (RuntimeException $error) {
-        if ($hasData) {
-            return $cached['data'];
-        }
         if ($file && $failTtl > 0) {
-            dashticz_atomic_write_file($file, json_encode(array('failedAt' => time(), 'error' => $error->getMessage())));
+            $failure = $hasData ? $cached : array();
+            $failure['failedAt'] = time();
+            $failure['error'] = $error->getMessage();
+            dashticz_atomic_write_file($file, json_encode($failure), $mode);
+        }
+        if ($stale) {
+            return $cached['data'];
         }
         throw $error;
     }
     if ($file) {
-        dashticz_atomic_write_file($file, json_encode(array('fetchedAt' => time(), 'tag' => $tag, 'data' => $data)));
+        dashticz_atomic_write_file($file, json_encode(array('fetchedAt' => time(), 'tag' => $tag, 'data' => $data)), $mode);
     }
     return $data;
+}
+
+/* Failure bookkeeping for the bridges of an account (PostNL, DHL, DPD): the
+   cache array of such a bridge gets 'failedAt' and 'error' when a refresh
+   failed, so for $seconds the stale list (or the error) is returned instead of
+   logging in again with every dashboard refresh. A successful refresh writes a
+   new cache array without these keys. */
+function dashticz_cache_failure_recent($cache, $seconds)
+{
+    return is_array($cache) && isset($cache['failedAt'], $cache['error'])
+        && time() - (int) $cache['failedAt'] < $seconds;
+}
+
+function dashticz_cache_note_failure($file, $cache, $message)
+{
+    $failure = is_array($cache) ? $cache : array();
+    $failure['failedAt'] = time();
+    $failure['error'] = (string) $message;
+    dashticz_atomic_write_file($file, json_encode($failure), 0600);
+}
+
+/* usort() is not stable before PHP 8.0: entries that compare equal keep their
+   original order here. Returns the sorted list (re-indexed). */
+function dashticz_stable_sort($list, $compare)
+{
+    $indexed = array();
+    foreach (array_values($list) as $i => $entry) {
+        $indexed[] = array($i, $entry);
+    }
+    usort($indexed, function ($a, $b) use ($compare) {
+        $result = call_user_func($compare, $a[1], $b[1]);
+        return $result !== 0 ? $result : $a[0] - $b[0];
+    });
+    return array_map(function ($pair) {
+        return $pair[1];
+    }, $indexed);
 }
 
 function dashticz_protect_cache_root($root)
@@ -608,7 +654,7 @@ function dashticz_fetch_remote($url, $maxBytes = 5242880, $maxRedirects = 3, $al
    $options: method (default GET), headers (list of "Name: value"), body,
    userpwd ("user:password", basic auth), verifyTls (default true; false for
    the self-signed certificate of a LAN device), connectTimeout (default 5)
-   and timeout (default 15) in seconds, post (true: send a POST also without
+   and timeout (default 15) in seconds, maxBytes (largest body accepted), post (true: send a POST also without
    a body), cookieFile (cookies are read from and saved to this file) and
    userAgent. headerCallback (callable($ch, $headerLine), replaces the
    collection of the response headers) and curlOptions (raw CURLOPT_* => value
@@ -665,8 +711,26 @@ function dashticz_http_request($url, $options = array())
         $curlOptions[CURLOPT_SSL_VERIFYPEER] = false;
         $curlOptions[CURLOPT_SSL_VERIFYHOST] = 0;
     }
+    // maxBytes: the transfer is stopped when the body gets larger than this
+    // (the request then counts as failed), so a huge answer cannot fill the
+    // memory of PHP.
+    $collected = null;
+    if (!empty($options['maxBytes'])) {
+        $collected = '';
+        $limit = (int) $options['maxBytes'];
+        $curlOptions[CURLOPT_WRITEFUNCTION] = function ($curlHandle, $chunk) use (&$collected, $limit) {
+            if (strlen($collected) + strlen($chunk) > $limit) {
+                return 0;
+            }
+            $collected .= $chunk;
+            return strlen($chunk);
+        };
+    }
     curl_setopt_array($ch, $curlOptions);
     $body = curl_exec($ch);
+    if ($collected !== null && $body !== false) {
+        $body = $collected;
+    }
     $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $contentType = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
     $failed = ($body === false);
