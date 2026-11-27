@@ -2510,11 +2510,15 @@ function bindLogPanel() {
     })
       .done(function (data) {
         entries = (data && data.entries) || [];
-        $view.text(
-          entries.length
-            ? entries.map(lineText).join('\n')
-            : logLabel('empty', 'The log is empty.')
-        );
+        $view.empty();
+        if (!entries.length) {
+          $view.text(logLabel('empty', 'The log is empty.'));
+        }
+        entries.forEach(function (entry) {
+          var $line = $('<div></div>').text(lineText(entry));
+          if (entry.l === 'error') $line.css('color', '#dc3545');
+          $view.append($line);
+        });
         if (data && data.writable === false) {
           $error.text(
             logLabel(
