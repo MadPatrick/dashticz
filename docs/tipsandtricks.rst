@@ -236,3 +236,9 @@ Dashticz has no user accounts: the editors, the Settings page and the update but
 Set the variable in the environment of the web server or PHP-FPM, for example ``SetEnv DASHTICZ_READ_ONLY 1`` in Apache, ``fastcgi_param DASHTICZ_READ_ONLY 1;`` in nginx, or ``environment:`` in ``docker-compose.yaml``. The value ``0``, ``false``, ``off`` or ``no`` switches it off again. Without access to the environment, an empty file in the ``custom`` folder does the same: ``custom/.readonly`` or ``custom/.noupdate``. The file cannot be created or removed from the dashboard.
 
 Changes by the editors are refused with the message "Editing is disabled on this server". To change the dashboard again, remove the variable or the file.
+
+Hosts of the local network bridges
+----------------------------------
+
+The Lyrion Music Server, Toon, Fully Kiosk and HP iLO blocks let the Dashticz server connect to the address you enter. To prevent that this is abused to reach other services, only addresses on the local network are accepted (for example ``192.168.x.x``, ``10.x.x.x`` or ``fd..`` addresses). A host name must resolve to such an address. If a device really has a public address, or runs on the Dashticz machine itself (``127.0.0.1``), set ``DASHTICZ_ALLOW_PUBLIC_BRIDGE_HOSTS 1`` in the environment of the web server, or create an empty file ``custom/.allowpublichosts``. ``DASHTICZ_ALLOWED_REMOTE_HOSTS`` also works for a single host name.
+

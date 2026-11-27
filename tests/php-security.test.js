@@ -411,6 +411,9 @@ function lmsFetchCover(payload) {
   ]);
   const dashticzServer = spawn('php', ['-S', `127.0.0.1:${dashticzPort}`], {
     cwd: root,
+    env: Object.assign({}, process.env, {
+      DASHTICZ_ALLOW_PUBLIC_BRIDGE_HOSTS: '1',
+    }),
   });
   try {
     const deadline = Date.now() + 3000;
@@ -2218,4 +2221,56 @@ echo json_encode(array($posted, $seenCookies, $failed, $messages));`;
     server.kill();
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('LAN bridges only connect to hosts on the local network', () => {
+  const result = runPhp(`
+    $out = array();
+    foreach (array('192.168.1.5', '10.0.0.2', 'fd12::1', '8.8.8.8', '127.0.0.1', '169.254.169.254', '0.0.0.0', '::1', 'fe80::1', 'nonsense') as $ip) {
+      $out[$ip] = dashticz_bridge_ip_allowed($ip, false);
+    }
+    $out['public-allowed'] = dashticz_bridge_ip_allowed('8.8.8.8', true);
+    $out['loopback-allowed'] = dashticz_bridge_ip_allowed('127.0.0.1', true);
+    foreach (array('192.168.1.5', '8.8.8.8', '127.0.0.1') as $host) {
+      try {
+        dashticz_require_bridge_host($host);
+        $out['host-' . $host] = true;
+      } catch (RuntimeException $error) {
+        $out['host-' . $host] = false;
+      }
+    }
+    echo json_encode($out);
+  `);
+  assert.deepEqual(result, {
+    '192.168.1.5': true,
+    '10.0.0.2': true,
+    'fd12::1': true,
+    '8.8.8.8': false,
+    '127.0.0.1': false,
+    '169.254.169.254': false,
+    '0.0.0.0': false,
+    '::1': false,
+    'fe80::1': false,
+    nonsense: false,
+    'public-allowed': true,
+    'loopback-allowed': true,
+    'host-192.168.1.5': true,
+    'host-8.8.8.8': false,
+    'host-127.0.0.1': false,
+  });
+  for (const file of [
+    'vendor/dashticz/toon/index.php',
+    'vendor/dashticz/fullykiosk/index.php',
+    'vendor/dashticz/hpilo/index.php',
+    'vendor/dashticz/lms/index.php',
+  ]) {
+    assert.match(read(file), /dashticz_require_bridge_host\(\$(host|server)\)/);
+  }
+});
+
+test('HP iLO bridge keeps within its time budget', () => {
+  const hpilo = read('vendor/dashticz/hpilo/index.php');
+  assert.match(hpilo, /'deadline' => microtime\(true\) \+ 50/);
+  assert.match(hpilo, /dashticz_hpilo_out_of_time\(\$input\)/);
+  assert.match(hpilo, /'timeout' => \(int\) min\(15, ceil\(\$remaining\)\)/);
 });

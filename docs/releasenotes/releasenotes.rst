@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+v4.2068 (27-11-2026)
+----------------------
+
+* The Lyrion Music Server, Toon, Fully Kiosk and HP iLO bridges only connect to hosts on the local network. See Tips and tricks for the opt-out.
+* HP iLO: the storage section stops in time on a slow iLO and reports what it read.
+* HomeConnect: reading another Domoticz has a timeout, no overlapping requests and a clear message for an https dashboard with an http address.
+
 v4.2067 (26-11-2026)
 ----------------------
 

@@ -110,6 +110,8 @@ function dashticz_lms_read_input()
         throw new RuntimeException('Enter the Lyrion Music Server address.');
     }
 
+    dashticz_require_bridge_host($server);
+
     $port = isset($input['port']) ? (int) $input['port'] : 9000;
     if ($port < 1 || $port > 65535) {
         throw new RuntimeException('Enter a valid Lyrion Music Server port.');

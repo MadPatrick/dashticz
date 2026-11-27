@@ -266,6 +266,58 @@ function dashticz_validate_remote_url($url, $allowPrivate = false)
     return $url;
 }
 
+/* The LAN bridges (Lyrion, Toon, Fully Kiosk, HP iLO) connect to a host that
+   the browser posts, so without a check they would be a proxy to any host,
+   including services on this server itself. Only addresses on the local
+   network are accepted (private ranges, e.g. 192.168.x.x, 10.x.x.x and
+   fd00::/8). A host in DASHTICZ_ALLOWED_REMOTE_HOSTS, or any host when
+   DASHTICZ_ALLOW_PUBLIC_BRIDGE_HOSTS is set (or custom/.allowpublichosts
+   exists), is accepted as well, and that also allows the loopback address
+   (a Lyrion server on this machine). The link-local range (cloud metadata
+   services) and unspecified addresses are always refused. */
+function dashticz_bridge_ip_allowed($ip, $allowPublic)
+{
+    if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+        return false;
+    }
+    if (preg_match('/^(0\.|169\.254\.)/', $ip) || $ip === '::' || preg_match('/^fe[89ab][0-9a-f]:/i', $ip)) {
+        return false;
+    }
+    $loopback = preg_match('/^127\./', $ip) || $ip === '::1';
+    return $allowPublic || (!$loopback && !dashticz_ip_is_public($ip));
+}
+
+function dashticz_require_bridge_host($host)
+{
+    $host = strtolower(trim((string) $host, "[]. \t"));
+    $allowPublic = dashticz_host_is_explicitly_allowed($host)
+        || dashticz_server_flag('DASHTICZ_ALLOW_PUBLIC_BRIDGE_HOSTS', '.allowpublichosts');
+    if (filter_var($host, FILTER_VALIDATE_IP)) {
+        $ips = array($host);
+    } else {
+        $ips = array();
+        $records = function_exists('dns_get_record') ? @dns_get_record($host, DNS_A | DNS_AAAA) : false;
+        foreach (is_array($records) ? $records : array() as $record) {
+            if (isset($record['ip'])) {
+                $ips[] = $record['ip'];
+            } elseif (isset($record['ipv6'])) {
+                $ips[] = $record['ipv6'];
+            }
+        }
+        $ipv4 = @gethostbynamel($host);
+        $ips = array_merge($ips, is_array($ipv4) ? $ipv4 : array());
+    }
+    if (!$ips) {
+        throw new RuntimeException('The host could not be resolved.');
+    }
+    foreach ($ips as $ip) {
+        if (!dashticz_bridge_ip_allowed($ip, $allowPublic)) {
+            throw new RuntimeException('Only hosts on the local network are allowed here.');
+        }
+    }
+    return $host;
+}
+
 /* Strips a pasted scheme ("http://"/"https://"), any trailing path/query/
    fragment, and an accidentally-included ":port" from a plain server/host
    field, so a value like "http://192.168.1.6/" (scheme + trailing slash,
