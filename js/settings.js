@@ -2447,11 +2447,8 @@ function logLabel(key, fallback) {
 }
 
 function renderLogPanel() {
-  var html = '<div class="settings-two-col">';
-  html += renderSettingsRow('logLevel', settingList['log']['logLevel']);
-  html += '</div>';
-  html +=
-    '<div id="settings-log" class="mt-3">' +
+  var html =
+    '<div id="settings-log">' +
     '<div class="d-flex flex-wrap align-items-center gap-2 mb-2">' +
     '<select class="form-select w-auto" id="settings-log-filter">' +
     '<option value="">' +
@@ -2476,7 +2473,10 @@ function renderLogPanel() {
     '</button>' +
     '</div>' +
     '<div class="text-danger" id="settings-log-error" role="alert"></div>' +
-    '<pre id="settings-log-view" class="p-2 border rounded" style="max-height:50vh;overflow:auto;white-space:pre-wrap"></pre>' +
+    '<pre id="settings-log-view" class="p-2 border rounded" style="height:65vh;overflow:auto;white-space:pre-wrap;font-size:12px"></pre>' +
+    '</div>' +
+    '<div class="settings-two-col mt-3">' +
+    renderSettingsRow('logLevel', settingList['log']['logLevel']) +
     '</div>';
   return html;
 }
