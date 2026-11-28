@@ -2473,7 +2473,7 @@ function renderLogPanel() {
     '</button>' +
     '</div>' +
     '<div class="text-danger" id="settings-log-error" role="alert"></div>' +
-    '<pre id="settings-log-view" class="p-2 border rounded" style="height:calc(65vh - 50px);overflow:auto;white-space:pre-wrap;font-size:12px"></pre>' +
+    '<pre id="settings-log-view" class="p-2 border rounded" style="height:calc(100vh - 410px);min-height:150px;overflow:auto;white-space:pre-wrap;font-size:12px"></pre>' +
     '</div>' +
     '<div class="settings-two-col mt-3">' +
     renderSettingsRow('logLevel', settingList['log']['logLevel']) +
