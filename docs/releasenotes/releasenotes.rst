@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+v4.2079 (28-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Husqvarna widget: a button that was pressed lights up for 10 seconds, so that you can see the press was received.
+
 v4.2077 (28-11-2026)
 ----------------------
 

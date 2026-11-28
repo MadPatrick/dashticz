@@ -1,4 +1,4 @@
 {
-    "version": "4.2077",
-    "last_changes": "Car status widget: a stronger glow in the battery bar while charging."
+    "version": "4.2079",
+    "last_changes": "Husqvarna widget: a button that was pressed lights up for 10 seconds, so that you can see the press was received."
 }
