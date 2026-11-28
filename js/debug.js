@@ -32,6 +32,7 @@ var Debug = (function () {
     tst: tst,
     saveDebug: saveDebug,
     action: action,
+    widget: widget,
     maskSensitive: maskSensitive,
     INFO: 0,
     REQUEST: 1,
@@ -280,6 +281,12 @@ var Debug = (function () {
     return write(3, args);
   }
 
+  // A message of a widget (a notification of an appliance, a failed data
+  // request). Always an error line in the log, with the widget name in front.
+  function widget(name, text) {
+    return write(3, [Debug.ERROR, '[' + name + '] ' + text]);
+  }
+
   function write(stackDepth, args) {
     var msg;
     var start = 0;
@@ -433,8 +440,27 @@ var Debug = (function () {
           (xhr.status || 'no response') +
           ' ' +
           (xhr.statusText || '') +
-          ')'
+          ')' +
+          (xhr.responseJSON && typeof xhr.responseJSON.error === 'string'
+            ? ': ' + xhr.responseJSON.error
+            : '')
       );
+    });
+    // A bridge (vendor/dashticz/*) that answers 200 with {"error": "..."}.
+    $(document).ajaxSuccess(function (event, xhr, options, data) {
+      if (
+        data &&
+        typeof data === 'object' &&
+        typeof data.error === 'string' &&
+        data.error &&
+        /vendor\/dashticz\//.test(String(options.url)) &&
+        !isLogRequest(options.url)
+      ) {
+        log(
+          Debug.ERROR,
+          'Bridge error: ' + plainUrl(options.url) + ': ' + data.error
+        );
+      }
     });
     // Saving settings, layout, devices, configurations: every POST to js/*.php.
     $(document).ajaxSuccess(function (event, xhr, options) {

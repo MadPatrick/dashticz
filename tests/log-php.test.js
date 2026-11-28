@@ -170,3 +170,11 @@ test(
     });
   }
 );
+
+test('widget notifications and bridge errors reach the log', () => {
+  const debug = read('js/debug.js');
+  assert.match(debug, /widget: widget,/);
+  assert.match(debug, /Bridge error: /);
+  const hc = read('js/components/homeconnect.js');
+  assert.match(hc, /Debug\.widget\('HomeConnect', app\.name \+ ': ' \+ text\)/);
+});
