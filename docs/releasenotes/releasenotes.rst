@@ -8,6 +8,13 @@ v4.2079 (28-11-2026)
 
 - Husqvarna widget: a button that was pressed lights up for 10 seconds, so that you can see the press was received.
 
+v4.2078 (28-11-2026)
+----------------------
+
+* **Enhancements**
+
+- The debug window that opened when you clicked on the Dashticz logo is removed, with its memory graph, config and block tabs, the ``heartbeat`` setting and ``tpl/debug.tpl``. Use Settings -> Log instead: that log is stored on the server and has a level (``logLevel``), a filter, download and clear.
+
 v4.2077 (28-11-2026)
 ----------------------
 
