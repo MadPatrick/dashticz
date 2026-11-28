@@ -1,12 +1,19 @@
 Release Notes
 =============
 
-v4.2079 (28-11-2026)
+v4.2080 (28-11-2026)
 ----------------------
 
 * **Enhancements**
 
 - Husqvarna widget: a button that was pressed lights up in the theme's active (blue) button color for 10 seconds, so that you can see the press was received.
+
+v4.2079 (28-11-2026)
+----------------------
+
+* **Fixes**
+
+- Car status widget: every update of a device logged four errors ``Cannot read properties of undefined (reading 'mileage')`` (and ``charging``, ``chargetime``, ``battery``) and the tile was not drawn again. The list of status names for the log was declared after the ``return`` of the widget and so never set.
 
 v4.2078 (28-11-2026)
 ----------------------
