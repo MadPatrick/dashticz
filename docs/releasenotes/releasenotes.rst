@@ -8,6 +8,20 @@ v4.2074 (28-11-2026)
 
 - Car status widget: a lightning bolt in the battery icon while the car is charging.
 
+v4.2073 (28-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Slide button: Device Config now has a *Text* section to set the title size (px) and the horizontal alignment of the button title (``fontsize_title`` and ``textalign``).
+
+v4.2072 (28-11-2026)
+----------------------
+
+* **Enhancements**
+
+- Log level ``warning``. Notifications of widgets that are not an error (a message of a HomeConnect appliance, doors or windows open of Car status, the yellow message bar) are now logged as warnings, in orange, instead of errors. Widgets that do not work stay errors. The log levels are ``off``, ``error`` (default), ``warning``, ``action`` and ``debug``; the viewer in Settings -> Log has a filter for warnings.
+
 v4.2071 (28-11-2026)
 ----------------------
 
