@@ -1568,11 +1568,17 @@ function infoMessage(sub, msg, timeOut) {
   // Notifications of widgets and other parts also go to the Dashticz log
   // (messages that stay on screen, timeOut 0, are progress texts).
   if (timeOut !== 0 && typeof Debug !== 'undefined' && Debug.widget) {
+    // Text content of the message; a DOMParser document runs no scripts and
+    // loads no images.
     var plain = function (text) {
-      return String(text == null ? '' : text)
-        .replace(/<[^>]*>/g, '')
-        .replace(/&nbsp;/g, ' ')
-        .trim();
+      var html = String(text == null ? '' : text);
+      try {
+        html = new DOMParser().parseFromString(html, 'text/html').body
+          .textContent;
+      } catch (e) {
+        // keep the raw text
+      }
+      return html.replace(/\u00a0/g, ' ').trim();
     };
     Debug.widget(plain(sub) || 'Message', plain(msg));
   }
