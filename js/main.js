@@ -1565,6 +1565,17 @@ function infoMessage(sub, msg, timeOut) {
   if (timeOut == null) {
     timeOut = 8000;
   }
+  // Notifications of widgets and other parts also go to the Dashticz log
+  // (messages that stay on screen, timeOut 0, are progress texts).
+  if (timeOut !== 0 && typeof Debug !== 'undefined' && Debug.widget) {
+    var plain = function (text) {
+      return String(text == null ? '' : text)
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .trim();
+    };
+    Debug.widget(plain(sub) || 'Message', plain(msg));
+  }
   if (timeOut == 0) {
     $('body').append(
       '<div class="update">' +

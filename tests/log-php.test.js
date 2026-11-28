@@ -178,3 +178,9 @@ test('widget notifications and bridge errors reach the log', () => {
   const hc = read('js/components/homeconnect.js');
   assert.match(hc, /Debug\.widget\('HomeConnect', app\.name \+ ': ' \+ text\)/);
 });
+
+test('infoMessage, PostNL and the console report to the log', () => {
+  assert.match(read('js/main.js'), /Debug\.widget\(plain\(sub\)/);
+  assert.match(read('js/components/postnl.js'), /Debug\.widget\(\s*'PostNL'/);
+  assert.match(read('js/debug.js'), /function hookConsole\(\)/);
+});

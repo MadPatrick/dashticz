@@ -6,9 +6,9 @@ Dashticz can write errors and actions to a log file on the server: ``custom/logs
 What is logged
 --------------
 
-- ``error``: JavaScript errors, unhandled promise rejections, failed requests, errors of the PHP bridges (also when a bridge answers with an error message) and messages of widgets, for example a notification of a HomeConnect appliance (``[HomeConnect] Washer: Drip tray full``).
+- ``error``: JavaScript errors, unhandled promise rejections, failed requests, errors of the PHP bridges (also when a bridge answers with an error message) ``console.error`` messages, every notification that a widget or Dashticz shows on screen (the yellow message bar) and messages of widgets, for example a notification of a HomeConnect appliance (``[HomeConnect] Washer: Drip tray full``).
 - ``action``: switching devices (Domoticz commands) and saving settings, layouts, devices or configurations.
-- ``debug``: everything that the debug window (click on the logo) shows too.
+- ``debug``: ``console.warn`` messages and everything that the debug window (click on the logo) shows too.
 
 Level
 -----

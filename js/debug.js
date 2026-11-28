@@ -412,7 +412,31 @@ var Debug = (function () {
     return parts[0] + (type ? '?type=' + type[2] : '');
   }
 
+  // console.error goes to the log as an error, console.warn as a debug line.
+  function hookConsole() {
+    ['error', 'warn'].forEach(function (method) {
+      var original = window.console && window.console[method];
+      if (typeof original !== 'function') return;
+      window.console[method] = function () {
+        try {
+          var text = Array.prototype.map
+            .call(arguments, function (arg) {
+              if (arg instanceof Error) return arg.message;
+              return typeof arg === 'object' ? JSON.stringify(arg) : arg;
+            })
+            .join(' ');
+          if (method === 'error') log(Debug.ERROR, 'console.error: ' + text);
+          else log(Debug.INFO, 'console.warn: ' + text);
+        } catch (e) {
+          // Logging must never break the caller.
+        }
+        return original.apply(window.console, arguments);
+      };
+    });
+  }
+
   function initServerLog() {
+    hookConsole();
     window.addEventListener('error', function (e) {
       if (!e.message) return; // resource load errors have no message
       log(
