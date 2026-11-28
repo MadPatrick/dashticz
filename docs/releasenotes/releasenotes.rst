@@ -1,12 +1,19 @@
 Release Notes
 =============
 
-v4.2080 (28-11-2026)
+v4.2081 (28-11-2026)
 ----------------------
 
 * **Enhancements**
 
 - Husqvarna widget: a button that was pressed lights up in the theme's active (blue) button color for 10 seconds, so that you can see the press was received.
+
+v4.2080 (28-11-2026)
+----------------------
+
+* **Fixes**
+
+- Car status widget: *Not home* only shows when a home device is set and has reported. Without one, or before the devices have loaded, the tile no longer says the car is away.
 
 v4.2079 (28-11-2026)
 ----------------------
