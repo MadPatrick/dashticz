@@ -1,4 +1,4 @@
 {
-    "version": "4.2071",
-    "last_changes": "Car status widget: the white to green gradient of the battery bar changes more gradually."
+    "version": "4.2074",
+    "last_changes": "Car status widget: a lightning bolt in the battery icon while the car is charging."
 }
