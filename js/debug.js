@@ -20,6 +20,7 @@ var Debug = (function () {
   var serverSeen = {};
   var serverTimer = null;
   var serverFailedAt = 0;
+  var widgetSeen = {};
 
   var $el;
   var $elbody;
@@ -284,6 +285,12 @@ var Debug = (function () {
   // A message of a widget (a notification of an appliance, a failed data
   // request). Always an error line in the log, with the widget name in front.
   function widget(name, text) {
+    // Widgets draw their message again at every refresh: once per 5 minutes.
+    var key = name + ':' + text;
+    var now = Date.now();
+    if (widgetSeen[key] && now - widgetSeen[key] < 300000) return;
+    widgetSeen[key] = now;
+    if (Object.keys(widgetSeen).length > 200) widgetSeen = {};
     return write(3, [Debug.ERROR, '[' + name + '] ' + text]);
   }
 

@@ -184,3 +184,24 @@ test('infoMessage, PostNL and the console report to the log', () => {
   assert.match(read('js/components/postnl.js'), /Debug\.widget\(\s*'PostNL'/);
   assert.match(read('js/debug.js'), /function hookConsole\(\)/);
 });
+
+test('every widget with its own message area reports to the log', () => {
+  for (const file of [
+    'f1',
+    'hpilo',
+    'tvgids',
+    'weatherinfo',
+    'mower',
+    'toon',
+    'fullykiosk',
+    'lms',
+    'trafficinfo',
+    'carstatus',
+  ]) {
+    assert.match(
+      read(`js/components/${file}.js`),
+      /DT_function\.widgetLog\(/,
+      file
+    );
+  }
+});
